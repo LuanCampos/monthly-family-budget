@@ -26,14 +26,16 @@ export const ExpenseList = ({ expenses, onRemove }: ExpenseListProps) => {
             key={expense.id}
             className="flex items-center justify-between p-2 bg-secondary/50 rounded-lg group"
           >
-            <div className="flex items-center gap-2">
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: cat.color }}
-              />
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm text-foreground">{expense.title}</span>
+              <span
+                className="text-xs px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: `${cat.color}30`, color: cat.color }}
+              >
+                {cat.name}
+              </span>
               {expense.isRecurring && (
-                <span className="text-xs text-muted-foreground">(recorrente)</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">recorrente</span>
               )}
             </div>
             <div className="flex items-center gap-2">
