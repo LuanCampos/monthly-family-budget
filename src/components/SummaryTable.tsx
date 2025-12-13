@@ -17,11 +17,11 @@ interface SummaryTableProps {
   usedPercentage: number;
 }
 
-export const SummaryTable = ({ 
-  categories, 
-  totalSpent, 
-  totalBudget, 
-  usedPercentage 
+export const SummaryTable = ({
+  categories,
+  totalSpent,
+  totalBudget,
+  usedPercentage,
 }: SummaryTableProps) => {
   return (
     <div className="overflow-x-auto">
@@ -34,42 +34,95 @@ export const SummaryTable = ({
             <th className="text-right py-3 font-semibold">Utilizado</th>
           </tr>
         </thead>
+
         <tbody>
-          {categories.map((cat) => (
-            <tr key={cat.key} className="border-b border-border/50">
-              <td className="py-3 text-foreground font-medium">{cat.name}</td>
-              <td className="py-3 text-right text-foreground">
-                {formatCurrency(cat.spent)}
-              </td>
-              <td className="py-3 text-right text-foreground">
-                {formatCurrency(cat.budget)}
-              </td>
-              <td className={`py-3 text-right font-medium ${cat.usedPercentage >= 100 ? 'text-destructive' : 'text-success'}`}>
-                {formatPercentage(cat.usedPercentage)}
-              </td>
-            </tr>
-          ))}
+          {categories.map((cat) => {
+            const exceeded = cat.spent > cat.budget;
+
+            return (
+              <tr key={cat.key} className="border-b border-border/50">
+                <td className="py-3 text-foreground font-medium">
+                  {cat.name}
+                </td>
+
+                {/* Valor gasto */}
+                <td
+                  className={`py-3 text-right font-medium ${
+                    exceeded ? 'text-destructive' : 'text-foreground'
+                  }`}
+                >
+                  {formatCurrency(cat.spent)}
+                </td>
+
+                {/* Budget */}
+                <td className="py-3 text-right text-foreground">
+                  {formatCurrency(cat.budget)}
+                </td>
+
+                {/* Utilizado */}
+                <td
+                  className={`py-3 text-right font-medium ${
+                    cat.usedPercentage >= 100
+                      ? 'text-destructive'
+                      : 'text-success'
+                  }`}
+                >
+                  {formatPercentage(cat.usedPercentage)}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
+      {/* Totals */}
       <div className="flex items-center gap-6 mt-6 pt-4 border-t border-border">
+        {/* Total gastos */}
         <div>
-          <span className="text-destructive text-2xl font-bold">
+          <span
+            className={`text-2xl font-bold ${
+              totalSpent > totalBudget
+                ? 'text-destructive'
+                : 'text-foreground'
+            }`}
+          >
             {formatCurrency(totalSpent)}
           </span>
-          <p className="text-xs text-muted-foreground mt-1">Total gastos</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Total gastos
+          </p>
         </div>
+
+        {/* Total a gastar */}
         <div>
-          <span className={`text-2xl font-bold ${totalBudget - totalSpent >= 0 ? 'text-success' : 'text-destructive'}`}>
+          <span
+            className={`text-2xl font-bold ${
+              totalBudget - totalSpent < 0
+                ? 'text-destructive'
+                : 'text-foreground'
+            }`}
+          >
             {formatCurrency(totalBudget - totalSpent)}
           </span>
-          <p className="text-xs text-muted-foreground mt-1">Total a gastar</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Total a gastar
+          </p>
         </div>
+
+        {/* Utilizado */}
         <div>
-          <span className={`text-2xl font-bold ${usedPercentage >= 100 ? 'text-destructive' : 'text-success'}`}>
+          <span
+            className={`text-2xl font-bold ${
+              usedPercentage >= 100
+                ? 'text-destructive'
+                : 'text-success'
+            }`}
+          >
             {formatPercentage(usedPercentage)}
           </span>
-          <p className="text-xs text-muted-foreground mt-1">Utilizado</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Utilizado
+          </p>
         </div>
       </div>
     </div>

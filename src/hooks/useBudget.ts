@@ -227,7 +227,7 @@ export const useBudget = () => {
         budget,
         spent,
         remaining,
-        usedPercentage: Math.min(100, Math.max(0, usedPercentage)),
+        usedPercentage: Math.max(0, usedPercentage),
       };
     });
   };
