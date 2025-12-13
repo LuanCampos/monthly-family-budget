@@ -18,27 +18,26 @@ export const ExpenseList = ({ expenses, onRemove }: ExpenseListProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+    <div className="space-y-2">
       {expenses.map((expense) => {
         const cat = getCategoryByKey(expense.category);
         return (
           <div
             key={expense.id}
-            className="flex items-center justify-between p-2 bg-secondary/50 rounded-lg group"
+            className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg group"
           >
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-foreground">{expense.title}</span>
+            <div className="flex items-center gap-3">
               <span
-                className="text-xs px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: `${cat.color}30`, color: cat.color }}
-              >
-                {cat.name}
-              </span>
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: cat.color }}
+              />
+              <span className="text-sm text-foreground font-medium">{expense.title}</span>
+              <span className="text-xs text-muted-foreground">({cat.name})</span>
               {expense.isRecurring && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">recorrente</span>
+                <span className="text-xs text-muted-foreground">(recorrente)</span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <span className="text-sm text-foreground font-medium">
                 {formatCurrency(expense.value)}
               </span>
