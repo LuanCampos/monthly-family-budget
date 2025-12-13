@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Expense, getCategoryByKey, formatCurrency } from '@/types/budget';
+import { Expense, getCategoryByKey, formatCurrency, CATEGORIES } from '@/types/budget';
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -17,9 +17,20 @@ export const ExpenseList = ({ expenses, onRemove }: ExpenseListProps) => {
     );
   }
 
+  // Sort by: Category order, then recurring first, then alphabetically by title
+  const sortedExpenses = [...expenses].sort((a, b) => {
+    const catIndexA = CATEGORIES.findIndex(c => c.key === a.category);
+    const catIndexB = CATEGORIES.findIndex(c => c.key === b.category);
+    if (catIndexA !== catIndexB) return catIndexA - catIndexB;
+    
+    if (a.isRecurring !== b.isRecurring) return a.isRecurring ? -1 : 1;
+    
+    return a.title.localeCompare(b.title);
+  });
+
   return (
     <div className="space-y-2">
-      {expenses.map((expense) => {
+      {sortedExpenses.map((expense) => {
         const cat = getCategoryByKey(expense.category);
         return (
           <div
