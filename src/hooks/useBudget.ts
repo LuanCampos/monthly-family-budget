@@ -131,6 +131,23 @@ export const useBudget = () => {
     };
 
     setRecurringExpenses(prev => [...prev, newRecurring]);
+
+    // Also add to current month if one is selected
+    if (currentMonthId) {
+      const expense: Expense = {
+        id: `${currentMonthId}-recurring-${Date.now()}`,
+        title,
+        category,
+        value,
+        isRecurring: true,
+      };
+
+      setMonths(prev => prev.map(m => 
+        m.id === currentMonthId 
+          ? { ...m, expenses: [...m.expenses, expense] }
+          : m
+      ));
+    }
   };
 
   const removeRecurringExpense = (index: number) => {
@@ -150,7 +167,7 @@ export const useBudget = () => {
         budget: 0,
         spent: 0,
         remaining: 0,
-        usedPercentage: 100,
+        usedPercentage: 0,
       }));
     }
 
@@ -160,14 +177,15 @@ export const useBudget = () => {
         .filter(e => e.category === cat.key)
         .reduce((sum, e) => sum + e.value, 0);
       const remaining = budget - spent;
-      const usedPercentage = budget > 0 ? ((budget - spent) / budget) * 100 : 100;
+      // If no spending yet, show 0% used; otherwise calculate actual percentage
+      const usedPercentage = spent === 0 ? 0 : (budget > 0 ? (spent / budget) * 100 : 0);
 
       return {
         ...cat,
         budget,
         spent,
         remaining,
-        usedPercentage: Math.max(0, usedPercentage),
+        usedPercentage: Math.min(100, Math.max(0, usedPercentage)),
       };
     });
   };

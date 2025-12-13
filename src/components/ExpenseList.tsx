@@ -9,12 +9,16 @@ interface ExpenseListProps {
 
 export const ExpenseList = ({ expenses, onRemove }: ExpenseListProps) => {
   if (expenses.length === 0) {
-    return null;
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <p>Nenhum gasto cadastrado neste mês.</p>
+        <p className="text-sm mt-1">Use os botões acima para adicionar gastos.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="mt-6 space-y-2 max-h-48 overflow-y-auto">
-      <h4 className="text-sm font-semibold text-muted-foreground mb-3">Gastos do mês</h4>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
       {expenses.map((expense) => {
         const cat = getCategoryByKey(expense.category);
         return (
