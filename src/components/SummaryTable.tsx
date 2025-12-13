@@ -32,7 +32,6 @@ export const SummaryTable = ({
             <th className="text-right py-3 font-semibold">Valor Gasto</th>
             <th className="text-right py-3 font-semibold">Devo gastar</th>
             <th className="text-right py-3 font-semibold">Utilizado</th>
-            <th className="text-right py-3 font-semibold">Total</th>
           </tr>
         </thead>
         <tbody>
@@ -45,11 +44,8 @@ export const SummaryTable = ({
               <td className="py-3 text-right text-foreground">
                 {formatCurrency(cat.budget)}
               </td>
-              <td className={`py-3 text-right font-medium ${cat.usedPercentage > 100 ? 'text-destructive' : cat.usedPercentage > 80 ? 'text-warning' : 'text-success'}`}>
+              <td className={`py-3 text-right font-medium ${cat.usedPercentage >= 100 ? 'text-destructive' : 'text-success'}`}>
                 {formatPercentage(cat.usedPercentage)}
-              </td>
-              <td className="py-3 text-right text-muted-foreground">
-                {formatPercentage(cat.percentage)}
               </td>
             </tr>
           ))}
@@ -64,13 +60,13 @@ export const SummaryTable = ({
           <p className="text-xs text-muted-foreground mt-1">Total gastos</p>
         </div>
         <div>
-          <span className="text-destructive text-2xl font-bold">
-            {formatCurrency(Math.max(0, totalBudget - totalSpent))}
+          <span className={`text-2xl font-bold ${totalBudget - totalSpent >= 0 ? 'text-success' : 'text-destructive'}`}>
+            {formatCurrency(totalBudget - totalSpent)}
           </span>
           <p className="text-xs text-muted-foreground mt-1">Total a gastar</p>
         </div>
         <div>
-          <span className="text-foreground text-2xl font-bold">
+          <span className={`text-2xl font-bold ${usedPercentage >= 100 ? 'text-destructive' : 'text-success'}`}>
             {formatPercentage(usedPercentage)}
           </span>
           <p className="text-xs text-muted-foreground mt-1">Utilizado</p>
