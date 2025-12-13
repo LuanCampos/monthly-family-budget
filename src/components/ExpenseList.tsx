@@ -1,13 +1,14 @@
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Expense, getCategoryByKey, formatCurrency, CATEGORIES } from '@/types/budget';
 
 interface ExpenseListProps {
   expenses: Expense[];
   onRemove: (id: string) => void;
+  onEdit: (expense: Expense) => void;
 }
 
-export const ExpenseList = ({ expenses, onRemove }: ExpenseListProps) => {
+export const ExpenseList = ({ expenses, onRemove, onEdit }: ExpenseListProps) => {
   if (expenses.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -22,9 +23,9 @@ export const ExpenseList = ({ expenses, onRemove }: ExpenseListProps) => {
     const catIndexA = CATEGORIES.findIndex(c => c.key === a.category);
     const catIndexB = CATEGORIES.findIndex(c => c.key === b.category);
     if (catIndexA !== catIndexB) return catIndexA - catIndexB;
-    
+
     if (a.isRecurring !== b.isRecurring) return a.isRecurring ? -1 : 1;
-    
+
     return a.title.localeCompare(b.title);
   });
 
@@ -32,6 +33,7 @@ export const ExpenseList = ({ expenses, onRemove }: ExpenseListProps) => {
     <div className="space-y-2">
       {sortedExpenses.map((expense) => {
         const cat = getCategoryByKey(expense.category);
+
         return (
           <div
             key={expense.id}
@@ -42,16 +44,38 @@ export const ExpenseList = ({ expenses, onRemove }: ExpenseListProps) => {
                 className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: cat.color }}
               />
-              <span className="text-sm text-foreground font-medium">{expense.title}</span>
-              <span className="text-xs text-muted-foreground">({cat.name})</span>
+
+              <span className="text-sm text-foreground font-medium">
+                {expense.title}
+              </span>
+
+              <span className="text-xs text-muted-foreground">
+                ({cat.name})
+              </span>
+
               {expense.isRecurring && (
-                <span className="text-xs text-muted-foreground">(recorrente)</span>
+                <span className="text-xs text-muted-foreground">
+                  (Recorrente)
+                </span>
               )}
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-foreground font-medium">
+
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-foreground font-medium mr-2">
                 {formatCurrency(expense.value)}
               </span>
+
+              {/* Edit button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onEdit(expense)}
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary hover:bg-primary/10"
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+
+              {/* Delete button */}
               <Button
                 variant="ghost"
                 size="icon"
