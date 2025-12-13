@@ -31,7 +31,7 @@ export interface Month {
 }
 
 export const CATEGORIES: Category[] = [
-  { key: 'custos-fixos', name: 'Custos fixos', percentage: 30, color: 'hsl(187, 85%, 53%)' },
+  { key: 'essenciais', name: 'Essenciais', percentage: 30, color: 'hsl(187, 85%, 53%)' },
   { key: 'conforto', name: 'Conforto', percentage: 10, color: 'hsl(160, 84%, 39%)' },
   { key: 'metas', name: 'Metas', percentage: 20, color: 'hsl(48, 96%, 53%)' },
   { key: 'prazeres', name: 'Prazeres', percentage: 10, color: 'hsl(291, 64%, 42%)' },
