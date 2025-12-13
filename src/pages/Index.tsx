@@ -57,14 +57,6 @@ const Index = () => {
             onChange={updateIncome}
             disabled={!currentMonthId}
           />
-          <div className="flex gap-2 ml-auto">
-            <RecurringExpenses
-              expenses={recurringExpenses}
-              onAdd={addRecurringExpense}
-              onRemove={removeRecurringExpense}
-            />
-            <ExpenseForm onAdd={addExpense} disabled={!currentMonthId} />
-          </div>
         </div>
 
         {/* Main Grid */}
@@ -85,10 +77,6 @@ const Index = () => {
                 hasExpenses={hasExpenses}
               />
               <CategoryLegend />
-              <ExpenseList
-                expenses={currentMonth?.expenses || []}
-                onRemove={removeExpense}
-              />
             </CardContent>
           </Card>
 
@@ -117,6 +105,29 @@ const Index = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Expense List Section */}
+        {currentMonthId && (
+          <Card className="mt-6 bg-card border-border animate-fade-in" style={{ animationDelay: '0.5s' }}>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-foreground">Gastos do mês</CardTitle>
+              <div className="flex gap-2">
+                <RecurringExpenses
+                  expenses={recurringExpenses}
+                  onAdd={addRecurringExpense}
+                  onRemove={removeRecurringExpense}
+                />
+                <ExpenseForm onAdd={addExpense} disabled={!currentMonthId} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ExpenseList
+                expenses={currentMonth?.expenses || []}
+                onRemove={removeExpense}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Empty State */}
         {!currentMonthId && (

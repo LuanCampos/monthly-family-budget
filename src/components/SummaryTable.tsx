@@ -45,7 +45,7 @@ export const SummaryTable = ({
               <td className="py-3 text-right text-foreground">
                 {formatCurrency(cat.budget)}
               </td>
-              <td className="py-3 text-right text-success font-medium">
+              <td className={`py-3 text-right font-medium ${cat.usedPercentage > 100 ? 'text-destructive' : cat.usedPercentage > 80 ? 'text-warning' : 'text-success'}`}>
                 {formatPercentage(cat.usedPercentage)}
               </td>
               <td className="py-3 text-right text-muted-foreground">
