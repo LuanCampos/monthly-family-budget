@@ -33,6 +33,7 @@ const Index = () => {
     exportBudget,
     importBudget,
     updateRecurringExpense,
+    removeMonth,
   } = useBudget();
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -113,6 +114,7 @@ const Index = () => {
             currentMonth={currentMonth}
             onSelectMonth={selectMonth}
             onAddMonth={addMonth}
+            onRemoveMonth={removeMonth}
           />
           <IncomeInput
             value={currentMonth?.income || 0}

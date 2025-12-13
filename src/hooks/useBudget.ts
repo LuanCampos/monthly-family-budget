@@ -303,6 +303,18 @@ export const useBudget = () => {
       )
     );
   };
+  
+  const removeMonth = (monthId: string) => {
+    setMonths(prev => {
+      const filtered = prev.filter(m => m.id !== monthId);
+  
+      if (currentMonthId === monthId) {
+        setCurrentMonthId(filtered.length ? filtered[filtered.length - 1].id : null);
+      }
+  
+      return filtered;
+    });
+  };
 
   return {
     months,
@@ -322,5 +334,6 @@ export const useBudget = () => {
     exportBudget,
     importBudget,
     updateRecurringExpense,
+    removeMonth,
   };
 };
