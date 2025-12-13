@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -12,34 +12,36 @@ import {
 } from '@/components/ui/dialog';
 
 interface GoalsPanelProps {
-  onEdit?: (percentages: Record<CategoryKey, number>) => void;
+  percentages: Record<CategoryKey, number>;
+  onEdit: (percentages: Record<CategoryKey, number>) => void;
 }
 
-export const GoalsPanel = ({ onEdit }: GoalsPanelProps) => {
+export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [localPercentages, setLocalPercentages] =
+    useState<Record<CategoryKey, number>>(percentages);
 
-  const [percentages, setPercentages] = useState<Record<CategoryKey, number>>(
-    Object.fromEntries(
-      CATEGORIES.map((c) => [c.key, c.percentage])
-    ) as Record<CategoryKey, number>
-  );
+  // sempre sincroniza quando o estado global mudar
+  useEffect(() => {
+    setLocalPercentages(percentages);
+  }, [percentages]);
 
-  const total = Object.values(percentages).reduce((a, b) => a + b, 0);
+  const total = Object.values(localPercentages).reduce((a, b) => a + b, 0);
 
   const handleSave = () => {
-    onEdit?.(percentages);
+    onEdit(localPercentages);
     setIsEditing(false);
   };
 
   return (
     <div>
-      {/* Read-only view */}
+      {/* Read-only */}
       <div className="space-y-4">
         {CATEGORIES.map((cat) => (
           <div key={cat.key} className="flex justify-between items-center">
             <span className="text-foreground">{cat.name}</span>
             <span className="text-foreground font-medium">
-              {cat.percentage}%
+              {percentages[cat.key]}%
             </span>
           </div>
         ))}
@@ -70,7 +72,7 @@ export const GoalsPanel = ({ onEdit }: GoalsPanelProps) => {
                 <div className="flex justify-between items-center">
                   <span className="text-foreground">{cat.name}</span>
                   <span className="text-foreground font-medium">
-                    {percentages[cat.key]}%
+                    {localPercentages[cat.key]}%
                   </span>
                 </div>
 
@@ -78,9 +80,9 @@ export const GoalsPanel = ({ onEdit }: GoalsPanelProps) => {
                   min={0}
                   max={100}
                   step={1}
-                  value={[percentages[cat.key]]}
+                  value={[localPercentages[cat.key]]}
                   onValueChange={([value]) =>
-                    setPercentages((prev) => ({
+                    setLocalPercentages((prev) => ({
                       ...prev,
                       [cat.key]: value,
                     }))

@@ -3,6 +3,7 @@ import { Month, Expense, CategoryKey, CATEGORIES } from '@/types/budget';
 
 const STORAGE_KEY = 'budget-data';
 const RECURRING_KEY = 'recurring-expenses';
+const GOALS_KEY = 'budget-goals';
 
 interface BudgetData {
   months: Month[];
@@ -16,7 +17,7 @@ const generateMonthId = (year: number, month: number): string => {
 const getMonthLabel = (year: number, month: number): string => {
   const monthNames = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
   ];
   return `${monthNames[month - 1]}/${year}`;
 };
@@ -27,11 +28,22 @@ export const useBudget = () => {
   const [recurringExpenses, setRecurringExpenses] = useState<Omit<Expense, 'id'>[]>([]);
 
   /* =====================
+     Category goals
+     ===================== */
+  const [categoryPercentages, setCategoryPercentages] =
+    useState<Record<CategoryKey, number>>(
+      Object.fromEntries(
+        CATEGORIES.map(c => [c.key, c.percentage])
+      ) as Record<CategoryKey, number>
+    );
+
+  /* =====================
      Load from localStorage
      ===================== */
   useEffect(() => {
     const savedData = localStorage.getItem(STORAGE_KEY);
     const savedRecurring = localStorage.getItem(RECURRING_KEY);
+    const savedGoals = localStorage.getItem(GOALS_KEY);
 
     if (savedData) {
       const data: BudgetData = JSON.parse(savedData);
@@ -41,6 +53,10 @@ export const useBudget = () => {
 
     if (savedRecurring) {
       setRecurringExpenses(JSON.parse(savedRecurring));
+    }
+
+    if (savedGoals) {
+      setCategoryPercentages(JSON.parse(savedGoals));
     }
   }, []);
 
@@ -55,6 +71,10 @@ export const useBudget = () => {
   useEffect(() => {
     localStorage.setItem(RECURRING_KEY, JSON.stringify(recurringExpenses));
   }, [recurringExpenses]);
+
+  useEffect(() => {
+    localStorage.setItem(GOALS_KEY, JSON.stringify(categoryPercentages));
+  }, [categoryPercentages]);
 
   const currentMonth = months.find(m => m.id === currentMonthId) || null;
 
@@ -88,6 +108,20 @@ export const useBudget = () => {
     );
     setCurrentMonthId(id);
     return true;
+  };
+
+  const removeMonth = (monthId: string) => {
+    setMonths(prev => {
+      const filtered = prev.filter(m => m.id !== monthId);
+
+      if (currentMonthId === monthId) {
+        setCurrentMonthId(
+          filtered.length ? filtered[filtered.length - 1].id : null
+        );
+      }
+
+      return filtered;
+    });
   };
 
   const selectMonth = (monthId: string) => {
@@ -166,7 +200,11 @@ export const useBudget = () => {
   /* =====================
      Recurring expenses
      ===================== */
-  const addRecurringExpense = (title: string, category: CategoryKey, value: number) => {
+  const addRecurringExpense = (
+    title: string,
+    category: CategoryKey,
+    value: number
+  ) => {
     const newRecurring: Omit<Expense, 'id'> = {
       title,
       category,
@@ -195,6 +233,19 @@ export const useBudget = () => {
     }
   };
 
+  const updateRecurringExpense = (
+    index: number,
+    title: string,
+    category: CategoryKey,
+    value: number
+  ) => {
+    setRecurringExpenses(prev =>
+      prev.map((exp, i) =>
+        i === index ? { ...exp, title, category, value } : exp
+      )
+    );
+  };
+
   const removeRecurringExpense = (index: number) => {
     setRecurringExpenses(prev => prev.filter((_, i) => i !== index));
   };
@@ -206,6 +257,7 @@ export const useBudget = () => {
     if (!currentMonth) {
       return CATEGORIES.map(cat => ({
         ...cat,
+        percentage: categoryPercentages[cat.key],
         budget: 0,
         spent: 0,
         remaining: 0,
@@ -214,16 +266,20 @@ export const useBudget = () => {
     }
 
     return CATEGORIES.map(cat => {
-      const budget = (currentMonth.income * cat.percentage) / 100;
+      const percentage = categoryPercentages[cat.key] ?? cat.percentage;
+      const budget = (currentMonth.income * percentage) / 100;
+
       const spent = currentMonth.expenses
         .filter(e => e.category === cat.key)
         .reduce((sum, e) => sum + e.value, 0);
+
       const remaining = budget - spent;
       const usedPercentage =
         spent === 0 ? 0 : budget > 0 ? (spent / budget) * 100 : 0;
 
       return {
         ...cat,
+        percentage,
         budget,
         spent,
         remaining,
@@ -237,27 +293,34 @@ export const useBudget = () => {
       return { totalSpent: 0, totalBudget: 0, usedPercentage: 0 };
     }
 
-    const totalSpent = currentMonth.expenses.reduce((sum, e) => sum + e.value, 0);
+    const totalSpent = currentMonth.expenses.reduce(
+      (sum, e) => sum + e.value,
+      0
+    );
     const totalBudget = currentMonth.income;
     const usedPercentage =
       totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
     return { totalSpent, totalBudget, usedPercentage };
   };
-  
+
+  /* =====================
+     Import / Export
+     ===================== */
   const exportBudget = () => {
     const data = {
       version: 1,
       exportedAt: new Date().toISOString(),
       months,
       recurringExpenses,
+      categoryPercentages,
       currentMonthId,
     };
-  
+
     const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: 'application/json',
     });
-  
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -265,75 +328,57 @@ export const useBudget = () => {
     a.click();
     URL.revokeObjectURL(url);
   };
-  
+
   const importBudget = (file: File) => {
     const reader = new FileReader();
-  
+
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result as string);
-  
+
         if (
           !Array.isArray(data.months) ||
-          !Array.isArray(data.recurringExpenses)
+          !Array.isArray(data.recurringExpenses) ||
+          !data.categoryPercentages
         ) {
           throw new Error('Invalid file structure');
         }
-  
+
         setMonths(data.months);
         setRecurringExpenses(data.recurringExpenses);
+        setCategoryPercentages(data.categoryPercentages);
         setCurrentMonthId(data.currentMonthId ?? null);
       } catch {
         alert('Arquivo inválido ou corrompido');
       }
     };
-  
+
     reader.readAsText(file);
   };
-  
-  const updateRecurringExpense = (
-    index: number,
-    title: string,
-    category: CategoryKey,
-    value: number
-  ) => {
-    setRecurringExpenses(prev =>
-      prev.map((exp, i) =>
-        i === index ? { ...exp, title, category, value } : exp
-      )
-    );
-  };
-  
-  const removeMonth = (monthId: string) => {
-    setMonths(prev => {
-      const filtered = prev.filter(m => m.id !== monthId);
-  
-      if (currentMonthId === monthId) {
-        setCurrentMonthId(filtered.length ? filtered[filtered.length - 1].id : null);
-      }
-  
-      return filtered;
-    });
-  };
 
+  /* =====================
+     Public API
+     ===================== */
   return {
     months,
     currentMonth,
     currentMonthId,
     recurringExpenses,
+    categoryPercentages,
     addMonth,
+    removeMonth,
     selectMonth,
     updateIncome,
     addExpense,
     updateExpense,
     removeExpense,
     addRecurringExpense,
+    updateRecurringExpense,
     removeRecurringExpense,
+    updateGoals: setCategoryPercentages,
     getCategorySummary,
     getTotals,
     exportBudget,
     importBudget,
-    updateRecurringExpense,
-    removeMonth,
   };
 };

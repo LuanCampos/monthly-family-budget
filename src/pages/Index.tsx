@@ -34,6 +34,8 @@ const Index = () => {
     importBudget,
     updateRecurringExpense,
     removeMonth,
+    categoryPercentages,
+    updateGoals,
   } = useBudget();
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -174,7 +176,10 @@ const Index = () => {
               <CardTitle className="text-foreground">Metas</CardTitle>
             </CardHeader>
             <CardContent>
-              <GoalsPanel />
+              <GoalsPanel
+                percentages={categoryPercentages}
+                onEdit={updateGoals}
+              />
             </CardContent>
           </Card>
         </div>
