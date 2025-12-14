@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Month, Expense, CategoryKey, CATEGORIES } from '@/types/budget';
+import { Month, Expense, CategoryKey } from '@/types/budget';
+import { CATEGORIES, MONTH_NAMES } from '@/constants/categories';
 
 const STORAGE_KEY = 'budget-data';
 const RECURRING_KEY = 'recurring-expenses';
@@ -15,11 +16,7 @@ const generateMonthId = (year: number, month: number): string => {
 };
 
 const getMonthLabel = (year: number, month: number): string => {
-  const monthNames = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-  ];
-  return `${monthNames[month - 1]}/${year}`;
+  return `${MONTH_NAMES[month - 1]}/${year}`;
 };
 
 export const useBudget = () => {
@@ -27,9 +24,6 @@ export const useBudget = () => {
   const [currentMonthId, setCurrentMonthId] = useState<string | null>(null);
   const [recurringExpenses, setRecurringExpenses] = useState<Omit<Expense, 'id'>[]>([]);
 
-  /* =====================
-     Category goals
-     ===================== */
   const [categoryPercentages, setCategoryPercentages] =
     useState<Record<CategoryKey, number>>(
       Object.fromEntries(
@@ -37,9 +31,7 @@ export const useBudget = () => {
       ) as Record<CategoryKey, number>
     );
 
-  /* =====================
-     Load from localStorage
-     ===================== */
+  // Load from localStorage
   useEffect(() => {
     const savedData = localStorage.getItem(STORAGE_KEY);
     const savedRecurring = localStorage.getItem(RECURRING_KEY);
@@ -60,9 +52,7 @@ export const useBudget = () => {
     }
   }, []);
 
-  /* =====================
-     Save to localStorage
-     ===================== */
+  // Save to localStorage
   useEffect(() => {
     const data: BudgetData = { months, currentMonthId };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -78,9 +68,7 @@ export const useBudget = () => {
 
   const currentMonth = months.find(m => m.id === currentMonthId) || null;
 
-  /* =====================
-     Month management
-     ===================== */
+  // Month management
   const addMonth = (year: number, month: number) => {
     const id = generateMonthId(year, month);
 
@@ -138,9 +126,7 @@ export const useBudget = () => {
     );
   };
 
-  /* =====================
-     Expenses
-     ===================== */
+  // Expenses
   const addExpense = (title: string, category: CategoryKey, value: number) => {
     if (!currentMonthId) return;
 
@@ -197,9 +183,7 @@ export const useBudget = () => {
     );
   };
 
-  /* =====================
-     Recurring expenses
-     ===================== */
+  // Recurring expenses
   const addRecurringExpense = (
     title: string,
     category: CategoryKey,
@@ -250,9 +234,7 @@ export const useBudget = () => {
     setRecurringExpenses(prev => prev.filter((_, i) => i !== index));
   };
 
-  /* =====================
-     Calculations
-     ===================== */
+  // Calculations
   const getCategorySummary = () => {
     if (!currentMonth) {
       return CATEGORIES.map(cat => ({
@@ -304,9 +286,7 @@ export const useBudget = () => {
     return { totalSpent, totalBudget, usedPercentage };
   };
 
-  /* =====================
-     Import / Export
-     ===================== */
+  // Import / Export
   const exportBudget = () => {
     const data = {
       version: 1,
@@ -356,9 +336,6 @@ export const useBudget = () => {
     reader.readAsText(file);
   };
 
-  /* =====================
-     Public API
-     ===================== */
   return {
     months,
     currentMonth,

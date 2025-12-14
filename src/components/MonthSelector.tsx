@@ -31,20 +31,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Month } from '@/types/budget';
+import { Month, MONTH_NAMES } from '@/types/budget';
 
 interface MonthSelectorProps {
   months: Month[];
   currentMonth: Month | null;
   onSelectMonth: (monthId: string) => void;
   onAddMonth: (year: number, month: number) => boolean;
-  onRemoveMonth: (monthId: string) => void; // 👈 NOVO
+  onRemoveMonth: (monthId: string) => void;
 }
-
-const MONTH_NAMES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
 
 export const MonthSelector = ({
   months,
@@ -78,7 +73,6 @@ export const MonthSelector = ({
     <div className="flex items-center gap-2">
       {currentMonth ? (
         <>
-          {/* Month selector */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 font-semibold">
@@ -99,7 +93,6 @@ export const MonthSelector = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Delete month */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -137,7 +130,6 @@ export const MonthSelector = ({
         <span className="text-muted-foreground">Nenhum mês selecionado</span>
       )}
 
-      {/* Add month */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
           <Button

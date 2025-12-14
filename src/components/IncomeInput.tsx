@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { formatCurrency } from '@/types/budget';
+import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
 
 interface IncomeInputProps {
   value: number;
@@ -12,21 +12,15 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
   const [inputValue, setInputValue] = useState('');
 
   useEffect(() => {
-    if (value > 0) {
-      setInputValue(value.toFixed(2).replace('.', ','));
-    } else {
-      setInputValue('');
-    }
+    setInputValue(formatCurrencyInput(value));
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/[^\d,]/g, '');
-    setInputValue(raw);
+    setInputValue(sanitizeCurrencyInput(e.target.value));
   };
 
   const handleBlur = () => {
-    const numericValue = parseFloat(inputValue.replace(',', '.')) || 0;
-    onChange(numericValue);
+    onChange(parseCurrencyInput(inputValue));
   };
 
   return (

@@ -1,4 +1,4 @@
-import { CATEGORIES } from '@/types/budget';
+import { CATEGORIES } from '@/constants/categories';
 
 export const CategoryLegend = () => {
   return (
