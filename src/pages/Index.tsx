@@ -3,6 +3,7 @@ import { useBudget } from '@/hooks/useBudget';
 import { MonthSelector } from '@/components/MonthSelector';
 import { IncomeInput } from '@/components/IncomeInput';
 import { ExpenseChart } from '@/components/ExpenseChart';
+import { SubcategoryChart } from '@/components/SubcategoryChart';
 import { CategoryLegend } from '@/components/CategoryLegend';
 import { SummaryTable } from '@/components/SummaryTable';
 import { GoalsPanel } from '@/components/GoalsPanel';
@@ -14,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const Index = () => {
   const {
@@ -44,6 +46,7 @@ const Index = () => {
   } = useBudget();
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [activeCategory, setActiveCategory] = useState<CategoryKey | null>(null);
 
   const categorySummary = getCategorySummary();
   const { totalSpent, totalBudget, usedPercentage } = getTotals();
@@ -63,7 +66,7 @@ const Index = () => {
     updateExpense(id, title, category, subcategoryId, value);
     setEditingExpense(null);
   };
-  
+
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -76,18 +79,16 @@ const Index = () => {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header className="mb-8 animate-fade-in flex items-start justify-between">
-          {/* Left side */}
+        <header className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
               Orçamento doméstico
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm md:text-base">
               Controlando o orçamento doméstico da familinha com base nas nossas metas.
             </p>
           </div>
-        
-          {/* Right side – Import / Export */}
+
           <div className="flex gap-2">
             <input
               type="file"
@@ -96,27 +97,25 @@ const Index = () => {
               className="hidden"
               onChange={handleImportFile}
             />
-        
+
             <Button
               variant="outline"
+              size="sm"
               onClick={() => document.getElementById('import-budget')?.click()}
             >
-              <Upload className="h-4 w-4 mr-2" />
-              Importar
+              <Upload className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Importar</span>
             </Button>
-        
-            <Button variant="outline" onClick={exportBudget}>
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
+
+            <Button variant="outline" size="sm" onClick={exportBudget}>
+              <Download className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Exportar</span>
             </Button>
           </div>
         </header>
 
         {/* Controls */}
-        <div
-          className="flex flex-wrap items-end gap-4 mb-8 animate-fade-in"
-          style={{ animationDelay: '0.1s' }}
-        >
+        <div className="flex flex-col md:flex-row md:items-end gap-4 mb-8">
           <MonthSelector
             months={months}
             currentMonth={currentMonth}
@@ -133,37 +132,28 @@ const Index = () => {
 
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column - Gastos */}
-          <Card
-            className="lg:col-span-3 bg-card border-border animate-fade-in"
-            style={{ animationDelay: '0.2s' }}
-          >
+          <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle className="text-foreground">Gastos</CardTitle>
+              <CardTitle>Gastos</CardTitle>
             </CardHeader>
             <CardContent>
               <ExpenseChart
-                data={categorySummary.map((c) => ({
+                data={categorySummary.map(c => ({
                   key: c.key,
                   name: c.name,
                   spent: c.spent,
                   color: c.color,
                 }))}
                 hasExpenses={hasExpenses}
-                expenses={currentMonth?.expenses || []}
-                subcategories={subcategories}
+                onSelectCategory={setActiveCategory}
               />
               <CategoryLegend />
             </CardContent>
           </Card>
 
-          {/* Center Column - Resumo */}
-          <Card
-            className="lg:col-span-6 bg-card border-border animate-fade-in"
-            style={{ animationDelay: '0.3s' }}
-          >
+          <Card className="lg:col-span-6">
             <CardHeader>
-              <CardTitle className="text-foreground">Resumo</CardTitle>
+              <CardTitle>Resumo</CardTitle>
             </CardHeader>
             <CardContent>
               <SummaryTable
@@ -175,13 +165,9 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          {/* Right Column - Metas */}
-          <Card
-            className="lg:col-span-3 bg-card border-border animate-fade-in"
-            style={{ animationDelay: '0.4s' }}
-          >
+          <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle className="text-foreground">Metas</CardTitle>
+              <CardTitle>Metas</CardTitle>
             </CardHeader>
             <CardContent>
               <GoalsPanel
@@ -192,15 +178,12 @@ const Index = () => {
           </Card>
         </div>
 
-        {/* Expense List Section */}
+        {/* Expense List */}
         {currentMonthId && (
-          <Card
-            className="mt-6 bg-card border-border animate-fade-in"
-            style={{ animationDelay: '0.5s' }}
-          >
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-foreground">Gastos do mês</CardTitle>
-              <div className="flex gap-2">
+          <Card className="mt-6">
+            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <CardTitle>Gastos do mês</CardTitle>
+              <div className="flex flex-wrap gap-2">
                 <SubcategoryManager
                   subcategories={subcategories}
                   onAdd={addSubcategory}
@@ -234,21 +217,9 @@ const Index = () => {
           </Card>
         )}
 
-        {/* Expense Edit Modal */}
-        {editingExpense && (
-          <ExpenseForm
-            mode="edit"
-            subcategories={subcategories}
-            initialData={editingExpense}
-            onUpdate={handleUpdateExpense}
-            onCancel={() => setEditingExpense(null)}
-          />
-        )}
-
-        {/* Empty State */}
         {!currentMonthId && (
-          <div className="mt-12 text-center animate-fade-in">
-            <p className="text-muted-foreground text-lg mb-4">
+          <div className="mt-12 text-center">
+            <p className="text-muted-foreground text-lg mb-2">
               Comece adicionando um mês para gerenciar seu orçamento.
             </p>
             <p className="text-muted-foreground text-sm">
@@ -257,6 +228,25 @@ const Index = () => {
           </div>
         )}
       </div>
+
+      {/* Subcategorias */}
+      <Dialog
+        open={!!activeCategory}
+        onOpenChange={(open) => {
+          if (!open) setActiveCategory(null);
+        }}
+      >
+        <DialogContent className="w-full max-w-3xl p-4 md:p-6 overflow-y-auto">
+          {activeCategory && currentMonth && (
+            <SubcategoryChart
+              categoryKey={activeCategory}
+              expenses={currentMonth.expenses}
+              subcategories={subcategories}
+              onBack={() => setActiveCategory(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
