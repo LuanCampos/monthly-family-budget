@@ -1,27 +1,17 @@
 import { useState } from 'react';
 import { Plus, Trash2, RefreshCw, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  CATEGORIES,
-  CategoryKey,
-  formatCurrency,
-  getCategoryByKey,
-  Expense,
-} from '@/types/budget';
+import { CategoryKey, Expense } from '@/types/budget';
+import { getCategoryByKey, DEFAULT_CATEGORY } from '@/constants/categories';
+import { formatCurrency } from '@/utils/formatters';
+import { ExpenseFormFields } from './ExpenseFormFields';
+import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
 
 type ViewMode = 'list' | 'add' | 'edit';
 
@@ -43,12 +33,12 @@ export const RecurringExpenses = ({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<CategoryKey>('custos-fixos');
+  const [category, setCategory] = useState<CategoryKey>(DEFAULT_CATEGORY);
   const [value, setValue] = useState('');
 
   const resetForm = () => {
     setTitle('');
-    setCategory('custos-fixos');
+    setCategory(DEFAULT_CATEGORY);
     setValue('');
     setEditingIndex(null);
   };
@@ -70,13 +60,13 @@ export const RecurringExpenses = ({
 
     setTitle(exp.title);
     setCategory(exp.category);
-    setValue(exp.value.toFixed(2).replace('.', ','));
+    setValue(formatCurrencyInput(exp.value));
     setEditingIndex(index);
     setView('edit');
   };
 
   const handleSubmit = () => {
-    const numericValue = parseFloat(value.replace(',', '.')) || 0;
+    const numericValue = parseCurrencyInput(value);
     if (!title.trim() || numericValue <= 0) return;
 
     if (view === 'add') {
@@ -93,7 +83,6 @@ export const RecurringExpenses = ({
 
   return (
     <>
-      {/* Trigger */}
       <Button
         variant="outline"
         className="border-border hover:bg-secondary"
@@ -103,7 +92,6 @@ export const RecurringExpenses = ({
         Gastos Recorrentes ({expenses.length})
       </Button>
 
-      {/* Dialog */}
       <Dialog
         open={isOpen}
         onOpenChange={(open) => {
@@ -122,7 +110,6 @@ export const RecurringExpenses = ({
             </DialogTitle>
           </DialogHeader>
 
-          {/* LISTA */}
           {view === 'list' && (
             <>
               <p className="text-sm text-muted-foreground">
@@ -192,62 +179,18 @@ export const RecurringExpenses = ({
             </>
           )}
 
-          {/* FORMULÁRIO */}
           {(view === 'add' || view === 'edit') && (
-            <div className="space-y-4 mt-4">
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">
-                  Título
-                </label>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="bg-secondary border-border text-foreground"
-                />
-              </div>
+            <div className="mt-4">
+              <ExpenseFormFields
+                title={title}
+                category={category}
+                value={value}
+                onTitleChange={setTitle}
+                onCategoryChange={setCategory}
+                onValueChange={(v) => setValue(sanitizeCurrencyInput(v))}
+              />
 
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">
-                  Categoria
-                </label>
-                <Select value={category} onValueChange={(v) => setCategory(v as CategoryKey)}>
-                  <SelectTrigger className="bg-secondary border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {CATEGORIES.map((cat) => (
-                      <SelectItem key={cat.key} value={cat.key}>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: cat.color }}
-                          />
-                          {cat.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">
-                  Valor
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    R$
-                  </span>
-                  <Input
-                    type="text"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value.replace(/[^\d,]/g, ''))}
-                    className="pl-10 bg-secondary border-border text-foreground"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2">
+              <div className="flex gap-2 mt-4">
                 <Button
                   onClick={handleSubmit}
                   className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"

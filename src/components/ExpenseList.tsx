@@ -1,6 +1,8 @@
 import { Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Expense, getCategoryByKey, formatCurrency, CATEGORIES } from '@/types/budget';
+import { Expense } from '@/types/budget';
+import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
+import { formatCurrency } from '@/utils/formatters';
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -18,7 +20,6 @@ export const ExpenseList = ({ expenses, onRemove, onEdit }: ExpenseListProps) =>
     );
   }
 
-  // Sort by: Category order, then recurring first, then alphabetically by title
   const sortedExpenses = [...expenses].sort((a, b) => {
     const catIndexA = CATEGORIES.findIndex(c => c.key === a.category);
     const catIndexB = CATEGORIES.findIndex(c => c.key === b.category);
@@ -65,7 +66,6 @@ export const ExpenseList = ({ expenses, onRemove, onEdit }: ExpenseListProps) =>
                 {formatCurrency(expense.value)}
               </span>
 
-              {/* Edit button */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -75,7 +75,6 @@ export const ExpenseList = ({ expenses, onRemove, onEdit }: ExpenseListProps) =>
                 <Pencil className="h-3 w-3" />
               </Button>
 
-              {/* Delete button */}
               <Button
                 variant="ghost"
                 size="icon"

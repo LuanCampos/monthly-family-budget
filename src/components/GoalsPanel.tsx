@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { CATEGORIES, CategoryKey } from '@/types/budget';
+import { CategoryKey } from '@/types/budget';
+import { CATEGORIES } from '@/constants/categories';
 import {
   Dialog,
   DialogContent,
@@ -21,7 +22,6 @@ export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
   const [localPercentages, setLocalPercentages] =
     useState<Record<CategoryKey, number>>(percentages);
 
-  // sempre sincroniza quando o estado global mudar
   useEffect(() => {
     setLocalPercentages(percentages);
   }, [percentages]);
@@ -35,7 +35,6 @@ export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
 
   return (
     <div>
-      {/* Read-only */}
       <div className="space-y-4">
         {CATEGORIES.map((cat) => (
           <div key={cat.key} className="flex justify-between items-center">
@@ -47,7 +46,6 @@ export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
         ))}
       </div>
 
-      {/* Edit dialog */}
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
         <DialogTrigger asChild>
           <Button

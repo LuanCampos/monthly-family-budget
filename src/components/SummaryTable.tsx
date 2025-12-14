@@ -1,4 +1,5 @@
-import { formatCurrency, formatPercentage, CategoryKey } from '@/types/budget';
+import { CategoryKey } from '@/types/budget';
+import { formatCurrency, formatPercentage } from '@/utils/formatters';
 
 interface CategorySummary {
   key: CategoryKey;
@@ -45,7 +46,6 @@ export const SummaryTable = ({
                   {cat.name}
                 </td>
 
-                {/* Valor gasto */}
                 <td
                   className={`py-3 text-right font-medium ${
                     exceeded ? 'text-destructive' : 'text-foreground'
@@ -54,12 +54,10 @@ export const SummaryTable = ({
                   {formatCurrency(cat.spent)}
                 </td>
 
-                {/* Budget */}
                 <td className="py-3 text-right text-foreground">
                   {formatCurrency(cat.budget)}
                 </td>
 
-                {/* Utilizado */}
                 <td
                   className={`py-3 text-right font-medium ${
                     cat.usedPercentage >= 100
@@ -75,9 +73,7 @@ export const SummaryTable = ({
         </tbody>
       </table>
 
-      {/* Totals */}
       <div className="flex items-center gap-6 mt-6 pt-4 border-t border-border">
-        {/* Total gastos */}
         <div>
           <span
             className={`text-2xl font-bold ${
@@ -93,7 +89,6 @@ export const SummaryTable = ({
           </p>
         </div>
 
-        {/* Total a gastar */}
         <div>
           <span
             className={`text-2xl font-bold ${
@@ -109,7 +104,6 @@ export const SummaryTable = ({
           </p>
         </div>
 
-        {/* Utilizado */}
         <div>
           <span
             className={`text-2xl font-bold ${
