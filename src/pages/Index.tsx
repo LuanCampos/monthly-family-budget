@@ -217,6 +217,7 @@ const Index = () => {
           </Card>
         )}
 
+        {/* Empty State */}
         {!currentMonthId && (
           <div className="mt-12 text-center">
             <p className="text-muted-foreground text-lg mb-2">
@@ -229,7 +230,7 @@ const Index = () => {
         )}
       </div>
 
-      {/* Subcategorias */}
+      {/* Subcategory Chart Modal */}
       <Dialog
         open={!!activeCategory}
         onOpenChange={(open) => {
@@ -247,6 +248,17 @@ const Index = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Expense Edit */}
+      {editingExpense && (
+        <ExpenseForm
+          mode="edit"
+          subcategories={subcategories}
+          initialData={editingExpense}
+          onUpdate={handleUpdateExpense}
+          onCancel={() => setEditingExpense(null)}
+        />
+      )}
     </div>
   );
 };

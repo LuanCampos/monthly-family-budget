@@ -72,7 +72,7 @@ export const SubcategoryChart = ({
   if (uncategorized > 0) {
     data.push({
       id: 'uncategorized',
-      name: 'Sem sub-categoria',
+      name: 'Não especificado',
       value: uncategorized,
       color: generateSubcategoryColor(category.color, data.length, data.length + 1),
     });
