@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CategoryKey, Expense } from '@/types/budget';
+import { CategoryKey, Expense, Subcategory } from '@/types/budget';
 import { getCategoryByKey, DEFAULT_CATEGORY } from '@/constants/categories';
 import { formatCurrency } from '@/utils/formatters';
 import { ExpenseFormFields } from './ExpenseFormFields';
@@ -15,15 +15,21 @@ import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '
 
 type ViewMode = 'list' | 'add' | 'edit';
 
+interface RecurringExpense extends Omit<Expense, 'id'> {
+  subcategoryId?: string;
+}
+
 interface RecurringExpensesProps {
-  expenses: Omit<Expense, 'id'>[];
-  onAdd: (title: string, category: CategoryKey, value: number) => void;
-  onUpdate: (index: number, title: string, category: CategoryKey, value: number) => void;
+  expenses: RecurringExpense[];
+  subcategories: Subcategory[];
+  onAdd: (title: string, category: CategoryKey, subcategoryId: string | undefined, value: number) => void;
+  onUpdate: (index: number, title: string, category: CategoryKey, subcategoryId: string | undefined, value: number) => void;
   onRemove: (index: number) => void;
 }
 
 export const RecurringExpenses = ({
   expenses,
+  subcategories,
   onAdd,
   onUpdate,
   onRemove,
@@ -34,11 +40,13 @@ export const RecurringExpenses = ({
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<CategoryKey>(DEFAULT_CATEGORY);
+  const [subcategoryId, setSubcategoryId] = useState('');
   const [value, setValue] = useState('');
 
   const resetForm = () => {
     setTitle('');
     setCategory(DEFAULT_CATEGORY);
+    setSubcategoryId('');
     setValue('');
     setEditingIndex(null);
   };
@@ -60,6 +68,7 @@ export const RecurringExpenses = ({
 
     setTitle(exp.title);
     setCategory(exp.category);
+    setSubcategoryId(exp.subcategoryId || '');
     setValue(formatCurrencyInput(exp.value));
     setEditingIndex(index);
     setView('edit');
@@ -69,16 +78,24 @@ export const RecurringExpenses = ({
     const numericValue = parseCurrencyInput(value);
     if (!title.trim() || numericValue <= 0) return;
 
+    const finalSubcategoryId = subcategoryId || undefined;
+
     if (view === 'add') {
-      onAdd(title.trim(), category, numericValue);
+      onAdd(title.trim(), category, finalSubcategoryId, numericValue);
     }
 
     if (view === 'edit' && editingIndex !== null) {
-      onUpdate(editingIndex, title.trim(), category, numericValue);
+      onUpdate(editingIndex, title.trim(), category, finalSubcategoryId, numericValue);
     }
 
     setView('list');
     resetForm();
+  };
+
+  const getSubcategoryName = (subId?: string) => {
+    if (!subId) return null;
+    const sub = subcategories.find(s => s.id === subId);
+    return sub?.name || null;
   };
 
   return (
@@ -124,6 +141,7 @@ export const RecurringExpenses = ({
                 ) : (
                   expenses.map((exp, index) => {
                     const cat = getCategoryByKey(exp.category);
+                    const subName = getSubcategoryName(exp.subcategoryId);
                     return (
                       <div
                         key={index}
@@ -136,7 +154,10 @@ export const RecurringExpenses = ({
                           />
                           <div>
                             <p className="text-foreground font-medium">{exp.title}</p>
-                            <p className="text-xs text-muted-foreground">{cat.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {cat.name}
+                              {subName && ` • ${subName}`}
+                            </p>
                           </div>
                         </div>
 
@@ -184,9 +205,12 @@ export const RecurringExpenses = ({
               <ExpenseFormFields
                 title={title}
                 category={category}
+                subcategoryId={subcategoryId}
                 value={value}
+                subcategories={subcategories}
                 onTitleChange={setTitle}
                 onCategoryChange={setCategory}
+                onSubcategoryChange={setSubcategoryId}
                 onValueChange={(v) => setValue(sanitizeCurrencyInput(v))}
               />
 

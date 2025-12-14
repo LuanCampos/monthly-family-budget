@@ -13,10 +13,17 @@ export interface Category {
   color: string;
 }
 
+export interface Subcategory {
+  id: string;
+  name: string;
+  categoryKey: CategoryKey;
+}
+
 export interface Expense {
   id: string;
   title: string;
   category: CategoryKey;
+  subcategoryId?: string;
   value: number;
   isRecurring: boolean;
 }

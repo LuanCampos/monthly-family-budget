@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Month, Expense, CategoryKey } from '@/types/budget';
+import { Month, Expense, CategoryKey, Subcategory } from '@/types/budget';
 import { CATEGORIES, MONTH_NAMES } from '@/constants/categories';
 
 const STORAGE_KEY = 'budget-data';
 const RECURRING_KEY = 'recurring-expenses';
 const GOALS_KEY = 'budget-goals';
+const SUBCATEGORIES_KEY = 'budget-subcategories';
 
 interface BudgetData {
   months: Month[];
   currentMonthId: string | null;
+}
+
+interface RecurringExpense extends Omit<Expense, 'id'> {
+  subcategoryId?: string;
 }
 
 const generateMonthId = (year: number, month: number): string => {
@@ -22,7 +27,8 @@ const getMonthLabel = (year: number, month: number): string => {
 export const useBudget = () => {
   const [months, setMonths] = useState<Month[]>([]);
   const [currentMonthId, setCurrentMonthId] = useState<string | null>(null);
-  const [recurringExpenses, setRecurringExpenses] = useState<Omit<Expense, 'id'>[]>([]);
+  const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
   const [categoryPercentages, setCategoryPercentages] =
     useState<Record<CategoryKey, number>>(
@@ -36,6 +42,7 @@ export const useBudget = () => {
     const savedData = localStorage.getItem(STORAGE_KEY);
     const savedRecurring = localStorage.getItem(RECURRING_KEY);
     const savedGoals = localStorage.getItem(GOALS_KEY);
+    const savedSubcategories = localStorage.getItem(SUBCATEGORIES_KEY);
 
     if (savedData) {
       const data: BudgetData = JSON.parse(savedData);
@@ -49,6 +56,10 @@ export const useBudget = () => {
 
     if (savedGoals) {
       setCategoryPercentages(JSON.parse(savedGoals));
+    }
+
+    if (savedSubcategories) {
+      setSubcategories(JSON.parse(savedSubcategories));
     }
   }, []);
 
@@ -66,7 +77,48 @@ export const useBudget = () => {
     localStorage.setItem(GOALS_KEY, JSON.stringify(categoryPercentages));
   }, [categoryPercentages]);
 
+  useEffect(() => {
+    localStorage.setItem(SUBCATEGORIES_KEY, JSON.stringify(subcategories));
+  }, [subcategories]);
+
   const currentMonth = months.find(m => m.id === currentMonthId) || null;
+
+  // Subcategory management
+  const addSubcategory = (name: string, categoryKey: CategoryKey) => {
+    const newSubcategory: Subcategory = {
+      id: `sub-${Date.now()}`,
+      name,
+      categoryKey,
+    };
+    setSubcategories(prev => [...prev, newSubcategory]);
+  };
+
+  const updateSubcategory = (id: string, name: string) => {
+    setSubcategories(prev =>
+      prev.map(s => (s.id === id ? { ...s, name } : s))
+    );
+  };
+
+  const removeSubcategory = (id: string) => {
+    setSubcategories(prev => prev.filter(s => s.id !== id));
+    
+    // Remove subcategory from expenses
+    setMonths(prev =>
+      prev.map(m => ({
+        ...m,
+        expenses: m.expenses.map(e =>
+          e.subcategoryId === id ? { ...e, subcategoryId: undefined } : e
+        ),
+      }))
+    );
+
+    // Remove from recurring expenses
+    setRecurringExpenses(prev =>
+      prev.map(e =>
+        e.subcategoryId === id ? { ...e, subcategoryId: undefined } : e
+      )
+    );
+  };
 
   // Month management
   const addMonth = (year: number, month: number) => {
@@ -127,13 +179,19 @@ export const useBudget = () => {
   };
 
   // Expenses
-  const addExpense = (title: string, category: CategoryKey, value: number) => {
+  const addExpense = (
+    title: string,
+    category: CategoryKey,
+    subcategoryId: string | undefined,
+    value: number
+  ) => {
     if (!currentMonthId) return;
 
     const expense: Expense = {
       id: `${currentMonthId}-${Date.now()}`,
       title,
       category,
+      subcategoryId,
       value,
       isRecurring: false,
     };
@@ -151,6 +209,7 @@ export const useBudget = () => {
     id: string,
     title: string,
     category: CategoryKey,
+    subcategoryId: string | undefined,
     value: number
   ) => {
     if (!currentMonthId) return;
@@ -163,7 +222,7 @@ export const useBudget = () => {
           ...m,
           expenses: m.expenses.map(e =>
             e.id === id
-              ? { ...e, title, category, value }
+              ? { ...e, title, category, subcategoryId, value }
               : e
           ),
         };
@@ -187,11 +246,13 @@ export const useBudget = () => {
   const addRecurringExpense = (
     title: string,
     category: CategoryKey,
+    subcategoryId: string | undefined,
     value: number
   ) => {
-    const newRecurring: Omit<Expense, 'id'> = {
+    const newRecurring: RecurringExpense = {
       title,
       category,
+      subcategoryId,
       value,
       isRecurring: true,
     };
@@ -203,6 +264,7 @@ export const useBudget = () => {
         id: `${currentMonthId}-recurring-${Date.now()}`,
         title,
         category,
+        subcategoryId,
         value,
         isRecurring: true,
       };
@@ -221,11 +283,12 @@ export const useBudget = () => {
     index: number,
     title: string,
     category: CategoryKey,
+    subcategoryId: string | undefined,
     value: number
   ) => {
     setRecurringExpenses(prev =>
       prev.map((exp, i) =>
-        i === index ? { ...exp, title, category, value } : exp
+        i === index ? { ...exp, title, category, subcategoryId, value } : exp
       )
     );
   };
@@ -289,11 +352,12 @@ export const useBudget = () => {
   // Import / Export
   const exportBudget = () => {
     const data = {
-      version: 1,
+      version: 2,
       exportedAt: new Date().toISOString(),
       months,
       recurringExpenses,
       categoryPercentages,
+      subcategories,
       currentMonthId,
     };
 
@@ -327,6 +391,7 @@ export const useBudget = () => {
         setMonths(data.months);
         setRecurringExpenses(data.recurringExpenses);
         setCategoryPercentages(data.categoryPercentages);
+        setSubcategories(data.subcategories || []);
         setCurrentMonthId(data.currentMonthId ?? null);
       } catch {
         alert('Arquivo inválido ou corrompido');
@@ -342,6 +407,7 @@ export const useBudget = () => {
     currentMonthId,
     recurringExpenses,
     categoryPercentages,
+    subcategories,
     addMonth,
     removeMonth,
     selectMonth,
@@ -352,6 +418,9 @@ export const useBudget = () => {
     addRecurringExpense,
     updateRecurringExpense,
     removeRecurringExpense,
+    addSubcategory,
+    updateSubcategory,
+    removeSubcategory,
     updateGoals: setCategoryPercentages,
     getCategorySummary,
     getTotals,
