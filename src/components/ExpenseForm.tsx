@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { CategoryKey } from '@/types/budget';
+import { CategoryKey, Subcategory } from '@/types/budget';
 import { DEFAULT_CATEGORY } from '@/constants/categories';
 import { ExpenseFormFields } from './ExpenseFormFields';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
@@ -17,20 +17,23 @@ type ExpenseFormMode = 'create' | 'edit';
 
 interface ExpenseFormProps {
   mode: ExpenseFormMode;
+  subcategories: Subcategory[];
   initialData?: {
     id: string;
     title: string;
     category: CategoryKey;
+    subcategoryId?: string;
     value: number;
   };
-  onAdd?: (title: string, category: CategoryKey, value: number) => void;
-  onUpdate?: (id: string, title: string, category: CategoryKey, value: number) => void;
+  onAdd?: (title: string, category: CategoryKey, subcategoryId: string | undefined, value: number) => void;
+  onUpdate?: (id: string, title: string, category: CategoryKey, subcategoryId: string | undefined, value: number) => void;
   onCancel?: () => void;
   disabled?: boolean;
 }
 
 export const ExpenseForm = ({
   mode,
+  subcategories,
   initialData,
   onAdd,
   onUpdate,
@@ -40,11 +43,13 @@ export const ExpenseForm = ({
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<CategoryKey>(DEFAULT_CATEGORY);
+  const [subcategoryId, setSubcategoryId] = useState('');
   const [value, setValue] = useState('');
 
   const resetForm = () => {
     setTitle('');
     setCategory(DEFAULT_CATEGORY);
+    setSubcategoryId('');
     setValue('');
     setIsOpen(false);
   };
@@ -53,6 +58,7 @@ export const ExpenseForm = ({
     if (mode === 'edit' && initialData) {
       setTitle(initialData.title);
       setCategory(initialData.category);
+      setSubcategoryId(initialData.subcategoryId || '');
       setValue(formatCurrencyInput(initialData.value));
       setIsOpen(true);
     }
@@ -62,12 +68,14 @@ export const ExpenseForm = ({
     const numericValue = parseCurrencyInput(value);
     if (!title.trim() || numericValue <= 0) return;
 
+    const finalSubcategoryId = subcategoryId || undefined;
+
     if (mode === 'create' && onAdd) {
-      onAdd(title.trim(), category, numericValue);
+      onAdd(title.trim(), category, finalSubcategoryId, numericValue);
     }
 
     if (mode === 'edit' && onUpdate && initialData) {
-      onUpdate(initialData.id, title.trim(), category, numericValue);
+      onUpdate(initialData.id, title.trim(), category, finalSubcategoryId, numericValue);
     }
 
     resetForm();
@@ -110,9 +118,12 @@ export const ExpenseForm = ({
           <ExpenseFormFields
             title={title}
             category={category}
+            subcategoryId={subcategoryId}
             value={value}
+            subcategories={subcategories}
             onTitleChange={setTitle}
             onCategoryChange={setCategory}
+            onSubcategoryChange={setSubcategoryId}
             onValueChange={(v) => setValue(sanitizeCurrencyInput(v))}
           />
 

@@ -9,6 +9,7 @@ import { GoalsPanel } from '@/components/GoalsPanel';
 import { ExpenseForm } from '@/components/ExpenseForm';
 import { RecurringExpenses } from '@/components/RecurringExpenses';
 import { ExpenseList } from '@/components/ExpenseList';
+import { SubcategoryManager } from '@/components/SubcategoryManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Download, Upload } from 'lucide-react';
@@ -20,6 +21,7 @@ const Index = () => {
     currentMonth,
     currentMonthId,
     recurringExpenses,
+    subcategories,
     addMonth,
     selectMonth,
     updateIncome,
@@ -28,11 +30,14 @@ const Index = () => {
     updateExpense,
     addRecurringExpense,
     removeRecurringExpense,
+    updateRecurringExpense,
+    addSubcategory,
+    updateSubcategory,
+    removeSubcategory,
     getCategorySummary,
     getTotals,
     exportBudget,
     importBudget,
-    updateRecurringExpense,
     removeMonth,
     categoryPercentages,
     updateGoals,
@@ -52,9 +57,10 @@ const Index = () => {
     id: string,
     title: string,
     category: CategoryKey,
+    subcategoryId: string | undefined,
     value: number
   ) => {
-    updateExpense(id, title, category, value);
+    updateExpense(id, title, category, subcategoryId, value);
     setEditingExpense(null);
   };
   
@@ -144,6 +150,8 @@ const Index = () => {
                   color: c.color,
                 }))}
                 hasExpenses={hasExpenses}
+                expenses={currentMonth?.expenses || []}
+                subcategories={subcategories}
               />
               <CategoryLegend />
             </CardContent>
@@ -193,14 +201,22 @@ const Index = () => {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-foreground">Gastos do mês</CardTitle>
               <div className="flex gap-2">
+                <SubcategoryManager
+                  subcategories={subcategories}
+                  onAdd={addSubcategory}
+                  onUpdate={updateSubcategory}
+                  onRemove={removeSubcategory}
+                />
                 <RecurringExpenses
                   expenses={recurringExpenses}
+                  subcategories={subcategories}
                   onAdd={addRecurringExpense}
                   onUpdate={updateRecurringExpense}
                   onRemove={removeRecurringExpense}
                 />
                 <ExpenseForm
                   mode="create"
+                  subcategories={subcategories}
                   onAdd={addExpense}
                   disabled={!currentMonthId}
                 />
@@ -210,6 +226,7 @@ const Index = () => {
             <CardContent>
               <ExpenseList
                 expenses={currentMonth?.expenses || []}
+                subcategories={subcategories}
                 onRemove={removeExpense}
                 onEdit={handleEditExpense}
               />
@@ -221,6 +238,7 @@ const Index = () => {
         {editingExpense && (
           <ExpenseForm
             mode="edit"
+            subcategories={subcategories}
             initialData={editingExpense}
             onUpdate={handleUpdateExpense}
             onCancel={() => setEditingExpense(null)}

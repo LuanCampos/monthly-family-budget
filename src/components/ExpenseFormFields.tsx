@@ -6,25 +6,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CATEGORIES, CategoryKey } from '@/types/budget';
+import { CATEGORIES, CategoryKey, Subcategory } from '@/types/budget';
 
 interface ExpenseFormFieldsProps {
   title: string;
   category: CategoryKey;
+  subcategoryId: string;
   value: string;
+  subcategories: Subcategory[];
   onTitleChange: (value: string) => void;
   onCategoryChange: (value: CategoryKey) => void;
+  onSubcategoryChange: (value: string) => void;
   onValueChange: (value: string) => void;
 }
 
 export const ExpenseFormFields = ({
   title,
   category,
+  subcategoryId,
   value,
+  subcategories,
   onTitleChange,
   onCategoryChange,
+  onSubcategoryChange,
   onValueChange,
 }: ExpenseFormFieldsProps) => {
+  const filteredSubcategories = subcategories.filter(
+    (sub) => sub.categoryKey === category
+  );
+
+  const handleCategoryChange = (newCategory: CategoryKey) => {
+    onCategoryChange(newCategory);
+    // Reset subcategory when category changes
+    onSubcategoryChange('');
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -44,7 +60,7 @@ export const ExpenseFormFields = ({
         </label>
         <Select
           value={category}
-          onValueChange={(v) => onCategoryChange(v as CategoryKey)}
+          onValueChange={(v) => handleCategoryChange(v as CategoryKey)}
         >
           <SelectTrigger className="bg-secondary border-border">
             <SelectValue />
@@ -59,6 +75,28 @@ export const ExpenseFormFields = ({
                   />
                   {cat.name}
                 </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <label className="text-sm text-muted-foreground mb-1 block">
+          Sub-categoria (opcional)
+        </label>
+        <Select
+          value={subcategoryId || 'none'}
+          onValueChange={(v) => onSubcategoryChange(v === 'none' ? '' : v)}
+        >
+          <SelectTrigger className="bg-secondary border-border">
+            <SelectValue placeholder="Selecione..." />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border">
+            <SelectItem value="none">Nenhuma</SelectItem>
+            {filteredSubcategories.map((sub) => (
+              <SelectItem key={sub.id} value={sub.id}>
+                {sub.name}
               </SelectItem>
             ))}
           </SelectContent>

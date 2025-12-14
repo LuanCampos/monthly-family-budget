@@ -1,16 +1,17 @@
 import { Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Expense } from '@/types/budget';
+import { Expense, Subcategory } from '@/types/budget';
 import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
 import { formatCurrency } from '@/utils/formatters';
 
 interface ExpenseListProps {
   expenses: Expense[];
+  subcategories: Subcategory[];
   onRemove: (id: string) => void;
   onEdit: (expense: Expense) => void;
 }
 
-export const ExpenseList = ({ expenses, onRemove, onEdit }: ExpenseListProps) => {
+export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: ExpenseListProps) => {
   if (expenses.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -19,6 +20,12 @@ export const ExpenseList = ({ expenses, onRemove, onEdit }: ExpenseListProps) =>
       </div>
     );
   }
+
+  const getSubcategoryName = (subcategoryId?: string) => {
+    if (!subcategoryId) return null;
+    const sub = subcategories.find(s => s.id === subcategoryId);
+    return sub?.name || null;
+  };
 
   const sortedExpenses = [...expenses].sort((a, b) => {
     const catIndexA = CATEGORIES.findIndex(c => c.key === a.category);
@@ -34,6 +41,7 @@ export const ExpenseList = ({ expenses, onRemove, onEdit }: ExpenseListProps) =>
     <div className="space-y-2">
       {sortedExpenses.map((expense) => {
         const cat = getCategoryByKey(expense.category);
+        const subName = getSubcategoryName(expense.subcategoryId);
 
         return (
           <div
@@ -53,6 +61,12 @@ export const ExpenseList = ({ expenses, onRemove, onEdit }: ExpenseListProps) =>
               <span className="text-xs text-muted-foreground">
                 ({cat.name})
               </span>
+
+              {subName && (
+                <span className="text-xs text-muted-foreground">
+                  ({subName})
+                </span>
+              )}
 
               {expense.isRecurring && (
                 <span className="text-xs text-muted-foreground">
