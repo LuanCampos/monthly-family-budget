@@ -83,7 +83,7 @@ export const SummaryTable = ({
                   </div>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="top" className="bg-popover border-border">
+              <TooltipContent side="right" align="start" sideOffset={5} className="bg-popover border-border">
                 <p className="text-sm tabular-nums">{formatPercentage(cat.usedPercentage)}</p>
               </TooltipContent>
             </Tooltip>
@@ -108,7 +108,7 @@ export const SummaryTable = ({
           
           <div className="text-right space-y-0.5">
             <p className="text-xs text-muted-foreground">{t('used')}</p>
-            <p className={`text-lg font-bold tabular-nums ${usedPercentage > 100 ? 'text-destructive' : 'text-muted-foreground'}`}>
+            <p className={`text-lg font-bold tabular-nums ${usedPercentage > 100 ? 'text-destructive' : 'text-foreground'}`}>
               {formatPercentage(usedPercentage)}
             </p>
           </div>
