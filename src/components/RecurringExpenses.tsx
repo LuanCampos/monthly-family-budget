@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Plus, Trash2, RefreshCw, Pencil, Calendar } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, Pencil, Calendar, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CategoryKey, Subcategory, RecurringExpense } from '@/types/budget';
+import { CategoryKey, Subcategory, RecurringExpense, Expense } from '@/types/budget';
 import { getCategoryByKey, DEFAULT_CATEGORY } from '@/constants/categories';
 import { formatCurrency } from '@/utils/formatters';
 import { RecurringExpenseFormFields } from './RecurringExpenseFormFields';
@@ -25,6 +26,7 @@ type ViewMode = 'list' | 'add' | 'edit';
 interface RecurringExpensesProps {
   expenses: RecurringExpense[];
   subcategories: Subcategory[];
+  currentMonthExpenses: Expense[];
   onAdd: (
     title: string,
     category: CategoryKey,
@@ -50,14 +52,17 @@ interface RecurringExpensesProps {
     updatePastExpenses?: boolean
   ) => void;
   onRemove: (id: string) => void;
+  onApply: (id: string) => boolean;
 }
 
 export const RecurringExpenses = ({
   expenses,
   subcategories,
+  currentMonthExpenses,
   onAdd,
   onUpdate,
   onRemove,
+  onApply,
 }: RecurringExpensesProps) => {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
@@ -218,7 +223,7 @@ export const RecurringExpenses = ({
                   {t('recurringExpensesDescription')}
                 </p>
 
-                <div className="space-y-3 mt-2 pt-2">
+                <div className="space-y-4 mt-3 pt-2">
                   {expenses.length === 0 ? (
                     <p className="text-center text-muted-foreground py-4">
                       {t('noRecurringExpenses')}
@@ -227,19 +232,31 @@ export const RecurringExpenses = ({
                     expenses.map((exp) => {
                       const cat = getCategoryByKey(exp.category);
                       const subName = getSubcategoryName(exp.subcategoryId);
+                      const isInCurrentMonth = currentMonthExpenses.some(
+                        e => e.recurringExpenseId === exp.id
+                      );
+
+                      const handleApply = () => {
+                        const success = onApply(exp.id);
+                        if (success) {
+                          toast.success(t('applyToCurrentMonth'));
+                        } else {
+                          toast.info(t('alreadyInCurrentMonth'));
+                        }
+                      };
 
                       return (
                         <div
                           key={exp.id}
-                          className="flex items-center justify-between p-3 bg-secondary rounded-lg"
+                          className="flex items-start justify-between p-4 bg-secondary rounded-lg gap-3"
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
                             <span
-                              className="w-3 h-3 rounded-full"
+                              className="w-3 h-3 rounded-full mt-1.5 flex-shrink-0"
                               style={{ backgroundColor: cat.color }}
                             />
-                            <div>
-                              <div className="flex items-center gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <p className="text-foreground font-medium">
                                   {exp.title}
                                 </p>
@@ -249,7 +266,7 @@ export const RecurringExpenses = ({
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 flex-wrap">
                                 <span>{t(cat.name as TranslationKey)}</span>
                                 {subName && <span>• {subName}</span>}
                                 {exp.dueDay && (
@@ -259,13 +276,31 @@ export const RecurringExpenses = ({
                                   </span>
                                 )}
                               </div>
+                              <p className="text-foreground font-medium mt-2 sm:hidden">
+                                {formatCurrency(exp.value)}
+                              </p>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <span className="text-foreground font-medium">
+                          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                            <span className="text-foreground font-medium hidden sm:block">
                               {formatCurrency(exp.value)}
                             </span>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={handleApply}
+                              disabled={isInCurrentMonth}
+                              title={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
+                              className={`h-8 w-8 ${
+                                isInCurrentMonth 
+                                  ? 'text-muted-foreground/40 cursor-not-allowed' 
+                                  : 'text-muted-foreground hover:text-green-500 hover:bg-green-500/10'
+                              }`}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
 
                             <Button
                               variant="ghost"

@@ -35,6 +35,7 @@ const Index = () => {
     addRecurringExpense,
     removeRecurringExpense,
     updateRecurringExpense,
+    applyRecurringToCurrentMonth,
     addSubcategory,
     updateSubcategory,
     removeSubcategory,
@@ -170,9 +171,11 @@ const Index = () => {
                 <RecurringExpenses
                   expenses={recurringExpenses}
                   subcategories={subcategories}
+                  currentMonthExpenses={currentMonth?.expenses || []}
                   onAdd={addRecurringExpense}
                   onUpdate={updateRecurringExpense}
                   onRemove={removeRecurringExpense}
+                  onApply={applyRecurringToCurrentMonth}
                 />
                 <ExpenseForm
                   mode="create"

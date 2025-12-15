@@ -445,6 +445,53 @@ export const useBudget = () => {
     setRecurringExpenses(prev => prev.filter((exp) => exp.id !== id));
   };
 
+  // Apply a recurring expense to the current month (if not already present)
+  const applyRecurringToCurrentMonth = (recurringId: string): boolean => {
+    if (!currentMonthId) return false;
+
+    const currentMonthData = months.find(m => m.id === currentMonthId);
+    if (!currentMonthData) return false;
+
+    // Check if already exists in current month
+    const alreadyExists = currentMonthData.expenses.some(
+      e => e.recurringExpenseId === recurringId
+    );
+    if (alreadyExists) return false;
+
+    const recurring = recurringExpenses.find(r => r.id === recurringId);
+    if (!recurring) return false;
+
+    const result = shouldIncludeRecurringInMonth(recurring, currentMonthData.year, currentMonthData.month);
+    
+    if (!result.include) return false;
+
+    const expense: Expense = {
+      id: `${currentMonthId}-recurring-${recurringId}`,
+      title: recurring.title,
+      category: recurring.category,
+      subcategoryId: recurring.subcategoryId,
+      value: recurring.value,
+      isRecurring: true,
+      isPending: true,
+      dueDay: recurring.dueDay,
+      recurringExpenseId: recurringId,
+      installmentInfo: result.installmentNumber ? {
+        current: result.installmentNumber,
+        total: recurring.totalInstallments!,
+      } : undefined,
+    };
+
+    setMonths(prev =>
+      prev.map(m =>
+        m.id === currentMonthId
+          ? { ...m, expenses: [...m.expenses, expense] }
+          : m
+      )
+    );
+
+    return true;
+  };
+
   // Calculations
   const getCategorySummary = () => {
     if (!currentMonth) {
@@ -573,6 +620,7 @@ export const useBudget = () => {
     addRecurringExpense,
     updateRecurringExpense,
     removeRecurringExpense,
+    applyRecurringToCurrentMonth,
     addSubcategory,
     updateSubcategory,
     removeSubcategory,
