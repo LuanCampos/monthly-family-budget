@@ -164,13 +164,9 @@ export const useBudget = () => {
         const result = shouldIncludeRecurringInMonth(exp, year, month);
         if (!result.include) return null;
 
-        const expenseTitle = result.installmentNumber && exp.totalInstallments
-          ? `${exp.title} (Parcela ${result.installmentNumber}/${exp.totalInstallments})`
-          : exp.title;
-
         return {
           id: `${id}-recurring-${exp.id}`,
-          title: expenseTitle,
+          title: exp.title,
           category: exp.category,
           subcategoryId: exp.subcategoryId,
           value: exp.value,
@@ -348,13 +344,9 @@ export const useBudget = () => {
         const result = shouldIncludeRecurringInMonth(newRecurring, currentMonthData.year, currentMonthData.month);
         
         if (result.include) {
-          const expenseTitle = result.installmentNumber && totalInstallments
-            ? `${title} (Parcela ${result.installmentNumber}/${totalInstallments})`
-            : title;
-
           const expense: Expense = {
             id: `${currentMonthId}-recurring-${recurringId}`,
-            title: expenseTitle,
+            title,
             category,
             subcategoryId,
             value,
@@ -423,13 +415,11 @@ export const useBudget = () => {
           if (!updatePastExpenses) return e;
 
           // Recalculate installment info if needed
-          let newTitle = title;
           let installmentInfo = e.installmentInfo;
 
           if (hasInstallments && totalInstallments && startYear && startMonth) {
             const installmentNumber = calculateInstallmentNumber(m.year, m.month, startYear, startMonth);
             if (installmentNumber >= 1 && installmentNumber <= totalInstallments) {
-              newTitle = `${title} (Parcela ${installmentNumber}/${totalInstallments})`;
               installmentInfo = { current: installmentNumber, total: totalInstallments };
             }
           } else if (!hasInstallments && e.installmentInfo) {
@@ -439,7 +429,7 @@ export const useBudget = () => {
 
           return {
             ...e,
-            title: newTitle,
+            title,
             category,
             subcategoryId,
             value,

@@ -233,7 +233,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
                     {expense.installmentInfo && (
                       <button
                         onClick={() => setFilter({ type: 'installments' })}
-                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-accent/20 text-accent-foreground hover:bg-accent/30 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
                       >
                         <CreditCard className="h-3 w-3" />
                         <span>
