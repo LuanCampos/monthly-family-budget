@@ -97,7 +97,7 @@
 
   /* Action Button Group */
   .action-btn-group {
-    @apply flex items-center gap-1.5 sm:gap-2;
+    @apply flex items-center gap-1.5 sm:gap-2 flex-wrap;
   }
 
   /* Stat Card */
