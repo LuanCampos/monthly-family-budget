@@ -33,6 +33,7 @@ export const SummaryTable = ({
             <th className="text-right py-3 font-semibold">Valor Gasto</th>
             <th className="text-right py-3 font-semibold">Devo gastar</th>
             <th className="text-right py-3 font-semibold">Utilizado</th>
+            </th>
           </tr>
         </thead>
 
@@ -42,24 +43,24 @@ export const SummaryTable = ({
 
             return (
               <tr key={cat.key} className="border-b border-border/50">
-                <td className="py-3 text-foreground font-medium">
+                <td className="py-3 text-foreground font-medium whitespace-nowrap">
                   {cat.name}
                 </td>
 
                 <td
-                  className={`py-3 text-right font-medium ${
+                  className={`py-3 text-right font-medium whitespace-nowrap tracking-tight sm:tracking-normal ${
                     exceeded ? 'text-destructive' : 'text-foreground'
                   }`}
                 >
                   {formatCurrency(cat.spent)}
                 </td>
 
-                <td className="py-3 text-right text-foreground">
+                <td className="py-3 text-right text-foreground whitespace-nowrap tracking-tight sm:tracking-normal">
                   {formatCurrency(cat.budget)}
                 </td>
 
                 <td
-                  className={`py-3 text-right font-medium ${
+                  className={`py-3 text-right font-medium whitespace-nowrap tracking-tight sm:tracking-normal ${
                     cat.usedPercentage >= 100
                       ? 'text-destructive'
                       : 'text-success'
@@ -73,10 +74,11 @@ export const SummaryTable = ({
         </tbody>
       </table>
 
+      {/* Totais */}
       <div className="flex items-center gap-6 mt-6 pt-4 border-t border-border">
         <div>
           <span
-            className={`text-2xl font-bold ${
+            className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${
               totalSpent > totalBudget
                 ? 'text-destructive'
                 : 'text-foreground'
@@ -91,7 +93,7 @@ export const SummaryTable = ({
 
         <div>
           <span
-            className={`text-2xl font-bold ${
+            className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${
               totalBudget - totalSpent < 0
                 ? 'text-destructive'
                 : 'text-foreground'
@@ -106,7 +108,7 @@ export const SummaryTable = ({
 
         <div>
           <span
-            className={`text-2xl font-bold ${
+            className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${
               usedPercentage >= 100
                 ? 'text-destructive'
                 : 'text-success'
