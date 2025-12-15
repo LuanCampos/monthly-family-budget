@@ -96,9 +96,13 @@ const Index = () => {
                 currentMonth={currentMonth}
                 onSelectMonth={selectMonth}
                 onAddMonth={addMonth}
-                onRemoveMonth={removeMonth}
               />
-              <SettingsPanel onExport={exportBudget} onImport={handleImportFile} />
+              <SettingsPanel 
+                onExport={exportBudget} 
+                onImport={handleImportFile}
+                currentMonthLabel={currentMonth ? `${t(`month-${currentMonth.month - 1}` as any)} ${currentMonth.year}` : undefined}
+                onDeleteMonth={currentMonth ? () => removeMonth(currentMonth.id) : undefined}
+              />
             </div>
           </div>
         </div>

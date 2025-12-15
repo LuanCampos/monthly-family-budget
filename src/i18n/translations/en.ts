@@ -25,6 +25,8 @@ export const en: Record<TranslationKey, string> = {
   deleteMonth: 'Delete month',
   deleteMonthConfirm: 'Are you sure you want to delete the month',
   deleteMonthWarning: 'This action cannot be undone.',
+  deleteCurrentMonth: 'Delete current month',
+  deleteCurrentMonthDescription: 'Delete the current month and all its expenses. This action cannot be undone.',
   
   // Income
   monthlyIncome: 'Monthly income',

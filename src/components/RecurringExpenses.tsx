@@ -360,21 +360,12 @@ export const RecurringExpenses = ({
                 {t('addRecurringExpense')}
               </Button>
             ) : (
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSubmit}
-                  className="flex-1 h-10 bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  {view === 'add' ? t('add') : t('save')}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setView('list')}
-                  className="h-10"
-                >
-                  {t('cancel')}
-                </Button>
-              </div>
+              <Button
+                onClick={handleSubmit}
+                className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {view === 'add' ? t('add') : t('save')}
+              </Button>
             )}
           </div>
         </DialogContent>
