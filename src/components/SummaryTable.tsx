@@ -40,23 +40,23 @@ export const SummaryTable = ({
         return (
           <div key={cat.key} className="space-y-1.5">
             <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span
                   className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: category.color }}
                 />
-                <span className="text-foreground font-medium">
+                <span className="text-foreground font-medium truncate">
                   {t(cat.key as TranslationKey)}
                 </span>
               </div>
-              <div className="flex items-center gap-3 text-xs">
-                <span className={`tabular-nums font-medium ${exceeded ? 'text-destructive' : 'text-foreground'}`}>
+              <div className="flex items-center text-xs">
+                <span className={`tabular-nums font-medium text-right w-20 ${exceeded ? 'text-destructive' : 'text-foreground'}`}>
                   {formatCurrency(cat.spent)}
                 </span>
-                <span className="text-muted-foreground tabular-nums">
+                <span className="text-muted-foreground tabular-nums text-right w-24">
                   / {formatCurrency(cat.budget)}
                 </span>
-                <span className={`tabular-nums min-w-[3.5rem] text-right ${exceeded ? 'text-destructive' : 'text-muted-foreground'}`}>
+                <span className={`tabular-nums text-right w-14 ${exceeded ? 'text-destructive' : 'text-muted-foreground'}`}>
                   ({formatPercentage(cat.usedPercentage)})
                 </span>
               </div>
