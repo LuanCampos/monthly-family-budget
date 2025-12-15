@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Month, Expense, CategoryKey, Subcategory } from '@/types/budget';
+import { Month, Expense, CategoryKey, Subcategory, RecurringExpense } from '@/types/budget';
 import { CATEGORIES, MONTH_NAMES } from '@/constants/categories';
 
 const STORAGE_KEY = 'budget-data';
@@ -12,16 +12,41 @@ interface BudgetData {
   currentMonthId: string | null;
 }
 
-interface RecurringExpense extends Omit<Expense, 'id'> {
-  subcategoryId?: string;
-}
-
 const generateMonthId = (year: number, month: number): string => {
   return `${year}-${month.toString().padStart(2, '0')}`;
 };
 
 const getMonthLabel = (year: number, month: number): string => {
   return `${MONTH_NAMES[month - 1]}/${year}`;
+};
+
+// Calculate which installment number this month represents
+const calculateInstallmentNumber = (
+  targetYear: number,
+  targetMonth: number,
+  startYear: number,
+  startMonth: number
+): number => {
+  return (targetYear - startYear) * 12 + (targetMonth - startMonth) + 1;
+};
+
+// Check if a recurring expense should appear in a given month
+const shouldIncludeRecurringInMonth = (
+  recurring: RecurringExpense,
+  year: number,
+  month: number
+): { include: boolean; installmentNumber?: number } => {
+  if (!recurring.hasInstallments || !recurring.totalInstallments || !recurring.startYear || !recurring.startMonth) {
+    return { include: true };
+  }
+
+  const installmentNumber = calculateInstallmentNumber(year, month, recurring.startYear, recurring.startMonth);
+  
+  if (installmentNumber < 1 || installmentNumber > recurring.totalInstallments) {
+    return { include: false };
+  }
+
+  return { include: true, installmentNumber };
 };
 
 export const useBudget = () => {
@@ -51,7 +76,13 @@ export const useBudget = () => {
     }
 
     if (savedRecurring) {
-      setRecurringExpenses(JSON.parse(savedRecurring));
+      const parsed = JSON.parse(savedRecurring);
+      // Migrate old format to new format with id
+      const migrated = parsed.map((exp: RecurringExpense | Omit<RecurringExpense, 'id'>, index: number) => ({
+        ...exp,
+        id: (exp as RecurringExpense).id || `recurring-${Date.now()}-${index}`,
+      }));
+      setRecurringExpenses(migrated);
     }
 
     if (savedGoals) {
@@ -128,11 +159,32 @@ export const useBudget = () => {
       return false;
     }
 
-    const newExpenses: Expense[] = recurringExpenses.map((exp, index) => ({
-      ...exp,
-      id: `${id}-recurring-${index}`,
-      isRecurring: true,
-    }));
+    const newExpenses: Expense[] = recurringExpenses
+      .map((exp) => {
+        const result = shouldIncludeRecurringInMonth(exp, year, month);
+        if (!result.include) return null;
+
+        const expenseTitle = result.installmentNumber && exp.totalInstallments
+          ? `${exp.title} (Parcela ${result.installmentNumber}/${exp.totalInstallments})`
+          : exp.title;
+
+        return {
+          id: `${id}-recurring-${exp.id}`,
+          title: expenseTitle,
+          category: exp.category,
+          subcategoryId: exp.subcategoryId,
+          value: exp.value,
+          isRecurring: true,
+          isPending: true,
+          dueDay: exp.dueDay,
+          recurringExpenseId: exp.id,
+          installmentInfo: result.installmentNumber ? {
+            current: result.installmentNumber,
+            total: exp.totalInstallments!,
+          } : undefined,
+        } as Expense;
+      })
+      .filter((exp): exp is Expense => exp !== null);
 
     const newMonth: Month = {
       id,
@@ -210,7 +262,8 @@ export const useBudget = () => {
     title: string,
     category: CategoryKey,
     subcategoryId: string | undefined,
-    value: number
+    value: number,
+    isPending?: boolean
   ) => {
     if (!currentMonthId) return;
 
@@ -222,8 +275,25 @@ export const useBudget = () => {
           ...m,
           expenses: m.expenses.map(e =>
             e.id === id
-              ? { ...e, title, category, subcategoryId, value }
+              ? { ...e, title, category, subcategoryId, value, isPending }
               : e
+          ),
+        };
+      })
+    );
+  };
+
+  const confirmPayment = (expenseId: string) => {
+    if (!currentMonthId) return;
+
+    setMonths(prev =>
+      prev.map(m => {
+        if (m.id !== currentMonthId) return m;
+
+        return {
+          ...m,
+          expenses: m.expenses.map(e =>
+            e.id === expenseId ? { ...e, isPending: false } : e
           ),
         };
       })
@@ -247,54 +317,141 @@ export const useBudget = () => {
     title: string,
     category: CategoryKey,
     subcategoryId: string | undefined,
-    value: number
+    value: number,
+    dueDay?: number,
+    hasInstallments?: boolean,
+    totalInstallments?: number,
+    startYear?: number,
+    startMonth?: number
   ) => {
+    const recurringId = `recurring-${Date.now()}`;
+    
     const newRecurring: RecurringExpense = {
+      id: recurringId,
       title,
       category,
       subcategoryId,
       value,
       isRecurring: true,
+      dueDay,
+      hasInstallments,
+      totalInstallments,
+      startYear,
+      startMonth,
     };
 
     setRecurringExpenses(prev => [...prev, newRecurring]);
 
     if (currentMonthId) {
-      const expense: Expense = {
-        id: `${currentMonthId}-recurring-${Date.now()}`,
-        title,
-        category,
-        subcategoryId,
-        value,
-        isRecurring: true,
-      };
+      const currentMonthData = months.find(m => m.id === currentMonthId);
+      if (currentMonthData) {
+        const result = shouldIncludeRecurringInMonth(newRecurring, currentMonthData.year, currentMonthData.month);
+        
+        if (result.include) {
+          const expenseTitle = result.installmentNumber && totalInstallments
+            ? `${title} (Parcela ${result.installmentNumber}/${totalInstallments})`
+            : title;
 
-      setMonths(prev =>
-        prev.map(m =>
-          m.id === currentMonthId
-            ? { ...m, expenses: [...m.expenses, expense] }
-            : m
-        )
-      );
+          const expense: Expense = {
+            id: `${currentMonthId}-recurring-${recurringId}`,
+            title: expenseTitle,
+            category,
+            subcategoryId,
+            value,
+            isRecurring: true,
+            isPending: true,
+            dueDay,
+            recurringExpenseId: recurringId,
+            installmentInfo: result.installmentNumber ? {
+              current: result.installmentNumber,
+              total: totalInstallments!,
+            } : undefined,
+          };
+
+          setMonths(prev =>
+            prev.map(m =>
+              m.id === currentMonthId
+                ? { ...m, expenses: [...m.expenses, expense] }
+                : m
+            )
+          );
+        }
+      }
     }
   };
 
   const updateRecurringExpense = (
-    index: number,
+    id: string,
     title: string,
     category: CategoryKey,
     subcategoryId: string | undefined,
-    value: number
+    value: number,
+    dueDay?: number,
+    hasInstallments?: boolean,
+    totalInstallments?: number,
+    startYear?: number,
+    startMonth?: number,
+    updatePastExpenses?: boolean
   ) => {
     setRecurringExpenses(prev =>
-      prev.map((exp, i) =>
-        i === index ? { ...exp, title, category, subcategoryId, value } : exp
+      prev.map((exp) =>
+        exp.id === id 
+          ? { 
+              ...exp, 
+              title, 
+              category, 
+              subcategoryId, 
+              value, 
+              dueDay,
+              hasInstallments,
+              totalInstallments,
+              startYear,
+              startMonth,
+            } 
+          : exp
       )
     );
+
+    if (updatePastExpenses) {
+      // Update all existing expenses linked to this recurring expense
+      setMonths(prev =>
+        prev.map(m => ({
+          ...m,
+          expenses: m.expenses.map(e => {
+            if (e.recurringExpenseId !== id) return e;
+
+            // Recalculate installment info if needed
+            let newTitle = title;
+            let installmentInfo = e.installmentInfo;
+
+            if (hasInstallments && totalInstallments && startYear && startMonth) {
+              const installmentNumber = calculateInstallmentNumber(m.year, m.month, startYear, startMonth);
+              if (installmentNumber >= 1 && installmentNumber <= totalInstallments) {
+                newTitle = `${title} (Parcela ${installmentNumber}/${totalInstallments})`;
+                installmentInfo = { current: installmentNumber, total: totalInstallments };
+              }
+            } else if (!hasInstallments && e.installmentInfo) {
+              // Remove installment info if no longer has installments
+              installmentInfo = undefined;
+            }
+
+            return {
+              ...e,
+              title: newTitle,
+              category,
+              subcategoryId,
+              value,
+              dueDay,
+              installmentInfo,
+            };
+          }),
+        }))
+      );
+    }
   };
 
-  const removeRecurringExpense = (index: number) => {
-    setRecurringExpenses(prev => prev.filter((_, i) => i !== index));
+  const removeRecurringExpense = (id: string) => {
+    setRecurringExpenses(prev => prev.filter((exp) => exp.id !== id));
   };
 
   // Calculations
@@ -352,7 +509,7 @@ export const useBudget = () => {
   // Import / Export
   const exportBudget = () => {
     const data = {
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString(),
       months,
       recurringExpenses,
@@ -388,8 +545,14 @@ export const useBudget = () => {
           throw new Error('Invalid file structure');
         }
 
+        // Migrate recurring expenses to new format with id
+        const migratedRecurring = data.recurringExpenses.map((exp: RecurringExpense | Omit<RecurringExpense, 'id'>, index: number) => ({
+          ...exp,
+          id: (exp as RecurringExpense).id || `recurring-imported-${Date.now()}-${index}`,
+        }));
+
         setMonths(data.months);
-        setRecurringExpenses(data.recurringExpenses);
+        setRecurringExpenses(migratedRecurring);
         setCategoryPercentages(data.categoryPercentages);
         setSubcategories(data.subcategories || []);
         setCurrentMonthId(data.currentMonthId ?? null);
@@ -415,6 +578,7 @@ export const useBudget = () => {
     addExpense,
     updateExpense,
     removeExpense,
+    confirmPayment,
     addRecurringExpense,
     updateRecurringExpense,
     removeRecurringExpense,

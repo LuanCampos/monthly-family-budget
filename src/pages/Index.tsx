@@ -30,6 +30,7 @@ const Index = () => {
     addExpense,
     removeExpense,
     updateExpense,
+    confirmPayment,
     addRecurringExpense,
     removeRecurringExpense,
     updateRecurringExpense,
@@ -61,9 +62,10 @@ const Index = () => {
     title: string,
     category: CategoryKey,
     subcategoryId: string | undefined,
-    value: number
+    value: number,
+    isPending?: boolean
   ) => {
-    updateExpense(id, title, category, subcategoryId, value);
+    updateExpense(id, title, category, subcategoryId, value, isPending);
     setEditingExpense(null);
   };
 
@@ -212,6 +214,7 @@ const Index = () => {
                 subcategories={subcategories}
                 onRemove={removeExpense}
                 onEdit={handleEditExpense}
+                onConfirmPayment={confirmPayment}
               />
             </CardContent>
           </Card>

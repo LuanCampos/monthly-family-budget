@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { CategoryKey, Subcategory } from '@/types/budget';
 import { DEFAULT_CATEGORY } from '@/constants/categories';
 import { ExpenseFormFields } from './ExpenseFormFields';
@@ -24,9 +25,11 @@ interface ExpenseFormProps {
     category: CategoryKey;
     subcategoryId?: string;
     value: number;
+    isRecurring?: boolean;
+    isPending?: boolean;
   };
   onAdd?: (title: string, category: CategoryKey, subcategoryId: string | undefined, value: number) => void;
-  onUpdate?: (id: string, title: string, category: CategoryKey, subcategoryId: string | undefined, value: number) => void;
+  onUpdate?: (id: string, title: string, category: CategoryKey, subcategoryId: string | undefined, value: number, isPending?: boolean) => void;
   onCancel?: () => void;
   disabled?: boolean;
 }
@@ -45,12 +48,16 @@ export const ExpenseForm = ({
   const [category, setCategory] = useState<CategoryKey>(DEFAULT_CATEGORY);
   const [subcategoryId, setSubcategoryId] = useState('');
   const [value, setValue] = useState('');
+  const [isPending, setIsPending] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false);
 
   const resetForm = () => {
     setTitle('');
     setCategory(DEFAULT_CATEGORY);
     setSubcategoryId('');
     setValue('');
+    setIsPending(false);
+    setIsRecurring(false);
     setIsOpen(false);
   };
 
@@ -60,6 +67,8 @@ export const ExpenseForm = ({
       setCategory(initialData.category);
       setSubcategoryId(initialData.subcategoryId || '');
       setValue(formatCurrencyInput(initialData.value));
+      setIsPending(initialData.isPending || false);
+      setIsRecurring(initialData.isRecurring || false);
       setIsOpen(true);
     }
   }, [mode, initialData]);
@@ -75,7 +84,7 @@ export const ExpenseForm = ({
     }
 
     if (mode === 'edit' && onUpdate && initialData) {
-      onUpdate(initialData.id, title.trim(), category, finalSubcategoryId, numericValue);
+      onUpdate(initialData.id, title.trim(), category, finalSubcategoryId, numericValue, isPending);
     }
 
     resetForm();
@@ -126,6 +135,22 @@ export const ExpenseForm = ({
             onSubcategoryChange={setSubcategoryId}
             onValueChange={(v) => setValue(sanitizeCurrencyInput(v))}
           />
+
+          {mode === 'edit' && isRecurring && (
+            <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-border">
+              <Checkbox
+                id="isPending"
+                checked={isPending}
+                onCheckedChange={(checked) => setIsPending(checked === true)}
+              />
+              <label
+                htmlFor="isPending"
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                Pagamento Pendente
+              </label>
+            </div>
+          )}
 
           <Button
             onClick={handleSubmit}

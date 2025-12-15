@@ -26,6 +26,27 @@ export interface Expense {
   subcategoryId?: string;
   value: number;
   isRecurring: boolean;
+  isPending?: boolean;
+  dueDay?: number;
+  recurringExpenseId?: string;
+  installmentInfo?: {
+    current: number;
+    total: number;
+  };
+}
+
+export interface RecurringExpense {
+  id: string;
+  title: string;
+  category: CategoryKey;
+  subcategoryId?: string;
+  value: number;
+  isRecurring: true;
+  dueDay?: number;
+  hasInstallments?: boolean;
+  totalInstallments?: number;
+  startYear?: number;
+  startMonth?: number;
 }
 
 export interface Month {
