@@ -77,7 +77,9 @@ export const en: Record<TranslationKey, string> = {
   startMonth: 'Start month',
   startYear: 'Start year',
   installment: 'Installment',
-  
+  installments: 'Installments',
+  installmentOf: 'of',
+
   // Pending Payment
   pendingPayment: 'Pending Payment',
   confirmPayment: 'Confirm payment',
