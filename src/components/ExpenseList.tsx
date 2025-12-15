@@ -1,6 +1,7 @@
-import { Trash2, Pencil, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2, Pencil, RefreshCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Expense, Subcategory } from '@/types/budget';
+import { Expense, Subcategory, CategoryKey } from '@/types/budget';
 import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
 import { formatCurrency } from '@/utils/formatters';
 
@@ -10,6 +11,12 @@ interface ExpenseListProps {
   onRemove: (id: string) => void;
   onEdit: (expense: Expense) => void;
 }
+
+type FilterType = 
+  | { type: 'category'; value: CategoryKey }
+  | { type: 'subcategory'; value: string }
+  | { type: 'recurring' }
+  | null;
 
 const generateSubcategoryColor = (
   baseColor: string,
@@ -30,6 +37,8 @@ const generateSubcategoryColor = (
 };
 
 export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: ExpenseListProps) => {
+  const [filter, setFilter] = useState<FilterType>(null);
+
   if (expenses.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -49,10 +58,25 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
     const category = getCategoryByKey(sub.categoryKey);
     const color = generateSubcategoryColor(category.color, index, categorySubs.length);
     
-    return { name: sub.name, color };
+    return { id: sub.id, name: sub.name, color };
   };
 
-  const sortedExpenses = [...expenses].sort((a, b) => {
+  const filteredExpenses = expenses.filter(expense => {
+    if (!filter) return true;
+    
+    if (filter.type === 'category') {
+      return expense.category === filter.value;
+    }
+    if (filter.type === 'subcategory') {
+      return expense.subcategoryId === filter.value;
+    }
+    if (filter.type === 'recurring') {
+      return expense.isRecurring;
+    }
+    return true;
+  });
+
+  const sortedExpenses = [...filteredExpenses].sort((a, b) => {
     const catIndexA = CATEGORIES.findIndex(c => c.key === a.category);
     const catIndexB = CATEGORIES.findIndex(c => c.key === b.category);
 
@@ -70,70 +94,115 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
     return a.title.localeCompare(b.title);
   });
 
+  const getFilterLabel = () => {
+    if (!filter) return '';
+    if (filter.type === 'category') {
+      return getCategoryByKey(filter.value).name;
+    }
+    if (filter.type === 'subcategory') {
+      const sub = subcategories.find(s => s.id === filter.value);
+      return sub?.name || '';
+    }
+    if (filter.type === 'recurring') {
+      return 'Recorrentes';
+    }
+    return '';
+  };
+
   return (
     <div className="space-y-2">
-      {sortedExpenses.map((expense) => {
-        const cat = getCategoryByKey(expense.category);
-        const subInfo = getSubcategoryInfo(expense.subcategoryId);
+      {filter && (
+        <div className="flex items-center gap-2 pb-2 border-b border-border">
+          <span className="text-sm text-muted-foreground">Filtro:</span>
+          <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-primary/20 text-primary">
+            {getFilterLabel()}
+            <button
+              onClick={() => setFilter(null)}
+              className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        </div>
+      )}
 
-        return (
-          <div
-            key={expense.id}
-            className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg group"
-          >
-            <div className="flex items-center gap-2">
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: cat.color }}
-              />
+      {sortedExpenses.length === 0 ? (
+        <div className="text-center py-4 text-muted-foreground">
+          <p>Nenhum gasto encontrado com este filtro.</p>
+        </div>
+      ) : (
+        sortedExpenses.map((expense) => {
+          const cat = getCategoryByKey(expense.category);
+          const subInfo = getSubcategoryInfo(expense.subcategoryId);
 
-              <span className="text-sm text-foreground font-medium">
-                {expense.title}
-              </span>
+          return (
+            <div
+              key={expense.id}
+              className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg group"
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: cat.color }}
+                />
 
-              <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                {cat.name}
-              </span>
-
-              {subInfo && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                  {subInfo.name}
+                <span className="text-sm text-foreground font-medium">
+                  {expense.title}
                 </span>
-              )}
 
-              {expense.isRecurring && (
-                <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                  <RefreshCw className="h-3 w-3" />
+                <button
+                  onClick={() => setFilter({ type: 'category', value: expense.category })}
+                  className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                >
+                  {cat.name}
+                </button>
+
+                {subInfo && (
+                  <button
+                    onClick={() => setFilter({ type: 'subcategory', value: subInfo.id })}
+                    className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                  >
+                    {subInfo.name}
+                  </button>
+                )}
+
+                {expense.isRecurring && (
+                  <button
+                    onClick={() => setFilter({ type: 'recurring' })}
+                    className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-foreground font-medium mr-2">
+                  {formatCurrency(expense.value)}
                 </span>
-              )}
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onEdit(expense)}
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary hover:bg-primary/10"
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onRemove(expense.id)}
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
             </div>
-
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-foreground font-medium mr-2">
-                {formatCurrency(expense.value)}
-              </span>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onEdit(expense)}
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary hover:bg-primary/10"
-              >
-                <Pencil className="h-3 w-3" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onRemove(expense.id)}
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-        );
-      })}
+          );
+        })
+      )}
     </div>
   );
 };
