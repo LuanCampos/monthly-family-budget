@@ -120,6 +120,7 @@ export const pt = {
   backupDescription: 'Exporte seus dados para fazer backup ou importe um backup existente.',
   importBackup: 'Importar Backup',
   exportBackup: 'Exportar Backup',
+  importError: 'Arquivo inválido ou corrompido',
   
   // Languages
   portuguese: 'Português',

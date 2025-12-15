@@ -122,6 +122,7 @@ export const en: Record<TranslationKey, string> = {
   backupDescription: 'Export your data to backup or import an existing backup.',
   importBackup: 'Import Backup',
   exportBackup: 'Export Backup',
+  importError: 'Invalid or corrupted file',
   
   // Languages
   portuguese: 'Português',
