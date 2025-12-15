@@ -14,8 +14,3 @@ export const DEFAULT_CATEGORY: CategoryKey = 'essenciais';
 export const getCategoryByKey = (key: CategoryKey): Category => {
   return CATEGORIES.find(c => c.key === key) || CATEGORIES[0];
 };
-
-export const MONTH_NAMES = [
-  'month-0', 'month-1', 'month-2', 'month-3', 'month-4', 'month-5',
-  'month-6', 'month-7', 'month-8', 'month-9', 'month-10', 'month-11',
-] as const;

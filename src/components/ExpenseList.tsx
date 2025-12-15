@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Expense, Subcategory, CategoryKey } from '@/types/budget';
 import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
 import { formatCurrency } from '@/utils/formatters';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { TranslationKey } from '@/i18n/translations/pt';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,14 +51,14 @@ const generateSubcategoryColor = (
 };
 
 export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfirmPayment }: ExpenseListProps) => {
+  const { t } = useLanguage();
   const [filter, setFilter] = useState<FilterType>(null);
   const [confirmPaymentId, setConfirmPaymentId] = useState<string | null>(null);
 
   if (expenses.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        <p>Nenhum gasto cadastrado neste mês.</p>
-        <p className="text-sm mt-1">Use os botões acima para adicionar gastos.</p>
+        <p>{t('noExpenses')}</p>
       </div>
     );
   }
@@ -113,17 +115,17 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
   const getFilterLabel = () => {
     if (!filter) return '';
     if (filter.type === 'category') {
-      return getCategoryByKey(filter.value).name;
+      return t(filter.value as TranslationKey);
     }
     if (filter.type === 'subcategory') {
       const sub = subcategories.find(s => s.id === filter.value);
       return sub?.name || '';
     }
     if (filter.type === 'recurring') {
-      return 'Recorrentes';
+      return t('recurring');
     }
     if (filter.type === 'pending') {
-      return 'Pendentes';
+      return t('pending');
     }
     return '';
   };
@@ -139,7 +141,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
     <div className="space-y-2">
       {filter && (
         <div className="flex items-center gap-2 pb-2 border-b border-border">
-          <span className="text-sm text-muted-foreground">Filtro:</span>
+          <span className="text-sm text-muted-foreground">{t('all')}:</span>
           <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-primary/20 text-primary">
             {getFilterLabel()}
             <button
@@ -154,7 +156,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
 
       {sortedExpenses.length === 0 ? (
         <div className="text-center py-4 text-muted-foreground">
-          <p>Nenhum gasto encontrado com este filtro.</p>
+          <p>{t('noExpenses')}</p>
         </div>
       ) : (
         sortedExpenses.map((expense) => {
@@ -182,7 +184,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
                       onClick={() => setFilter({ type: 'category', value: expense.category })}
                       className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
                     >
-                      {cat.name}
+                      {t(cat.key as TranslationKey)}
                     </button>
               
                     {subInfo && (
@@ -209,7 +211,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
                       <button
                         onClick={() => setConfirmPaymentId(expense.id)}
                         className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-destructive/20 text-destructive hover:bg-destructive/30 transition-colors cursor-pointer"
-                        title="Clique para confirmar pagamento"
+                        title={t('confirmPayment')}
                       >
                         <AlertCircle className="h-3 w-3" />
                         {expense.dueDay && (
@@ -255,18 +257,18 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
       <AlertDialog open={!!confirmPaymentId} onOpenChange={(open) => !open && setConfirmPaymentId(null)}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Pagamento</AlertDialogTitle>
+            <AlertDialogTitle>{t('confirmPayment')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Deseja confirmar que este pagamento foi realizado? A pendência será removida.
+              {t('confirmPaymentMessage')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmPayment}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              Confirmar Pagamento
+              {t('confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
