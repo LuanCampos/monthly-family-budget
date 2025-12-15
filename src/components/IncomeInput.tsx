@@ -45,7 +45,7 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
           onBlur={handleBlur}
           disabled={disabled}
           placeholder="0,00"
-          className="pl-10 h-10 bg-secondary/50 border-border text-primary text-lg font-bold placeholder:text-muted-foreground"
+          className="pl-10 h-12 bg-secondary/50 border-border text-primary text-xl font-bold placeholder:text-muted-foreground"
         />
       </div>
     </div>
