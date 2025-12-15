@@ -29,7 +29,7 @@ interface ExpenseFormProps {
     isRecurring?: boolean;
     isPending?: boolean;
   };
-  onAdd?: (title: string, category: CategoryKey, subcategoryId: string | undefined, value: number, isPending?: boolean) => void;
+  onAdd?: (title: string, category: CategoryKey, subcategoryId: string | undefined, value: number) => void;
   onUpdate?: (id: string, title: string, category: CategoryKey, subcategoryId: string | undefined, value: number, isPending?: boolean) => void;
   onCancel?: () => void;
   disabled?: boolean;
@@ -82,7 +82,7 @@ export const ExpenseForm = ({
     const finalSubcategoryId = subcategoryId || undefined;
 
     if (mode === 'create' && onAdd) {
-      onAdd(title.trim(), category, finalSubcategoryId, numericValue, isPending);
+      onAdd(title.trim(), category, finalSubcategoryId, numericValue);
     }
 
     if (mode === 'edit' && onUpdate && initialData) {
@@ -139,19 +139,21 @@ export const ExpenseForm = ({
             onValueChange={(v) => setValue(sanitizeCurrencyInput(v))}
           />
 
-          <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-border">
-            <Checkbox
-              id="isPending"
-              checked={isPending}
-              onCheckedChange={(checked) => setIsPending(checked === true)}
-            />
-            <label
-              htmlFor="isPending"
-              className="text-sm font-medium leading-none cursor-pointer"
-            >
-              {t('pendingPayment')}
-            </label>
-          </div>
+          {mode === 'edit' && isRecurring && (
+            <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-border">
+              <Checkbox
+                id="isPending"
+                checked={isPending}
+                onCheckedChange={(checked) => setIsPending(checked === true)}
+              />
+              <label
+                htmlFor="isPending"
+                className="text-sm font-medium leading-none cursor-pointer"
+              >
+                {t('pendingPayment')}
+              </label>
+            </div>
+          )}
         </div>
 
         <div className="px-6 py-4 border-t border-border bg-secondary/30">

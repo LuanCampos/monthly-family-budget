@@ -231,8 +231,7 @@ export const useBudget = () => {
     title: string,
     category: CategoryKey,
     subcategoryId: string | undefined,
-    value: number,
-    isPending?: boolean
+    value: number
   ) => {
     if (!currentMonthId) return;
 
@@ -243,7 +242,6 @@ export const useBudget = () => {
       subcategoryId,
       value,
       isRecurring: false,
-      isPending: isPending || false,
     };
 
     setMonths(prev =>
