@@ -248,7 +248,7 @@ const Index = () => {
           if (!open) setActiveCategory(null);
         }}
       >
-        <DialogContent className="w-full max-w-3xl p-4 md:p-6 overflow-y-auto max-h-[90vh]">
+        <DialogContent className="w-full max-w-md p-4 md:p-6 overflow-y-auto max-h-[90vh]">
           {activeCategory && currentMonth && (
             <SubcategoryChart
               categoryKey={activeCategory}
