@@ -29,20 +29,20 @@ export const SummaryTable = ({
   const { t } = useLanguage();
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto -mx-4 sm:mx-0">
+      <table className="w-full text-xs sm:text-sm min-w-[400px]">
         <thead>
           <tr className="text-muted-foreground border-b border-border">
-            <th className="text-left py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
+            <th className="text-left py-2 sm:py-3 px-2 sm:px-0 font-semibold whitespace-nowrap">
               {t('budget')}
             </th>
-            <th className="text-right py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
+            <th className="text-right py-2 sm:py-3 px-2 sm:px-0 font-semibold whitespace-nowrap">
               {t('amountSpent')}
             </th>
-            <th className="text-right py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
+            <th className="text-right py-2 sm:py-3 px-2 sm:px-0 font-semibold whitespace-nowrap">
               {t('shouldSpend')}
             </th>
-            <th className="text-right py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
+            <th className="text-right py-2 sm:py-3 px-2 sm:px-0 font-semibold whitespace-nowrap">
               {t('used')}
             </th>
           </tr>
@@ -54,24 +54,24 @@ export const SummaryTable = ({
 
             return (
               <tr key={cat.key} className="border-b border-border/50">
-                <td className="py-3 text-foreground font-medium whitespace-nowrap">
+                <td className="py-2 sm:py-3 px-2 sm:px-0 text-foreground font-medium whitespace-nowrap">
                   {t(cat.key as TranslationKey)}
                 </td>
 
                 <td
-                  className={`py-3 text-right font-medium whitespace-nowrap tracking-tight sm:tracking-normal ${
+                  className={`py-2 sm:py-3 px-2 sm:px-0 text-right font-medium whitespace-nowrap ${
                     exceeded ? 'text-destructive' : 'text-foreground'
                   }`}
                 >
                   {formatCurrency(cat.spent)}
                 </td>
 
-                <td className="py-3 text-right text-foreground whitespace-nowrap tracking-tight sm:tracking-normal">
+                <td className="py-2 sm:py-3 px-2 sm:px-0 text-right text-foreground whitespace-nowrap">
                   {formatCurrency(cat.budget)}
                 </td>
 
                 <td
-                  className={`py-3 text-right font-medium whitespace-nowrap tracking-tight sm:tracking-normal ${
+                  className={`py-2 sm:py-3 px-2 sm:px-0 text-right font-medium whitespace-nowrap ${
                     cat.usedPercentage >= 100
                       ? 'text-destructive'
                       : 'text-success'
@@ -86,10 +86,10 @@ export const SummaryTable = ({
       </table>
 
       {/* Totais */}
-      <div className="flex items-center gap-6 mt-6 pt-4 border-t border-border">
+      <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-4 sm:mt-6 pt-4 border-t border-border px-2 sm:px-0">
         <div>
           <span
-            className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${
+            className={`text-lg sm:text-2xl font-bold whitespace-nowrap ${
               totalSpent > totalBudget
                 ? 'text-destructive'
                 : 'text-foreground'
@@ -104,7 +104,7 @@ export const SummaryTable = ({
 
         <div>
           <span
-            className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${
+            className={`text-lg sm:text-2xl font-bold whitespace-nowrap ${
               totalBudget - totalSpent < 0
                 ? 'text-destructive'
                 : 'text-foreground'
@@ -119,7 +119,7 @@ export const SummaryTable = ({
 
         <div>
           <span
-            className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${
+            className={`text-lg sm:text-2xl font-bold whitespace-nowrap ${
               usedPercentage >= 100
                 ? 'text-destructive'
                 : 'text-success'
