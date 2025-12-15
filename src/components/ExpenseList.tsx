@@ -81,8 +81,6 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
     const catIndexB = CATEGORIES.findIndex(c => c.key === b.category);
 
     if (catIndexA !== catIndexB) return catIndexA - catIndexB;
-
-    if (a.isRecurring !== b.isRecurring) return a.isRecurring ? -1 : 1;
   
     const subA =
       subcategories.find(s => s.id === a.subcategoryId)?.name ?? 'ZZZ';
@@ -90,6 +88,8 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
       subcategories.find(s => s.id === b.subcategoryId)?.name ?? 'ZZZ';
   
     if (subA !== subB) return subA.localeCompare(subB);
+
+    if (a.isRecurring !== b.isRecurring) return a.isRecurring ? -1 : 1;
   
     return a.title.localeCompare(b.title);
   });
