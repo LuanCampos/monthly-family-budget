@@ -50,14 +50,18 @@ export const SummaryTable = ({
                 </span>
               </div>
               <div className="flex items-center gap-1.5 text-xs">
-                <span className={`tabular-nums font-medium ${exceeded ? 'text-destructive' : 'text-foreground'}`}>
+                <span className={`tabular-nums ${exceeded ? 'text-destructive' : 'text-muted-foreground'}`}>
                   {formatCurrency(cat.spent)}
                 </span>
                 <span className="text-muted-foreground">/</span>
                 <span className="text-muted-foreground tabular-nums">
                   {formatCurrency(cat.budget)}
                 </span>
-                <span className={`tabular-nums ${exceeded ? 'text-destructive' : 'text-muted-foreground'}`}>
+                <span
+                  className={`tabular-nums font-medium ${
+                    exceeded ? 'text-destructive' : 'text-foreground'
+                  }`}
+                >
                   ({formatPercentage(cat.usedPercentage)})
                 </span>
               </div>
