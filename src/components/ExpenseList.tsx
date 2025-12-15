@@ -214,6 +214,18 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
                       </button>
                     )}
 
+                    {expense.installmentInfo && (
+                      <button
+                        onClick={() => setFilter({ type: 'installments' })}
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                      >
+                        <CreditCard className="h-3 w-3" />
+                        <span>
+                          {expense.installmentInfo.current}/{expense.installmentInfo.total}
+                        </span>
+                      </button>
+                    )}
+
                     {expense.isPending && (
                       <button
                         onClick={() => setConfirmPaymentId(expense.id)}
@@ -227,18 +239,6 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
                             {expense.dueDay}
                           </span>
                         )}
-                      </button>
-                    )}
-
-                    {expense.installmentInfo && (
-                      <button
-                        onClick={() => setFilter({ type: 'installments' })}
-                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
-                      >
-                        <CreditCard className="h-3 w-3" />
-                        <span>
-                          {expense.installmentInfo.current}/{expense.installmentInfo.total}
-                        </span>
                       </button>
                     )}
                   </div>
