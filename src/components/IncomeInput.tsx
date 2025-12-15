@@ -33,28 +33,20 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
         {t('monthlyIncome')}
       </label>
       
-      <div className="flex items-center gap-3 flex-1">
-        <div className="relative flex-1 max-w-xs">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-            R$
-          </span>
-          <Input
-            type="text"
-            inputMode="decimal"
-            value={inputValue}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            disabled={disabled}
-            placeholder="0,00"
-            className="pl-10 h-10 bg-secondary/50 border-border text-foreground font-medium placeholder:text-muted-foreground"
-          />
-        </div>
-        
-        {value > 0 && (
-          <span className="text-lg sm:text-xl font-bold text-primary whitespace-nowrap">
-            {formatCurrency(value)}
-          </span>
-        )}
+      <div className="relative flex-1 max-w-xs">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+          R$
+        </span>
+        <Input
+          type="text"
+          inputMode="decimal"
+          value={inputValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          disabled={disabled}
+          placeholder="0,00"
+          className="pl-10 h-10 bg-secondary/50 border-border text-foreground text-lg font-bold placeholder:text-muted-foreground"
+        />
       </div>
     </div>
   );
