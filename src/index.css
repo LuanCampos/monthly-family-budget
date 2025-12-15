@@ -5,7 +5,6 @@
 @tailwind utilities;
 
 @layer base {
-  /* Default Theme Variables - Will be overridden by ThemeContext */
   :root {
     --background: 30 6% 9%;
     --foreground: 40 20% 95%;
@@ -47,6 +46,11 @@
     --sidebar-accent-foreground: 40 20% 95%;
     --sidebar-border: 30 6% 22%;
     --sidebar-ring: 43 74% 49%;
+
+    /* Dashboard enhancements */
+    --card-hover: 30 6% 14%;
+    --card-shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -2px hsl(0 0% 0% / 0.2);
+    --card-shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.2);
   }
 
   * {
@@ -56,6 +60,57 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  /* Dashboard Card Styles */
+  .dashboard-card {
+    @apply bg-card rounded-lg border border-border transition-all duration-200;
+    box-shadow: var(--card-shadow);
+  }
+
+  .dashboard-card:hover {
+    background-color: hsl(var(--card-hover));
+  }
+
+  .dashboard-card-header {
+    @apply flex items-center justify-between px-4 py-3 border-b border-border/50;
+  }
+
+  .dashboard-card-title {
+    @apply text-sm font-semibold text-foreground uppercase tracking-wide;
+  }
+
+  .dashboard-card-content {
+    @apply p-4;
+  }
+
+  /* Section Header */
+  .section-header {
+    @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4;
+  }
+
+  .section-title {
+    @apply text-lg font-semibold text-foreground;
+  }
+
+  /* Action Button Group */
+  .action-btn-group {
+    @apply flex items-center gap-2 flex-wrap;
+  }
+
+  /* Stat Card */
+  .stat-card {
+    @apply flex flex-col p-3 sm:p-4 bg-secondary/30 rounded-lg;
+  }
+
+  .stat-value {
+    @apply text-xl sm:text-2xl font-bold text-foreground;
+  }
+
+  .stat-label {
+    @apply text-xs text-muted-foreground mt-1;
   }
 }
 
@@ -96,5 +151,12 @@
   }
   .bg-category-conhecimento {
     background-color: hsl(var(--category-conhecimento));
+  }
+
+  /* Mobile touch targets */
+  @media (max-width: 640px) {
+    .touch-target {
+      @apply min-h-[44px] min-w-[44px];
+    }
   }
 }

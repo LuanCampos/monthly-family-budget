@@ -13,9 +13,9 @@ import { RecurringExpenses } from '@/components/RecurringExpenses';
 import { ExpenseList } from '@/components/ExpenseList';
 import { SubcategoryManager } from '@/components/SubcategoryManager';
 import { SettingsPanel } from '@/components/SettingsPanel';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { PieChart, Target, ListTodo, Wallet } from 'lucide-react';
 
 const Index = () => {
   const { t } = useLanguage();
@@ -76,140 +76,166 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <header className="mb-6 flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1 truncate">
-              {t('appTitle')}
-            </h1>
-            <p className="text-muted-foreground text-xs sm:text-sm md:text-base line-clamp-2">
-              {t('appSubtitle')}
-            </p>
+    <div className="min-h-screen bg-background">
+      {/* Top Bar */}
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+                <h1 className="text-base sm:text-lg font-bold text-foreground truncate">
+                  {t('appTitle')}
+                </h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              <MonthSelector
+                months={months}
+                currentMonth={currentMonth}
+                onSelectMonth={selectMonth}
+                onAddMonth={addMonth}
+                onRemoveMonth={removeMonth}
+              />
+              <SettingsPanel onExport={exportBudget} onImport={handleImportFile} />
+            </div>
           </div>
-
-          <SettingsPanel onExport={exportBudget} onImport={handleImportFile} />
-        </header>
-
-        {/* Controls */}
-        <div className="flex flex-col md:flex-row md:items-end gap-4 mb-8">
-          <MonthSelector
-            months={months}
-            currentMonth={currentMonth}
-            onSelectMonth={selectMonth}
-            onAddMonth={addMonth}
-            onRemoveMonth={removeMonth}
-          />
-          <IncomeInput
-            value={currentMonth?.income || 0}
-            onChange={updateIncome}
-            disabled={!currentMonthId}
-          />
         </div>
+      </header>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>{t('expenses')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ExpenseChart
-                data={categorySummary.map(c => ({
-                  key: c.key,
-                  name: c.name,
-                  spent: c.spent,
-                  color: c.color,
-                }))}
-                hasExpenses={hasExpenses}
-                onSelectCategory={setActiveCategory}
-              />
-              <CategoryLegend />
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-6">
-            <CardHeader>
-              <CardTitle>{t('summary')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SummaryTable
-                categories={categorySummary}
-                totalSpent={totalSpent}
-                totalBudget={totalBudget}
-                usedPercentage={usedPercentage}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>{t('goals')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <GoalsPanel
-                percentages={categoryPercentages}
-                onEdit={updateGoals}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Expense List */}
-        {currentMonthId && (
-          <Card className="mt-6">
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4">
-              <CardTitle className="text-base sm:text-lg">{t('monthExpenses')}</CardTitle>
-              <div className="flex items-center gap-2 flex-wrap">
-                <SubcategoryManager
-                  subcategories={subcategories}
-                  onAdd={addSubcategory}
-                  onUpdate={updateSubcategory}
-                  onRemove={removeSubcategory}
-                />
-                <RecurringExpenses
-                  expenses={recurringExpenses}
-                  subcategories={subcategories}
-                  currentMonthExpenses={currentMonth?.expenses || []}
-                  onAdd={addRecurringExpense}
-                  onUpdate={updateRecurringExpense}
-                  onRemove={removeRecurringExpense}
-                  onApply={applyRecurringToCurrentMonth}
-                />
-                <ExpenseForm
-                  mode="create"
-                  subcategories={subcategories}
-                  onAdd={addExpense}
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        {currentMonthId ? (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Income Section */}
+            <div className="dashboard-card">
+              <div className="dashboard-card-content">
+                <IncomeInput
+                  value={currentMonth?.income || 0}
+                  onChange={updateIncome}
                   disabled={!currentMonthId}
                 />
               </div>
-            </CardHeader>
+            </div>
 
-            <CardContent>
-              <ExpenseList
-                expenses={currentMonth?.expenses || []}
-                subcategories={subcategories}
-                onRemove={removeExpense}
-                onEdit={handleEditExpense}
-                onConfirmPayment={confirmPayment}
-              />
-            </CardContent>
-          </Card>
-        )}
+            {/* Stats Grid - Mobile: 2 cols, Desktop: 3 cols */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+              {/* Expenses Chart Card */}
+              <div className="dashboard-card">
+                <div className="dashboard-card-header">
+                  <div className="flex items-center gap-2">
+                    <PieChart className="h-4 w-4 text-primary" />
+                    <span className="dashboard-card-title">{t('expenses')}</span>
+                  </div>
+                </div>
+                <div className="dashboard-card-content">
+                  <ExpenseChart
+                    data={categorySummary.map(c => ({
+                      key: c.key,
+                      name: c.name,
+                      spent: c.spent,
+                      color: c.color,
+                    }))}
+                    hasExpenses={hasExpenses}
+                    onSelectCategory={setActiveCategory}
+                  />
+                  <div className="mt-4">
+                    <CategoryLegend />
+                  </div>
+                </div>
+              </div>
 
-        {/* Empty State */}
-        {!currentMonthId && (
-          <div className="mt-12 text-center">
-            <p className="text-muted-foreground text-lg mb-2">
+              {/* Summary Table Card */}
+              <div className="dashboard-card md:col-span-1 xl:col-span-1">
+                <div className="dashboard-card-header">
+                  <div className="flex items-center gap-2">
+                    <ListTodo className="h-4 w-4 text-primary" />
+                    <span className="dashboard-card-title">{t('summary')}</span>
+                  </div>
+                </div>
+                <div className="dashboard-card-content">
+                  <SummaryTable
+                    categories={categorySummary}
+                    totalSpent={totalSpent}
+                    totalBudget={totalBudget}
+                    usedPercentage={usedPercentage}
+                  />
+                </div>
+              </div>
+
+              {/* Goals Card */}
+              <div className="dashboard-card md:col-span-2 xl:col-span-1">
+                <div className="dashboard-card-header">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" />
+                    <span className="dashboard-card-title">{t('goals')}</span>
+                  </div>
+                </div>
+                <div className="dashboard-card-content">
+                  <GoalsPanel
+                    percentages={categoryPercentages}
+                    onEdit={updateGoals}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Expense List Section */}
+            <div className="dashboard-card">
+              <div className="dashboard-card-header flex-col sm:flex-row gap-3">
+                <span className="dashboard-card-title">{t('monthExpenses')}</span>
+                <div className="action-btn-group w-full sm:w-auto justify-start sm:justify-end">
+                  <SubcategoryManager
+                    subcategories={subcategories}
+                    onAdd={addSubcategory}
+                    onUpdate={updateSubcategory}
+                    onRemove={removeSubcategory}
+                  />
+                  <RecurringExpenses
+                    expenses={recurringExpenses}
+                    subcategories={subcategories}
+                    currentMonthExpenses={currentMonth?.expenses || []}
+                    onAdd={addRecurringExpense}
+                    onUpdate={updateRecurringExpense}
+                    onRemove={removeRecurringExpense}
+                    onApply={applyRecurringToCurrentMonth}
+                  />
+                  <ExpenseForm
+                    mode="create"
+                    subcategories={subcategories}
+                    onAdd={addExpense}
+                    disabled={!currentMonthId}
+                  />
+                </div>
+              </div>
+
+              <div className="dashboard-card-content">
+                <ExpenseList
+                  expenses={currentMonth?.expenses || []}
+                  subcategories={subcategories}
+                  onRemove={removeExpense}
+                  onEdit={handleEditExpense}
+                  onConfirmPayment={confirmPayment}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Empty State */
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4 sm:mb-6">
+              <Wallet className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
+            </div>
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
               {t('emptyStateTitle')}
-            </p>
-            <p className="text-muted-foreground text-sm">
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-md">
               {t('emptyStateSubtitle')}
             </p>
           </div>
         )}
-      </div>
+      </main>
 
       {/* Subcategory Chart Modal */}
       <Dialog
@@ -218,7 +244,7 @@ const Index = () => {
           if (!open) setActiveCategory(null);
         }}
       >
-        <DialogContent className="w-full max-w-3xl p-4 md:p-6 overflow-y-auto">
+        <DialogContent className="w-full max-w-3xl p-4 md:p-6 overflow-y-auto max-h-[90vh]">
           {activeCategory && currentMonth && (
             <SubcategoryChart
               categoryKey={activeCategory}

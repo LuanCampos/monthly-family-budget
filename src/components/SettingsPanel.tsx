@@ -46,28 +46,34 @@ export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Settings className="h-4 w-4 md:mr-2" />
-          <span className="hidden md:inline">{t('settings')}</span>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="h-9 w-9 sm:h-10 sm:w-10 text-muted-foreground hover:text-foreground hover:bg-secondary"
+        >
+          <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t('settings')}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            {t('settings')}
+          </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
+        <div className="space-y-5 py-4">
           {/* Language Selection */}
           <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
+            <Label className="flex items-center gap-2 text-sm font-medium">
+              <Globe className="h-4 w-4 text-muted-foreground" />
               {t('language')}
             </Label>
             <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
-              <SelectTrigger>
+              <SelectTrigger className="h-10 bg-secondary/50 border-border">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-card border-border">
                 {languages.map((lang) => (
                   <SelectItem key={lang.code} value={lang.code}>
                     {lang.name}
@@ -79,15 +85,15 @@ export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
 
           {/* Theme Selection */}
           <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Palette className="h-4 w-4" />
+            <Label className="flex items-center gap-2 text-sm font-medium">
+              <Palette className="h-4 w-4 text-muted-foreground" />
               {t('theme')}
             </Label>
             <Select value={theme} onValueChange={(v) => setTheme(v as ThemeKey)}>
-              <SelectTrigger>
+              <SelectTrigger className="h-10 bg-secondary/50 border-border">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-card border-border">
                 {themes.map((themeOption) => (
                   <SelectItem key={themeOption.key} value={themeOption.key}>
                     {t(themeOption.labelKey as TranslationKey)}
@@ -100,20 +106,20 @@ export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
           {/* Backup Section */}
           {(onExport || onImport) && (
             <>
-              <Separator />
+              <Separator className="bg-border" />
               <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <Database className="h-4 w-4" />
+                <Label className="flex items-center gap-2 text-sm font-medium">
+                  <Database className="h-4 w-4 text-muted-foreground" />
                   {t('backup')}
                 </Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {t('backupDescription')}
                 </p>
                 <div className="flex gap-2">
                   {onImport && (
                     <Button
                       variant="outline"
-                      className="flex-1"
+                      className="flex-1 h-9 border-border hover:bg-secondary"
                       onClick={handleImportClick}
                     >
                       <Upload className="h-4 w-4 mr-2" />
@@ -123,7 +129,7 @@ export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
                   {onExport && (
                     <Button
                       variant="outline"
-                      className="flex-1"
+                      className="flex-1 h-9 border-border hover:bg-secondary"
                       onClick={onExport}
                     >
                       <Download className="h-4 w-4 mr-2" />
