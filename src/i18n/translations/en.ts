@@ -33,7 +33,7 @@ export const en: Record<TranslationKey, string> = {
   goals: 'Goals',
   
   // Category Names
-  'custos-fixos': 'Fixed Costs',
+  'essenciais': 'Essentials',
   'conforto': 'Comfort',
   'metas': 'Goals',
   'prazeres': 'Pleasures',
@@ -43,18 +43,24 @@ export const en: Record<TranslationKey, string> = {
   // Expense List
   monthExpenses: 'Monthly expenses',
   noExpenses: 'No expenses recorded',
-  addExpense: 'Add expense',
-  editExpense: 'Edit expense',
+  addExpense: 'Add Expense',
+  newExpense: 'New Expense',
+  editExpense: 'Edit Expense',
   expenseTitle: 'Title',
   expenseValue: 'Value',
   expenseCategory: 'Category',
   expenseSubcategory: 'Subcategory',
+  saveChanges: 'Save changes',
   
   // Recurring Expenses
-  recurringExpenses: 'Recurring expenses',
-  addRecurringExpense: 'Add recurring expense',
-  editRecurringExpense: 'Edit recurring expense',
+  recurringExpenses: 'Recurring Expenses',
+  addRecurringExpense: 'Add Recurring',
+  newRecurringExpense: 'New Recurring Expense',
+  editRecurringExpense: 'Edit Recurring Expense',
+  recurringExpensesDescription: 'These expenses are automatically added to each new month.',
+  noRecurringExpenses: 'No recurring expenses registered',
   dueDay: 'Due day',
+  day: 'Day',
   hasInstallments: 'Fixed term',
   totalInstallments: 'Number of installments',
   startMonth: 'Start month',
@@ -62,16 +68,18 @@ export const en: Record<TranslationKey, string> = {
   installment: 'Installment',
   
   // Pending Payment
-  pendingPayment: 'Pending payment',
+  pendingPayment: 'Pending Payment',
   confirmPayment: 'Confirm payment',
   confirmPaymentMessage: 'Do you want to confirm the payment of this expense?',
   dueOn: 'Due on',
   
   // Subcategories
   subcategories: 'Subcategories',
+  manageSubcategories: 'Manage Subcategories',
   addSubcategory: 'Add subcategory',
   editSubcategory: 'Edit subcategory',
   subcategoryName: 'Subcategory name',
+  noSubcategories: 'No subcategories',
   
   // Summary
   spent: 'Spent',
@@ -94,14 +102,16 @@ export const en: Record<TranslationKey, string> = {
   emptyStateSubtitle: 'Click the + button next to the month selector.',
   
   // Update Options
-  updateRecurringTitle: 'Update recurring expense',
-  updateFutureOnly: 'Only future expenses',
-  updateAll: 'All expenses (including past)',
+  updateRecurringTitle: 'Apply changes',
+  updateRecurringDescription: 'Do you want to apply changes only to future expenses or also update expenses already created in previous months?',
+  updateFutureOnly: 'Only Future',
+  updateAll: 'Update All',
   
   // Settings
   settings: 'Settings',
   language: 'Language',
   theme: 'Theme',
+  importExport: 'Import / Export',
   
   // Languages
   portuguese: 'Português',
@@ -115,4 +125,18 @@ export const en: Record<TranslationKey, string> = {
   themeSolarized: 'Solarized',
   themeGruvbox: 'Gruvbox',
   themeCatppuccin: 'Catppuccin',
+  
+  // Months
+  'month-0': 'January',
+  'month-1': 'February',
+  'month-2': 'March',
+  'month-3': 'April',
+  'month-4': 'May',
+  'month-5': 'June',
+  'month-6': 'July',
+  'month-7': 'August',
+  'month-8': 'September',
+  'month-9': 'October',
+  'month-10': 'November',
+  'month-11': 'December',
 };

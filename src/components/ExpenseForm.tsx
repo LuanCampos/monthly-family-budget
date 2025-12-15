@@ -13,6 +13,7 @@ import { CategoryKey, Subcategory } from '@/types/budget';
 import { DEFAULT_CATEGORY } from '@/constants/categories';
 import { ExpenseFormFields } from './ExpenseFormFields';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type ExpenseFormMode = 'create' | 'edit';
 
@@ -43,6 +44,7 @@ export const ExpenseForm = ({
   onCancel,
   disabled,
 }: ExpenseFormProps) => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<CategoryKey>(DEFAULT_CATEGORY);
@@ -111,7 +113,7 @@ export const ExpenseForm = ({
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Adicionar Gasto
+            {t('addExpense')}
           </Button>
         </DialogTrigger>
       )}
@@ -119,7 +121,7 @@ export const ExpenseForm = ({
       <DialogContent className="bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-foreground">
-            {mode === 'create' ? 'Novo Gasto' : 'Editar Gasto'}
+            {mode === 'create' ? t('newExpense') : t('editExpense')}
           </DialogTitle>
         </DialogHeader>
 
@@ -147,7 +149,7 @@ export const ExpenseForm = ({
                 htmlFor="isPending"
                 className="text-sm font-medium leading-none cursor-pointer"
               >
-                Pagamento Pendente
+                {t('pendingPayment')}
               </label>
             </div>
           )}
@@ -156,7 +158,7 @@ export const ExpenseForm = ({
             onClick={handleSubmit}
             className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {mode === 'create' ? 'Adicionar' : 'Salvar alterações'}
+            {mode === 'create' ? t('add') : t('saveChanges')}
           </Button>
         </div>
       </DialogContent>

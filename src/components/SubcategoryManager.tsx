@@ -16,7 +16,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CategoryKey, Subcategory } from '@/types/budget';
-import { CATEGORIES, getCategoryByKey } from '@/constants/categories';
+import { CATEGORIES } from '@/constants/categories';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { TranslationKey } from '@/i18n/translations/pt';
 
 interface SubcategoryManagerProps {
   subcategories: Subcategory[];
@@ -31,6 +33,7 @@ export const SubcategoryManager = ({
   onUpdate,
   onRemove,
 }: SubcategoryManagerProps) => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newCategory, setNewCategory] = useState<CategoryKey>('essenciais');
@@ -63,6 +66,7 @@ export const SubcategoryManager = ({
 
   const groupedSubcategories = CATEGORIES.map((cat) => ({
     ...cat,
+    translatedName: t(cat.name as TranslationKey),
     subcategories: subcategories.filter((sub) => sub.categoryKey === cat.key),
   }));
 
@@ -74,21 +78,21 @@ export const SubcategoryManager = ({
         onClick={() => setIsOpen(true)}
       >
         <Tags className="h-4 w-4 mr-2" />
-        Sub-categorias ({subcategories.length})
+        {t('subcategories')} ({subcategories.length})
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="bg-card border-border max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-foreground">
-              Gerenciar Sub-categorias
+              {t('manageSubcategories')}
             </DialogTitle>
           </DialogHeader>
 
           {/* Add new */}
           <div className="flex gap-2 mt-4">
             <Input
-              placeholder="Nome da sub-categoria"
+              placeholder={t('subcategoryName')}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               className="bg-secondary border-border"
@@ -109,7 +113,7 @@ export const SubcategoryManager = ({
                         className="w-2 h-2 rounded-full"
                         style={{ backgroundColor: cat.color }}
                       />
-                      {cat.name}
+                      {t(cat.name as TranslationKey)}
                     </div>
                   </SelectItem>
                 ))}
@@ -134,7 +138,7 @@ export const SubcategoryManager = ({
                     style={{ backgroundColor: cat.color }}
                   />
                   <span className="text-sm font-medium text-foreground">
-                    {cat.name}
+                    {cat.translatedName}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     ({cat.subcategories.length})
@@ -143,7 +147,7 @@ export const SubcategoryManager = ({
 
                 {cat.subcategories.length === 0 ? (
                   <p className="text-xs text-muted-foreground ml-5 mb-2">
-                    Nenhuma sub-categoria
+                    {t('noSubcategories')}
                   </p>
                 ) : (
                   <div className="space-y-1 ml-5">

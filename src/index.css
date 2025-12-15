@@ -6,7 +6,7 @@
 
 @layer base {
   /* Default Dark Theme */
-  :root, .theme-dark {
+  :root {
     --background: 30 6% 9%;
     --foreground: 40 20% 95%;
 
@@ -59,7 +59,7 @@
   }
 
   /* Light Theme */
-  .theme-light {
+  html.theme-light {
     --background: 0 0% 98%;
     --foreground: 222 47% 11%;
 
@@ -109,7 +109,7 @@
   }
 
   /* Nord Theme */
-  .theme-nord {
+  html.theme-nord {
     --background: 220 16% 16%;
     --foreground: 219 28% 88%;
 
@@ -159,7 +159,7 @@
   }
 
   /* Dracula Theme */
-  .theme-dracula {
+  html.theme-dracula {
     --background: 231 15% 18%;
     --foreground: 60 30% 96%;
 
@@ -209,7 +209,7 @@
   }
 
   /* Solarized Dark Theme */
-  .theme-solarized {
+  html.theme-solarized {
     --background: 192 100% 5%;
     --foreground: 44 87% 94%;
 
@@ -259,7 +259,7 @@
   }
 
   /* Gruvbox Theme */
-  .theme-gruvbox {
+  html.theme-gruvbox {
     --background: 0 0% 16%;
     --foreground: 48 87% 87%;
 
@@ -309,7 +309,7 @@
   }
 
   /* Catppuccin Mocha Theme */
-  .theme-catppuccin {
+  html.theme-catppuccin {
     --background: 240 21% 12%;
     --foreground: 226 64% 88%;
 

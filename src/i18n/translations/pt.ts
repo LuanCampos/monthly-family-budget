@@ -31,28 +31,34 @@ export const pt = {
   goals: 'Metas',
   
   // Category Names
-  'custos-fixos': 'Custos Fixos',
+  'essenciais': 'Essenciais',
   'conforto': 'Conforto',
   'metas': 'Metas',
   'prazeres': 'Prazeres',
-  'liberdade': 'Liberdade Financeira',
+  'liberdade': 'Liberdade financeira',
   'conhecimento': 'Conhecimento',
   
   // Expense List
   monthExpenses: 'Gastos do mês',
   noExpenses: 'Nenhum gasto registrado',
-  addExpense: 'Adicionar gasto',
-  editExpense: 'Editar gasto',
+  addExpense: 'Adicionar Gasto',
+  newExpense: 'Novo Gasto',
+  editExpense: 'Editar Gasto',
   expenseTitle: 'Título',
   expenseValue: 'Valor',
   expenseCategory: 'Categoria',
   expenseSubcategory: 'Subcategoria',
+  saveChanges: 'Salvar alterações',
   
   // Recurring Expenses
-  recurringExpenses: 'Gastos recorrentes',
-  addRecurringExpense: 'Adicionar gasto recorrente',
-  editRecurringExpense: 'Editar gasto recorrente',
+  recurringExpenses: 'Gastos Recorrentes',
+  addRecurringExpense: 'Adicionar Recorrente',
+  newRecurringExpense: 'Novo Gasto Recorrente',
+  editRecurringExpense: 'Editar Gasto Recorrente',
+  recurringExpensesDescription: 'Estes gastos são adicionados automaticamente a cada novo mês.',
+  noRecurringExpenses: 'Nenhum gasto recorrente cadastrado',
   dueDay: 'Dia de vencimento',
+  day: 'Dia',
   hasInstallments: 'Prazo determinado',
   totalInstallments: 'Número de parcelas',
   startMonth: 'Mês inicial',
@@ -60,16 +66,18 @@ export const pt = {
   installment: 'Parcela',
   
   // Pending Payment
-  pendingPayment: 'Pagamento pendente',
+  pendingPayment: 'Pagamento Pendente',
   confirmPayment: 'Confirmar pagamento',
   confirmPaymentMessage: 'Deseja confirmar o pagamento deste gasto?',
   dueOn: 'Vence dia',
   
   // Subcategories
-  subcategories: 'Subcategorias',
+  subcategories: 'Sub-categorias',
+  manageSubcategories: 'Gerenciar Sub-categorias',
   addSubcategory: 'Adicionar subcategoria',
   editSubcategory: 'Editar subcategoria',
-  subcategoryName: 'Nome da subcategoria',
+  subcategoryName: 'Nome da sub-categoria',
+  noSubcategories: 'Nenhuma sub-categoria',
   
   // Summary
   spent: 'Gasto',
@@ -92,14 +100,16 @@ export const pt = {
   emptyStateSubtitle: 'Clique no botão + ao lado do seletor de mês.',
   
   // Update Options
-  updateRecurringTitle: 'Atualizar gasto recorrente',
-  updateFutureOnly: 'Apenas gastos futuros',
-  updateAll: 'Todos os gastos (incluindo anteriores)',
+  updateRecurringTitle: 'Aplicar alterações',
+  updateRecurringDescription: 'Deseja aplicar as alterações apenas aos gastos futuros ou também atualizar os gastos já criados em meses anteriores?',
+  updateFutureOnly: 'Apenas Futuros',
+  updateAll: 'Atualizar Todos',
   
   // Settings
   settings: 'Configurações',
   language: 'Idioma',
   theme: 'Tema',
+  importExport: 'Importar / Exportar',
   
   // Languages
   portuguese: 'Português',
@@ -113,6 +123,20 @@ export const pt = {
   themeSolarized: 'Solarized',
   themeGruvbox: 'Gruvbox',
   themeCatppuccin: 'Catppuccin',
+  
+  // Months
+  'month-0': 'Janeiro',
+  'month-1': 'Fevereiro',
+  'month-2': 'Março',
+  'month-3': 'Abril',
+  'month-4': 'Maio',
+  'month-5': 'Junho',
+  'month-6': 'Julho',
+  'month-7': 'Agosto',
+  'month-8': 'Setembro',
+  'month-9': 'Outubro',
+  'month-10': 'Novembro',
+  'month-11': 'Dezembro',
 };
 
 export type TranslationKey = keyof typeof pt;

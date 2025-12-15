@@ -1,12 +1,12 @@
 import { Category, CategoryKey } from '@/types/budget';
 
 export const CATEGORIES: Category[] = [
-  { key: 'essenciais', name: 'Essenciais', percentage: 30, color: 'hsl(187, 85%, 53%)' },
-  { key: 'conforto', name: 'Conforto', percentage: 10, color: 'hsl(160, 84%, 39%)' },
-  { key: 'metas', name: 'Metas', percentage: 20, color: 'hsl(48, 96%, 53%)' },
-  { key: 'prazeres', name: 'Prazeres', percentage: 10, color: 'hsl(291, 64%, 42%)' },
-  { key: 'liberdade', name: 'Liberdade financeira', percentage: 25, color: 'hsl(217, 91%, 60%)' },
-  { key: 'conhecimento', name: 'Conhecimento', percentage: 5, color: 'hsl(25, 95%, 53%)' },
+  { key: 'essenciais', name: 'essenciais', percentage: 30, color: 'hsl(187, 85%, 53%)' },
+  { key: 'conforto', name: 'conforto', percentage: 10, color: 'hsl(160, 84%, 39%)' },
+  { key: 'metas', name: 'metas', percentage: 20, color: 'hsl(48, 96%, 53%)' },
+  { key: 'prazeres', name: 'prazeres', percentage: 10, color: 'hsl(291, 64%, 42%)' },
+  { key: 'liberdade', name: 'liberdade', percentage: 25, color: 'hsl(217, 91%, 60%)' },
+  { key: 'conhecimento', name: 'conhecimento', percentage: 5, color: 'hsl(25, 95%, 53%)' },
 ];
 
 export const DEFAULT_CATEGORY: CategoryKey = 'essenciais';
@@ -16,6 +16,6 @@ export const getCategoryByKey = (key: CategoryKey): Category => {
 };
 
 export const MONTH_NAMES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+  'month-0', 'month-1', 'month-2', 'month-3', 'month-4', 'month-5',
+  'month-6', 'month-7', 'month-8', 'month-9', 'month-10', 'month-11',
 ] as const;
