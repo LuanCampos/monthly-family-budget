@@ -6,7 +6,7 @@ export default {
   prefix: "",
   theme: {
     screens: {
-      'xs': '400px',
+      'xs': '900px',
       'sm': '640px',
       'md': '768px',
       'lg': '1024px',
