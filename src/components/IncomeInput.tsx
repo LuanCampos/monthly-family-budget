@@ -27,7 +27,7 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
   };
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
       <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground whitespace-nowrap">
         <DollarSign className="h-4 w-4" />
         {t('monthlyIncome')}
@@ -45,7 +45,7 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
           onBlur={handleBlur}
           disabled={disabled}
           placeholder="0,00"
-          className="pl-10 h-9 py-0 bg-secondary/50 border-border text-primary !text-base font-bold placeholder:text-muted-foreground"
+          className="pl-10 h-10 py-0 bg-secondary/50 border-border text-primary !text-base font-bold placeholder:text-muted-foreground"
         />
       </div>
     </div>
