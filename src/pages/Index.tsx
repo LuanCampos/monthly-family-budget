@@ -187,9 +187,9 @@ const Index = () => {
 
             {/* Expense List Section */}
             <div className="dashboard-card">
-              <div className="dashboard-card-header flex-col xs:flex-row gap-2 xs:gap-3">
-                <span className="dashboard-card-title">{t('monthExpenses')}</span>
-                <div className="action-btn-group w-full xs:w-auto justify-center xs:justify-end">
+              <div className="dashboard-card-header flex-wrap gap-2 xs:gap-3">
+                <span className="dashboard-card-title flex-1">{t('monthExpenses')}</span>
+                <div className="action-btn-group justify-center xs:justify-end">
                   <SubcategoryManager
                     subcategories={subcategories}
                     onAdd={addSubcategory}
