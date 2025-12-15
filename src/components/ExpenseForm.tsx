@@ -110,10 +110,12 @@ export const ExpenseForm = ({
         <DialogTrigger asChild>
           <Button
             disabled={disabled}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            {t('addExpense')}
+            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden xs:inline">{t('addExpense')}</span>
+            <span className="xs:hidden">+</span>
           </Button>
         </DialogTrigger>
       )}

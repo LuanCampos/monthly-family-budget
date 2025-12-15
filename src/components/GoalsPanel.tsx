@@ -38,11 +38,11 @@ export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
 
   return (
     <div>
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {CATEGORIES.map((cat) => (
           <div key={cat.key} className="flex justify-between items-center">
-            <span className="text-foreground">{t(cat.key as TranslationKey)}</span>
-            <span className="text-foreground font-medium">
+            <span className="text-foreground text-sm sm:text-base">{t(cat.key as TranslationKey)}</span>
+            <span className="text-foreground font-medium text-sm sm:text-base">
               {percentages[cat.key]}%
             </span>
           </div>
