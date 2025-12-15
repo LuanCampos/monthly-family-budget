@@ -1,23 +1,22 @@
+import { useState } from 'react';
 import { Trash2, Pencil, RefreshCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Expense, Subcategory, CategoryKey } from '@/types/budget';
 import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
 import { formatCurrency } from '@/utils/formatters';
 
-export type FilterType = 
-  | { type: 'category'; value: CategoryKey }
-  | { type: 'subcategory'; value: string }
-  | { type: 'recurring' }
-  | null;
-
 interface ExpenseListProps {
   expenses: Expense[];
   subcategories: Subcategory[];
   onRemove: (id: string) => void;
   onEdit: (expense: Expense) => void;
-  filter: FilterType;
-  onFilterChange: (filter: FilterType) => void;
 }
+
+type FilterType = 
+  | { type: 'category'; value: CategoryKey }
+  | { type: 'subcategory'; value: string }
+  | { type: 'recurring' }
+  | null;
 
 const generateSubcategoryColor = (
   baseColor: string,
@@ -37,7 +36,8 @@ const generateSubcategoryColor = (
   return `hsl(${h}, ${s}%, ${newL}%)`;
 };
 
-export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, filter, onFilterChange }: ExpenseListProps) => {
+export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: ExpenseListProps) => {
+  const [filter, setFilter] = useState<FilterType>(null);
 
   if (expenses.length === 0) {
     return (
@@ -116,12 +116,12 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, filter,
           <span className="text-sm text-muted-foreground">Filtro:</span>
           <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-primary/20 text-primary">
             {getFilterLabel()}
-              <button
-                onClick={() => onFilterChange(null)}
-                className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
-              >
-                <X className="h-3 w-3" />
-              </button>
+            <button
+              onClick={() => setFilter(null)}
+              className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+            >
+              <X className="h-3 w-3" />
+            </button>
           </span>
         </div>
       )}
@@ -151,7 +151,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, filter,
                 </span>
 
                 <button
-                  onClick={() => onFilterChange({ type: 'category', value: expense.category })}
+                  onClick={() => setFilter({ type: 'category', value: expense.category })}
                   className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
                 >
                   {cat.name}
@@ -159,7 +159,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, filter,
 
                 {subInfo && (
                   <button
-                    onClick={() => onFilterChange({ type: 'subcategory', value: subInfo.id })}
+                    onClick={() => setFilter({ type: 'subcategory', value: subInfo.id })}
                     className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
                   >
                     {subInfo.name}
@@ -168,7 +168,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, filter,
 
                 {expense.isRecurring && (
                   <button
-                    onClick={() => onFilterChange({ type: 'recurring' })}
+                    onClick={() => setFilter({ type: 'recurring' })}
                     className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
                   >
                     <RefreshCw className="h-3 w-3" />

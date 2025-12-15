@@ -1,19 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useBudget } from '@/hooks/useBudget';
 import { MonthSelector } from '@/components/MonthSelector';
 import { IncomeInput } from '@/components/IncomeInput';
-import { ExpenseChartContainer } from '@/components/ExpenseChartContainer';
+import { ExpenseChart } from '@/components/ExpenseChart';
+import { SubcategoryChart } from '@/components/SubcategoryChart';
 import { CategoryLegend } from '@/components/CategoryLegend';
 import { SummaryTable } from '@/components/SummaryTable';
 import { GoalsPanel } from '@/components/GoalsPanel';
 import { ExpenseForm } from '@/components/ExpenseForm';
 import { RecurringExpenses } from '@/components/RecurringExpenses';
-import { ExpenseList, FilterType } from '@/components/ExpenseList';
+import { ExpenseList } from '@/components/ExpenseList';
 import { SubcategoryManager } from '@/components/SubcategoryManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const Index = () => {
   const {
@@ -45,26 +47,6 @@ const Index = () => {
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [activeCategory, setActiveCategory] = useState<CategoryKey | null>(null);
-  const [filter, setFilter] = useState<FilterType>(null);
-
-  // Sync filter with activeCategory
-  const handleFilterChange = (newFilter: FilterType) => {
-    setFilter(newFilter);
-    if (newFilter?.type === 'category') {
-      setActiveCategory(newFilter.value);
-    } else if (newFilter === null) {
-      setActiveCategory(null);
-    }
-  };
-
-  const handleCategorySelect = (category: CategoryKey | null) => {
-    setActiveCategory(category);
-    if (category) {
-      setFilter({ type: 'category', value: category });
-    } else {
-      setFilter(null);
-    }
-  };
 
   const categorySummary = getCategorySummary();
   const { totalSpent, totalBudget, usedPercentage } = getTotals();
@@ -155,7 +137,7 @@ const Index = () => {
               <CardTitle>Gastos</CardTitle>
             </CardHeader>
             <CardContent>
-              <ExpenseChartContainer
+              <ExpenseChart
                 data={categorySummary.map(c => ({
                   key: c.key,
                   name: c.name,
@@ -163,12 +145,9 @@ const Index = () => {
                   color: c.color,
                 }))}
                 hasExpenses={hasExpenses}
-                expenses={currentMonth?.expenses || []}
-                subcategories={subcategories}
-                activeCategory={activeCategory}
-                onSelectCategory={handleCategorySelect}
+                onSelectCategory={setActiveCategory}
               />
-              {!activeCategory && <CategoryLegend />}
+              <CategoryLegend />
             </CardContent>
           </Card>
 
@@ -233,8 +212,6 @@ const Index = () => {
                 subcategories={subcategories}
                 onRemove={removeExpense}
                 onEdit={handleEditExpense}
-                filter={filter}
-                onFilterChange={handleFilterChange}
               />
             </CardContent>
           </Card>
@@ -252,6 +229,25 @@ const Index = () => {
           </div>
         )}
       </div>
+
+      {/* Subcategory Chart Modal */}
+      <Dialog
+        open={!!activeCategory}
+        onOpenChange={(open) => {
+          if (!open) setActiveCategory(null);
+        }}
+      >
+        <DialogContent className="w-full max-w-3xl p-4 md:p-6 overflow-y-auto">
+          {activeCategory && currentMonth && (
+            <SubcategoryChart
+              categoryKey={activeCategory}
+              expenses={currentMonth.expenses}
+              subcategories={subcategories}
+              onBack={() => setActiveCategory(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Expense Edit */}
       {editingExpense && (
