@@ -1,21 +1,33 @@
 import { useState } from 'react';
-import { Trash2, Pencil, RefreshCw, X } from 'lucide-react';
+import { Trash2, Pencil, RefreshCw, X, AlertCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Expense, Subcategory, CategoryKey } from '@/types/budget';
 import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
 import { formatCurrency } from '@/utils/formatters';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ExpenseListProps {
   expenses: Expense[];
   subcategories: Subcategory[];
   onRemove: (id: string) => void;
   onEdit: (expense: Expense) => void;
+  onConfirmPayment: (id: string) => void;
 }
 
 type FilterType = 
   | { type: 'category'; value: CategoryKey }
   | { type: 'subcategory'; value: string }
   | { type: 'recurring' }
+  | { type: 'pending' }
   | null;
 
 const generateSubcategoryColor = (
@@ -36,8 +48,9 @@ const generateSubcategoryColor = (
   return `hsl(${h}, ${s}%, ${newL}%)`;
 };
 
-export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: ExpenseListProps) => {
+export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfirmPayment }: ExpenseListProps) => {
   const [filter, setFilter] = useState<FilterType>(null);
+  const [confirmPaymentId, setConfirmPaymentId] = useState<string | null>(null);
 
   if (expenses.length === 0) {
     return (
@@ -73,6 +86,9 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
     if (filter.type === 'recurring') {
       return expense.isRecurring;
     }
+    if (filter.type === 'pending') {
+      return expense.isPending;
+    }
     return true;
   });
 
@@ -106,7 +122,17 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
     if (filter.type === 'recurring') {
       return 'Recorrentes';
     }
+    if (filter.type === 'pending') {
+      return 'Pendentes';
+    }
     return '';
+  };
+
+  const handleConfirmPayment = () => {
+    if (confirmPaymentId) {
+      onConfirmPayment(confirmPaymentId);
+      setConfirmPaymentId(null);
+    }
   };
 
   return (
@@ -178,6 +204,22 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
                         <RefreshCw className="h-3 w-3" />
                       </button>
                     )}
+
+                    {expense.isPending && (
+                      <button
+                        onClick={() => setConfirmPaymentId(expense.id)}
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-destructive/20 text-destructive hover:bg-destructive/30 transition-colors cursor-pointer"
+                        title="Clique para confirmar pagamento"
+                      >
+                        <AlertCircle className="h-3 w-3" />
+                        {expense.dueDay && (
+                          <span className="flex items-center gap-0.5">
+                            <Calendar className="h-2.5 w-2.5" />
+                            {expense.dueDay}
+                          </span>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -209,6 +251,26 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
           );
         })
       )}
+
+      <AlertDialog open={!!confirmPaymentId} onOpenChange={(open) => !open && setConfirmPaymentId(null)}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Pagamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja confirmar que este pagamento foi realizado? A pendência será removida.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmPayment}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Confirmar Pagamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
