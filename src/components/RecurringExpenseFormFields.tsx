@@ -8,7 +8,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { YearSelector } from '@/components/ui/year-selector';
-import { CATEGORIES, CategoryKey, Subcategory } from '@/types/budget';
+import { CategoryKey, Subcategory } from '@/types/budget';
+import { CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TranslationKey } from '@/i18n/translations/pt';
 

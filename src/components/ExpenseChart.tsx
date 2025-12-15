@@ -1,6 +1,8 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { CategoryKey } from '@/types/budget';
 import { formatCurrency } from '@/utils/formatters';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { TranslationKey } from '@/i18n/translations/pt';
 
 interface CategorySummary {
   key: CategoryKey;
@@ -20,10 +22,12 @@ export const ExpenseChart = ({
   hasExpenses,
   onSelectCategory,
 }: ExpenseChartProps) => {
+  const { t } = useLanguage();
+
   if (!hasExpenses) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground text-center px-4">
-        Você não possui gastos cadastrados
+        {t('noExpenses')}
       </div>
     );
   }
@@ -40,7 +44,7 @@ export const ExpenseChart = ({
   if (chartData.length === 0) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground text-center px-4">
-        Você não possui gastos cadastrados
+        {t('noExpenses')}
       </div>
     );
   }
@@ -82,16 +86,11 @@ export const ExpenseChart = ({
                 return (
                   <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg">
                     <p className="text-sm font-medium text-foreground">
-                      {data.name}
+                      {t(data.key as TranslationKey)}
                     </p>
                     <p className="text-sm text-primary">
                       {formatCurrency(data.value)}
                     </p>
-                    {onSelectCategory && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Clique para ver detalhes
-                      </p>
-                    )}
                   </div>
                 );
               }

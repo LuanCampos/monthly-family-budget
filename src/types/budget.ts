@@ -57,16 +57,3 @@ export interface Month {
   income: number;
   expenses: Expense[];
 }
-
-// Re-export para manter compatibilidade com imports existentes
-export { 
-  CATEGORIES, 
-  getCategoryByKey, 
-  DEFAULT_CATEGORY,
-  MONTH_NAMES 
-} from '@/constants/categories';
-
-export { 
-  formatCurrency, 
-  formatPercentage 
-} from '@/utils/formatters';

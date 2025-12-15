@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Month, Expense, CategoryKey, Subcategory, RecurringExpense } from '@/types/budget';
-import { CATEGORIES, MONTH_NAMES } from '@/constants/categories';
+import { CATEGORIES } from '@/constants/categories';
 
 const STORAGE_KEY = 'budget-data';
 const RECURRING_KEY = 'recurring-expenses';
@@ -17,7 +17,7 @@ const generateMonthId = (year: number, month: number): string => {
 };
 
 const getMonthLabel = (year: number, month: number): string => {
-  return `${MONTH_NAMES[month - 1]}/${year}`;
+  return `${month.toString().padStart(2, '0')}/${year}`;
 };
 
 // Calculate which installment number this month represents
