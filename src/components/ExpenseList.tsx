@@ -58,8 +58,8 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
 
   if (expenses.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        <p>{t('noExpenses')}</p>
+      <div className="text-center py-12 text-muted-foreground">
+        <p className="text-sm">{t('noExpenses')}</p>
       </div>
     );
   }
@@ -147,13 +147,13 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
   return (
     <div className="space-y-2">
       {filter && (
-        <div className="flex items-center gap-2 pb-2 border-b border-border">
-          <span className="text-sm text-muted-foreground">{t('all')}:</span>
-          <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-primary/20 text-primary">
+        <div className="flex items-center gap-2 pb-3 border-b border-border mb-3">
+          <span className="text-xs text-muted-foreground">{t('all')}:</span>
+          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-primary/20 text-primary font-medium">
             {getFilterLabel()}
             <button
               onClick={() => setFilter(null)}
-              className="ml-1 hover:bg-primary/30 rounded-full p-0.5"
+              className="ml-1 hover:bg-primary/30 rounded-full p-0.5 transition-colors"
             >
               <X className="h-3 w-3" />
             </button>
@@ -162,119 +162,120 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
       )}
 
       {sortedExpenses.length === 0 ? (
-        <div className="text-center py-4 text-muted-foreground">
-          <p>{t('noExpenses')}</p>
+        <div className="text-center py-8 text-muted-foreground">
+          <p className="text-sm">{t('noExpenses')}</p>
         </div>
       ) : (
-        sortedExpenses.map((expense) => {
-          const cat = getCategoryByKey(expense.category);
-          const subInfo = getSubcategoryInfo(expense.subcategoryId);
+        <div className="space-y-1.5">
+          {sortedExpenses.map((expense) => {
+            const cat = getCategoryByKey(expense.category);
+            const subInfo = getSubcategoryInfo(expense.subcategoryId);
 
-          return (
-            <div
-              key={expense.id}
-              className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg group"
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: cat.color }}
-                />
-              
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <span className="text-sm text-foreground font-medium whitespace-nowrap">
-                    {expense.title}
+            return (
+              <div
+                key={expense.id}
+                className="flex items-center justify-between p-3 bg-secondary/30 hover:bg-secondary/50 rounded-lg group transition-colors"
+              >
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: cat.color }}
+                  />
+                
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                    <span className="text-sm text-foreground font-medium truncate">
+                      {expense.title}
+                    </span>
+                
+                    <div className="flex flex-wrap items-center gap-1">
+                      <button
+                        onClick={() => setFilter({ type: 'category', value: expense.category })}
+                        className="text-xs px-2 py-0.5 rounded-full bg-muted/70 text-muted-foreground hover:bg-muted transition-colors"
+                      >
+                        {t(cat.key as TranslationKey)}
+                      </button>
+                
+                      {subInfo && (
+                        <button
+                          onClick={() => setFilter({ type: 'subcategory', value: subInfo.id })}
+                          className="text-xs px-2 py-0.5 rounded-full bg-muted/70 text-muted-foreground hover:bg-muted transition-colors"
+                        >
+                          {subInfo.name}
+                        </button>
+                      )}
+                
+                      {expense.isRecurring && (
+                        <button
+                          onClick={() => setFilter({ type: 'recurring' })}
+                          className="inline-flex items-center text-xs px-1.5 py-0.5 rounded-full bg-muted/70 text-muted-foreground hover:bg-muted transition-colors"
+                          title={t('recurring')}
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                        </button>
+                      )}
+
+                      {expense.installmentInfo && (
+                        <button
+                          onClick={() => setFilter({ type: 'installments' })}
+                          className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted/70 text-muted-foreground hover:bg-muted transition-colors"
+                        >
+                          <CreditCard className="h-3 w-3" />
+                          <span>{expense.installmentInfo.current}/{expense.installmentInfo.total}</span>
+                        </button>
+                      )}
+
+                      {expense.isPending && (
+                        <button
+                          onClick={() => setConfirmPaymentId(expense.id)}
+                          className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-destructive/20 text-destructive hover:bg-destructive/30 transition-colors"
+                          title={t('confirmPayment')}
+                        >
+                          <AlertCircle className="h-3 w-3" />
+                          {expense.dueDay && (
+                            <span className="flex items-center gap-0.5">
+                              <Calendar className="h-2.5 w-2.5" />
+                              {expense.dueDay}
+                            </span>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
+                  <span className="text-sm text-foreground font-semibold tabular-nums">
+                    {formatCurrency(expense.value)}
                   </span>
-              
-                  <div className="flex flex-wrap items-center gap-1">
-                    <button
-                      onClick={() => setFilter({ type: 'category', value: expense.category })}
-                      className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+
+                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit(expense)}
+                      className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
                     >
-                      {t(cat.key as TranslationKey)}
-                    </button>
-              
-                    {subInfo && (
-                      <button
-                        onClick={() =>
-                          setFilter({ type: 'subcategory', value: subInfo.id })
-                        }
-                        className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
-                      >
-                        {subInfo.name}
-                      </button>
-                    )}
-              
-                    {expense.isRecurring && (
-                      <button
-                        onClick={() => setFilter({ type: 'recurring' })}
-                        className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
-                      >
-                        <RefreshCw className="h-3 w-3" />
-                      </button>
-                    )}
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
 
-                    {expense.installmentInfo && (
-                      <button
-                        onClick={() => setFilter({ type: 'installments' })}
-                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
-                      >
-                        <CreditCard className="h-3 w-3" />
-                        <span>
-                          {expense.installmentInfo.current}/{expense.installmentInfo.total}
-                        </span>
-                      </button>
-                    )}
-
-                    {expense.isPending && (
-                      <button
-                        onClick={() => setConfirmPaymentId(expense.id)}
-                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-destructive/20 text-destructive hover:bg-destructive/30 transition-colors cursor-pointer"
-                        title={t('confirmPayment')}
-                      >
-                        <AlertCircle className="h-3 w-3" />
-                        {expense.dueDay && (
-                          <span className="flex items-center gap-0.5">
-                            <Calendar className="h-2.5 w-2.5" />
-                            {expense.dueDay}
-                          </span>
-                        )}
-                      </button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onRemove(expense.id)}
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               </div>
-
-              <div className="flex items-center gap-1">
-                <span className="text-sm text-foreground font-medium mr-2">
-                  {formatCurrency(expense.value)}
-                </span>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onEdit(expense)}
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary hover:bg-primary/10"
-                >
-                  <Pencil className="h-3 w-3" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onRemove(expense.id)}
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          );
-        })
+            );
+          })}
+        </div>
       )}
 
       <AlertDialog open={!!confirmPaymentId} onOpenChange={(open) => !open && setConfirmPaymentId(null)}>
-        <AlertDialogContent className="bg-card border-border">
+        <AlertDialogContent className="bg-card border-border max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('confirmPayment')}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -282,10 +283,10 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmPayment}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="h-9 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {t('confirm')}
             </AlertDialogAction>

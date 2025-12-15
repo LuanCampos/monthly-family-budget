@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
+import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput, formatCurrency } from '@/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { DollarSign } from 'lucide-react';
 
 interface IncomeInputProps {
   value: number;
@@ -26,21 +27,34 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
   };
 
   return (
-    <div className="flex flex-col">
-      <label className="text-sm text-primary mb-1 font-medium">{t('monthlyIncome')}</label>
-      <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-          R$
-        </span>
-        <Input
-          type="text"
-          value={inputValue}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          disabled={disabled}
-          placeholder="0,00"
-          className="pl-10 bg-secondary border-border text-foreground placeholder:text-muted-foreground"
-        />
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+      <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground whitespace-nowrap">
+        <DollarSign className="h-4 w-4" />
+        {t('monthlyIncome')}
+      </label>
+      
+      <div className="flex items-center gap-3 flex-1">
+        <div className="relative flex-1 max-w-xs">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+            R$
+          </span>
+          <Input
+            type="text"
+            inputMode="decimal"
+            value={inputValue}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            disabled={disabled}
+            placeholder="0,00"
+            className="pl-10 h-10 bg-secondary/50 border-border text-foreground font-medium placeholder:text-muted-foreground"
+          />
+        </div>
+        
+        {value > 0 && (
+          <span className="text-lg sm:text-xl font-bold text-primary whitespace-nowrap">
+            {formatCurrency(value)}
+          </span>
+        )}
       </div>
     </div>
   );
