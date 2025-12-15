@@ -1,4 +1,4 @@
-import { Settings, Globe, Palette } from 'lucide-react';
+import { Settings, Globe, Palette, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,14 +15,33 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme, themes, ThemeKey } from '@/contexts/ThemeContext';
 import { languages, Language } from '@/i18n';
 import { TranslationKey } from '@/i18n/translations/pt';
 
-export const SettingsPanel = () => {
+interface SettingsPanelProps {
+  onExport?: () => void;
+  onImport?: (file: File) => void;
+}
+
+export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
+
+  const handleImportClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file && onImport) {
+        onImport(file);
+      }
+    };
+    input.click();
+  };
 
   return (
     <Dialog>
@@ -77,6 +96,40 @@ export const SettingsPanel = () => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Import/Export */}
+          {(onExport || onImport) && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  {t('importExport')}
+                </Label>
+                <div className="flex gap-2">
+                  {onImport && (
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={handleImportClick}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {t('import')}
+                    </Button>
+                  )}
+                  {onExport && (
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={onExport}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      {t('export')}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

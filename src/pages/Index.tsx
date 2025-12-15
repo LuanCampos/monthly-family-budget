@@ -15,8 +15,6 @@ import { SubcategoryManager } from '@/components/SubcategoryManager';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Expense, CategoryKey } from '@/types/budget';
-import { Download, Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const Index = () => {
@@ -72,12 +70,8 @@ const Index = () => {
     setEditingExpense(null);
   };
 
-  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      importBudget(file);
-      e.target.value = '';
-    }
+  const handleImportFile = (file: File) => {
+    importBudget(file);
   };
 
   return (
@@ -94,31 +88,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="flex gap-2">
-            <input
-              type="file"
-              accept=".json"
-              id="import-budget"
-              className="hidden"
-              onChange={handleImportFile}
-            />
-
-            <SettingsPanel />
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => document.getElementById('import-budget')?.click()}
-            >
-              <Upload className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">{t('import')}</span>
-            </Button>
-
-            <Button variant="outline" size="sm" onClick={exportBudget}>
-              <Download className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">{t('export')}</span>
-            </Button>
-          </div>
+          <SettingsPanel onExport={exportBudget} onImport={handleImportFile} />
         </header>
 
         {/* Controls */}

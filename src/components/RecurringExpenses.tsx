@@ -7,6 +7,8 @@ import { getCategoryByKey, DEFAULT_CATEGORY } from '@/constants/categories';
 import { formatCurrency } from '@/utils/formatters';
 import { RecurringExpenseFormFields } from './RecurringExpenseFormFields';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { TranslationKey } from '@/i18n/translations/pt';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +59,7 @@ export const RecurringExpenses = ({
   onUpdate,
   onRemove,
 }: RecurringExpensesProps) => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<ViewMode>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -184,7 +187,7 @@ export const RecurringExpenses = ({
         onClick={() => setIsOpen(true)}
       >
         <RefreshCw className="h-4 w-4 mr-2" />
-        Gastos Recorrentes ({expenses.length})
+        {t('recurringExpenses')} ({expenses.length})
       </Button>
 
       <Dialog
@@ -198,10 +201,10 @@ export const RecurringExpenses = ({
           <DialogHeader>
             <DialogTitle className="text-foreground">
               {view === 'list'
-                ? 'Gastos Recorrentes'
+                ? t('recurringExpenses')
                 : view === 'add'
-                ? 'Novo Gasto Recorrente'
-                : 'Editar Gasto Recorrente'}
+                ? t('newRecurringExpense')
+                : t('editRecurringExpense')}
             </DialogTitle>
           </DialogHeader>
 
@@ -209,13 +212,13 @@ export const RecurringExpenses = ({
             {view === 'list' && (
               <>
                 <p className="text-sm text-muted-foreground">
-                  Estes gastos são adicionados automaticamente a cada novo mês.
+                  {t('recurringExpensesDescription')}
                 </p>
 
                 <div className="space-y-3 mt-2 pt-2">
                   {expenses.length === 0 ? (
                     <p className="text-center text-muted-foreground py-4">
-                      Nenhum gasto recorrente cadastrado
+                      {t('noRecurringExpenses')}
                     </p>
                   ) : (
                     expenses.map((exp) => {
@@ -244,12 +247,12 @@ export const RecurringExpenses = ({
                                 )}
                               </div>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <span>{cat.name}</span>
+                                <span>{t(cat.name as TranslationKey)}</span>
                                 {subName && <span>• {subName}</span>}
                                 {exp.dueDay && (
                                   <span className="inline-flex items-center gap-0.5">
                                     <Calendar className="h-3 w-3" />
-                                    Dia {exp.dueDay}
+                                    {t('day')} {exp.dueDay}
                                   </span>
                                 )}
                               </div>
@@ -318,10 +321,10 @@ export const RecurringExpenses = ({
                 onClick={handleSubmit}
                 className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                {view === 'add' ? 'Adicionar' : 'Salvar'}
+                {view === 'add' ? t('add') : t('save')}
               </Button>
               <Button variant="outline" onClick={() => setView('list')}>
-                Cancelar
+                {t('cancel')}
               </Button>
             </div>
           )}
@@ -332,7 +335,7 @@ export const RecurringExpenses = ({
               className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Adicionar Recorrente
+              {t('addRecurringExpense')}
             </Button>
           )}
         </DialogContent>
@@ -341,26 +344,26 @@ export const RecurringExpenses = ({
       <AlertDialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle>Aplicar alterações</AlertDialogTitle>
+            <AlertDialogTitle>{t('updateRecurringTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Deseja aplicar as alterações apenas aos gastos futuros ou também atualizar os gastos já criados em meses anteriores?
+              {t('updateRecurringDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogCancel onClick={() => setShowUpdateDialog(false)}>
-              Cancelar
+              {t('cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => confirmUpdate(false)}
               className="bg-secondary text-foreground hover:bg-secondary/80"
             >
-              Apenas Futuros
+              {t('updateFutureOnly')}
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => confirmUpdate(true)}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              Atualizar Todos
+              {t('updateAll')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
