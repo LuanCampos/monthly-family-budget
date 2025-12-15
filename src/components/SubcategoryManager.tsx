@@ -79,8 +79,7 @@ export const SubcategoryManager = ({
         onClick={() => setIsOpen(true)}
       >
         <Tags className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-        <span className="hidden xs:inline">{t('subcategories')}</span>
-        <span className="xs:hidden">Sub</span>
+        {t('subcategories')}
         <span className="ml-1">({subcategories.length})</span>
       </Button>
 

@@ -193,8 +193,7 @@ export const RecurringExpenses = ({
         onClick={() => setIsOpen(true)}
       >
         <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-        <span className="hidden xs:inline">{t('recurringExpenses')}</span>
-        <span className="xs:hidden">Rec.</span>
+        {t('recurringExpenses')}
         <span className="ml-1">({expenses.length})</span>
       </Button>
 
