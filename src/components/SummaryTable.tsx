@@ -1,5 +1,7 @@
 import { CategoryKey } from '@/types/budget';
 import { formatCurrency, formatPercentage } from '@/utils/formatters';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { TranslationKey } from '@/i18n/translations/pt';
 
 interface CategorySummary {
   key: CategoryKey;
@@ -24,22 +26,24 @@ export const SummaryTable = ({
   totalBudget,
   usedPercentage,
 }: SummaryTableProps) => {
+  const { t } = useLanguage();
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="text-muted-foreground border-b border-border">
             <th className="text-left py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
-              Budget
+              {t('budget')}
             </th>
             <th className="text-right py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
-              Valor Gasto
+              {t('amountSpent')}
             </th>
             <th className="text-right py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
-              Devo gastar
+              {t('shouldSpend')}
             </th>
             <th className="text-right py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
-              Utilizado
+              {t('used')}
             </th>
           </tr>
         </thead>
@@ -51,7 +55,7 @@ export const SummaryTable = ({
             return (
               <tr key={cat.key} className="border-b border-border/50">
                 <td className="py-3 text-foreground font-medium whitespace-nowrap">
-                  {cat.name}
+                  {t(cat.key as TranslationKey)}
                 </td>
 
                 <td
@@ -94,7 +98,7 @@ export const SummaryTable = ({
             {formatCurrency(totalSpent)}
           </span>
           <p className="text-xs text-muted-foreground mt-1">
-            Total gastos
+            {t('totalSpent')}
           </p>
         </div>
 
@@ -109,7 +113,7 @@ export const SummaryTable = ({
             {formatCurrency(totalBudget - totalSpent)}
           </span>
           <p className="text-xs text-muted-foreground mt-1">
-            Total a gastar
+            {t('totalRemaining')}
           </p>
         </div>
 
@@ -124,7 +128,7 @@ export const SummaryTable = ({
             {formatPercentage(usedPercentage)}
           </span>
           <p className="text-xs text-muted-foreground mt-1">
-            Utilizado
+            {t('used')}
           </p>
         </div>
       </div>

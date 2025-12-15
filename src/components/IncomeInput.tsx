@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface IncomeInputProps {
   value: number;
@@ -9,6 +10,7 @@ interface IncomeInputProps {
 }
 
 export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => {
+  const { t } = useLanguage();
   const [inputValue, setInputValue] = useState('');
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
 
   return (
     <div className="flex flex-col">
-      <label className="text-sm text-primary mb-1 font-medium">Renda do mês</label>
+      <label className="text-sm text-primary mb-1 font-medium">{t('monthlyIncome')}</label>
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
           R$

@@ -1,4 +1,4 @@
-import { Settings, Globe, Palette, Download, Upload } from 'lucide-react';
+import { Settings, Globe, Palette, Download, Upload, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -97,14 +97,18 @@ export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
             </Select>
           </div>
 
-          {/* Import/Export */}
+          {/* Backup Section */}
           {(onExport || onImport) && (
             <>
               <Separator />
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label className="flex items-center gap-2">
-                  {t('importExport')}
+                  <Database className="h-4 w-4" />
+                  {t('backup')}
                 </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('backupDescription')}
+                </p>
                 <div className="flex gap-2">
                   {onImport && (
                     <Button
@@ -113,7 +117,7 @@ export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
                       onClick={handleImportClick}
                     >
                       <Upload className="h-4 w-4 mr-2" />
-                      {t('import')}
+                      {t('importBackup')}
                     </Button>
                   )}
                   {onExport && (
@@ -123,7 +127,7 @@ export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
                       onClick={onExport}
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      {t('export')}
+                      {t('exportBackup')}
                     </Button>
                   )}
                 </div>

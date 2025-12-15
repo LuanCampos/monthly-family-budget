@@ -8,7 +8,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { YearSelector } from '@/components/ui/year-selector';
-import { CATEGORIES, CategoryKey, Subcategory, MONTH_NAMES } from '@/types/budget';
+import { CATEGORIES, CategoryKey, Subcategory } from '@/types/budget';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { TranslationKey } from '@/i18n/translations/pt';
+
+const MONTH_KEYS = [
+  'month-0', 'month-1', 'month-2', 'month-3', 'month-4', 'month-5',
+  'month-6', 'month-7', 'month-8', 'month-9', 'month-10', 'month-11',
+] as const;
 
 interface RecurringExpenseFormFieldsProps {
   title: string;
@@ -53,6 +60,8 @@ export const RecurringExpenseFormFields = ({
   onStartYearChange,
   onStartMonthChange,
 }: RecurringExpenseFormFieldsProps) => {
+  const { t } = useLanguage();
+  
   const filteredSubcategories = subcategories.filter(
     (sub) => sub.categoryKey === category
   );
@@ -66,7 +75,7 @@ export const RecurringExpenseFormFields = ({
     <div className="space-y-4">
       <div>
         <label className="text-sm text-muted-foreground mb-1 block">
-          Título
+          {t('expenseTitle')}
         </label>
         <Input
           value={title}
@@ -77,7 +86,7 @@ export const RecurringExpenseFormFields = ({
 
       <div>
         <label className="text-sm text-muted-foreground mb-1 block">
-          Categoria
+          {t('expenseCategory')}
         </label>
         <Select
           value={category}
@@ -94,7 +103,7 @@ export const RecurringExpenseFormFields = ({
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: cat.color }}
                   />
-                  {cat.name}
+                  {t(cat.key as TranslationKey)}
                 </div>
               </SelectItem>
             ))}
@@ -104,17 +113,17 @@ export const RecurringExpenseFormFields = ({
 
       <div>
         <label className="text-sm text-muted-foreground mb-1 block">
-          Sub-categoria (opcional)
+          {t('expenseSubcategory')}
         </label>
         <Select
           value={subcategoryId || 'none'}
           onValueChange={(v) => onSubcategoryChange(v === 'none' ? '' : v)}
         >
           <SelectTrigger className="bg-secondary border-border">
-            <SelectValue placeholder="Selecione..." />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
-            <SelectItem value="none">Nenhuma</SelectItem>
+            <SelectItem value="none">-</SelectItem>
             {filteredSubcategories.map((sub) => (
               <SelectItem key={sub.id} value={sub.id}>
                 {sub.name}
@@ -126,7 +135,7 @@ export const RecurringExpenseFormFields = ({
 
       <div>
         <label className="text-sm text-muted-foreground mb-1 block">
-          Valor
+          {t('expenseValue')}
         </label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -145,7 +154,7 @@ export const RecurringExpenseFormFields = ({
 
       <div>
         <label className="text-sm text-muted-foreground mb-1 block">
-          Dia do Vencimento (opcional)
+          {t('dueDay')}
         </label>
         <Input
           type="number"
@@ -169,7 +178,7 @@ export const RecurringExpenseFormFields = ({
             htmlFor="hasInstallments"
             className="text-sm font-medium leading-none cursor-pointer"
           >
-            Prazo Determinado (Parcelado)
+            {t('hasInstallments')}
           </label>
         </div>
 
@@ -177,7 +186,7 @@ export const RecurringExpenseFormFields = ({
           <div className="space-y-4 pl-6 border-l-2 border-primary/30">
             <div>
               <label className="text-sm text-muted-foreground mb-1 block">
-                Número de Parcelas
+                {t('totalInstallments')}
               </label>
               <Input
                 type="number"
@@ -193,19 +202,19 @@ export const RecurringExpenseFormFields = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-muted-foreground mb-1 block">
-                  Mês da 1ª Parcela
+                  {t('startMonth')}
                 </label>
                 <Select
                   value={startMonth}
                   onValueChange={onStartMonthChange}
                 >
                   <SelectTrigger className="bg-secondary border-border">
-                    <SelectValue placeholder="Selecione..." />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    {MONTH_NAMES.map((name, index) => (
+                    {MONTH_KEYS.map((key, index) => (
                       <SelectItem key={index} value={String(index + 1)}>
-                        {name}
+                        {t(key as TranslationKey)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -214,7 +223,7 @@ export const RecurringExpenseFormFields = ({
 
               <div>
                 <label className="text-sm text-muted-foreground mb-1 block">
-                  Ano da 1ª Parcela
+                  {t('startYear')}
                 </label>
                 <YearSelector
                   value={startYear}

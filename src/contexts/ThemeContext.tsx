@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useLayoutEffect } from 'react';
 
 export type ThemeKey = 'dark' | 'light' | 'nord' | 'dracula' | 'solarized' | 'gruvbox' | 'catppuccin';
 
@@ -26,20 +26,26 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'budget-app-theme';
 
+const applyTheme = (theme: ThemeKey) => {
+  const root = document.documentElement;
+  // Remove all theme classes
+  themes.forEach(t => root.classList.remove(`theme-${t.key}`));
+  // Add new theme class
+  root.classList.add(`theme-${theme}`);
+};
+
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<ThemeKey>(() => {
+    if (typeof window === 'undefined') return 'dark';
     const stored = localStorage.getItem(STORAGE_KEY) as ThemeKey | null;
     if (stored && themes.some(t => t.key === stored)) return stored;
     return 'dark';
   });
 
-  useEffect(() => {
+  // Apply theme immediately on mount and when it changes
+  useLayoutEffect(() => {
+    applyTheme(theme);
     localStorage.setItem(STORAGE_KEY, theme);
-    
-    // Remove all theme classes and add current one
-    const root = document.documentElement;
-    themes.forEach(t => root.classList.remove(`theme-${t.key}`));
-    root.classList.add(`theme-${theme}`);
   }, [theme]);
 
   const setTheme = useCallback((newTheme: ThemeKey) => {
