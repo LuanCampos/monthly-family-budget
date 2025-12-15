@@ -389,16 +389,16 @@ export const RecurringExpenses = ({
               {t('cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => confirmUpdate(false)}
+              onClick={() => confirmUpdate(true)}
               className="bg-secondary text-foreground hover:bg-secondary/80"
             >
-              {t('updateFutureOnly')}
+              {t('updateAll')}
             </AlertDialogAction>
             <AlertDialogAction
-              onClick={() => confirmUpdate(true)}
+              onClick={() => confirmUpdate(false)}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {t('updateAll')}
+              {t('updateFutureOnly')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
