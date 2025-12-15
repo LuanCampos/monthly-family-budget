@@ -82,30 +82,27 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
             className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg group"
           >
             <div className="flex items-center gap-2">
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: cat.color }}
+              />
+
               <span className="text-sm text-foreground font-medium">
                 {expense.title}
               </span>
 
-              <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                <span
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: cat.color }}
-                />
+              <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                 {cat.name}
               </span>
 
               {subInfo && (
-                <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: subInfo.color }}
-                  />
+                <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                   {subInfo.name}
                 </span>
               )}
 
               {expense.isRecurring && (
-                <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                   <RefreshCw className="h-3 w-3" />
                 </span>
               )}
