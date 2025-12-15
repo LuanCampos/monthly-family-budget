@@ -116,6 +116,44 @@ export const SettingsPanel = ({ onExport, onImport, currentMonthLabel, onDeleteM
             </Select>
           </div>
 
+          {/* Backup Section */}
+          {(onExport || onImport) && (
+            <>
+              <Separator className="bg-border" />
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2 text-sm font-medium">
+                  <Database className="h-4 w-4 text-muted-foreground" />
+                  {t('backup')}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t('backupDescription')}
+                </p>
+                <div className="flex gap-2">
+                  {onImport && (
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-10 border-border hover:bg-secondary"
+                      onClick={handleImportClick}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {t('importBackup')}
+                    </Button>
+                  )}
+                  {onExport && (
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-10 border-border hover:bg-secondary"
+                      onClick={onExport}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      {t('exportBackup')}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
           {/* Delete Current Month */}
           {onDeleteMonth && currentMonthLabel && (
             <>
@@ -156,44 +194,6 @@ export const SettingsPanel = ({ onExport, onImport, currentMonthLabel, onDeleteM
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-              </div>
-            </>
-          )}
-
-          {/* Backup Section */}
-          {(onExport || onImport) && (
-            <>
-              <Separator className="bg-border" />
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2 text-sm font-medium">
-                  <Database className="h-4 w-4 text-muted-foreground" />
-                  {t('backup')}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t('backupDescription')}
-                </p>
-                <div className="flex gap-2">
-                  {onImport && (
-                    <Button
-                      variant="outline"
-                      className="flex-1 h-10 border-border hover:bg-secondary"
-                      onClick={handleImportClick}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      {t('importBackup')}
-                    </Button>
-                  )}
-                  {onExport && (
-                    <Button
-                      variant="outline"
-                      className="flex-1 h-10 border-border hover:bg-secondary"
-                      onClick={onExport}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      {t('exportBackup')}
-                    </Button>
-                  )}
-                </div>
               </div>
             </>
           )}
