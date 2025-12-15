@@ -223,7 +223,7 @@ export const RecurringExpenses = ({
                   {t('recurringExpensesDescription')}
                 </p>
 
-                <div className="space-y-3 mt-3 pt-2">
+                <div className="space-y-2 mt-3 pt-2">
                   {expenses.length === 0 ? (
                     <p className="text-center text-muted-foreground py-4">
                       {t('noRecurringExpenses')}
