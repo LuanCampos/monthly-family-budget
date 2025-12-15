@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useBudget } from '@/hooks/useBudget';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { IncomeInput } from '@/components/IncomeInput';
 import { ExpenseChart } from '@/components/ExpenseChart';
@@ -11,6 +12,7 @@ import { ExpenseForm } from '@/components/ExpenseForm';
 import { RecurringExpenses } from '@/components/RecurringExpenses';
 import { ExpenseList } from '@/components/ExpenseList';
 import { SubcategoryManager } from '@/components/SubcategoryManager';
+import { SettingsPanel } from '@/components/SettingsPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Download, Upload } from 'lucide-react';
@@ -18,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const Index = () => {
+  const { t } = useLanguage();
   const {
     months,
     currentMonth,
@@ -84,10 +87,10 @@ const Index = () => {
         <header className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
-              Orçamento doméstico
+              {t('appTitle')}
             </h1>
             <p className="text-muted-foreground text-sm md:text-base">
-              Controlando o orçamento doméstico da familinha com base nas nossas metas.
+              {t('appSubtitle')}
             </p>
           </div>
 
@@ -100,18 +103,20 @@ const Index = () => {
               onChange={handleImportFile}
             />
 
+            <SettingsPanel />
+
             <Button
               variant="outline"
               size="sm"
               onClick={() => document.getElementById('import-budget')?.click()}
             >
               <Upload className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">Importar</span>
+              <span className="hidden md:inline">{t('import')}</span>
             </Button>
 
             <Button variant="outline" size="sm" onClick={exportBudget}>
               <Download className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">Exportar</span>
+              <span className="hidden md:inline">{t('export')}</span>
             </Button>
           </div>
         </header>
@@ -136,7 +141,7 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle>Gastos</CardTitle>
+              <CardTitle>{t('expenses')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ExpenseChart
@@ -155,7 +160,7 @@ const Index = () => {
 
           <Card className="lg:col-span-6">
             <CardHeader>
-              <CardTitle>Resumo</CardTitle>
+              <CardTitle>{t('summary')}</CardTitle>
             </CardHeader>
             <CardContent>
               <SummaryTable
@@ -169,7 +174,7 @@ const Index = () => {
 
           <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle>Metas</CardTitle>
+              <CardTitle>{t('goals')}</CardTitle>
             </CardHeader>
             <CardContent>
               <GoalsPanel
@@ -184,7 +189,7 @@ const Index = () => {
         {currentMonthId && (
           <Card className="mt-6">
             <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <CardTitle>Gastos do mês</CardTitle>
+              <CardTitle>{t('monthExpenses')}</CardTitle>
               <div className="flex flex-wrap gap-2">
                 <SubcategoryManager
                   subcategories={subcategories}
@@ -224,10 +229,10 @@ const Index = () => {
         {!currentMonthId && (
           <div className="mt-12 text-center">
             <p className="text-muted-foreground text-lg mb-2">
-              Comece adicionando um mês para gerenciar seu orçamento.
+              {t('emptyStateTitle')}
             </p>
             <p className="text-muted-foreground text-sm">
-              Clique no botão + ao lado do seletor de mês.
+              {t('emptyStateSubtitle')}
             </p>
           </div>
         )}
