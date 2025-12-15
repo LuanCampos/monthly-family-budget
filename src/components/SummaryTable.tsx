@@ -45,11 +45,11 @@ export const SummaryTable = ({
   };
 
   return (
-    <div className="space-y-3 relative">
-      {/* Custom tooltip that follows the mouse */}
+    <>
+      {/* Custom tooltip that follows the mouse - rendered outside the container */}
       {hoveredCategory && (
         <div
-          className="fixed z-50 px-2 py-1 text-sm tabular-nums bg-popover border border-border rounded-md shadow-md pointer-events-none"
+          className="fixed z-[9999] px-2 py-1 text-sm tabular-nums bg-popover border border-border rounded-md shadow-md pointer-events-none"
           style={{
             left: hoveredCategory.x + 12,
             top: hoveredCategory.y - 10,
@@ -58,6 +58,7 @@ export const SummaryTable = ({
           {formatPercentage(hoveredCategory.percentage)}
         </div>
       )}
+      <div className="space-y-3">
 
       {/* Categories with progress bars */}
       {categories.map((cat) => {
@@ -131,6 +132,7 @@ export const SummaryTable = ({
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
