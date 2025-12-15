@@ -145,35 +145,41 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
                   className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: cat.color }}
                 />
-
-                <span className="text-sm text-foreground font-medium">
-                  {expense.title}
-                </span>
-
-                <button
-                  onClick={() => setFilter({ type: 'category', value: expense.category })}
-                  className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
-                >
-                  {cat.name}
-                </button>
-
-                {subInfo && (
-                  <button
-                    onClick={() => setFilter({ type: 'subcategory', value: subInfo.id })}
-                    className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
-                  >
-                    {subInfo.name}
-                  </button>
-                )}
-
-                {expense.isRecurring && (
-                  <button
-                    onClick={() => setFilter({ type: 'recurring' })}
-                    className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                  </button>
-                )}
+              
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <span className="text-sm text-foreground font-medium whitespace-nowrap">
+                    {expense.title}
+                  </span>
+              
+                  <div className="flex flex-wrap items-center gap-1">
+                    <button
+                      onClick={() => setFilter({ type: 'category', value: expense.category })}
+                      className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                    >
+                      {cat.name}
+                    </button>
+              
+                    {subInfo && (
+                      <button
+                        onClick={() =>
+                          setFilter({ type: 'subcategory', value: subInfo.id })
+                        }
+                        className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                      >
+                        {subInfo.name}
+                      </button>
+                    )}
+              
+                    {expense.isRecurring && (
+                      <button
+                        onClick={() => setFilter({ type: 'recurring' })}
+                        className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center gap-1">

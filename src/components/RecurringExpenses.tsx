@@ -1,12 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trash2, RefreshCw, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CategoryKey, Expense, Subcategory } from '@/types/budget';
 import { getCategoryByKey, DEFAULT_CATEGORY } from '@/constants/categories';
 import { formatCurrency } from '@/utils/formatters';
@@ -22,8 +17,19 @@ interface RecurringExpense extends Omit<Expense, 'id'> {
 interface RecurringExpensesProps {
   expenses: RecurringExpense[];
   subcategories: Subcategory[];
-  onAdd: (title: string, category: CategoryKey, subcategoryId: string | undefined, value: number) => void;
-  onUpdate: (index: number, title: string, category: CategoryKey, subcategoryId: string | undefined, value: number) => void;
+  onAdd: (
+    title: string,
+    category: CategoryKey,
+    subcategoryId: string | undefined,
+    value: number
+  ) => void;
+  onUpdate: (
+    index: number,
+    title: string,
+    category: CategoryKey,
+    subcategoryId: string | undefined,
+    value: number
+  ) => void;
   onRemove: (index: number) => void;
 }
 
@@ -85,7 +91,13 @@ export const RecurringExpenses = ({
     }
 
     if (view === 'edit' && editingIndex !== null) {
-      onUpdate(editingIndex, title.trim(), category, finalSubcategoryId, numericValue);
+      onUpdate(
+        editingIndex,
+        title.trim(),
+        category,
+        finalSubcategoryId,
+        numericValue
+      );
     }
 
     setView('list');
@@ -94,7 +106,7 @@ export const RecurringExpenses = ({
 
   const getSubcategoryName = (subId?: string) => {
     if (!subId) return null;
-    const sub = subcategories.find(s => s.id === subId);
+    const sub = subcategories.find((s) => s.id === subId);
     return sub?.name || null;
   };
 
@@ -116,7 +128,7 @@ export const RecurringExpenses = ({
           else setIsOpen(true);
         }}
       >
-        <DialogContent className="bg-card border-border max-w-md">
+        <DialogContent className="bg-card border-border max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-foreground">
               {view === 'list'
@@ -127,81 +139,76 @@ export const RecurringExpenses = ({
             </DialogTitle>
           </DialogHeader>
 
-          {view === 'list' && (
-            <>
-              <p className="text-sm text-muted-foreground">
-                Estes gastos são adicionados automaticamente a cada novo mês.
-              </p>
+          <div className="flex-1 overflow-y-auto mt-4 pr-4">
+            {view === 'list' && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Estes gastos são adicionados automaticamente a cada novo mês.
+                </p>
 
-              <div className="space-y-3 mt-4 max-h-64 overflow-y-auto">
-                {expenses.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-4">
-                    Nenhum gasto recorrente cadastrado
-                  </p>
-                ) : (
-                  expenses.map((exp, index) => {
-                    const cat = getCategoryByKey(exp.category);
-                    const subName = getSubcategoryName(exp.subcategoryId);
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-secondary rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: cat.color }}
-                          />
-                          <div>
-                            <p className="text-foreground font-medium">{exp.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {cat.name}
-                              {subName && ` • ${subName}`}
-                            </p>
+                <div className="space-y-3 mt-2 pt-2">
+                  {expenses.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-4">
+                      Nenhum gasto recorrente cadastrado
+                    </p>
+                  ) : (
+                    expenses.map((exp, index) => {
+                      const cat = getCategoryByKey(exp.category);
+                      const subName = getSubcategoryName(exp.subcategoryId);
+
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-secondary rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: cat.color }}
+                            />
+                            <div>
+                              <p className="text-foreground font-medium">
+                                {exp.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {cat.name}
+                                {subName && ` • ${subName}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-foreground font-medium">
+                              {formatCurrency(exp.value)}
+                            </span>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEdit(index)}
+                              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onRemove(index)}
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            )}
 
-                        <div className="flex items-center gap-2">
-                          <span className="text-foreground font-medium">
-                            {formatCurrency(exp.value)}
-                          </span>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEdit(index)}
-                            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onRemove(index)}
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              <Button
-                onClick={openAdd}
-                className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Recorrente
-              </Button>
-            </>
-          )}
-
-          {(view === 'add' || view === 'edit') && (
-            <div className="mt-4">
+            {(view === 'add' || view === 'edit') && (
               <ExpenseFormFields
                 title={title}
                 category={category}
@@ -213,19 +220,31 @@ export const RecurringExpenses = ({
                 onSubcategoryChange={setSubcategoryId}
                 onValueChange={(v) => setValue(sanitizeCurrencyInput(v))}
               />
+            )}
+          </div>
 
-              <div className="flex gap-2 mt-4">
-                <Button
-                  onClick={handleSubmit}
-                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  {view === 'add' ? 'Adicionar' : 'Salvar'}
-                </Button>
-                <Button variant="outline" onClick={() => setView('list')}>
-                  Cancelar
-                </Button>
-              </div>
+          {(view === 'add' || view === 'edit') && (
+            <div className="flex gap-2 mt-4">
+              <Button
+                onClick={handleSubmit}
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {view === 'add' ? 'Adicionar' : 'Salvar'}
+              </Button>
+              <Button variant="outline" onClick={() => setView('list')}>
+                Cancelar
+              </Button>
             </div>
+          )}
+
+          {view === 'list' && (
+            <Button
+              onClick={openAdd}
+              className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Recorrente
+            </Button>
           )}
         </DialogContent>
       </Dialog>
