@@ -189,7 +189,7 @@ const Index = () => {
             <div className="dashboard-card">
               <div className="dashboard-card-header flex-col sm:flex-row gap-2 sm:gap-3">
                 <span className="dashboard-card-title">{t('monthExpenses')}</span>
-                <div className="action-btn-group w-full sm:w-auto justify-start sm:justify-end flex-nowrap overflow-x-auto pb-1 sm:pb-0 -mb-1 sm:mb-0">
+                <div className="action-btn-group w-full sm:w-auto justify-start sm:justify-end">
                   <SubcategoryManager
                     subcategories={subcategories}
                     onAdd={addSubcategory}
