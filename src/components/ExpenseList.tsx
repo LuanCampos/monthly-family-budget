@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, Pencil, RefreshCw, X, AlertCircle, Calendar } from 'lucide-react';
+import { Trash2, Pencil, RefreshCw, X, AlertCircle, Calendar, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Expense, Subcategory, CategoryKey } from '@/types/budget';
 import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
@@ -30,6 +30,7 @@ type FilterType =
   | { type: 'subcategory'; value: string }
   | { type: 'recurring' }
   | { type: 'pending' }
+  | { type: 'installments' }
   | null;
 
 const generateSubcategoryColor = (
@@ -91,6 +92,9 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
     if (filter.type === 'pending') {
       return expense.isPending;
     }
+    if (filter.type === 'installments') {
+      return !!expense.installmentInfo;
+    }
     return true;
   });
 
@@ -126,6 +130,9 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
     }
     if (filter.type === 'pending') {
       return t('pending');
+    }
+    if (filter.type === 'installments') {
+      return t('installments');
     }
     return '';
   };
@@ -220,6 +227,18 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
                             {expense.dueDay}
                           </span>
                         )}
+                      </button>
+                    )}
+
+                    {expense.installmentInfo && (
+                      <button
+                        onClick={() => setFilter({ type: 'installments' })}
+                        className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-accent/20 text-accent-foreground hover:bg-accent/30 transition-colors cursor-pointer"
+                      >
+                        <CreditCard className="h-3 w-3" />
+                        <span>
+                          {expense.installmentInfo.current}/{expense.installmentInfo.total}
+                        </span>
                       </button>
                     )}
                   </div>

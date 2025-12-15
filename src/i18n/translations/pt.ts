@@ -75,6 +75,8 @@ export const pt = {
   startMonth: 'Mês inicial',
   startYear: 'Ano inicial',
   installment: 'Parcela',
+  installments: 'Parcelado',
+  installmentOf: 'de',
   
   // Pending Payment
   pendingPayment: 'Pagamento Pendente',
