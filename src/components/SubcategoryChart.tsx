@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { CategoryKey, Expense, Subcategory } from '@/types/budget';
 import { formatCurrency } from '@/utils/formatters';
 import { getCategoryByKey } from '@/constants/categories';
-
+import { useLanguage } from '@/contexts/LanguageContext';
+import { TranslationKey } from '@/i18n';
 interface SubcategoryChartProps {
   categoryKey: CategoryKey;
   expenses: Expense[];
@@ -36,6 +37,7 @@ export const SubcategoryChart = ({
   subcategories,
   onBack,
 }: SubcategoryChartProps) => {
+  const { t } = useLanguage();
   const category = getCategoryByKey(categoryKey);
   const categoryExpenses = expenses.filter(e => e.category === categoryKey);
 
@@ -72,7 +74,7 @@ export const SubcategoryChart = ({
   if (uncategorized > 0) {
     data.push({
       id: 'uncategorized',
-      name: 'Não especificado',
+      name: t('notSpecified'),
       value: uncategorized,
       color: generateSubcategoryColor(category.color, data.length, data.length + 1),
     });
@@ -88,13 +90,13 @@ export const SubcategoryChart = ({
         </Button>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }} />
-          <span className="font-medium text-foreground">{category.name}</span>
+          <span className="font-medium text-foreground">{t(categoryKey as TranslationKey)}</span>
         </div>
       </div>
 
       {data.length === 0 ? (
         <div className="h-64 flex items-center justify-center text-muted-foreground">
-          Nenhuma sub-categoria com gastos
+          {t('noSubcategoryExpenses')}
         </div>
       ) : (
         <>
