@@ -82,29 +82,27 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
             className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg group"
           >
             <div className="flex items-center gap-2">
-              {expense.isRecurring && (
+              <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                 <span
-                  className="flex items-center justify-center w-5 h-5 rounded-full"
-                  style={{ backgroundColor: 'hsl(var(--muted))' }}
-                  title="Recorrente"
-                >
-                  <RefreshCw className="h-3 w-3 text-muted-foreground" />
-                </span>
-              )}
-
-              <span
-                className="text-xs px-2 py-0.5 rounded-full font-medium"
-                style={{ backgroundColor: cat.color, color: 'white' }}
-              >
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: cat.color }}
+                />
                 {cat.name}
               </span>
 
               {subInfo && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-medium"
-                  style={{ backgroundColor: subInfo.color, color: 'white' }}
-                >
+                <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: subInfo.color }}
+                  />
                   {subInfo.name}
+                </span>
+              )}
+
+              {expense.isRecurring && (
+                <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                  <RefreshCw className="h-3 w-3" />
                 </span>
               )}
 
