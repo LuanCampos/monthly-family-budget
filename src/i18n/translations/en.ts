@@ -16,12 +16,15 @@ export const en: Record<TranslationKey, string> = {
   confirm: 'Confirm',
   back: 'Back',
   close: 'Close',
+  delete: 'Delete',
   
   // Month Selector
   selectMonth: 'Select a month',
-  newMonth: 'New month',
-  removeMonth: 'Remove month',
-  confirmRemoveMonth: 'Are you sure you want to remove this month?',
+  noMonthSelected: 'No month selected',
+  addMonth: 'Add Month',
+  deleteMonth: 'Delete month',
+  deleteMonthConfirm: 'Are you sure you want to delete the month',
+  deleteMonthWarning: 'This action cannot be undone.',
   
   // Income
   monthlyIncome: 'Monthly income',
@@ -32,13 +35,21 @@ export const en: Record<TranslationKey, string> = {
   summary: 'Summary',
   goals: 'Goals',
   
-  // Category Names
+  // Category Names (capitalized)
   'essenciais': 'Essentials',
   'conforto': 'Comfort',
   'metas': 'Goals',
   'prazeres': 'Pleasures',
   'liberdade': 'Financial Freedom',
   'conhecimento': 'Knowledge',
+  
+  // Summary Table
+  budget: 'Budget',
+  amountSpent: 'Amount Spent',
+  shouldSpend: 'Should Spend',
+  used: 'Used',
+  totalSpent: 'Total spent',
+  totalRemaining: 'Remaining',
   
   // Expense List
   monthExpenses: 'Monthly expenses',
@@ -81,16 +92,10 @@ export const en: Record<TranslationKey, string> = {
   subcategoryName: 'Subcategory name',
   noSubcategories: 'No subcategories',
   
-  // Summary
-  spent: 'Spent',
-  budget: 'Budget',
-  remaining: 'Remaining',
-  total: 'Total',
-  used: 'Used',
-  
   // Goals
-  editGoals: 'Edit goals',
+  editGoals: 'Edit Goals',
   percentage: 'Percentage',
+  total: 'Total',
   
   // Filters
   all: 'All',
@@ -111,7 +116,10 @@ export const en: Record<TranslationKey, string> = {
   settings: 'Settings',
   language: 'Language',
   theme: 'Theme',
-  importExport: 'Import / Export',
+  backup: 'Backup',
+  backupDescription: 'Export your data to backup or import an existing backup.',
+  importBackup: 'Import Backup',
+  exportBackup: 'Export Backup',
   
   // Languages
   portuguese: 'Português',

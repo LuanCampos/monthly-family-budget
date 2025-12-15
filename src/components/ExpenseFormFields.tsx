@@ -7,6 +7,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CATEGORIES, CategoryKey, Subcategory } from '@/types/budget';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { TranslationKey } from '@/i18n/translations/pt';
 
 interface ExpenseFormFieldsProps {
   title: string;
@@ -31,6 +33,8 @@ export const ExpenseFormFields = ({
   onSubcategoryChange,
   onValueChange,
 }: ExpenseFormFieldsProps) => {
+  const { t } = useLanguage();
+  
   const filteredSubcategories = subcategories.filter(
     (sub) => sub.categoryKey === category
   );
@@ -45,7 +49,7 @@ export const ExpenseFormFields = ({
     <div className="space-y-4">
       <div>
         <label className="text-sm text-muted-foreground mb-1 block">
-          Título
+          {t('expenseTitle')}
         </label>
         <Input
           value={title}
@@ -56,7 +60,7 @@ export const ExpenseFormFields = ({
 
       <div>
         <label className="text-sm text-muted-foreground mb-1 block">
-          Categoria
+          {t('expenseCategory')}
         </label>
         <Select
           value={category}
@@ -73,7 +77,7 @@ export const ExpenseFormFields = ({
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: cat.color }}
                   />
-                  {cat.name}
+                  {t(cat.key as TranslationKey)}
                 </div>
               </SelectItem>
             ))}
@@ -83,17 +87,17 @@ export const ExpenseFormFields = ({
 
       <div>
         <label className="text-sm text-muted-foreground mb-1 block">
-          Sub-categoria (opcional)
+          {t('expenseSubcategory')}
         </label>
         <Select
           value={subcategoryId || 'none'}
           onValueChange={(v) => onSubcategoryChange(v === 'none' ? '' : v)}
         >
           <SelectTrigger className="bg-secondary border-border">
-            <SelectValue placeholder="Selecione..." />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
-            <SelectItem value="none">Nenhuma</SelectItem>
+            <SelectItem value="none">-</SelectItem>
             {filteredSubcategories.map((sub) => (
               <SelectItem key={sub.id} value={sub.id}>
                 {sub.name}
@@ -105,7 +109,7 @@ export const ExpenseFormFields = ({
 
       <div>
         <label className="text-sm text-muted-foreground mb-1 block">
-          Valor
+          {t('expenseValue')}
         </label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">

@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { CategoryKey } from '@/types/budget';
 import { CATEGORIES } from '@/constants/categories';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { TranslationKey } from '@/i18n/translations/pt';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +20,7 @@ interface GoalsPanelProps {
 }
 
 export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
+  const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [localPercentages, setLocalPercentages] =
     useState<Record<CategoryKey, number>>(percentages);
@@ -38,7 +41,7 @@ export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
       <div className="space-y-4">
         {CATEGORIES.map((cat) => (
           <div key={cat.key} className="flex justify-between items-center">
-            <span className="text-foreground">{cat.name}</span>
+            <span className="text-foreground">{t(cat.key as TranslationKey)}</span>
             <span className="text-foreground font-medium">
               {percentages[cat.key]}%
             </span>
@@ -53,14 +56,14 @@ export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
             className="mt-6 w-full border-border hover:bg-secondary"
           >
             <Edit2 className="h-4 w-4 mr-2" />
-            Editar
+            {t('edit')}
           </Button>
         </DialogTrigger>
 
         <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-foreground">
-              Editar Metas
+              {t('editGoals')}
             </DialogTitle>
           </DialogHeader>
 
@@ -68,7 +71,7 @@ export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
             {CATEGORIES.map((cat) => (
               <div key={cat.key} className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-foreground">{cat.name}</span>
+                  <span className="text-foreground">{t(cat.key as TranslationKey)}</span>
                   <span className="text-foreground font-medium">
                     {localPercentages[cat.key]}%
                   </span>
@@ -98,14 +101,14 @@ export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
                   : 'text-muted-foreground'
               }`}
             >
-              Total: {total}%
+              {t('total')}: {total}%
             </p>
 
             <Button
               onClick={handleSave}
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              Salvar
+              {t('save')}
             </Button>
           </div>
         </DialogContent>

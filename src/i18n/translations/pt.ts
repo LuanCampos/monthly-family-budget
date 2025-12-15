@@ -14,15 +14,18 @@ export const pt = {
   confirm: 'Confirmar',
   back: 'Voltar',
   close: 'Fechar',
+  delete: 'Excluir',
   
   // Month Selector
   selectMonth: 'Selecione um mês',
-  newMonth: 'Novo mês',
-  removeMonth: 'Remover mês',
-  confirmRemoveMonth: 'Tem certeza que deseja remover este mês?',
+  noMonthSelected: 'Nenhum mês selecionado',
+  addMonth: 'Adicionar Mês',
+  deleteMonth: 'Excluir mês',
+  deleteMonthConfirm: 'Tem certeza que deseja excluir o mês',
+  deleteMonthWarning: 'Esta ação não pode ser desfeita.',
   
   // Income
-  monthlyIncome: 'Renda mensal',
+  monthlyIncome: 'Renda do mês',
   
   // Categories
   categories: 'Categorias',
@@ -30,13 +33,21 @@ export const pt = {
   summary: 'Resumo',
   goals: 'Metas',
   
-  // Category Names
+  // Category Names (capitalized)
   'essenciais': 'Essenciais',
   'conforto': 'Conforto',
   'metas': 'Metas',
   'prazeres': 'Prazeres',
-  'liberdade': 'Liberdade financeira',
+  'liberdade': 'Liberdade Financeira',
   'conhecimento': 'Conhecimento',
+  
+  // Summary Table
+  budget: 'Orçamento',
+  amountSpent: 'Valor Gasto',
+  shouldSpend: 'Devo Gastar',
+  used: 'Utilizado',
+  totalSpent: 'Total gastos',
+  totalRemaining: 'Total a gastar',
   
   // Expense List
   monthExpenses: 'Gastos do mês',
@@ -79,16 +90,10 @@ export const pt = {
   subcategoryName: 'Nome da sub-categoria',
   noSubcategories: 'Nenhuma sub-categoria',
   
-  // Summary
-  spent: 'Gasto',
-  budget: 'Orçamento',
-  remaining: 'Restante',
-  total: 'Total',
-  used: 'Utilizado',
-  
   // Goals
-  editGoals: 'Editar metas',
+  editGoals: 'Editar Metas',
   percentage: 'Porcentagem',
+  total: 'Total',
   
   // Filters
   all: 'Todos',
@@ -109,7 +114,10 @@ export const pt = {
   settings: 'Configurações',
   language: 'Idioma',
   theme: 'Tema',
-  importExport: 'Importar / Exportar',
+  backup: 'Backup',
+  backupDescription: 'Exporte seus dados para fazer backup ou importe um backup existente.',
+  importBackup: 'Importar Backup',
+  exportBackup: 'Exportar Backup',
   
   // Languages
   portuguese: 'Português',
