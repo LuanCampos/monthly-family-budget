@@ -77,6 +77,8 @@ export const pt = {
   installment: 'Parcela',
   installments: 'Parcelado',
   installmentOf: 'de',
+  applyToCurrentMonth: 'Aplicar ao mês atual',
+  alreadyInCurrentMonth: 'Já existe neste mês',
   
   // Pending Payment
   pendingPayment: 'Pagamento Pendente',

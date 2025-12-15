@@ -79,6 +79,8 @@ export const en: Record<TranslationKey, string> = {
   installment: 'Installment',
   installments: 'Installments',
   installmentOf: 'of',
+  applyToCurrentMonth: 'Apply to current month',
+  alreadyInCurrentMonth: 'Already in this month',
 
   // Pending Payment
   pendingPayment: 'Pending Payment',
