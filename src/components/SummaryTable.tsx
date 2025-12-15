@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { CategoryKey } from '@/types/budget';
 import { formatCurrency, formatPercentage } from '@/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -29,37 +28,9 @@ export const SummaryTable = ({
   usedPercentage,
 }: SummaryTableProps) => {
   const { t } = useLanguage();
-  const [hoveredCategory, setHoveredCategory] = useState<{ key: string; x: number; y: number; percentage: number } | null>(null);
-
-  const handleMouseMove = (e: React.MouseEvent, catKey: string, percentage: number) => {
-    setHoveredCategory({
-      key: catKey,
-      x: e.clientX,
-      y: e.clientY,
-      percentage,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setHoveredCategory(null);
-  };
 
   return (
-    <>
-      {/* Custom tooltip that follows the mouse - rendered outside the container */}
-      {hoveredCategory && (
-        <div
-          className="fixed z-[9999] px-2 py-1 text-sm tabular-nums bg-popover border border-border rounded-md shadow-md pointer-events-none"
-          style={{
-            left: hoveredCategory.x + 12,
-            top: hoveredCategory.y - 10,
-          }}
-        >
-          {formatPercentage(hoveredCategory.percentage)}
-        </div>
-      )}
-      <div className="space-y-3">
-
+    <div className="space-y-3">
       {/* Categories with progress bars */}
       {categories.map((cat) => {
         const category = getCategoryByKey(cat.key);
@@ -67,12 +38,7 @@ export const SummaryTable = ({
         const progressWidth = Math.min(cat.usedPercentage, 100);
 
         return (
-          <div
-            key={cat.key}
-            className="space-y-1.5 cursor-pointer"
-            onMouseMove={(e) => handleMouseMove(e, cat.key, cat.usedPercentage)}
-            onMouseLeave={handleMouseLeave}
-          >
+          <div key={cat.key} className="space-y-1.5">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <span
@@ -89,6 +55,9 @@ export const SummaryTable = ({
                 </span>
                 <span className="text-muted-foreground tabular-nums">
                   / {formatCurrency(cat.budget)}
+                </span>
+                <span className={`tabular-nums min-w-[3.5rem] text-right ${exceeded ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  ({formatPercentage(cat.usedPercentage)})
                 </span>
               </div>
             </div>
@@ -132,7 +101,6 @@ export const SummaryTable = ({
           </p>
         </div>
       </div>
-      </div>
-    </>
+    </div>
   );
 };
