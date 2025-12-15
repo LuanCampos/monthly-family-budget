@@ -29,10 +29,17 @@ export const SummaryTable = ({
       <table className="w-full text-sm">
         <thead>
           <tr className="text-muted-foreground border-b border-border">
-            <th className="text-left py-3 font-semibold">Budget</th>
-            <th className="text-right py-3 font-semibold">Valor Gasto</th>
-            <th className="text-right py-3 font-semibold">Devo gastar</th>
-            <th className="text-right py-3 font-semibold">Utilizado</th>
+            <th className="text-left py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
+              Budget
+            </th>
+            <th className="text-right py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
+              Valor Gasto
+            </th>
+            <th className="text-right py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
+              Devo gastar
+            </th>
+            <th className="text-right py-3 font-semibold whitespace-nowrap text-sm sm:text-base">
+              Utilizado
             </th>
           </tr>
         </thead>
