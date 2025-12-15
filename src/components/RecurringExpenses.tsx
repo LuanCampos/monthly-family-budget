@@ -183,11 +183,14 @@ export const RecurringExpenses = ({
     <>
       <Button
         variant="outline"
-        className="border-border hover:bg-secondary"
+        size="sm"
+        className="border-border hover:bg-secondary text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
         onClick={() => setIsOpen(true)}
       >
-        <RefreshCw className="h-4 w-4 mr-2" />
-        {t('recurringExpenses')} ({expenses.length})
+        <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+        <span className="hidden xs:inline">{t('recurringExpenses')}</span>
+        <span className="xs:hidden">Rec.</span>
+        <span className="ml-1">({expenses.length})</span>
       </Button>
 
       <Dialog

@@ -74,11 +74,14 @@ export const SubcategoryManager = ({
     <>
       <Button
         variant="outline"
-        className="border-border hover:bg-secondary"
+        size="sm"
+        className="border-border hover:bg-secondary text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
         onClick={() => setIsOpen(true)}
       >
-        <Tags className="h-4 w-4 mr-2" />
-        {t('subcategories')} ({subcategories.length})
+        <Tags className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+        <span className="hidden xs:inline">{t('subcategories')}</span>
+        <span className="xs:hidden">Sub</span>
+        <span className="ml-1">({subcategories.length})</span>
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

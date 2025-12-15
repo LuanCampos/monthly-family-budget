@@ -78,12 +78,12 @@ const Index = () => {
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
+        <header className="mb-6 flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1 truncate">
               {t('appTitle')}
             </h1>
-            <p className="text-muted-foreground text-sm md:text-base">
+            <p className="text-muted-foreground text-xs sm:text-sm md:text-base line-clamp-2">
               {t('appSubtitle')}
             </p>
           </div>
@@ -158,9 +158,9 @@ const Index = () => {
         {/* Expense List */}
         {currentMonthId && (
           <Card className="mt-6">
-            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <CardTitle>{t('monthExpenses')}</CardTitle>
-              <div className="flex flex-wrap gap-2">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4">
+              <CardTitle className="text-base sm:text-lg">{t('monthExpenses')}</CardTitle>
+              <div className="flex items-center gap-2 flex-wrap">
                 <SubcategoryManager
                   subcategories={subcategories}
                   onAdd={addSubcategory}
