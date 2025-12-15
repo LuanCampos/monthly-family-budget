@@ -95,7 +95,9 @@ export const en: Record<TranslationKey, string> = {
   editSubcategory: 'Edit subcategory',
   subcategoryName: 'Subcategory name',
   noSubcategories: 'No subcategories',
-  
+  noSubcategoryExpenses: 'No subcategory with expenses',
+  notSpecified: 'Not specified',
+
   // Goals
   editGoals: 'Edit Goals',
   percentage: 'Percentage',

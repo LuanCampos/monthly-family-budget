@@ -93,7 +93,9 @@ export const pt = {
   editSubcategory: 'Editar subcategoria',
   subcategoryName: 'Nome da sub-categoria',
   noSubcategories: 'Nenhuma sub-categoria',
-  
+  noSubcategoryExpenses: 'Nenhuma sub-categoria com gastos',
+  notSpecified: 'Não especificado',
+
   // Goals
   editGoals: 'Editar Metas',
   percentage: 'Porcentagem',
