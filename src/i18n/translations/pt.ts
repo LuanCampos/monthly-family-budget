@@ -23,6 +23,8 @@ export const pt = {
   deleteMonth: 'Excluir mês',
   deleteMonthConfirm: 'Tem certeza que deseja excluir o mês',
   deleteMonthWarning: 'Esta ação não pode ser desfeita.',
+  deleteCurrentMonth: 'Excluir mês atual',
+  deleteCurrentMonthDescription: 'Exclua o mês atual e todos os seus gastos. Esta ação não pode ser desfeita.',
   
   // Income
   monthlyIncome: 'Renda do mês',

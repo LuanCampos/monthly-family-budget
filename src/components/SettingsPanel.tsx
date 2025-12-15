@@ -1,4 +1,4 @@
-import { Settings, Globe, Palette, Download, Upload, Database } from 'lucide-react';
+import { Settings, Globe, Palette, Download, Upload, Database, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -7,6 +7,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
   Select,
   SelectContent,
@@ -24,9 +35,11 @@ import { TranslationKey } from '@/i18n/translations/pt';
 interface SettingsPanelProps {
   onExport?: () => void;
   onImport?: (file: File) => void;
+  currentMonthLabel?: string;
+  onDeleteMonth?: () => void;
 }
 
-export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
+export const SettingsPanel = ({ onExport, onImport, currentMonthLabel, onDeleteMonth }: SettingsPanelProps) => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
 
@@ -54,15 +67,15 @@ export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
           <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
             {t('settings')}
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-5 py-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
           {/* Language Selection */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2 text-sm font-medium">
@@ -103,6 +116,50 @@ export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
             </Select>
           </div>
 
+          {/* Delete Current Month */}
+          {onDeleteMonth && currentMonthLabel && (
+            <>
+              <Separator className="bg-border" />
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2 text-sm font-medium">
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                  {t('deleteCurrentMonth')}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t('deleteCurrentMonthDescription')}
+                </p>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full h-10 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {t('delete')} "{currentMonthLabel}"
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-card border-border sm:max-w-md">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t('deleteMonth')}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t('deleteMonthConfirm')} <strong>{currentMonthLabel}</strong>? {t('deleteMonthWarning')}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="h-10">{t('cancel')}</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="h-10 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={onDeleteMonth}
+                      >
+                        {t('delete')}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </>
+          )}
+
           {/* Backup Section */}
           {(onExport || onImport) && (
             <>
@@ -119,7 +176,7 @@ export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
                   {onImport && (
                     <Button
                       variant="outline"
-                      className="flex-1 h-9 border-border hover:bg-secondary"
+                      className="flex-1 h-10 border-border hover:bg-secondary"
                       onClick={handleImportClick}
                     >
                       <Upload className="h-4 w-4 mr-2" />
@@ -129,7 +186,7 @@ export const SettingsPanel = ({ onExport, onImport }: SettingsPanelProps) => {
                   {onExport && (
                     <Button
                       variant="outline"
-                      className="flex-1 h-9 border-border hover:bg-secondary"
+                      className="flex-1 h-10 border-border hover:bg-secondary"
                       onClick={onExport}
                     >
                       <Download className="h-4 w-4 mr-2" />
