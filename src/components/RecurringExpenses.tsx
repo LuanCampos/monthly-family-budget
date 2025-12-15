@@ -205,7 +205,7 @@ export const RecurringExpenses = ({
           else setIsOpen(true);
         }}
       >
-        <DialogContent className="bg-card border-border max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent className="bg-card border-border max-w-xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-foreground">
               {view === 'list'
@@ -223,7 +223,7 @@ export const RecurringExpenses = ({
                   {t('recurringExpensesDescription')}
                 </p>
 
-                <div className="space-y-4 mt-3 pt-2">
+                <div className="space-y-3 mt-3 pt-2">
                   {expenses.length === 0 ? (
                     <p className="text-center text-muted-foreground py-4">
                       {t('noRecurringExpenses')}
@@ -248,16 +248,16 @@ export const RecurringExpenses = ({
                       return (
                         <div
                           key={exp.id}
-                          className="flex items-start justify-between p-4 bg-secondary rounded-lg gap-3"
+                          className="flex items-center justify-between p-3 bg-secondary rounded-lg gap-3"
                         >
-                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
                             <span
-                              className="w-3 h-3 rounded-full mt-1.5 flex-shrink-0"
+                              className="w-3 h-3 rounded-full flex-shrink-0"
                               style={{ backgroundColor: cat.color }}
                             />
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <p className="text-foreground font-medium">
+                                <p className="text-foreground text-sm font-medium">
                                   {exp.title}
                                 </p>
                                 {exp.hasInstallments && exp.totalInstallments && (
@@ -266,7 +266,7 @@ export const RecurringExpenses = ({
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 flex-wrap">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                                 <span>{t(cat.name as TranslationKey)}</span>
                                 {subName && <span>• {subName}</span>}
                                 {exp.dueDay && (
@@ -276,14 +276,11 @@ export const RecurringExpenses = ({
                                   </span>
                                 )}
                               </div>
-                              <p className="text-foreground font-medium mt-2 sm:hidden">
-                                {formatCurrency(exp.value)}
-                              </p>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                            <span className="text-foreground font-medium hidden sm:block">
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <span className="text-foreground text-sm font-medium mr-1">
                               {formatCurrency(exp.value)}
                             </span>
 
