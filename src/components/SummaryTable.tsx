@@ -2,6 +2,7 @@ import { CategoryKey } from '@/types/budget';
 import { formatCurrency, formatPercentage } from '@/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TranslationKey } from '@/i18n/translations/pt';
+import { getCategoryByKey } from '@/constants/categories';
 
 interface CategorySummary {
   key: CategoryKey;
@@ -29,102 +30,67 @@ export const SummaryTable = ({
   const { t } = useLanguage();
 
   return (
-    <div className="space-y-4">
-      {/* Table */}
-      <div className="overflow-x-auto -mx-4 sm:mx-0">
-        <table className="w-full text-xs sm:text-sm min-w-[360px]">
-          <thead>
-            <tr className="text-muted-foreground border-b border-border">
-              <th className="text-left py-2 px-2 sm:px-0 font-medium">
-                {t('budget')}
-              </th>
-              <th className="text-right py-2 px-2 sm:px-0 font-medium">
-                {t('amountSpent')}
-              </th>
-              <th className="text-right py-2 px-2 sm:px-0 font-medium hidden sm:table-cell">
-                {t('shouldSpend')}
-              </th>
-              <th className="text-right py-2 px-2 sm:px-0 font-medium">
-                {t('used')}
-              </th>
-            </tr>
-          </thead>
+    <div className="space-y-3">
+      {/* Categories with progress bars */}
+      {categories.map((cat) => {
+        const category = getCategoryByKey(cat.key);
+        const exceeded = cat.spent > cat.budget;
+        const progressWidth = Math.min(cat.usedPercentage, 100);
 
-          <tbody>
-            {categories.map((cat) => {
-              const exceeded = cat.spent > cat.budget;
-
-              return (
-                <tr key={cat.key} className="border-b border-border/30">
-                  <td className="py-2.5 px-2 sm:px-0 text-foreground font-medium">
-                    {t(cat.key as TranslationKey)}
-                  </td>
-
-                  <td
-                    className={`py-2.5 px-2 sm:px-0 text-right font-medium tabular-nums ${
-                      exceeded ? 'text-destructive' : 'text-foreground'
-                    }`}
-                  >
-                    {formatCurrency(cat.spent)}
-                  </td>
-
-                  <td className="py-2.5 px-2 sm:px-0 text-right text-muted-foreground tabular-nums hidden sm:table-cell">
-                    {formatCurrency(cat.budget)}
-                  </td>
-
-                  <td className="py-2.5 px-2 sm:px-0 text-right">
-                    <span
-                      className={`inline-flex items-center justify-center min-w-[48px] px-2 py-0.5 rounded-full text-xs font-medium ${
-                        cat.usedPercentage >= 100
-                          ? 'bg-destructive/20 text-destructive'
-                          : cat.usedPercentage >= 80
-                          ? 'bg-primary/20 text-primary'
-                          : 'bg-success/20 text-success'
-                      }`}
-                    >
-                      {formatPercentage(cat.usedPercentage)}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+        return (
+          <div key={cat.key} className="space-y-1.5">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: category.color }}
+                />
+                <span className="text-foreground font-medium">
+                  {t(cat.key as TranslationKey)}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <span className={`tabular-nums font-medium ${exceeded ? 'text-destructive' : 'text-foreground'}`}>
+                  {formatCurrency(cat.spent)}
+                </span>
+                <span className="text-muted-foreground tabular-nums">
+                  / {formatCurrency(cat.budget)}
+                </span>
+              </div>
+            </div>
+            
+            {/* Progress bar */}
+            <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${progressWidth}%`,
+                  backgroundColor: exceeded 
+                    ? 'hsl(var(--destructive))' 
+                    : cat.usedPercentage >= 80 
+                    ? 'hsl(var(--primary))' 
+                    : category.color,
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
 
       {/* Totals */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-3 border-t border-border">
-        <div className="stat-card">
-          <span
-            className={`stat-value tabular-nums ${
-              totalSpent > totalBudget ? 'text-destructive' : ''
-            }`}
-          >
+      <div className="flex items-center justify-between pt-4 mt-4 border-t border-border">
+        <div className="space-y-0.5">
+          <p className="text-xs text-muted-foreground">{t('totalSpent')}</p>
+          <p className={`text-lg font-bold tabular-nums ${totalSpent > totalBudget ? 'text-destructive' : 'text-foreground'}`}>
             {formatCurrency(totalSpent)}
-          </span>
-          <span className="stat-label">{t('totalSpent')}</span>
+          </p>
         </div>
-
-        <div className="stat-card">
-          <span
-            className={`stat-value tabular-nums ${
-              totalBudget - totalSpent < 0 ? 'text-destructive' : ''
-            }`}
-          >
+        
+        <div className="text-right space-y-0.5">
+          <p className="text-xs text-muted-foreground">{t('totalRemaining')}</p>
+          <p className={`text-lg font-bold tabular-nums ${totalBudget - totalSpent < 0 ? 'text-destructive' : 'text-success'}`}>
             {formatCurrency(totalBudget - totalSpent)}
-          </span>
-          <span className="stat-label">{t('totalRemaining')}</span>
-        </div>
-
-        <div className="stat-card">
-          <span
-            className={`stat-value tabular-nums ${
-              usedPercentage >= 100 ? 'text-destructive' : 'text-success'
-            }`}
-          >
-            {formatPercentage(usedPercentage)}
-          </span>
-          <span className="stat-label">{t('used')}</span>
+          </p>
         </div>
       </div>
     </div>

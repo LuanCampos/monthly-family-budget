@@ -1,4 +1,5 @@
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
@@ -74,98 +75,106 @@ export const RecurringExpenseFormFields = ({
 
   return (
     <div className="space-y-4">
-      <div>
-        <label className="text-sm text-muted-foreground mb-1 block">
+      <div className="space-y-2">
+        <Label htmlFor="title" className="text-sm font-medium">
           {t('expenseTitle')}
-        </label>
+        </Label>
         <Input
+          id="title"
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
-          className="bg-secondary border-border text-foreground"
+          className="h-10 bg-secondary/50 border-border"
         />
       </div>
 
-      <div>
-        <label className="text-sm text-muted-foreground mb-1 block">
-          {t('expenseCategory')}
-        </label>
-        <Select
-          value={category}
-          onValueChange={(v) => handleCategoryChange(v as CategoryKey)}
-        >
-          <SelectTrigger className="bg-secondary border-border">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border">
-            {CATEGORIES.map((cat) => (
-              <SelectItem key={cat.key} value={cat.key}>
-                <div className="flex items-center gap-2">
-                  <span
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: cat.color }}
-                  />
-                  {t(cat.key as TranslationKey)}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">
+            {t('expenseCategory')}
+          </Label>
+          <Select
+            value={category}
+            onValueChange={(v) => handleCategoryChange(v as CategoryKey)}
+          >
+            <SelectTrigger className="h-10 bg-secondary/50 border-border">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border">
+              {CATEGORIES.map((cat) => (
+                <SelectItem key={cat.key} value={cat.key}>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: cat.color }}
+                    />
+                    {t(cat.key as TranslationKey)}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div>
-        <label className="text-sm text-muted-foreground mb-1 block">
-          {t('expenseSubcategory')}
-        </label>
-        <Select
-          value={subcategoryId || 'none'}
-          onValueChange={(v) => onSubcategoryChange(v === 'none' ? '' : v)}
-        >
-          <SelectTrigger className="bg-secondary border-border">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border">
-            <SelectItem value="none">-</SelectItem>
-            {filteredSubcategories.map((sub) => (
-              <SelectItem key={sub.id} value={sub.id}>
-                {sub.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <label className="text-sm text-muted-foreground mb-1 block">
-          {t('expenseValue')}
-        </label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-            R$
-          </span>
-          <Input
-            type="text"
-            value={value}
-            onChange={(e) =>
-              onValueChange(e.target.value.replace(/[^\d,]/g, ''))
-            }
-            className="pl-10 bg-secondary border-border text-foreground"
-          />
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">
+            {t('expenseSubcategory')}
+          </Label>
+          <Select
+            value={subcategoryId || 'none'}
+            onValueChange={(v) => onSubcategoryChange(v === 'none' ? '' : v)}
+          >
+            <SelectTrigger className="h-10 bg-secondary/50 border-border">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border">
+              <SelectItem value="none">-</SelectItem>
+              {filteredSubcategories.map((sub) => (
+                <SelectItem key={sub.id} value={sub.id}>
+                  {sub.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      <div>
-        <label className="text-sm text-muted-foreground mb-1 block">
-          {t('dueDay')}
-        </label>
-        <Input
-          type="number"
-          min="1"
-          max="31"
-          value={dueDay}
-          onChange={(e) => onDueDayChange(e.target.value)}
-          placeholder="Ex: 10"
-          className="bg-secondary border-border text-foreground"
-        />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="value" className="text-sm font-medium">
+            {t('expenseValue')}
+          </Label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+              R$
+            </span>
+            <Input
+              id="value"
+              type="text"
+              inputMode="decimal"
+              value={value}
+              onChange={(e) =>
+                onValueChange(e.target.value.replace(/[^\d,]/g, ''))
+              }
+              className="h-10 pl-10 bg-secondary/50 border-border"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="dueDay" className="text-sm font-medium">
+            {t('dueDay')}
+          </Label>
+          <Input
+            id="dueDay"
+            type="number"
+            min="1"
+            max="31"
+            value={dueDay}
+            onChange={(e) => onDueDayChange(e.target.value)}
+            placeholder="Ex: 10"
+            className="h-10 bg-secondary/50 border-border"
+          />
+        </div>
       </div>
 
       <div className="border-t border-border pt-4 mt-4">
@@ -184,32 +193,33 @@ export const RecurringExpenseFormFields = ({
         </div>
 
         {hasInstallments && (
-          <div className="space-y-4 pl-6 border-l-2 border-primary/30">
-            <div>
-              <label className="text-sm text-muted-foreground mb-1 block">
+          <div className="space-y-4 pl-4 border-l-2 border-primary/30">
+            <div className="space-y-2">
+              <Label htmlFor="totalInstallments" className="text-sm font-medium">
                 {t('totalInstallments')}
-              </label>
+              </Label>
               <Input
+                id="totalInstallments"
                 type="number"
                 min="1"
                 max="120"
                 value={totalInstallments}
                 onChange={(e) => onTotalInstallmentsChange(e.target.value)}
                 placeholder="Ex: 12"
-                className="bg-secondary border-border text-foreground"
+                className="h-10 bg-secondary/50 border-border"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
                   {t('startMonth')}
-                </label>
+                </Label>
                 <Select
                   value={startMonth}
                   onValueChange={onStartMonthChange}
                 >
-                  <SelectTrigger className="bg-secondary border-border">
+                  <SelectTrigger className="h-10 bg-secondary/50 border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
@@ -222,10 +232,10 @@ export const RecurringExpenseFormFields = ({
                 </Select>
               </div>
 
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
                   {t('startYear')}
-                </label>
+                </Label>
                 <YearSelector
                   value={startYear}
                   onValueChange={onStartYearChange}

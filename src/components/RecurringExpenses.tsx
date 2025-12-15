@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, Trash2, RefreshCw, Pencil, Calendar, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CategoryKey, Subcategory, RecurringExpense, Expense } from '@/types/budget';
 import { getCategoryByKey, DEFAULT_CATEGORY } from '@/constants/categories';
 import { formatCurrency } from '@/utils/formatters';
@@ -205,124 +205,123 @@ export const RecurringExpenses = ({
           else setIsOpen(true);
         }}
       >
-        <DialogContent className="bg-card border-border max-w-xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">
+        <DialogContent className="bg-card border-border sm:max-w-lg max-h-[85vh] flex flex-col gap-0 p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle>
               {view === 'list'
                 ? t('recurringExpenses')
                 : view === 'add'
                 ? t('newRecurringExpense')
                 : t('editRecurringExpense')}
             </DialogTitle>
+            {view === 'list' && (
+              <DialogDescription className="text-sm text-muted-foreground">
+                {t('recurringExpensesDescription')}
+              </DialogDescription>
+            )}
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto mt-4 pr-4">
+          <div className="flex-1 overflow-y-auto px-6 py-4">
             {view === 'list' && (
-              <>
-                <p className="text-sm text-muted-foreground">
-                  {t('recurringExpensesDescription')}
-                </p>
+              <div className="space-y-2">
+                {expenses.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8 text-sm">
+                    {t('noRecurringExpenses')}
+                  </p>
+                ) : (
+                  expenses.map((exp) => {
+                    const cat = getCategoryByKey(exp.category);
+                    const subName = getSubcategoryName(exp.subcategoryId);
+                    const isInCurrentMonth = currentMonthExpenses.some(
+                      e => e.recurringExpenseId === exp.id
+                    );
 
-                <div className="space-y-2 mt-3 pt-2">
-                  {expenses.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-4">
-                      {t('noRecurringExpenses')}
-                    </p>
-                  ) : (
-                    expenses.map((exp) => {
-                      const cat = getCategoryByKey(exp.category);
-                      const subName = getSubcategoryName(exp.subcategoryId);
-                      const isInCurrentMonth = currentMonthExpenses.some(
-                        e => e.recurringExpenseId === exp.id
-                      );
+                    const handleApply = () => {
+                      const success = onApply(exp.id);
+                      if (success) {
+                        toast.success(t('applyToCurrentMonth'));
+                      } else {
+                        toast.info(t('alreadyInCurrentMonth'));
+                      }
+                    };
 
-                      const handleApply = () => {
-                        const success = onApply(exp.id);
-                        if (success) {
-                          toast.success(t('applyToCurrentMonth'));
-                        } else {
-                          toast.info(t('alreadyInCurrentMonth'));
-                        }
-                      };
-
-                      return (
-                        <div
-                          key={exp.id}
-                          className="flex items-center justify-between p-3 bg-secondary rounded-lg gap-3"
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <span
-                              className="w-3 h-3 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: cat.color }}
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="text-foreground text-sm font-medium">
-                                  {exp.title}
-                                </p>
-                                {exp.hasInstallments && exp.totalInstallments && (
-                                  <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
-                                    {exp.totalInstallments}x
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                                <span>{t(cat.name as TranslationKey)}</span>
-                                {subName && <span>• {subName}</span>}
-                                {exp.dueDay && (
-                                  <span className="inline-flex items-center gap-0.5">
-                                    <Calendar className="h-3 w-3" />
-                                    {t('day')} {exp.dueDay}
-                                  </span>
-                                )}
-                              </div>
+                    return (
+                      <div
+                        key={exp.id}
+                        className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg gap-3 group"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-foreground text-sm font-medium">
+                                {exp.title}
+                              </p>
+                              {exp.hasInstallments && exp.totalInstallments && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
+                                  {exp.totalInstallments}x
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap mt-0.5">
+                              <span>{t(cat.name as TranslationKey)}</span>
+                              {subName && <span>• {subName}</span>}
+                              {exp.dueDay && (
+                                <span className="inline-flex items-center gap-0.5">
+                                  <Calendar className="h-3 w-3" />
+                                  {t('day')} {exp.dueDay}
+                                </span>
+                              )}
                             </div>
                           </div>
-
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <span className="text-foreground text-sm font-medium mr-1">
-                              {formatCurrency(exp.value)}
-                            </span>
-
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={handleApply}
-                              disabled={isInCurrentMonth}
-                              title={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
-                              className={`h-8 w-8 ${
-                                isInCurrentMonth 
-                                  ? 'text-muted-foreground/40 cursor-not-allowed' 
-                                  : 'text-muted-foreground hover:text-green-500 hover:bg-green-500/10'
-                              }`}
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEdit(exp)}
-                              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onRemove(exp.id)}
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
                         </div>
-                      );
-                    })
-                  )}
-                </div>
-              </>
+
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <span className="text-foreground text-sm font-semibold tabular-nums mr-1">
+                            {formatCurrency(exp.value)}
+                          </span>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleApply}
+                            disabled={isInCurrentMonth}
+                            title={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
+                            className={`h-8 w-8 ${
+                              isInCurrentMonth 
+                                ? 'text-muted-foreground/40 cursor-not-allowed' 
+                                : 'text-muted-foreground hover:text-success hover:bg-success/10'
+                            }`}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEdit(exp)}
+                            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onRemove(exp.id)}
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             )}
 
             {(view === 'add' || view === 'edit') && (
@@ -350,34 +349,39 @@ export const RecurringExpenses = ({
             )}
           </div>
 
-          {(view === 'add' || view === 'edit') && (
-            <div className="flex gap-2 mt-4">
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-border bg-secondary/30">
+            {view === 'list' ? (
               <Button
-                onClick={handleSubmit}
-                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={openAdd}
+                className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                {view === 'add' ? t('add') : t('save')}
+                <Plus className="h-4 w-4 mr-2" />
+                {t('addRecurringExpense')}
               </Button>
-              <Button variant="outline" onClick={() => setView('list')}>
-                {t('cancel')}
-              </Button>
-            </div>
-          )}
-
-          {view === 'list' && (
-            <Button
-              onClick={openAdd}
-              className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {t('addRecurringExpense')}
-            </Button>
-          )}
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleSubmit}
+                  className="flex-1 h-10 bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {view === 'add' ? t('add') : t('save')}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setView('list')}
+                  className="h-10"
+                >
+                  {t('cancel')}
+                </Button>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
-        <AlertDialogContent className="bg-card border-border">
+        <AlertDialogContent className="bg-card border-border sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('updateRecurringTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -385,18 +389,18 @@ export const RecurringExpenses = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel onClick={() => setShowUpdateDialog(false)}>
+            <AlertDialogCancel className="h-10" onClick={() => setShowUpdateDialog(false)}>
               {t('cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => confirmUpdate(true)}
-              className="bg-secondary text-foreground hover:bg-secondary/80"
+              className="h-10 bg-secondary text-foreground hover:bg-secondary/80"
             >
               {t('updateAll')}
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => confirmUpdate(false)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="h-10 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {t('updateFutureOnly')}
             </AlertDialogAction>

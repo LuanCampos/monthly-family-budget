@@ -119,10 +119,10 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Stats Grid - Mobile: 2 cols, Desktop: 3 cols */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
               {/* Expenses Chart Card */}
-              <div className="dashboard-card">
+              <div className="dashboard-card lg:col-span-4">
                 <div className="dashboard-card-header">
                   <div className="flex items-center gap-2">
                     <PieChart className="h-4 w-4 text-primary" />
@@ -146,8 +146,8 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Summary Table Card */}
-              <div className="dashboard-card md:col-span-1 xl:col-span-1">
+              {/* Summary Card */}
+              <div className="dashboard-card lg:col-span-5">
                 <div className="dashboard-card-header">
                   <div className="flex items-center gap-2">
                     <ListTodo className="h-4 w-4 text-primary" />
@@ -165,7 +165,7 @@ const Index = () => {
               </div>
 
               {/* Goals Card */}
-              <div className="dashboard-card md:col-span-2 xl:col-span-1">
+              <div className="dashboard-card lg:col-span-3">
                 <div className="dashboard-card-header">
                   <div className="flex items-center gap-2">
                     <Target className="h-4 w-4 text-primary" />

@@ -119,14 +119,14 @@ export const ExpenseForm = ({
         </DialogTrigger>
       )}
 
-      <DialogContent className="bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">
+      <DialogContent className="bg-card border-border sm:max-w-md flex flex-col gap-0 p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+          <DialogTitle>
             {mode === 'create' ? t('newExpense') : t('editExpense')}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="mt-4">
+        <div className="px-6 py-4">
           <ExpenseFormFields
             title={title}
             category={category}
@@ -154,10 +154,12 @@ export const ExpenseForm = ({
               </label>
             </div>
           )}
+        </div>
 
+        <div className="px-6 py-4 border-t border-border bg-secondary/30">
           <Button
             onClick={handleSubmit}
-            className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90"
+            className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {mode === 'create' ? t('add') : t('saveChanges')}
           </Button>
