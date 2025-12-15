@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { YearSelector } from '@/components/ui/year-selector';
 import { Month, MONTH_NAMES } from '@/types/budget';
 
 interface MonthSelectorProps {
@@ -55,9 +56,6 @@ export const MonthSelector = ({
   const [selectedMonth, setSelectedMonth] = useState(
     (new Date().getMonth() + 1).toString()
   );
-
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
   const handleAddMonth = () => {
     const success = onAddMonth(
@@ -164,18 +162,7 @@ export const MonthSelector = ({
               </SelectContent>
             </Select>
 
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="bg-secondary border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <YearSelector value={selectedYear} onValueChange={setSelectedYear} />
           </div>
 
           <Button

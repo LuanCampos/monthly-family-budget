@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { YearSelector } from '@/components/ui/year-selector';
 import { CATEGORIES, CategoryKey, Subcategory, MONTH_NAMES } from '@/types/budget';
 
 interface RecurringExpenseFormFieldsProps {
@@ -60,9 +61,6 @@ export const RecurringExpenseFormFields = ({
     onCategoryChange(newCategory);
     onSubcategoryChange('');
   };
-
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 10 }, (_, i) => currentYear - 2 + i);
 
   return (
     <div className="space-y-4">
@@ -218,21 +216,10 @@ export const RecurringExpenseFormFields = ({
                 <label className="text-sm text-muted-foreground mb-1 block">
                   Ano da 1ª Parcela
                 </label>
-                <Select
+                <YearSelector
                   value={startYear}
                   onValueChange={onStartYearChange}
-                >
-                  <SelectTrigger className="bg-secondary border-border">
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {years.map((year) => (
-                      <SelectItem key={year} value={String(year)}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
             </div>
           </div>

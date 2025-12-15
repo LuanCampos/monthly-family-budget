@@ -412,42 +412,43 @@ export const useBudget = () => {
       )
     );
 
-    if (updatePastExpenses) {
-      // Update all existing expenses linked to this recurring expense
-      setMonths(prev =>
-        prev.map(m => ({
-          ...m,
-          expenses: m.expenses.map(e => {
-            if (e.recurringExpenseId !== id) return e;
+    // Update all existing expenses linked to this recurring expense (past and future)
+    setMonths(prev =>
+      prev.map(m => ({
+        ...m,
+        expenses: m.expenses.map(e => {
+          if (e.recurringExpenseId !== id) return e;
 
-            // Recalculate installment info if needed
-            let newTitle = title;
-            let installmentInfo = e.installmentInfo;
+          // Always update if updatePastExpenses is true, regardless of month
+          if (!updatePastExpenses) return e;
 
-            if (hasInstallments && totalInstallments && startYear && startMonth) {
-              const installmentNumber = calculateInstallmentNumber(m.year, m.month, startYear, startMonth);
-              if (installmentNumber >= 1 && installmentNumber <= totalInstallments) {
-                newTitle = `${title} (Parcela ${installmentNumber}/${totalInstallments})`;
-                installmentInfo = { current: installmentNumber, total: totalInstallments };
-              }
-            } else if (!hasInstallments && e.installmentInfo) {
-              // Remove installment info if no longer has installments
-              installmentInfo = undefined;
+          // Recalculate installment info if needed
+          let newTitle = title;
+          let installmentInfo = e.installmentInfo;
+
+          if (hasInstallments && totalInstallments && startYear && startMonth) {
+            const installmentNumber = calculateInstallmentNumber(m.year, m.month, startYear, startMonth);
+            if (installmentNumber >= 1 && installmentNumber <= totalInstallments) {
+              newTitle = `${title} (Parcela ${installmentNumber}/${totalInstallments})`;
+              installmentInfo = { current: installmentNumber, total: totalInstallments };
             }
+          } else if (!hasInstallments && e.installmentInfo) {
+            // Remove installment info if no longer has installments
+            installmentInfo = undefined;
+          }
 
-            return {
-              ...e,
-              title: newTitle,
-              category,
-              subcategoryId,
-              value,
-              dueDay,
-              installmentInfo,
-            };
-          }),
-        }))
-      );
-    }
+          return {
+            ...e,
+            title: newTitle,
+            category,
+            subcategoryId,
+            value,
+            dueDay,
+            installmentInfo,
+          };
+        }),
+      }))
+    );
   };
 
   const removeRecurringExpense = (id: string) => {
