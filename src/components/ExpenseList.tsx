@@ -1,4 +1,4 @@
-import { Trash2, Pencil } from 'lucide-react';
+import { Trash2, Pencil, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Expense, Subcategory } from '@/types/budget';
 import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
@@ -11,6 +11,24 @@ interface ExpenseListProps {
   onEdit: (expense: Expense) => void;
 }
 
+const generateSubcategoryColor = (
+  baseColor: string,
+  index: number,
+  total: number
+): string => {
+  const match = baseColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+  if (!match) return baseColor;
+
+  const h = parseInt(match[1]);
+  const s = parseInt(match[2]);
+  const l = parseInt(match[3]);
+
+  const step = total > 1 ? 30 / (total - 1) : 0;
+  const newL = Math.max(25, Math.min(75, l - 15 + step * index));
+
+  return `hsl(${h}, ${s}%, ${newL}%)`;
+};
+
 export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: ExpenseListProps) => {
   if (expenses.length === 0) {
     return (
@@ -21,10 +39,17 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
     );
   }
 
-  const getSubcategoryName = (subcategoryId?: string) => {
+  const getSubcategoryInfo = (subcategoryId?: string) => {
     if (!subcategoryId) return null;
     const sub = subcategories.find(s => s.id === subcategoryId);
-    return sub?.name || null;
+    if (!sub) return null;
+    
+    const categorySubs = subcategories.filter(s => s.categoryKey === sub.categoryKey);
+    const index = categorySubs.findIndex(s => s.id === subcategoryId);
+    const category = getCategoryByKey(sub.categoryKey);
+    const color = generateSubcategoryColor(category.color, index, categorySubs.length);
+    
+    return { name: sub.name, color };
   };
 
   const sortedExpenses = [...expenses].sort((a, b) => {
@@ -49,38 +74,43 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit }: Expen
     <div className="space-y-2">
       {sortedExpenses.map((expense) => {
         const cat = getCategoryByKey(expense.category);
-        const subName = getSubcategoryName(expense.subcategoryId);
+        const subInfo = getSubcategoryInfo(expense.subcategoryId);
 
         return (
           <div
             key={expense.id}
             className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg group"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {expense.isRecurring && (
+                <span
+                  className="flex items-center justify-center w-5 h-5 rounded-full"
+                  style={{ backgroundColor: 'hsl(var(--muted))' }}
+                  title="Recorrente"
+                >
+                  <RefreshCw className="h-3 w-3 text-muted-foreground" />
+                </span>
+              )}
+
               <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: cat.color }}
-              />
+                className="text-xs px-2 py-0.5 rounded-full font-medium"
+                style={{ backgroundColor: cat.color, color: 'white' }}
+              >
+                {cat.name}
+              </span>
+
+              {subInfo && (
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full font-medium"
+                  style={{ backgroundColor: subInfo.color, color: 'white' }}
+                >
+                  {subInfo.name}
+                </span>
+              )}
 
               <span className="text-sm text-foreground font-medium">
                 {expense.title}
               </span>
-
-              <span className="text-xs text-muted-foreground">
-                ({cat.name})
-              </span>
-
-              {subName && (
-                <span className="text-xs text-muted-foreground">
-                  ({subName})
-                </span>
-              )}
-
-              {expense.isRecurring && (
-                <span className="text-xs text-muted-foreground">
-                  (Recorrente)
-                </span>
-              )}
             </div>
 
             <div className="flex items-center gap-1">
