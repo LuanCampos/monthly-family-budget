@@ -27,14 +27,15 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
   };
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-      <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground whitespace-nowrap">
-        <DollarSign className="h-4 w-4" />
-        {t('monthlyIncome')}
+    <div className="flex items-center gap-2 sm:gap-4">
+      <label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">
+        <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+        <span className="hidden xs:inline">{t('monthlyIncome')}</span>
+        <span className="xs:hidden">Renda</span>
       </label>
       
-      <div className="relative flex-1 max-w-xs">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+      <div className="relative flex-1 max-w-[160px] sm:max-w-xs">
+        <span className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs sm:text-sm">
           R$
         </span>
         <Input
@@ -45,7 +46,7 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
           onBlur={handleBlur}
           disabled={disabled}
           placeholder="0,00"
-          className="pl-10 h-10 py-0 bg-secondary/50 border-border text-primary !text-base font-bold placeholder:text-muted-foreground"
+          className="pl-8 sm:pl-10 h-9 sm:h-10 py-0 bg-secondary/50 border-border text-primary text-sm sm:text-base font-bold placeholder:text-muted-foreground"
         />
       </div>
     </div>
