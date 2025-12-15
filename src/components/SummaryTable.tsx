@@ -49,15 +49,15 @@ export const SummaryTable = ({
                   {t(cat.key as TranslationKey)}
                 </span>
               </div>
-              <div className="flex items-center text-xs">
-                <span className={`tabular-nums font-medium text-right min-w-[9ch] ${exceeded ? 'text-destructive' : 'text-foreground'}`}>
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className={`tabular-nums font-medium ${exceeded ? 'text-destructive' : 'text-foreground'}`}>
                   {formatCurrency(cat.spent)}
                 </span>
-                <span className="text-muted-foreground mx-0.5">/</span>
-                <span className="text-muted-foreground tabular-nums text-right min-w-[9ch]">
+                <span className="text-muted-foreground">/</span>
+                <span className="text-muted-foreground tabular-nums">
                   {formatCurrency(cat.budget)}
                 </span>
-                <span className={`tabular-nums text-right min-w-[6ch] ${exceeded ? 'text-destructive' : 'text-muted-foreground'}`}>
+                <span className={`tabular-nums ${exceeded ? 'text-destructive' : 'text-muted-foreground'}`}>
                   ({formatPercentage(cat.usedPercentage)})
                 </span>
               </div>
