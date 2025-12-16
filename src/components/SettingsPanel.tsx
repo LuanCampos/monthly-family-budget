@@ -178,7 +178,7 @@ export const SettingsPanel = ({ onExport, onImport, currentMonthLabel, onDeleteM
               <div className="space-y-3">
                 <Label className="flex items-center gap-2 text-sm font-medium">
                   <Trash2 className="h-4 w-4 text-muted-foreground" />
-                  {t('deleteCurrentMonth')}
+                  {t('deleteMonth')}
                 </Label>
                 <p className="text-xs text-muted-foreground">
                   {t('deleteCurrentMonthDescription')}

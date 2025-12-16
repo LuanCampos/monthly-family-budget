@@ -136,7 +136,7 @@ const Index = () => {
           <div className="space-y-4 sm:space-y-6">
             {/* Income Section */}
             <div className="dashboard-card">
-              <div className="dashboard-card-header">
+              <div className="dashboard-card-header flex items-center gap-4 justify-start">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-primary" />
                   <span className="dashboard-card-title">{t('monthlyIncome')}</span>

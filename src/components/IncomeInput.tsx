@@ -26,7 +26,7 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
   return (
     <div className="flex items-center gap-2 sm:gap-4">
       <div className="relative flex-1 max-w-xs">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
           R$
         </span>
         <Input
@@ -37,7 +37,7 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
           onBlur={handleBlur}
           disabled={disabled}
           placeholder="0,00"
-          className="pl-10 h-10 py-0 bg-secondary/50 border-border text-primary !text-base font-bold placeholder:text-muted-foreground"
+          className="pl-12 h-10 py-0 bg-secondary/50 border-border text-primary !text-base font-bold placeholder:text-muted-foreground"
         />
       </div>
     </div>
