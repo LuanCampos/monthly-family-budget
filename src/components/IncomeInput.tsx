@@ -25,7 +25,7 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
 
   return (
     <div className="flex items-center gap-2 sm:gap-4">
-      <div className="relative flex-1 max-w-xs">
+      <div className="relative w-48 sm:w-56">
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
           R$
         </span>
