@@ -81,16 +81,14 @@ const Index = () => {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
-                <h1 className="text-base sm:text-lg font-bold text-foreground truncate">
-                  {t('appTitle')}
-                </h1>
-              </div>
+            <div className="flex items-center gap-2 min-w-0">
+              <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+              <h1 className="text-sm sm:text-lg font-bold text-foreground truncate">
+                {t('appTitle')}
+              </h1>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <MonthSelector
                 months={months}
                 currentMonth={currentMonth}
