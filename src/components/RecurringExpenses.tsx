@@ -5,10 +5,10 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CategoryKey, Subcategory, RecurringExpense, Expense } from '@/types/budget';
 import { getCategoryByKey, DEFAULT_CATEGORY } from '@/constants/categories';
-import { formatCurrency } from '@/utils/formatters';
 import { RecurringExpenseFormFields } from './RecurringExpenseFormFields';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
 import {
   AlertDialog,
@@ -65,6 +65,7 @@ export const RecurringExpenses = ({
   onApply,
 }: RecurringExpensesProps) => {
   const { t } = useLanguage();
+  const { formatCurrency } = useCurrency();
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<ViewMode>('list');
   const [editingId, setEditingId] = useState<string | null>(null);

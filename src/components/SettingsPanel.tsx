@@ -1,4 +1,4 @@
-import { Settings, Globe, Palette, Download, Upload, Database, Trash2 } from 'lucide-react';
+import { Settings, Globe, Palette, Download, Upload, Database, Trash2, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme, themes, ThemeKey } from '@/contexts/ThemeContext';
+import { useCurrency, currencies, CurrencyCode } from '@/contexts/CurrencyContext';
 import { languages, Language } from '@/i18n';
 import { TranslationKey } from '@/i18n/translations/pt';
 
@@ -42,6 +43,7 @@ interface SettingsPanelProps {
 export const SettingsPanel = ({ onExport, onImport, currentMonthLabel, onDeleteMonth }: SettingsPanelProps) => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
+  const { currency, setCurrency } = useCurrency();
 
   const handleImportClick = () => {
     const input = document.createElement('input');
@@ -90,6 +92,46 @@ export const SettingsPanel = ({ onExport, onImport, currentMonthLabel, onDeleteM
                 {languages.map((lang) => (
                   <SelectItem key={lang.code} value={lang.code}>
                     {lang.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Currency Selection */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 text-sm font-medium">
+              <Coins className="h-4 w-4 text-muted-foreground" />
+              {t('currency')}
+            </Label>
+            <Select value={currency} onValueChange={(v) => setCurrency(v as CurrencyCode)}>
+              <SelectTrigger className="h-10 bg-secondary/50 border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {currencies.map((curr) => (
+                  <SelectItem key={curr.code} value={curr.code}>
+                    {curr.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Theme Selection */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 text-sm font-medium">
+              <Palette className="h-4 w-4 text-muted-foreground" />
+              {t('theme')}
+            </Label>
+            <Select value={theme} onValueChange={(v) => setTheme(v as ThemeKey)}>
+              <SelectTrigger className="h-10 bg-secondary/50 border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {themes.map((themeOption) => (
+                  <SelectItem key={themeOption.key} value={themeOption.key}>
+                    {t(themeOption.labelKey as TranslationKey)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -2,10 +2,11 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CategoryKey, Expense, Subcategory } from '@/types/budget';
-import { formatCurrency } from '@/utils/formatters';
 import { getCategoryByKey } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n';
+
 interface SubcategoryChartProps {
   categoryKey: CategoryKey;
   expenses: Expense[];
@@ -38,6 +39,7 @@ export const SubcategoryChart = ({
   onBack,
 }: SubcategoryChartProps) => {
   const { t } = useLanguage();
+  const { formatCurrency } = useCurrency();
   const category = getCategoryByKey(categoryKey);
   const categoryExpenses = expenses.filter(e => e.category === categoryKey);
 

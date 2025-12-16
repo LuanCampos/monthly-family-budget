@@ -12,6 +12,7 @@ import { YearSelector } from '@/components/ui/year-selector';
 import { CategoryKey, Subcategory } from '@/types/budget';
 import { CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
 
 const MONTH_KEYS = [
@@ -63,6 +64,7 @@ export const RecurringExpenseFormFields = ({
   onStartMonthChange,
 }: RecurringExpenseFormFieldsProps) => {
   const { t } = useLanguage();
+  const { currencySymbol } = useCurrency();
   
   const filteredSubcategories = subcategories.filter(
     (sub) => sub.categoryKey === category
@@ -145,7 +147,7 @@ export const RecurringExpenseFormFields = ({
           </Label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-              R$
+              {currencySymbol}
             </span>
             <Input
               id="value"

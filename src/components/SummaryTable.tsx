@@ -1,6 +1,7 @@
 import { CategoryKey } from '@/types/budget';
-import { formatCurrency, formatPercentage } from '@/utils/formatters';
+import { formatPercentage } from '@/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
 import { getCategoryByKey } from '@/constants/categories';
 
@@ -28,6 +29,7 @@ export const SummaryTable = ({
   usedPercentage,
 }: SummaryTableProps) => {
   const { t } = useLanguage();
+  const { formatCurrency } = useCurrency();
 
   return (
     <div className="space-y-4">
