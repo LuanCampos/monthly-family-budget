@@ -217,9 +217,6 @@ const Index = () => {
                       <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs border-border">
                         <ArrowUpDown className="h-3.5 w-3.5" />
                         <span className="hidden sm:inline">{t('sortBy')}</span>
-                        {sortType === 'category' && (sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-                        {sortType === 'value' && (sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-                        {sortType === 'dueDate' && (sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40 bg-popover">
