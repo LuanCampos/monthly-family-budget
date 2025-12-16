@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { CategoryKey } from '@/types/budget';
-import { formatCurrency } from '@/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
 
 interface CategorySummary {
@@ -23,6 +23,7 @@ export const ExpenseChart = ({
   onSelectCategory,
 }: ExpenseChartProps) => {
   const { t } = useLanguage();
+  const { formatCurrency } = useCurrency();
 
   if (!hasExpenses) {
     return (

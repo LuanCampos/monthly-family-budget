@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface IncomeInputProps {
   value: number;
@@ -10,6 +11,7 @@ interface IncomeInputProps {
 
 export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => {
   const [inputValue, setInputValue] = useState('');
+  const { currencySymbol } = useCurrency();
 
   useEffect(() => {
     setInputValue(formatCurrencyInput(value));
@@ -27,7 +29,7 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
     <div className="flex items-center gap-2 sm:gap-4">
       <div className="relative w-48 sm:w-56">
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-          R$
+          {currencySymbol}
         </span>
         <Input
           type="text"

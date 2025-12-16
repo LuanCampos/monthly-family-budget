@@ -149,6 +149,9 @@ export const en: Record<TranslationKey, string> = {
   themeGruvbox: 'Gruvbox',
   themeCatppuccin: 'Catppuccin',
   
+  // Currency
+  currency: 'Currency',
+  
   // Months
   'month-0': 'January',
   'month-1': 'February',

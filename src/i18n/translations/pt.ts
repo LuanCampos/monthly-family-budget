@@ -147,6 +147,9 @@ export const pt = {
   themeGruvbox: 'Gruvbox',
   themeCatppuccin: 'Catppuccin',
   
+  // Currency
+  currency: 'Moeda',
+  
   // Months
   'month-0': 'Janeiro',
   'month-1': 'Fevereiro',

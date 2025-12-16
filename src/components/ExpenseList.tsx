@@ -3,8 +3,8 @@ import { Trash2, Pencil, RefreshCw, X, AlertCircle, Calendar, CreditCard } from 
 import { Button } from '@/components/ui/button';
 import { Expense, Subcategory, CategoryKey } from '@/types/budget';
 import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
-import { formatCurrency } from '@/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
 import {
   AlertDialog,
@@ -58,6 +58,7 @@ const generateSubcategoryColor = (
 
 export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfirmPayment, sortType, sortDirection }: ExpenseListProps) => {
   const { t } = useLanguage();
+  const { formatCurrency } = useCurrency();
   const [filter, setFilter] = useState<FilterType>(null);
   const [confirmPaymentId, setConfirmPaymentId] = useState<string | null>(null);
 
