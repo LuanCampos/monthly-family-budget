@@ -13,9 +13,10 @@ import { RecurringExpenses } from '@/components/RecurringExpenses';
 import { ExpenseList, SortType, SortDirection } from '@/components/ExpenseList';
 import { SubcategoryManager } from '@/components/SubcategoryManager';
 import { SettingsPanel } from '@/components/SettingsPanel';
+import { AnnualViewChart } from '@/components/AnnualViewChart';
 import { Expense, CategoryKey } from '@/types/budget';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -59,6 +60,7 @@ const Index = () => {
   const [activeCategory, setActiveCategory] = useState<CategoryKey | null>(null);
   const [sortType, setSortType] = useState<SortType>('category');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [showAnnualView, setShowAnnualView] = useState(false);
 
   const categorySummary = getCategorySummary();
   const { totalSpent, totalBudget, usedPercentage } = getTotals();
@@ -154,10 +156,19 @@ const Index = () => {
               {/* Expenses Chart Card */}
               <div className="dashboard-card lg:col-span-3">
                 <div className="dashboard-card-header">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-1">
                     <PieChart className="h-4 w-4 text-primary" />
                     <span className="dashboard-card-title">{t('expenses')}</span>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAnnualView(true)}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <Calendar className="h-3.5 w-3.5 mr-1" />
+                    <span className="hidden sm:inline">{t('annualView')}</span>
+                  </Button>
                 </div>
                 <div className="dashboard-card-content">
                   <ExpenseChart
@@ -316,6 +327,22 @@ const Index = () => {
               onBack={() => setActiveCategory(null)}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Annual View Modal */}
+      <Dialog open={showAnnualView} onOpenChange={setShowAnnualView}>
+        <DialogContent className="w-full max-w-3xl p-4 md:p-6 overflow-y-auto max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              {t('annualViewTitle')} - {currentMonth?.year || new Date().getFullYear()}
+            </DialogTitle>
+          </DialogHeader>
+          <AnnualViewChart
+            months={months}
+            currentYear={currentMonth?.year || new Date().getFullYear()}
+          />
         </DialogContent>
       </Dialog>
 
