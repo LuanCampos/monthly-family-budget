@@ -80,10 +80,10 @@ const Index = () => {
       {/* Top Bar */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center gap-2 min-w-0">
-              <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
-              <h1 className="text-sm sm:text-lg font-bold text-foreground truncate">
+          <div className="flex items-center justify-between py-2 sm:py-0 sm:h-16 gap-3">
+            <div className="flex items-start gap-2 min-w-0">
+              <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0 mt-0.5" />
+              <h1 className="text-sm sm:text-lg font-bold text-foreground leading-tight">
                 {t('appTitle')}
               </h1>
             </div>
