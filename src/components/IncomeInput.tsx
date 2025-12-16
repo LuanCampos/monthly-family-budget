@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput, formatCurrency } from '@/utils/formatters';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { DollarSign } from 'lucide-react';
+import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
 
 interface IncomeInputProps {
   value: number;
@@ -11,7 +9,6 @@ interface IncomeInputProps {
 }
 
 export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => {
-  const { t } = useLanguage();
   const [inputValue, setInputValue] = useState('');
 
   useEffect(() => {
@@ -28,13 +25,7 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
 
   return (
     <div className="flex items-center gap-2 sm:gap-4">
-      <label className="flex items-center gap-1.5 sm:gap-2 text-sm font-medium text-muted-foreground whitespace-nowrap">
-        <DollarSign className="h-4 w-4" />
-        <span className="hidden xs:inline">{t('monthlyIncome')}</span>
-        <span className="xs:hidden">Renda</span>
-      </label>
-      
-      <div className="relative flex-1 max-w-[140px] xs:max-w-xs">
+      <div className="relative flex-1 max-w-xs">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
           R$
         </span>
