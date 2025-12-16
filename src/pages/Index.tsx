@@ -141,8 +141,6 @@ const Index = () => {
                   <DollarSign className="h-4 w-4 text-primary" />
                   <span className="dashboard-card-title">{t('monthlyIncome')}</span>
                 </div>
-              </div>
-              <div className="dashboard-card-content">
                 <IncomeInput
                   value={currentMonth?.income || 0}
                   onChange={updateIncome}
@@ -223,8 +221,8 @@ const Index = () => {
                 <div className="action-btn-group justify-center xs:justify-end">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs border-border">
-                        <ArrowUpDown className="h-3.5 w-3.5" />
+                      <Button variant="outline" size="sm" className="border-border hover:bg-secondary text-xs h-8 px-2 xs:px-2.5 sm:h-9 sm:px-3 sm:text-sm">
+                        <ArrowUpDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline">{t('sortBy')}</span>
                       </Button>
                     </DropdownMenuTrigger>
