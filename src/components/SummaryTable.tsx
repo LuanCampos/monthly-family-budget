@@ -61,7 +61,7 @@ export const SummaryTable = ({
             
               {/* Spent */}
               <span
-                className={`text-sm text-right tabular-nums ${
+                className={`text-[13px] text-right tabular-nums ${
                   exceeded ? 'text-destructive' : 'text-muted-foreground'
                 }`}
               >
@@ -69,13 +69,13 @@ export const SummaryTable = ({
               </span>
             
               {/* Budget */}
-              <span className="text-sm text-left tabular-nums text-muted-foreground whitespace-nowrap">
+              <span className="text-[13px] text-left tabular-nums text-muted-foreground whitespace-nowrap">
                 / &nbsp;{formatCurrency(cat.budget)}
               </span>
             
               {/* Percentage */}
               <span
-                className={`text-sm text-right tabular-nums font-medium ${
+                className={`text-[13px] text-right tabular-nums font-medium ${
                   exceeded ? 'text-destructive' : 'text-foreground'
                 }`}
               >
