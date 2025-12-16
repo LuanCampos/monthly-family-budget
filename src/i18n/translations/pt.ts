@@ -108,6 +108,12 @@ export const pt = {
   recurring: 'Recorrentes',
   pending: 'Pendentes',
   
+  // Sorting
+  sortBy: 'Ordenar por',
+  sortCategory: 'Categoria',
+  sortValue: 'Valor',
+  sortDueDate: 'Data de Vencimento',
+  
   // Empty States
   emptyStateTitle: 'Comece adicionando um mês para gerenciar seu orçamento.',
   emptyStateSubtitle: 'Clique no botão + ao lado do seletor de mês.',

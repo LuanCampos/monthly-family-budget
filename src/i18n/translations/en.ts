@@ -110,6 +110,12 @@ export const en: Record<TranslationKey, string> = {
   recurring: 'Recurring',
   pending: 'Pending',
   
+  // Sorting
+  sortBy: 'Sort by',
+  sortCategory: 'Category',
+  sortValue: 'Value',
+  sortDueDate: 'Due Date',
+  
   // Empty States
   emptyStateTitle: 'Start by adding a month to manage your budget.',
   emptyStateSubtitle: 'Click the + button next to the month selector.',
