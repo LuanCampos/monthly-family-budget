@@ -150,6 +150,10 @@ export const pt = {
   // Currency
   currency: 'Moeda',
   
+  // Annual View
+  annualView: 'Visão Anual',
+  annualViewTitle: 'Gastos por Categoria',
+  
   // Months
   'month-0': 'Janeiro',
   'month-1': 'Fevereiro',

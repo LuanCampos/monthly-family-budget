@@ -152,6 +152,10 @@ export const en: Record<TranslationKey, string> = {
   // Currency
   currency: 'Currency',
   
+  // Annual View
+  annualView: 'Annual View',
+  annualViewTitle: 'Expenses by Category',
+  
   // Months
   'month-0': 'January',
   'month-1': 'February',
