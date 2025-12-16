@@ -42,22 +42,22 @@ export const SummaryTable = ({
             <div
               className="
                 grid
-                grid-cols-[12px_1fr_1fr_90px_14px_90px_70px]
+                grid-cols-[2fr_1fr_1fr_1fr]
                 items-center
                 gap-x-2
                 text-sm
               "
             >
-              {/* Dot */}
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: category.color }}
-              />
-            
-              {/* Name (2 columns) */}
-              <span className="font-medium truncate col-span-2">
-                {t(cat.key as TranslationKey)}
-              </span>
+              {/* Dot + Name */}
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: category.color }}
+                />
+                <span className="font-medium truncate">
+                  {t(cat.key as TranslationKey)}
+                </span>
+              </div>
             
               {/* Spent */}
               <span
@@ -68,14 +68,9 @@ export const SummaryTable = ({
                 {formatCurrency(cat.spent)}
               </span>
             
-              {/* Slash */}
-              <span className="text-xs text-center text-muted-foreground">
-                /
-              </span>
-            
               {/* Budget */}
-              <span className="text-xs text-right tabular-nums text-muted-foreground">
-                {formatCurrency(cat.budget)}
+              <span className="text-xs text-left tabular-nums text-muted-foreground whitespace-nowrap">
+                / &nbsp;{formatCurrency(cat.budget)}
               </span>
             
               {/* Percentage */}
