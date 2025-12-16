@@ -15,7 +15,7 @@ import { SubcategoryManager } from '@/components/SubcategoryManager';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -136,6 +136,12 @@ const Index = () => {
           <div className="space-y-4 sm:space-y-6">
             {/* Income Section */}
             <div className="dashboard-card">
+              <div className="dashboard-card-header">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-primary" />
+                  <span className="dashboard-card-title">{t('monthlyIncome')}</span>
+                </div>
+              </div>
               <div className="dashboard-card-content">
                 <IncomeInput
                   value={currentMonth?.income || 0}
@@ -210,7 +216,10 @@ const Index = () => {
             {/* Expense List Section */}
             <div className="dashboard-card">
               <div className="dashboard-card-header flex-wrap gap-2 xs:gap-3">
-                <span className="dashboard-card-title flex-1">{t('monthExpenses')}</span>
+                <div className="flex items-center gap-2 flex-1">
+                  <Receipt className="h-4 w-4 text-primary" />
+                  <span className="dashboard-card-title">{t('monthExpenses')}</span>
+                </div>
                 <div className="action-btn-group justify-center xs:justify-end">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
