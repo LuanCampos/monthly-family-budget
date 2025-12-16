@@ -138,26 +138,6 @@ export const SettingsPanel = ({ onExport, onImport, currentMonthLabel, onDeleteM
             </Select>
           </div>
 
-          {/* Theme Selection */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2 text-sm font-medium">
-              <Palette className="h-4 w-4 text-muted-foreground" />
-              {t('theme')}
-            </Label>
-            <Select value={theme} onValueChange={(v) => setTheme(v as ThemeKey)}>
-              <SelectTrigger className="h-10 bg-secondary/50 border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                {themes.map((themeOption) => (
-                  <SelectItem key={themeOption.key} value={themeOption.key}>
-                    {t(themeOption.labelKey as TranslationKey)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Backup Section */}
           {(onExport || onImport) && (
             <>
