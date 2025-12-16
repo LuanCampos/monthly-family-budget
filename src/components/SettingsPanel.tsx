@@ -125,27 +125,44 @@ export const SettingsPanel = ({ onExport, onImport, currentMonthLabel, onDeleteM
                   <Database className="h-4 w-4 text-muted-foreground" />
                   {t('backup')}
                 </Label>
+          
                 <p className="text-xs text-muted-foreground">
                   {t('backupDescription')}
                 </p>
+          
                 <div className="flex gap-2">
                   {onImport && (
                     <Button
                       variant="outline"
-                      className="flex-1 h-10 border-border hover:bg-secondary"
+                      className="
+                        flex-1
+                        h-9 sm:h-10
+                        text-xs sm:text-sm
+                        px-2 sm:px-3
+                        border-border
+                        hover:bg-secondary
+                      "
                       onClick={handleImportClick}
                     >
-                      <Upload className="h-4 w-4 mr-2" />
+                      <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                       {t('importBackup')}
                     </Button>
                   )}
+          
                   {onExport && (
                     <Button
                       variant="outline"
-                      className="flex-1 h-10 border-border hover:bg-secondary"
+                      className="
+                        flex-1
+                        h-9 sm:h-10
+                        text-xs sm:text-sm
+                        px-2 sm:px-3
+                        border-border
+                        hover:bg-secondary
+                      "
                       onClick={onExport}
                     >
-                      <Download className="h-4 w-4 mr-2" />
+                      <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                       {t('exportBackup')}
                     </Button>
                   )}
