@@ -152,7 +152,7 @@ const Index = () => {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
               {/* Expenses Chart Card */}
-              <div className="dashboard-card lg:col-span-4">
+              <div className="dashboard-card lg:col-span-3">
                 <div className="dashboard-card-header">
                   <div className="flex items-center gap-2">
                     <PieChart className="h-4 w-4 text-primary" />
@@ -177,7 +177,7 @@ const Index = () => {
               </div>
 
               {/* Summary Card */}
-              <div className="dashboard-card lg:col-span-5">
+              <div className="dashboard-card lg:col-span-6">
                 <div className="dashboard-card-header">
                   <div className="flex items-center gap-2">
                     <ListTodo className="h-4 w-4 text-primary" />
