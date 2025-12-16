@@ -10,12 +10,19 @@ import { SummaryTable } from '@/components/SummaryTable';
 import { GoalsPanel } from '@/components/GoalsPanel';
 import { ExpenseForm } from '@/components/ExpenseForm';
 import { RecurringExpenses } from '@/components/RecurringExpenses';
-import { ExpenseList } from '@/components/ExpenseList';
+import { ExpenseList, SortType, SortDirection } from '@/components/ExpenseList';
 import { SubcategoryManager } from '@/components/SubcategoryManager';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { PieChart, Target, ListTodo, Wallet } from 'lucide-react';
+import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Index = () => {
   const { t } = useLanguage();
@@ -50,10 +57,27 @@ const Index = () => {
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [activeCategory, setActiveCategory] = useState<CategoryKey | null>(null);
+  const [sortType, setSortType] = useState<SortType>('category');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const categorySummary = getCategorySummary();
   const { totalSpent, totalBudget, usedPercentage } = getTotals();
   const hasExpenses = currentMonth ? currentMonth.expenses.length > 0 : false;
+
+  const handleSortClick = (type: SortType) => {
+    if (sortType === type) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortType(type);
+      if (type === 'category') {
+        setSortDirection('asc');
+      } else if (type === 'value') {
+        setSortDirection('desc');
+      } else if (type === 'dueDate') {
+        setSortDirection('asc');
+      }
+    }
+  };
 
   const handleEditExpense = (expense: Expense) => {
     setEditingExpense(expense);
@@ -188,6 +212,37 @@ const Index = () => {
               <div className="dashboard-card-header flex-wrap gap-2 xs:gap-3">
                 <span className="dashboard-card-title flex-1">{t('monthExpenses')}</span>
                 <div className="action-btn-group justify-center xs:justify-end">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs border-border">
+                        <ArrowUpDown className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">{t('sortBy')}</span>
+                        {sortType === 'category' && (sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+                        {sortType === 'value' && (sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+                        {sortType === 'dueDate' && (sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40 bg-popover">
+                      <DropdownMenuItem onClick={() => handleSortClick('category')} className="flex items-center justify-between">
+                        {t('sortCategory')}
+                        {sortType === 'category' && (
+                          sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleSortClick('value')} className="flex items-center justify-between">
+                        {t('sortValue')}
+                        {sortType === 'value' && (
+                          sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleSortClick('dueDate')} className="flex items-center justify-between">
+                        {t('sortDueDate')}
+                        {sortType === 'dueDate' && (
+                          sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                        )}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <SubcategoryManager
                     subcategories={subcategories}
                     onAdd={addSubcategory}
@@ -219,6 +274,8 @@ const Index = () => {
                   onRemove={removeExpense}
                   onEdit={handleEditExpense}
                   onConfirmPayment={confirmPayment}
+                  sortType={sortType}
+                  sortDirection={sortDirection}
                 />
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, Pencil, RefreshCw, X, AlertCircle, Calendar, CreditCard, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, Pencil, RefreshCw, X, AlertCircle, Calendar, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Expense, Subcategory, CategoryKey } from '@/types/budget';
 import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
@@ -16,12 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -29,6 +23,8 @@ interface ExpenseListProps {
   onRemove: (id: string) => void;
   onEdit: (expense: Expense) => void;
   onConfirmPayment: (id: string) => void;
+  sortType: SortType;
+  sortDirection: SortDirection;
 }
 
 type FilterType = 
@@ -39,8 +35,8 @@ type FilterType =
   | { type: 'installments' }
   | null;
 
-type SortType = 'category' | 'value' | 'dueDate';
-type SortDirection = 'asc' | 'desc';
+export type SortType = 'category' | 'value' | 'dueDate';
+export type SortDirection = 'asc' | 'desc';
 
 const generateSubcategoryColor = (
   baseColor: string,
@@ -60,28 +56,10 @@ const generateSubcategoryColor = (
   return `hsl(${h}, ${s}%, ${newL}%)`;
 };
 
-export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfirmPayment }: ExpenseListProps) => {
+export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfirmPayment, sortType, sortDirection }: ExpenseListProps) => {
   const { t } = useLanguage();
   const [filter, setFilter] = useState<FilterType>(null);
   const [confirmPaymentId, setConfirmPaymentId] = useState<string | null>(null);
-  const [sortType, setSortType] = useState<SortType>('category');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-
-  const handleSortClick = (type: SortType) => {
-    if (sortType === type) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortType(type);
-      // Default directions for each sort type
-      if (type === 'category') {
-        setSortDirection('asc');
-      } else if (type === 'value') {
-        setSortDirection('desc'); // Maior para menor primeiro
-      } else if (type === 'dueDate') {
-        setSortDirection('asc'); // Menor para maior primeiro
-      }
-    }
-  };
 
   if (expenses.length === 0) {
     return (
@@ -187,53 +165,20 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between pb-2 border-b border-border mb-2">
-        {filter ? (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t('all')}:</span>
-            <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-primary/20 text-primary font-medium">
-              {getFilterLabel()}
-              <button
-                onClick={() => setFilter(null)}
-                className="ml-1 hover:bg-primary/30 rounded-full p-0.5 transition-colors"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          </div>
-        ) : (
-          <div />
-        )}
-        
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs">
-              <ArrowUpDown className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{t('sortBy')}</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={() => handleSortClick('category')} className="flex items-center justify-between">
-              {t('sortCategory')}
-              {sortType === 'category' && (
-                sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSortClick('value')} className="flex items-center justify-between">
-              {t('sortValue')}
-              {sortType === 'value' && (
-                sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSortClick('dueDate')} className="flex items-center justify-between">
-              {t('sortDueDate')}
-              {sortType === 'dueDate' && (
-                sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-              )}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {filter && (
+        <div className="flex items-center gap-2 pb-2 border-b border-border mb-2">
+          <span className="text-xs text-muted-foreground">{t('all')}:</span>
+          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-primary/20 text-primary font-medium">
+            {getFilterLabel()}
+            <button
+              onClick={() => setFilter(null)}
+              className="ml-1 hover:bg-primary/30 rounded-full p-0.5 transition-colors"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        </div>
+      )}
 
       {sortedExpenses.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
