@@ -97,10 +97,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       const { data, error } = await supabase
-        .from('family_members')
+        .from('family_member')
         .select(`
           family_id,
-          families (
+          family (
             id,
             name,
             created_by,
@@ -111,7 +111,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (!error && data) {
         const userFamilies = data
-          .map((d: any) => d.families)
+          .map((d: any) => d.family)
           .filter(Boolean) as Family[];
         setFamilies(userFamilies);
       }
@@ -130,7 +130,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       const { data, error } = await supabase
-        .from('family_members')
+        .from('family_member')
         .select('*')
         .eq('family_id', currentFamilyId);
 
@@ -155,7 +155,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Family invitations (for admins)
       if (currentFamilyId) {
         const { data: familyInvites } = await supabase
-          .from('family_invitations')
+          .from('family_invitation')
           .select('*')
           .eq('family_id', currentFamilyId)
           .eq('status', 'pending');
@@ -167,10 +167,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // My pending invitations
       const { data: myInvites } = await supabase
-        .from('family_invitations')
+        .from('family_invitation')
         .select(`
           *,
-          families (name)
+          family (name)
         `)
         .eq('email', user.email)
         .eq('status', 'pending');
@@ -179,7 +179,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setMyPendingInvitations(
           myInvites.map((inv: any) => ({
             ...inv,
-            family_name: inv.families?.name
+            family_name: inv.family?.name
           }))
         );
       }
@@ -196,7 +196,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       const { data } = await supabase
-        .from('user_preferences')
+        .from('user_preference')
         .select('current_family_id')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -215,7 +215,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       await supabase
-        .from('user_preferences')
+        .from('user_preference')
         .upsert({
           user_id: user.id,
           current_family_id: familyId,
@@ -262,7 +262,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!session?.user) return { error: new Error('Not authenticated') };
 
     const { data, error } = await supabase
-      .from('families')
+      .from('family')
       .insert({ name, created_by: session.user.id })
       .select()
       .single();
@@ -284,7 +284,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Update family name
   const updateFamilyName = async (familyId: string, name: string) => {
     const { error } = await supabase
-      .from('families')
+      .from('family')
       .update({ name })
       .eq('id', familyId);
 
@@ -295,7 +295,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Delete family
   const deleteFamily = async (familyId: string) => {
     const { error } = await supabase
-      .from('families')
+      .from('family')
       .delete()
       .eq('id', familyId);
 
@@ -319,7 +319,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!user) return { error: new Error('Not authenticated') };
 
     const { error } = await supabase
-      .from('family_members')
+      .from('family_member')
       .delete()
       .eq('family_id', familyId)
       .eq('user_id', user.id);
@@ -344,7 +344,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!user || !currentFamilyId) return { error: new Error('Not authenticated or no family selected') };
 
     const { error } = await supabase
-      .from('family_invitations')
+      .from('family_invitation')
       .insert({
         family_id: currentFamilyId,
         email: email.toLowerCase(),
@@ -364,7 +364,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Update invitation status
     const { error: updateError } = await supabase
-      .from('family_invitations')
+      .from('family_invitation')
       .update({ status: 'accepted' })
       .eq('id', invitationId);
 
@@ -372,7 +372,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Add user to family
     const { error: memberError } = await supabase
-      .from('family_members')
+      .from('family_member')
       .insert({
         family_id: invitation.family_id,
         user_id: user.id,
@@ -391,7 +391,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Reject invitation
   const rejectInvitation = async (invitationId: string) => {
     const { error } = await supabase
-      .from('family_invitations')
+      .from('family_invitation')
       .update({ status: 'rejected' })
       .eq('id', invitationId);
 
@@ -402,7 +402,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Cancel invitation
   const cancelInvitation = async (invitationId: string) => {
     const { error } = await supabase
-      .from('family_invitations')
+      .from('family_invitation')
       .delete()
       .eq('id', invitationId);
 
@@ -413,7 +413,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Update member role
   const updateMemberRole = async (memberId: string, role: FamilyRole) => {
     const { error } = await supabase
-      .from('family_members')
+      .from('family_member')
       .update({ role })
       .eq('id', memberId);
 
@@ -424,7 +424,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Remove member
   const removeMember = async (memberId: string) => {
     const { error } = await supabase
-      .from('family_members')
+      .from('family_member')
       .delete()
       .eq('id', memberId);
 
