@@ -71,6 +71,7 @@ const Index = () => {
   const [sortType, setSortType] = useState<SortType>('category');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [showAnnualView, setShowAnnualView] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const categorySummary = getCategorySummary();
   const { totalSpent, totalBudget, usedPercentage } = getTotals();
@@ -125,7 +126,6 @@ const Index = () => {
     return <FamilySetup />;
   }
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
