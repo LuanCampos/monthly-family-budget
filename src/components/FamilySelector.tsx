@@ -62,17 +62,19 @@ export const FamilySelector = () => {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline max-w-[120px] truncate">
-              {currentFamily?.name || t('selectFamily')}
-            </span>
-            {isCurrentOffline && (
-              <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-amber-500/20 text-amber-500">
-                <WifiOff className="h-3 w-3" />
-              </Badge>
-            )}
-            <ChevronDown className="h-4 w-4" />
+          <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto justify-between sm:justify-start">
+            <div className="flex items-center gap-2 min-w-0">
+              <Users className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">
+                {currentFamily?.name || t('selectFamily')}
+              </span>
+              {isCurrentOffline && (
+                <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-amber-500/20 text-amber-500 flex-shrink-0">
+                  <WifiOff className="h-3 w-3" />
+                </Badge>
+              )}
+            </div>
+            <ChevronDown className="h-4 w-4 flex-shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">
