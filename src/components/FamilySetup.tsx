@@ -4,22 +4,33 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Users, Plus, Mail, Check, X, Loader2, WifiOff } from 'lucide-react';
+import { Users, Plus, Mail, Check, X, Loader2, WifiOff, Lock, User, ArrowLeft, LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
 export const FamilySetup = () => {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, signIn, signUp } = useAuth();
   const { createFamily, createOfflineFamily, myPendingInvitations, acceptInvitation, rejectInvitation, loading } = useFamily();
   const { toast } = useToast();
   
+  // Family creation state
   const [familyName, setFamilyName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [processingInvitation, setProcessingInvitation] = useState<string | null>(null);
+  
+  // Auth state
+  const [showAuthForm, setShowAuthForm] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
 
   const handleCreateFamily = async () => {
     if (!familyName.trim()) return;
@@ -89,7 +100,345 @@ export const FamilySetup = () => {
     }
   };
 
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: t('error'),
+        description: t('fillAllFields'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsAuthLoading(true);
+    const { error } = await signIn(email, password);
+    setIsAuthLoading(false);
+
+    if (error) {
+      toast({
+        title: t('error'),
+        description: error.message === 'Invalid login credentials' 
+          ? t('invalidCredentials') 
+          : error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: t('success'),
+        description: t('loginSuccess'),
+      });
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password || !confirmPassword || !displayName.trim()) {
+      toast({
+        title: t('error'),
+        description: t('fillAllFields'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: t('error'),
+        description: t('passwordTooShort'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: t('error'),
+        description: t('passwordsDoNotMatch'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsAuthLoading(true);
+    const { error } = await signUp(email, password, displayName.trim());
+    setIsAuthLoading(false);
+
+    if (error) {
+      if (error.message.includes('already registered')) {
+        toast({
+          title: t('error'),
+          description: t('emailAlreadyRegistered'),
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: t('error'),
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    } else {
+      toast({
+        title: t('success'),
+        description: t('signupSuccess'),
+      });
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast({
+        title: t('error'),
+        description: t('enterEmailForReset'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsAuthLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    setIsAuthLoading(false);
+
+    if (error) {
+      toast({
+        title: t('error'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: t('success'),
+        description: t('resetEmailSent'),
+      });
+      setIsForgotPassword(false);
+    }
+  };
+
+  // Show welcome screen with options when no user
   if (!user) {
+    // Forgot password form
+    if (isForgotPassword) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold text-primary">
+                {t('forgotPassword')}
+              </CardTitle>
+              <CardDescription>
+                {t('forgotPasswordDescription')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">{t('email')}</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder={t('emailPlaceholder')}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Button type="submit" className="w-full" disabled={isAuthLoading}>
+                  {isAuthLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t('loading')}
+                    </>
+                  ) : (
+                    t('sendResetLink')
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setIsForgotPassword(false)}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {t('backToLogin')}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Auth form (login/signup)
+    if (showAuthForm) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold text-primary">
+                {t('appTitle')}
+              </CardTitle>
+              <CardDescription>
+                {t('authDescription')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="login">{t('login')}</TabsTrigger>
+                  <TabsTrigger value="signup">{t('signup')}</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="login">
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="login-email">{t('email')}</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="login-email"
+                          type="email"
+                          placeholder={t('emailPlaceholder')}
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="login-password">{t('password')}</Label>
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="px-0 h-auto text-xs"
+                          onClick={() => setIsForgotPassword(true)}
+                        >
+                          {t('forgotPassword')}
+                        </Button>
+                      </div>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="login-password"
+                          type="password"
+                          placeholder={t('passwordPlaceholder')}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isAuthLoading}>
+                      {isAuthLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {t('loading')}
+                        </>
+                      ) : (
+                        t('login')
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+                
+                <TabsContent value="signup">
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">{t('displayName')}</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-name"
+                          type="text"
+                          placeholder={t('displayNamePlaceholder')}
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">{t('email')}</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-email"
+                          type="email"
+                          placeholder={t('emailPlaceholder')}
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">{t('password')}</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-password"
+                          type="password"
+                          placeholder={t('passwordPlaceholder')}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm-password">{t('confirmPassword')}</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-confirm-password"
+                          type="password"
+                          placeholder={t('confirmPasswordPlaceholder')}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isAuthLoading}>
+                      {isAuthLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {t('loading')}
+                        </>
+                      ) : (
+                        t('signup')
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+              
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full mt-4"
+                onClick={() => setShowAuthForm(false)}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {t('back')}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Welcome screen with options
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -101,9 +450,10 @@ export const FamilySetup = () => {
             <CardDescription>{t('loginToAccessFamily')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Link to="/auth">
-              <Button className="w-full">{t('loginOrSignup')}</Button>
-            </Link>
+            <Button className="w-full" onClick={() => setShowAuthForm(true)}>
+              <LogIn className="mr-2 h-4 w-4" />
+              {t('loginOrSignup')}
+            </Button>
             
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
