@@ -29,8 +29,8 @@ interface ExpenseFormProps {
     isRecurring?: boolean;
     isPending?: boolean;
   };
-  onAdd?: (title: string, category: CategoryKey, subcategoryId: string | undefined, value: number) => void;
-  onUpdate?: (id: string, title: string, category: CategoryKey, subcategoryId: string | undefined, value: number, isPending?: boolean) => void;
+  onAdd?: (title: string, category: CategoryKey, subcategoryId: string | undefined, value: number) => void | Promise<void>;
+  onUpdate?: (id: string, title: string, category: CategoryKey, subcategoryId: string | undefined, value: number, isPending?: boolean) => void | Promise<void>;
   onCancel?: () => void;
   disabled?: boolean;
 }

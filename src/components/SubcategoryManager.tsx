@@ -23,9 +23,9 @@ import { TranslationKey } from '@/i18n/translations/pt';
 
 interface SubcategoryManagerProps {
   subcategories: Subcategory[];
-  onAdd: (name: string, categoryKey: CategoryKey) => void;
-  onUpdate: (id: string, name: string) => void;
-  onRemove: (id: string) => void;
+  onAdd: (name: string, categoryKey: CategoryKey) => void | Promise<void>;
+  onUpdate: (id: string, name: string) => void | Promise<void>;
+  onRemove: (id: string) => void | Promise<void>;
 }
 
 export const SubcategoryManager = ({

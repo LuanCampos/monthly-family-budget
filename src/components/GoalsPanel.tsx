@@ -17,7 +17,7 @@ import {
 
 interface GoalsPanelProps {
   percentages: Record<CategoryKey, number>;
-  onEdit: (percentages: Record<CategoryKey, number>) => void;
+  onEdit: (percentages: Record<CategoryKey, number>) => void | Promise<void>;
 }
 
 export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
