@@ -154,6 +154,25 @@ export const pt = {
   annualView: 'Visão Anual',
   annualViewTitle: 'Gastos por Categoria',
   
+  // Auth
+  login: 'Entrar',
+  signup: 'Cadastrar',
+  logout: 'Sair',
+  email: 'E-mail',
+  password: 'Senha',
+  emailPlaceholder: 'seu@email.com',
+  passwordPlaceholder: '••••••••',
+  authDescription: 'Faça login ou crie sua conta',
+  error: 'Erro',
+  success: 'Sucesso',
+  fillAllFields: 'Preencha todos os campos',
+  invalidCredentials: 'E-mail ou senha incorretos',
+  loginSuccess: 'Login realizado com sucesso!',
+  signupSuccess: 'Conta criada! Verifique seu e-mail para confirmar.',
+  passwordTooShort: 'A senha deve ter pelo menos 6 caracteres',
+  emailAlreadyRegistered: 'Este e-mail já está cadastrado',
+  loading: 'Carregando...',
+  
   // Months
   'month-0': 'Janeiro',
   'month-1': 'Fevereiro',
