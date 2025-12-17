@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useBudget } from '@/hooks/useBudget';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useFamily } from '@/contexts/FamilyContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { IncomeInput } from '@/components/IncomeInput';
 import { ExpenseChart } from '@/components/ExpenseChart';
@@ -14,9 +16,12 @@ import { ExpenseList, SortType, SortDirection } from '@/components/ExpenseList';
 import { SubcategoryManager } from '@/components/SubcategoryManager';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { AnnualViewChart } from '@/components/AnnualViewChart';
+import { FamilySetup } from '@/components/FamilySetup';
+import { FamilySelector } from '@/components/FamilySelector';
+import { FamilyManager } from '@/components/FamilyManager';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar } from 'lucide-react';
+import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -27,6 +32,9 @@ import {
 
 const Index = () => {
   const { t } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
+  const { currentFamily, currentFamilyId, loading: familyLoading } = useFamily();
+  
   const {
     months,
     currentMonth,
@@ -101,17 +109,32 @@ const Index = () => {
     importBudget(file);
   };
 
+  // Show loading while checking auth/family
+  if (authLoading || familyLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show family setup if user is logged in but has no family
+  if (!currentFamilyId) {
+    return <FamilySetup />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top Bar */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-2 sm:py-0 sm:h-16 gap-3">
-            <div className="flex items-start gap-2 min-w-0">
-              <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0 mt-0.5" />
-              <h1 className="text-sm sm:text-lg font-bold text-foreground leading-tight">
+            <div className="flex items-center gap-2 min-w-0">
+              <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+              <h1 className="text-sm sm:text-lg font-bold text-foreground leading-tight hidden sm:block">
                 {t('appTitle')}
               </h1>
+              <FamilySelector />
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
@@ -121,6 +144,7 @@ const Index = () => {
                 onSelectMonth={selectMonth}
                 onAddMonth={addMonth}
               />
+              <FamilyManager />
               <SettingsPanel 
                 currentMonthLabel={currentMonth ? `${t(`month-${currentMonth.month - 1}` as any)} ${currentMonth.year}` : undefined}
                 onDeleteMonth={currentMonth ? () => removeMonth(currentMonth.id) : undefined}
