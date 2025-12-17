@@ -130,16 +130,16 @@ const Index = () => {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
-            {/* Logo + Title */}
-            <div className="flex items-center gap-2 min-w-0">
-              <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
-              <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight hidden sm:block">
+            {/* Logo + Title (hidden on mobile) */}
+            <div className="hidden sm:flex items-center gap-2 min-w-0">
+              <Wallet className="h-6 w-6 text-primary flex-shrink-0" />
+              <h1 className="text-lg font-bold text-foreground leading-tight">
                 {t('appTitle')}
               </h1>
             </div>
 
-            {/* Month Selector (center) */}
-            <div className="flex-1 max-w-xs sm:max-w-sm">
+            {/* Month Selector */}
+            <div className="flex-1 sm:flex-initial sm:max-w-sm">
               <MonthSelector
                 months={months}
                 currentMonth={currentMonth}
