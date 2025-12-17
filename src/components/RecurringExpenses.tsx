@@ -37,7 +37,7 @@ interface RecurringExpensesProps {
     totalInstallments?: number,
     startYear?: number,
     startMonth?: number
-  ) => void;
+  ) => void | Promise<void>;
   onUpdate: (
     id: string,
     title: string,
@@ -50,9 +50,9 @@ interface RecurringExpensesProps {
     startYear?: number,
     startMonth?: number,
     updatePastExpenses?: boolean
-  ) => void;
-  onRemove: (id: string) => void;
-  onApply: (id: string) => boolean;
+  ) => void | Promise<void>;
+  onRemove: (id: string) => void | Promise<void>;
+  onApply: (id: string) => boolean | Promise<boolean>;
 }
 
 export const RecurringExpenses = ({
@@ -236,8 +236,8 @@ export const RecurringExpenses = ({
                       e => e.recurringExpenseId === exp.id
                     );
 
-                    const handleApply = () => {
-                      const success = onApply(exp.id);
+                    const handleApply = async () => {
+                      const success = await onApply(exp.id);
                       if (success) {
                         toast.success(t('applyToCurrentMonth'));
                       } else {

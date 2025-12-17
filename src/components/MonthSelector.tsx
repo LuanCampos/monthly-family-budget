@@ -30,7 +30,7 @@ interface MonthSelectorProps {
   months: Month[];
   currentMonth: Month | null;
   onSelectMonth: (monthId: string) => void;
-  onAddMonth: (year: number, month: number) => boolean;
+  onAddMonth: (year: number, month: number) => boolean | Promise<boolean>;
 }
 
 const MONTH_KEYS = [
@@ -53,8 +53,8 @@ export const MonthSelector = ({
     (new Date().getMonth() + 1).toString()
   );
 
-  const handleAddMonth = () => {
-    const success = onAddMonth(
+  const handleAddMonth = async () => {
+    const success = await onAddMonth(
       parseInt(selectedYear),
       parseInt(selectedMonth)
     );

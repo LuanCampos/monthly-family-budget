@@ -20,9 +20,9 @@ import {
 interface ExpenseListProps {
   expenses: Expense[];
   subcategories: Subcategory[];
-  onRemove: (id: string) => void;
+  onRemove: (id: string) => void | Promise<void>;
   onEdit: (expense: Expense) => void;
-  onConfirmPayment: (id: string) => void;
+  onConfirmPayment: (id: string) => void | Promise<void>;
   sortType: SortType;
   sortDirection: SortDirection;
 }

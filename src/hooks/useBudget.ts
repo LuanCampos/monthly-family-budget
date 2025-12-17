@@ -1,16 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Month, Expense, CategoryKey, Subcategory, RecurringExpense } from '@/types/budget';
 import { CATEGORIES } from '@/constants/categories';
-
-const STORAGE_KEY = 'budget-data';
-const RECURRING_KEY = 'recurring-expenses';
-const GOALS_KEY = 'budget-goals';
-const SUBCATEGORIES_KEY = 'budget-subcategories';
-
-interface BudgetData {
-  months: Month[];
-  currentMonthId: string | null;
-}
+import { supabase } from '@/lib/supabase';
+import { useFamily } from '@/contexts/FamilyContext';
+import { toast } from 'sonner';
 
 const generateMonthId = (year: number, month: number): string => {
   return `${year}-${month.toString().padStart(2, '0')}`;
@@ -20,7 +13,6 @@ const getMonthLabel = (year: number, month: number): string => {
   return `${month.toString().padStart(2, '0')}/${year}`;
 };
 
-// Calculate which installment number this month represents
 const calculateInstallmentNumber = (
   targetYear: number,
   targetMonth: number,
@@ -30,7 +22,6 @@ const calculateInstallmentNumber = (
   return (targetYear - startYear) * 12 + (targetMonth - startMonth) + 1;
 };
 
-// Check if a recurring expense should appear in a given month
 const shouldIncludeRecurringInMonth = (
   recurring: RecurringExpense,
   year: number,
@@ -50,10 +41,13 @@ const shouldIncludeRecurringInMonth = (
 };
 
 export const useBudget = () => {
+  const { currentFamilyId } = useFamily();
+  
   const [months, setMonths] = useState<Month[]>([]);
   const [currentMonthId, setCurrentMonthId] = useState<string | null>(null);
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [categoryPercentages, setCategoryPercentages] =
     useState<Record<CategoryKey, number>>(
@@ -62,172 +56,335 @@ export const useBudget = () => {
       ) as Record<CategoryKey, number>
     );
 
-  // Load from localStorage
-  useEffect(() => {
-    const savedData = localStorage.getItem(STORAGE_KEY);
-    const savedRecurring = localStorage.getItem(RECURRING_KEY);
-    const savedGoals = localStorage.getItem(GOALS_KEY);
-    const savedSubcategories = localStorage.getItem(SUBCATEGORIES_KEY);
-
-    if (savedData) {
-      const data: BudgetData = JSON.parse(savedData);
-      setMonths(data.months);
-      setCurrentMonthId(data.currentMonthId);
-    }
-
-    if (savedRecurring) {
-      const parsed = JSON.parse(savedRecurring);
-      // Migrate old format to new format with id
-      const migrated = parsed.map((exp: RecurringExpense | Omit<RecurringExpense, 'id'>, index: number) => ({
-        ...exp,
-        id: (exp as RecurringExpense).id || `recurring-${Date.now()}-${index}`,
-      }));
-      setRecurringExpenses(migrated);
-    }
-
-    if (savedGoals) {
-      setCategoryPercentages(JSON.parse(savedGoals));
-    }
-
-    if (savedSubcategories) {
-      setSubcategories(JSON.parse(savedSubcategories));
-    }
-  }, []);
-
-  // Save to localStorage
-  useEffect(() => {
-    const data: BudgetData = { months, currentMonthId };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [months, currentMonthId]);
-
-  useEffect(() => {
-    localStorage.setItem(RECURRING_KEY, JSON.stringify(recurringExpenses));
-  }, [recurringExpenses]);
-
-  useEffect(() => {
-    localStorage.setItem(GOALS_KEY, JSON.stringify(categoryPercentages));
-  }, [categoryPercentages]);
-
-  useEffect(() => {
-    localStorage.setItem(SUBCATEGORIES_KEY, JSON.stringify(subcategories));
-  }, [subcategories]);
-
   const currentMonth = months.find(m => m.id === currentMonthId) || null;
 
-  // Subcategory management
-  const addSubcategory = (name: string, categoryKey: CategoryKey) => {
-    const newSubcategory: Subcategory = {
-      id: `sub-${Date.now()}`,
-      name,
-      categoryKey,
+  // Load months from database
+  const loadMonths = useCallback(async () => {
+    if (!currentFamilyId) return;
+
+    const { data: monthsData, error } = await supabase
+      .from('month')
+      .select('*')
+      .eq('family_id', currentFamilyId)
+      .order('year', { ascending: true })
+      .order('month', { ascending: true });
+
+    if (error) {
+      console.error('Error loading months:', error);
+      return;
+    }
+
+    if (!monthsData) return;
+
+    // Load expenses for each month
+    const monthsWithExpenses: Month[] = await Promise.all(
+      monthsData.map(async (m) => {
+        const { data: expenses } = await supabase
+          .from('expense')
+          .select('*')
+          .eq('month_id', m.id);
+
+        return {
+          id: m.id,
+          label: getMonthLabel(m.year, m.month),
+          year: m.year,
+          month: m.month,
+          income: m.income || 0,
+          expenses: (expenses || []).map(e => ({
+            id: e.id,
+            title: e.title,
+            category: e.category as CategoryKey,
+            subcategoryId: e.subcategory_id,
+            value: e.value,
+            isRecurring: e.is_recurring,
+            isPending: e.is_pending,
+            dueDay: e.due_day,
+            recurringExpenseId: e.recurring_expense_id,
+            installmentInfo: e.installment_current && e.installment_total ? {
+              current: e.installment_current,
+              total: e.installment_total
+            } : undefined
+          }))
+        };
+      })
+    );
+
+    setMonths(monthsWithExpenses);
+  }, [currentFamilyId]);
+
+  // Load recurring expenses
+  const loadRecurringExpenses = useCallback(async () => {
+    if (!currentFamilyId) return;
+
+    const { data, error } = await supabase
+      .from('recurring_expense')
+      .select('*')
+      .eq('family_id', currentFamilyId);
+
+    if (error) {
+      console.error('Error loading recurring expenses:', error);
+      return;
+    }
+
+    setRecurringExpenses((data || []).map(r => ({
+      id: r.id,
+      title: r.title,
+      category: r.category as CategoryKey,
+      subcategoryId: r.subcategory_id,
+      value: r.value,
+      isRecurring: true as const,
+      dueDay: r.due_day,
+      hasInstallments: r.has_installments,
+      totalInstallments: r.total_installments,
+      startYear: r.start_year,
+      startMonth: r.start_month
+    })));
+  }, [currentFamilyId]);
+
+  // Load subcategories
+  const loadSubcategories = useCallback(async () => {
+    if (!currentFamilyId) return;
+
+    const { data, error } = await supabase
+      .from('subcategory')
+      .select('*')
+      .eq('family_id', currentFamilyId);
+
+    if (error) {
+      console.error('Error loading subcategories:', error);
+      return;
+    }
+
+    setSubcategories((data || []).map(s => ({
+      id: s.id,
+      name: s.name,
+      categoryKey: s.category_key as CategoryKey
+    })));
+  }, [currentFamilyId]);
+
+  // Load category goals
+  const loadCategoryGoals = useCallback(async () => {
+    if (!currentFamilyId) return;
+
+    const { data, error } = await supabase
+      .from('category_goal')
+      .select('*')
+      .eq('family_id', currentFamilyId);
+
+    if (error) {
+      console.error('Error loading category goals:', error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      const goals: Record<CategoryKey, number> = { ...categoryPercentages };
+      data.forEach(g => {
+        goals[g.category_key as CategoryKey] = g.percentage;
+      });
+      setCategoryPercentages(goals);
+    }
+  }, [currentFamilyId]);
+
+  // Initial data load
+  useEffect(() => {
+    const loadData = async () => {
+      if (!currentFamilyId) {
+        setMonths([]);
+        setRecurringExpenses([]);
+        setSubcategories([]);
+        setCurrentMonthId(null);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      await Promise.all([
+        loadMonths(),
+        loadRecurringExpenses(),
+        loadSubcategories(),
+        loadCategoryGoals()
+      ]);
+      setLoading(false);
     };
-    setSubcategories(prev => [...prev, newSubcategory]);
+
+    loadData();
+  }, [currentFamilyId, loadMonths, loadRecurringExpenses, loadSubcategories, loadCategoryGoals]);
+
+  // Set up realtime subscriptions
+  useEffect(() => {
+    if (!currentFamilyId) return;
+
+    const channel = supabase
+      .channel(`budget-${currentFamilyId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'month', filter: `family_id=eq.${currentFamilyId}` }, () => {
+        loadMonths();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expense' }, () => {
+        loadMonths();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'recurring_expense', filter: `family_id=eq.${currentFamilyId}` }, () => {
+        loadRecurringExpenses();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'subcategory', filter: `family_id=eq.${currentFamilyId}` }, () => {
+        loadSubcategories();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'category_goal', filter: `family_id=eq.${currentFamilyId}` }, () => {
+        loadCategoryGoals();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentFamilyId, loadMonths, loadRecurringExpenses, loadSubcategories, loadCategoryGoals]);
+
+  // Subcategory management
+  const addSubcategory = async (name: string, categoryKey: CategoryKey) => {
+    if (!currentFamilyId) return;
+
+    const { error } = await supabase
+      .from('subcategory')
+      .insert({
+        family_id: currentFamilyId,
+        name,
+        category_key: categoryKey
+      });
+
+    if (error) {
+      toast.error('Erro ao criar subcategoria');
+      console.error(error);
+    }
   };
 
-  const updateSubcategory = (id: string, name: string) => {
-    setSubcategories(prev =>
-      prev.map(s => (s.id === id ? { ...s, name } : s))
-    );
+  const updateSubcategory = async (id: string, name: string) => {
+    const { error } = await supabase
+      .from('subcategory')
+      .update({ name })
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Erro ao atualizar subcategoria');
+      console.error(error);
+    }
   };
 
-  const removeSubcategory = (id: string) => {
-    setSubcategories(prev => prev.filter(s => s.id !== id));
-    
-    // Remove subcategory from expenses
-    setMonths(prev =>
-      prev.map(m => ({
-        ...m,
-        expenses: m.expenses.map(e =>
-          e.subcategoryId === id ? { ...e, subcategoryId: undefined } : e
-        ),
-      }))
-    );
+  const removeSubcategory = async (id: string) => {
+    // Remove subcategory from expenses first
+    await supabase
+      .from('expense')
+      .update({ subcategory_id: null })
+      .eq('subcategory_id', id);
 
-    // Remove from recurring expenses
-    setRecurringExpenses(prev =>
-      prev.map(e =>
-        e.subcategoryId === id ? { ...e, subcategoryId: undefined } : e
-      )
-    );
+    await supabase
+      .from('recurring_expense')
+      .update({ subcategory_id: null })
+      .eq('subcategory_id', id);
+
+    const { error } = await supabase
+      .from('subcategory')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Erro ao remover subcategoria');
+      console.error(error);
+    }
   };
 
   // Month management
-  const addMonth = (year: number, month: number) => {
+  const addMonth = async (year: number, month: number) => {
+    if (!currentFamilyId) return false;
+
     const id = generateMonthId(year, month);
 
+    // Check if month already exists
     if (months.some(m => m.id === id)) {
       return false;
     }
 
-    const newExpenses: Expense[] = recurringExpenses
-      .map((exp) => {
-        const result = shouldIncludeRecurringInMonth(exp, year, month);
-        if (!result.include) return null;
-
-        return {
-          id: `${id}-recurring-${exp.id}`,
-          title: exp.title,
-          category: exp.category,
-          subcategoryId: exp.subcategoryId,
-          value: exp.value,
-          isRecurring: true,
-          isPending: true,
-          dueDay: exp.dueDay,
-          recurringExpenseId: exp.id,
-          installmentInfo: result.installmentNumber ? {
-            current: result.installmentNumber,
-            total: exp.totalInstallments!,
-          } : undefined,
-        } as Expense;
+    const { data: newMonthData, error } = await supabase
+      .from('month')
+      .insert({
+        id,
+        family_id: currentFamilyId,
+        year,
+        month,
+        income: 0
       })
-      .filter((exp): exp is Expense => exp !== null);
+      .select()
+      .single();
 
-    const newMonth: Month = {
-      id,
-      label: getMonthLabel(year, month),
-      year,
-      month,
-      income: 0,
-      expenses: newExpenses,
-    };
+    if (error) {
+      toast.error('Erro ao criar mês');
+      console.error(error);
+      return false;
+    }
 
-    setMonths(prev =>
-      [...prev, newMonth].sort((a, b) => a.id.localeCompare(b.id))
-    );
+    // Add recurring expenses to the new month
+    for (const recurring of recurringExpenses) {
+      const result = shouldIncludeRecurringInMonth(recurring, year, month);
+      if (result.include) {
+        await supabase.from('expense').insert({
+          month_id: id,
+          title: recurring.title,
+          category: recurring.category,
+          subcategory_id: recurring.subcategoryId,
+          value: recurring.value,
+          is_recurring: true,
+          is_pending: true,
+          due_day: recurring.dueDay,
+          recurring_expense_id: recurring.id,
+          installment_current: result.installmentNumber,
+          installment_total: recurring.totalInstallments
+        });
+      }
+    }
+
     setCurrentMonthId(id);
     return true;
   };
 
-  const removeMonth = (monthId: string) => {
-    setMonths(prev => {
-      const filtered = prev.filter(m => m.id !== monthId);
+  const removeMonth = async (monthId: string) => {
+    // Delete all expenses first
+    await supabase.from('expense').delete().eq('month_id', monthId);
 
-      if (currentMonthId === monthId) {
-        setCurrentMonthId(
-          filtered.length ? filtered[filtered.length - 1].id : null
-        );
-      }
+    const { error } = await supabase
+      .from('month')
+      .delete()
+      .eq('id', monthId);
 
-      return filtered;
-    });
+    if (error) {
+      toast.error('Erro ao remover mês');
+      console.error(error);
+      return;
+    }
+
+    if (currentMonthId === monthId) {
+      const remaining = months.filter(m => m.id !== monthId);
+      setCurrentMonthId(remaining.length ? remaining[remaining.length - 1].id : null);
+    }
   };
 
   const selectMonth = (monthId: string) => {
     setCurrentMonthId(monthId);
   };
 
-  const updateIncome = (income: number) => {
+  const updateIncome = async (income: number) => {
     if (!currentMonthId) return;
 
-    setMonths(prev =>
-      prev.map(m =>
-        m.id === currentMonthId ? { ...m, income } : m
-      )
-    );
+    const { error } = await supabase
+      .from('month')
+      .update({ income })
+      .eq('id', currentMonthId);
+
+    if (error) {
+      toast.error('Erro ao atualizar renda');
+      console.error(error);
+    }
   };
 
   // Expenses
-  const addExpense = (
+  const addExpense = async (
     title: string,
     category: CategoryKey,
     subcategoryId: string | undefined,
@@ -235,25 +392,23 @@ export const useBudget = () => {
   ) => {
     if (!currentMonthId) return;
 
-    const expense: Expense = {
-      id: `${currentMonthId}-${Date.now()}`,
+    const { error } = await supabase.from('expense').insert({
+      month_id: currentMonthId,
       title,
       category,
-      subcategoryId,
+      subcategory_id: subcategoryId || null,
       value,
-      isRecurring: false,
-    };
+      is_recurring: false,
+      is_pending: false
+    });
 
-    setMonths(prev =>
-      prev.map(m =>
-        m.id === currentMonthId
-          ? { ...m, expenses: [...m.expenses, expense] }
-          : m
-      )
-    );
+    if (error) {
+      toast.error('Erro ao criar despesa');
+      console.error(error);
+    }
   };
 
-  const updateExpense = (
+  const updateExpense = async (
     id: string,
     title: string,
     category: CategoryKey,
@@ -261,55 +416,49 @@ export const useBudget = () => {
     value: number,
     isPending?: boolean
   ) => {
-    if (!currentMonthId) return;
-
-    setMonths(prev =>
-      prev.map(m => {
-        if (m.id !== currentMonthId) return m;
-
-        return {
-          ...m,
-          expenses: m.expenses.map(e =>
-            e.id === id
-              ? { ...e, title, category, subcategoryId, value, isPending }
-              : e
-          ),
-        };
+    const { error } = await supabase
+      .from('expense')
+      .update({
+        title,
+        category,
+        subcategory_id: subcategoryId || null,
+        value,
+        is_pending: isPending ?? false
       })
-    );
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Erro ao atualizar despesa');
+      console.error(error);
+    }
   };
 
-  const confirmPayment = (expenseId: string) => {
-    if (!currentMonthId) return;
+  const confirmPayment = async (expenseId: string) => {
+    const { error } = await supabase
+      .from('expense')
+      .update({ is_pending: false })
+      .eq('id', expenseId);
 
-    setMonths(prev =>
-      prev.map(m => {
-        if (m.id !== currentMonthId) return m;
-
-        return {
-          ...m,
-          expenses: m.expenses.map(e =>
-            e.id === expenseId ? { ...e, isPending: false } : e
-          ),
-        };
-      })
-    );
+    if (error) {
+      toast.error('Erro ao confirmar pagamento');
+      console.error(error);
+    }
   };
 
-  const removeExpense = (expenseId: string) => {
-    if (!currentMonthId) return;
+  const removeExpense = async (expenseId: string) => {
+    const { error } = await supabase
+      .from('expense')
+      .delete()
+      .eq('id', expenseId);
 
-    setMonths(prev =>
-      prev.map(m =>
-        m.id === currentMonthId
-          ? { ...m, expenses: m.expenses.filter(e => e.id !== expenseId) }
-          : m
-      )
-    );
+    if (error) {
+      toast.error('Erro ao remover despesa');
+      console.error(error);
+    }
   };
 
   // Recurring expenses
-  const addRecurringExpense = (
+  const addRecurringExpense = async (
     title: string,
     category: CategoryKey,
     subcategoryId: string | undefined,
@@ -320,59 +469,68 @@ export const useBudget = () => {
     startYear?: number,
     startMonth?: number
   ) => {
-    const recurringId = `recurring-${Date.now()}`;
-    
-    const newRecurring: RecurringExpense = {
-      id: recurringId,
-      title,
-      category,
-      subcategoryId,
-      value,
-      isRecurring: true,
-      dueDay,
-      hasInstallments,
-      totalInstallments,
-      startYear,
-      startMonth,
-    };
+    if (!currentFamilyId) return;
 
-    setRecurringExpenses(prev => [...prev, newRecurring]);
+    const { data: newRecurring, error } = await supabase
+      .from('recurring_expense')
+      .insert({
+        family_id: currentFamilyId,
+        title,
+        category,
+        subcategory_id: subcategoryId || null,
+        value,
+        due_day: dueDay,
+        has_installments: hasInstallments,
+        total_installments: totalInstallments,
+        start_year: startYear,
+        start_month: startMonth
+      })
+      .select()
+      .single();
 
-    if (currentMonthId) {
-      const currentMonthData = months.find(m => m.id === currentMonthId);
-      if (currentMonthData) {
-        const result = shouldIncludeRecurringInMonth(newRecurring, currentMonthData.year, currentMonthData.month);
-        
-        if (result.include) {
-          const expense: Expense = {
-            id: `${currentMonthId}-recurring-${recurringId}`,
-            title,
-            category,
-            subcategoryId,
-            value,
-            isRecurring: true,
-            isPending: true,
-            dueDay,
-            recurringExpenseId: recurringId,
-            installmentInfo: result.installmentNumber ? {
-              current: result.installmentNumber,
-              total: totalInstallments!,
-            } : undefined,
-          };
+    if (error) {
+      toast.error('Erro ao criar despesa recorrente');
+      console.error(error);
+      return;
+    }
 
-          setMonths(prev =>
-            prev.map(m =>
-              m.id === currentMonthId
-                ? { ...m, expenses: [...m.expenses, expense] }
-                : m
-            )
-          );
-        }
+    // Add to current month if applicable
+    if (currentMonthId && currentMonth) {
+      const recurring: RecurringExpense = {
+        id: newRecurring.id,
+        title,
+        category,
+        subcategoryId,
+        value,
+        isRecurring: true,
+        dueDay,
+        hasInstallments,
+        totalInstallments,
+        startYear,
+        startMonth
+      };
+
+      const result = shouldIncludeRecurringInMonth(recurring, currentMonth.year, currentMonth.month);
+      
+      if (result.include) {
+        await supabase.from('expense').insert({
+          month_id: currentMonthId,
+          title,
+          category,
+          subcategory_id: subcategoryId || null,
+          value,
+          is_recurring: true,
+          is_pending: true,
+          due_day: dueDay,
+          recurring_expense_id: newRecurring.id,
+          installment_current: result.installmentNumber,
+          installment_total: totalInstallments
+        });
       }
     }
   };
 
-  const updateRecurringExpense = (
+  const updateRecurringExpense = async (
     id: string,
     title: string,
     category: CategoryKey,
@@ -385,75 +543,59 @@ export const useBudget = () => {
     startMonth?: number,
     updatePastExpenses?: boolean
   ) => {
-    setRecurringExpenses(prev =>
-      prev.map((exp) =>
-        exp.id === id 
-          ? { 
-              ...exp, 
-              title, 
-              category, 
-              subcategoryId, 
-              value, 
-              dueDay,
-              hasInstallments,
-              totalInstallments,
-              startYear,
-              startMonth,
-            } 
-          : exp
-      )
-    );
+    const { error } = await supabase
+      .from('recurring_expense')
+      .update({
+        title,
+        category,
+        subcategory_id: subcategoryId || null,
+        value,
+        due_day: dueDay,
+        has_installments: hasInstallments,
+        total_installments: totalInstallments,
+        start_year: startYear,
+        start_month: startMonth
+      })
+      .eq('id', id);
 
-    // Update all existing expenses linked to this recurring expense (past and future)
-    setMonths(prev =>
-      prev.map(m => ({
-        ...m,
-        expenses: m.expenses.map(e => {
-          if (e.recurringExpenseId !== id) return e;
+    if (error) {
+      toast.error('Erro ao atualizar despesa recorrente');
+      console.error(error);
+      return;
+    }
 
-          // Always update if updatePastExpenses is true, regardless of month
-          if (!updatePastExpenses) return e;
-
-          // Recalculate installment info if needed
-          let installmentInfo = e.installmentInfo;
-
-          if (hasInstallments && totalInstallments && startYear && startMonth) {
-            const installmentNumber = calculateInstallmentNumber(m.year, m.month, startYear, startMonth);
-            if (installmentNumber >= 1 && installmentNumber <= totalInstallments) {
-              installmentInfo = { current: installmentNumber, total: totalInstallments };
-            }
-          } else if (!hasInstallments && e.installmentInfo) {
-            // Remove installment info if no longer has installments
-            installmentInfo = undefined;
-          }
-
-          return {
-            ...e,
-            title,
-            category,
-            subcategoryId,
-            value,
-            dueDay,
-            installmentInfo,
-          };
-        }),
-      }))
-    );
+    // Update linked expenses if requested
+    if (updatePastExpenses) {
+      await supabase
+        .from('expense')
+        .update({
+          title,
+          category,
+          subcategory_id: subcategoryId || null,
+          value,
+          due_day: dueDay
+        })
+        .eq('recurring_expense_id', id);
+    }
   };
 
-  const removeRecurringExpense = (id: string) => {
-    setRecurringExpenses(prev => prev.filter((exp) => exp.id !== id));
+  const removeRecurringExpense = async (id: string) => {
+    const { error } = await supabase
+      .from('recurring_expense')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Erro ao remover despesa recorrente');
+      console.error(error);
+    }
   };
 
-  // Apply a recurring expense to the current month (if not already present)
-  const applyRecurringToCurrentMonth = (recurringId: string): boolean => {
-    if (!currentMonthId) return false;
+  const applyRecurringToCurrentMonth = async (recurringId: string): Promise<boolean> => {
+    if (!currentMonthId || !currentMonth) return false;
 
-    const currentMonthData = months.find(m => m.id === currentMonthId);
-    if (!currentMonthData) return false;
-
-    // Check if already exists in current month
-    const alreadyExists = currentMonthData.expenses.some(
+    // Check if already exists
+    const alreadyExists = currentMonth.expenses.some(
       e => e.recurringExpenseId === recurringId
     );
     if (alreadyExists) return false;
@@ -461,35 +603,48 @@ export const useBudget = () => {
     const recurring = recurringExpenses.find(r => r.id === recurringId);
     if (!recurring) return false;
 
-    const result = shouldIncludeRecurringInMonth(recurring, currentMonthData.year, currentMonthData.month);
-    
+    const result = shouldIncludeRecurringInMonth(recurring, currentMonth.year, currentMonth.month);
     if (!result.include) return false;
 
-    const expense: Expense = {
-      id: `${currentMonthId}-recurring-${recurringId}`,
+    const { error } = await supabase.from('expense').insert({
+      month_id: currentMonthId,
       title: recurring.title,
       category: recurring.category,
-      subcategoryId: recurring.subcategoryId,
+      subcategory_id: recurring.subcategoryId || null,
       value: recurring.value,
-      isRecurring: true,
-      isPending: true,
-      dueDay: recurring.dueDay,
-      recurringExpenseId: recurringId,
-      installmentInfo: result.installmentNumber ? {
-        current: result.installmentNumber,
-        total: recurring.totalInstallments!,
-      } : undefined,
-    };
+      is_recurring: true,
+      is_pending: true,
+      due_day: recurring.dueDay,
+      recurring_expense_id: recurringId,
+      installment_current: result.installmentNumber,
+      installment_total: recurring.totalInstallments
+    });
 
-    setMonths(prev =>
-      prev.map(m =>
-        m.id === currentMonthId
-          ? { ...m, expenses: [...m.expenses, expense] }
-          : m
-      )
-    );
+    if (error) {
+      toast.error('Erro ao aplicar despesa recorrente');
+      console.error(error);
+      return false;
+    }
 
     return true;
+  };
+
+  // Goals
+  const updateGoals = async (newGoals: Record<CategoryKey, number>) => {
+    if (!currentFamilyId) return;
+
+    setCategoryPercentages(newGoals);
+
+    // Upsert each category goal
+    for (const [categoryKey, percentage] of Object.entries(newGoals)) {
+      await supabase
+        .from('category_goal')
+        .upsert({
+          family_id: currentFamilyId,
+          category_key: categoryKey,
+          percentage
+        }, { onConflict: 'family_id,category_key' });
+    }
   };
 
   // Calculations
@@ -568,10 +723,12 @@ export const useBudget = () => {
     URL.revokeObjectURL(url);
   };
 
-  const importBudget = (file: File) => {
+  const importBudget = async (file: File) => {
+    if (!currentFamilyId) return;
+
     const reader = new FileReader();
 
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const data = JSON.parse(reader.result as string);
 
@@ -583,19 +740,80 @@ export const useBudget = () => {
           throw new Error('Invalid file structure');
         }
 
-        // Migrate recurring expenses to new format with id
-        const migratedRecurring = data.recurringExpenses.map((exp: RecurringExpense | Omit<RecurringExpense, 'id'>, index: number) => ({
-          ...exp,
-          id: (exp as RecurringExpense).id || `recurring-imported-${Date.now()}-${index}`,
-        }));
+        // Import subcategories
+        for (const sub of data.subcategories || []) {
+          await supabase.from('subcategory').upsert({
+            id: sub.id,
+            family_id: currentFamilyId,
+            name: sub.name,
+            category_key: sub.categoryKey
+          }, { onConflict: 'id' });
+        }
 
-        setMonths(data.months);
-        setRecurringExpenses(migratedRecurring);
-        setCategoryPercentages(data.categoryPercentages);
-        setSubcategories(data.subcategories || []);
-        setCurrentMonthId(data.currentMonthId ?? null);
-      } catch {
-        alert('Arquivo inválido ou corrompido');
+        // Import recurring expenses
+        for (const rec of data.recurringExpenses) {
+          await supabase.from('recurring_expense').upsert({
+            id: rec.id,
+            family_id: currentFamilyId,
+            title: rec.title,
+            category: rec.category,
+            subcategory_id: rec.subcategoryId || null,
+            value: rec.value,
+            due_day: rec.dueDay,
+            has_installments: rec.hasInstallments,
+            total_installments: rec.totalInstallments,
+            start_year: rec.startYear,
+            start_month: rec.startMonth
+          }, { onConflict: 'id' });
+        }
+
+        // Import months and expenses
+        for (const m of data.months) {
+          await supabase.from('month').upsert({
+            id: m.id,
+            family_id: currentFamilyId,
+            year: m.year,
+            month: m.month,
+            income: m.income
+          }, { onConflict: 'id' });
+
+          for (const exp of m.expenses) {
+            await supabase.from('expense').upsert({
+              id: exp.id,
+              month_id: m.id,
+              title: exp.title,
+              category: exp.category,
+              subcategory_id: exp.subcategoryId || null,
+              value: exp.value,
+              is_recurring: exp.isRecurring,
+              is_pending: exp.isPending,
+              due_day: exp.dueDay,
+              recurring_expense_id: exp.recurringExpenseId || null,
+              installment_current: exp.installmentInfo?.current,
+              installment_total: exp.installmentInfo?.total
+            }, { onConflict: 'id' });
+          }
+        }
+
+        // Import goals
+        await updateGoals(data.categoryPercentages);
+
+        toast.success('Dados importados com sucesso!');
+        
+        // Reload data
+        await Promise.all([
+          loadMonths(),
+          loadRecurringExpenses(),
+          loadSubcategories(),
+          loadCategoryGoals()
+        ]);
+
+        if (data.currentMonthId) {
+          setCurrentMonthId(data.currentMonthId);
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error('Arquivo inválido ou corrompido');
       }
     };
 
@@ -609,6 +827,7 @@ export const useBudget = () => {
     recurringExpenses,
     categoryPercentages,
     subcategories,
+    loading,
     addMonth,
     removeMonth,
     selectMonth,
@@ -624,7 +843,7 @@ export const useBudget = () => {
     addSubcategory,
     updateSubcategory,
     removeSubcategory,
-    updateGoals: setCategoryPercentages,
+    updateGoals,
     getCategorySummary,
     getTotals,
     exportBudget,
