@@ -203,6 +203,15 @@ export const en: Record<TranslationKey, string> = {
   passwordUpdated: 'Password updated successfully!',
   updatePassword: 'Update password',
   
+  // Settings Panel Extended
+  account: 'Account',
+  preferences: 'Preferences',
+  dataManagement: 'Data Management',
+  editProfile: 'Edit Profile',
+  changePassword: 'Change Password',
+  loginOrSignup: 'Login or Sign Up',
+  confirmNewPassword: 'Confirm New Password',
+  
   // Months
   'month-0': 'January',
   'month-1': 'February',

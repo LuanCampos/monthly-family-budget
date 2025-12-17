@@ -201,6 +201,15 @@ export const pt = {
   passwordUpdated: 'Senha atualizada com sucesso!',
   updatePassword: 'Atualizar senha',
   
+  // Settings Panel Extended
+  account: 'Conta',
+  preferences: 'Preferências',
+  dataManagement: 'Gerenciamento de Dados',
+  editProfile: 'Editar Perfil',
+  changePassword: 'Alterar Senha',
+  loginOrSignup: 'Entrar ou Criar Conta',
+  confirmNewPassword: 'Confirmar Nova Senha',
+  
   // Months
   'month-0': 'Janeiro',
   'month-1': 'Fevereiro',
