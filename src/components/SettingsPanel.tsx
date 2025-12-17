@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, Shield, X, Loader2, WifiOff } from 'lucide-react';
+import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, Shield, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -40,6 +40,16 @@ import { languages, Language } from '@/i18n';
 import { TranslationKey } from '@/i18n/translations/pt';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
+import { useOnline } from '@/contexts/OnlineContext';
+import { isOfflineId } from '@/lib/offlineStorage';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface SettingsPanelProps {
   currentMonthLabel?: string;
@@ -53,6 +63,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   const { user, signOut, signIn, signUp } = useAuth();
   const { 
     currentFamily, 
+    families,
+    selectFamily,
+    createFamily,
     members, 
     pendingInvitations, 
     myPendingInvitations,
@@ -67,6 +80,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
     deleteFamily,
     leaveFamily
   } = useFamily();
+  const { syncFamily, isSyncing, isOnline } = useOnline();
   
   const [activeSection, setActiveSection] = useState<'main' | 'profile' | 'password' | 'auth'>('main');
   const [displayName, setDisplayName] = useState('');
@@ -91,9 +105,13 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showLeaveAlert, setShowLeaveAlert] = useState(false);
   const [processingAction, setProcessingAction] = useState<string | null>(null);
+  const [showCreateFamilyDialog, setShowCreateFamilyDialog] = useState(false);
+  const [isCreatingFamily, setIsCreatingFamily] = useState(false);
+  const [createFamilyName, setCreateFamilyName] = useState('');
 
   const isAdmin = userRole === 'owner' || userRole === 'admin';
   const isOwner = userRole === 'owner';
+  const isCurrentOffline = currentFamily?.isOffline || isOfflineId(currentFamily?.id || '');
 
   useEffect(() => {
     if (user) {
@@ -239,6 +257,29 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
       setAuthPassword('');
       setAuthConfirmPassword('');
       setAuthDisplayName('');
+    }
+  };
+
+  // Family selector handlers
+  const handleCreateFamily = async () => {
+    if (!createFamilyName.trim()) return;
+    setIsCreatingFamily(true);
+    const { error } = await createFamily(createFamilyName.trim());
+    setIsCreatingFamily(false);
+    if (error) {
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: t('success'), description: t('familyCreated') });
+      setShowCreateFamilyDialog(false);
+      setCreateFamilyName('');
+    }
+  };
+
+  const handleSyncFamily = async () => {
+    if (!currentFamily) return;
+    const { error } = await syncFamily(currentFamily.id);
+    if (error) {
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
     }
   };
 
@@ -734,13 +775,70 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
               {/* Family Tab */}
               <TabsContent value="family" className="mt-0 space-y-4">
+                {/* Family Selector */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t('selectFamily')}</Label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Users className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">
+                            {currentFamily?.name || t('selectFamily')}
+                          </span>
+                          {isCurrentOffline && (
+                            <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-amber-500/20 text-amber-500 flex-shrink-0">
+                              <WifiOff className="h-3 w-3" />
+                            </Badge>
+                          )}
+                        </div>
+                        <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56">
+                      {families.map((family) => (
+                        <DropdownMenuItem
+                          key={family.id}
+                          onClick={() => selectFamily(family.id)}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="truncate">{family.name}</span>
+                          <div className="flex items-center gap-1">
+                            {(family.isOffline || isOfflineId(family.id)) && (
+                              <WifiOff className="h-3 w-3 text-amber-500" />
+                            )}
+                            {currentFamily?.id === family.id && (
+                              <Check className="h-4 w-4 text-primary" />
+                            )}
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      {isCurrentOffline && isOnline && (
+                        <DropdownMenuItem onClick={handleSyncFamily} disabled={isSyncing}>
+                          {isSyncing ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Cloud className="h-4 w-4 mr-2" />
+                          )}
+                          {t('syncToCloud')}
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => setShowCreateFamilyDialog(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        {t('createFamily')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
                 {currentFamily ? (
                   <>
-                    {/* Family name */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{currentFamily.name}</Label>
-                      {isAdmin && (
-                        editingName ? (
+                    {/* Family name editing */}
+                    {isAdmin && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t('familyName')}</Label>
+                        {editingName ? (
                           <div className="flex gap-2">
                             <Input value={newFamilyName} onChange={(e) => setNewFamilyName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleUpdateFamilyName()} />
                             <Button size="sm" onClick={handleUpdateFamilyName}>{t('save')}</Button>
@@ -749,8 +847,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                         ) : (
                           <Button variant="outline" size="sm" onClick={() => { setNewFamilyName(currentFamily.name); setEditingName(true); }}>{t('edit')}</Button>
                         )
-                      )}
-                    </div>
+                        }
+                      </div>
+                    )}
 
                     {/* Pending invitations for current user */}
                     {myPendingInvitations.length > 0 && (
@@ -890,6 +989,27 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create Family Dialog */}
+      <Dialog open={showCreateFamilyDialog} onOpenChange={setShowCreateFamilyDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('createFamily')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder={t('familyNamePlaceholder')}
+              value={createFamilyName}
+              onChange={(e) => setCreateFamilyName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateFamily()}
+            />
+            <Button onClick={handleCreateFamily} disabled={isCreatingFamily || !createFamilyName.trim()} className="w-full">
+              {isCreatingFamily ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              {t('createFamily')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
