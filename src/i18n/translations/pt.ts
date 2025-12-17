@@ -180,8 +180,6 @@ export const pt = {
   backToLogin: 'Voltar ao login',
   resetEmailSent: 'E-mail de redefinição enviado! Verifique sua caixa de entrada.',
   enterEmailForReset: 'Digite seu e-mail para redefinir a senha',
-  continueWithGoogle: 'Continuar com Google',
-  or: 'ou',
   
   // Account Settings
   accountSettings: 'Configurações da conta',
@@ -192,6 +190,9 @@ export const pt = {
   displayNameRequired: 'Nome de exibição é obrigatório',
   profileUpdated: 'Perfil atualizado com sucesso!',
   emailCannotBeChanged: 'O e-mail não pode ser alterado',
+  currentPassword: 'Senha atual',
+  currentPasswordPlaceholder: 'Digite sua senha atual',
+  currentPasswordIncorrect: 'Senha atual incorreta',
   newPassword: 'Nova senha',
   newPasswordPlaceholder: 'Digite a nova senha',
   confirmPassword: 'Confirmar senha',
@@ -199,11 +200,6 @@ export const pt = {
   passwordsDoNotMatch: 'As senhas não coincidem',
   passwordUpdated: 'Senha atualizada com sucesso!',
   updatePassword: 'Atualizar senha',
-  connections: 'Conexões',
-  connected: 'Conectado',
-  notConnected: 'Não conectado',
-  connect: 'Conectar',
-  connectionsDescription: 'Vincule contas externas para facilitar o login',
   
   // Months
   'month-0': 'Janeiro',
