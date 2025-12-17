@@ -11,6 +11,7 @@ export const pt = {
   offlineFamily: 'Família Offline',
   continueOffline: 'Continuar Offline',
   continueOfflineDescription: 'Use o app sem conta. Seus dados ficarão salvos apenas neste dispositivo.',
+  offlineMode: 'Usando modo offline',
   or: 'ou',
   
   // Navigation & Actions

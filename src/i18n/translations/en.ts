@@ -13,6 +13,7 @@ export const en: Record<TranslationKey, string> = {
   offlineFamily: 'Offline Family',
   continueOffline: 'Continue Offline',
   continueOfflineDescription: 'Use the app without an account. Your data will only be saved on this device.',
+  offlineMode: 'Using offline mode',
   or: 'or',
   
   // Navigation & Actions

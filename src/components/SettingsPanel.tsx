@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, Shield, X, Loader2 } from 'lucide-react';
+import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, Shield, X, Loader2, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -451,9 +450,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                   <>
                     <div className="space-y-3">
                       <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t('account')}</Label>
-                      <Button asChild className="w-full h-10">
-                        <Link to="/auth"><LogIn className="h-4 w-4 mr-2" />{t('loginOrSignup')}</Link>
-                      </Button>
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-muted-foreground text-sm">
+                        <WifiOff className="h-4 w-4" />
+                        {t('offlineMode')}
+                      </div>
                     </div>
                     <Separator className="bg-border" />
                   </>
