@@ -396,16 +396,16 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
             )}
           </Button>
         </DialogTrigger>
-        <DialogContent className="bg-card border-border sm:max-w-lg max-h-[85vh] flex flex-col gap-0 p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+        <DialogContent className="bg-card border-border sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
               {t('settings')}
             </DialogTitle>
           </DialogHeader>
           
-          <Tabs defaultValue={myPendingInvitations.length > 0 ? 'family' : 'general'} className="flex-1 flex flex-col">
-            <TabsList className="grid w-full grid-cols-2 mx-6 mt-4" style={{ width: 'calc(100% - 3rem)' }}>
+          <Tabs defaultValue={myPendingInvitations.length > 0 ? 'family' : 'general'} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <TabsList className="grid w-full grid-cols-2 mx-6 mt-4 flex-shrink-0" style={{ width: 'calc(100% - 3rem)' }}>
               <TabsTrigger value="general">{t('preferences')}</TabsTrigger>
               <TabsTrigger value="family" className="relative">
                 {t('family')}
@@ -417,7 +417,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
               {/* General Tab */}
               <TabsContent value="general" className="mt-0 space-y-5">
                 {/* User Account Section */}
