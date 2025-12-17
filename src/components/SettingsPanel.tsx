@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -53,11 +53,18 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   const { user, signOut } = useAuth();
   
   const [activeSection, setActiveSection] = useState<'main' | 'profile' | 'password'>('main');
-  const [displayName, setDisplayName] = useState(user?.user_metadata?.display_name || user?.user_metadata?.full_name || '');
+  const [displayName, setDisplayName] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Initialize displayName when user changes
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.user_metadata?.display_name || user.user_metadata?.full_name || '');
+    }
+  }, [user]);
   const [open, setOpen] = useState(false);
 
   const getUserInitials = () => {
