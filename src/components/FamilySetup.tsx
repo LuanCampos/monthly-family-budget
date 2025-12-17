@@ -6,14 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Plus, Mail, Check, X, Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Users, Plus, Mail, Check, X, Loader2, WifiOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 
 export const FamilySetup = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { createFamily, myPendingInvitations, acceptInvitation, rejectInvitation, loading } = useFamily();
+  const { createFamily, createOfflineFamily, myPendingInvitations, acceptInvitation, rejectInvitation, loading } = useFamily();
   const { toast } = useToast();
   
   const [familyName, setFamilyName] = useState('');
@@ -74,6 +75,20 @@ export const FamilySetup = () => {
     }
   };
 
+  const handleContinueOffline = async () => {
+    setIsCreating(true);
+    const { error } = await createOfflineFamily(t('offlineFamily'));
+    setIsCreating(false);
+
+    if (error) {
+      toast({
+        title: t('error'),
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -85,10 +100,36 @@ export const FamilySetup = () => {
             <CardTitle>{t('familyBudget')}</CardTitle>
             <CardDescription>{t('loginToAccessFamily')}</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Link to="/auth">
               <Button className="w-full">{t('loginOrSignup')}</Button>
             </Link>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">{t('or')}</span>
+              </div>
+            </div>
+            
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleContinueOffline}
+              disabled={isCreating}
+            >
+              {isCreating ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <WifiOff className="mr-2 h-4 w-4" />
+              )}
+              {t('continueOffline')}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              {t('continueOfflineDescription')}
+            </p>
           </CardContent>
         </Card>
       </div>

@@ -9,8 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Mail, Lock, ArrowLeft, User, WifiOff } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Loader2, Mail, Lock, ArrowLeft, User } from 'lucide-react';
 
 const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -355,30 +354,6 @@ const Auth: React.FC = () => {
               </form>
             </TabsContent>
           </Tabs>
-          
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <Separator className="w-full" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">{t('or')}</span>
-              </div>
-            </div>
-            
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full mt-4"
-              onClick={() => navigate('/')}
-            >
-              <WifiOff className="mr-2 h-4 w-4" />
-              {t('continueOffline')}
-            </Button>
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              {t('continueOfflineDescription')}
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
