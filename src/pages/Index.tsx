@@ -18,7 +18,7 @@ import { SettingsPanel } from '@/components/SettingsPanel';
 import { AnnualViewChart } from '@/components/AnnualViewChart';
 import { FamilySetup } from '@/components/FamilySetup';
 import { FamilySelector } from '@/components/FamilySelector';
-import { FamilyManager } from '@/components/FamilyManager';
+
 import { OnlineStatusBar } from '@/components/OnlineStatusBar';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -138,14 +138,13 @@ const Index = () => {
               <FamilySelector />
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <MonthSelector
                 months={months}
                 currentMonth={currentMonth}
                 onSelectMonth={selectMonth}
                 onAddMonth={addMonth}
               />
-              <FamilyManager />
               <SettingsPanel 
                 currentMonthLabel={currentMonth ? `${t(`month-${currentMonth.month - 1}` as any)} ${currentMonth.year}` : undefined}
                 onDeleteMonth={currentMonth ? () => removeMonth(currentMonth.id) : undefined}

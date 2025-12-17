@@ -94,6 +94,16 @@ export const FamilySelector = () => {
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
+          {isCurrentOffline && isOnline && (
+            <DropdownMenuItem onClick={handleSyncFamily} disabled={isSyncing}>
+              {isSyncing ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Cloud className="h-4 w-4 mr-2" />
+              )}
+              {t('syncToCloud')}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => setShowCreateDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
             {t('createFamily')}
@@ -101,23 +111,6 @@ export const FamilySelector = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Sync button for offline families */}
-      {isCurrentOffline && isOnline && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleSyncFamily}
-          disabled={isSyncing}
-          className="gap-1.5 text-amber-600 border-amber-500/50 hover:bg-amber-500/10"
-        >
-          {isSyncing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Cloud className="h-4 w-4" />
-          )}
-          <span className="hidden sm:inline">{t('syncToCloud')}</span>
-        </Button>
-      )}
 
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="sm:max-w-md">

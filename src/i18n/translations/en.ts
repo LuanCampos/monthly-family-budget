@@ -270,4 +270,8 @@ export const en: Record<TranslationKey, string> = {
   familyDeleted: 'Family deleted',
   leftFamily: 'You left the family',
   accept: 'Accept',
+  family: 'Family',
+  pendingInvitations: 'Pending invitations',
+  noFamilySelected: 'No family selected',
+  leave: 'Leave',
 };
