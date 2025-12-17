@@ -76,7 +76,7 @@ export const useFamily = () => {
 };
 
 export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [families, setFamilies] = useState<Family[]>([]);
   const [currentFamilyId, setCurrentFamilyId] = useState<string | null>(null);
   const [members, setMembers] = useState<FamilyMember[]>([]);
@@ -256,23 +256,38 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Create family
   const createFamily = async (name: string) => {
-    // Get fresh session to ensure auth.uid() matches
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session?.user) return { error: new Error('Not authenticated') };
+    // Prefer context session, but ensure we have a fresh session before mutating
+    const ensuredSession = session ?? (await supabase.auth.getSession()).data.session;
+    const sessionUser = ensuredSession?.user;
 
-    const { data, error } = await supabase
+    if (!sessionUser) return { error: new Error('Not authenticated') };
+
+    const { data: family, error } = await supabase
       .from('family')
-      .insert({ name, created_by: session.user.id })
+      .insert({ name, created_by: sessionUser.id })
       .select()
       .single();
 
     if (error) return { error };
 
+    // Ensure creator becomes a member/owner (works whether or not DB trigger exists)
+    const { error: memberError } = await supabase
+      .from('family_member')
+      .insert({
+        family_id: family.id,
+        user_id: sessionUser.id,
+        role: 'owner',
+      });
+
+    // Ignore duplicate membership (in case a trigger already inserted it)
+    if (memberError && (memberError as any).code !== '23505') {
+      return { error: memberError };
+    }
+
     await refreshFamilies();
-    await selectFamily(data.id);
-    
-    return { error: null, family: data };
+    await selectFamily(family.id);
+
+    return { error: null, family };
   };
 
   // Select family
