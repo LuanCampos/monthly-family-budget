@@ -268,6 +268,10 @@ export const pt = {
   familyDeleted: 'Família excluída',
   leftFamily: 'Você saiu da família',
   accept: 'Aceitar',
+  family: 'Família',
+  pendingInvitations: 'Convites pendentes',
+  noFamilySelected: 'Nenhuma família selecionada',
+  leave: 'Sair',
 };
 
 export type TranslationKey = keyof typeof pt;
