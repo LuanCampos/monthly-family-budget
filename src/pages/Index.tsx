@@ -14,7 +14,6 @@ import { ExpenseList, SortType, SortDirection } from '@/components/ExpenseList';
 import { SubcategoryManager } from '@/components/SubcategoryManager';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { AnnualViewChart } from '@/components/AnnualViewChart';
-import { UserMenu } from '@/components/UserMenu';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar } from 'lucide-react';
@@ -123,12 +122,9 @@ const Index = () => {
                 onAddMonth={addMonth}
               />
               <SettingsPanel 
-                onExport={exportBudget} 
-                onImport={handleImportFile}
                 currentMonthLabel={currentMonth ? `${t(`month-${currentMonth.month - 1}` as any)} ${currentMonth.year}` : undefined}
                 onDeleteMonth={currentMonth ? () => removeMonth(currentMonth.id) : undefined}
               />
-              <UserMenu />
             </div>
           </div>
         </div>
