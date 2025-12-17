@@ -175,6 +175,38 @@ export const en: Record<TranslationKey, string> = {
   emailAlreadyRegistered: 'This email is already registered',
   loading: 'Loading...',
   
+  // Auth Extended
+  forgotPassword: 'Forgot password?',
+  forgotPasswordDescription: 'Enter your email to receive a reset link',
+  sendResetLink: 'Send reset link',
+  backToLogin: 'Back to login',
+  resetEmailSent: 'Reset email sent! Check your inbox.',
+  enterEmailForReset: 'Enter your email to reset password',
+  continueWithGoogle: 'Continue with Google',
+  or: 'or',
+  
+  // Account Settings
+  accountSettings: 'Account Settings',
+  accountSettingsDescription: 'Manage your profile and security',
+  profile: 'Profile',
+  displayName: 'Display name',
+  displayNamePlaceholder: 'Your name',
+  displayNameRequired: 'Display name is required',
+  profileUpdated: 'Profile updated successfully!',
+  emailCannotBeChanged: 'Email cannot be changed',
+  newPassword: 'New password',
+  newPasswordPlaceholder: 'Enter new password',
+  confirmPassword: 'Confirm password',
+  confirmPasswordPlaceholder: 'Confirm new password',
+  passwordsDoNotMatch: 'Passwords do not match',
+  passwordUpdated: 'Password updated successfully!',
+  updatePassword: 'Update password',
+  connections: 'Connections',
+  connected: 'Connected',
+  notConnected: 'Not connected',
+  connect: 'Connect',
+  connectionsDescription: 'Link external accounts for easier login',
+  
   // Months
   'month-0': 'January',
   'month-1': 'February',
