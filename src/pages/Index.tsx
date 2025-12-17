@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useBudget } from '@/hooks/useBudget';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { IncomeInput } from '@/components/IncomeInput';
 import { ExpenseChart } from '@/components/ExpenseChart';
@@ -16,7 +18,7 @@ import { SettingsPanel } from '@/components/SettingsPanel';
 import { AnnualViewChart } from '@/components/AnnualViewChart';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar } from 'lucide-react';
+import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, LogIn, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -27,6 +29,7 @@ import {
 
 const Index = () => {
   const { t } = useLanguage();
+  const { user, signOut } = useAuth();
   const {
     months,
     currentMonth,
@@ -127,6 +130,29 @@ const Index = () => {
                 currentMonthLabel={currentMonth ? `${t(`month-${currentMonth.month - 1}` as any)} ${currentMonth.year}` : undefined}
                 onDeleteMonth={currentMonth ? () => removeMonth(currentMonth.id) : undefined}
               />
+              {user ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={signOut}
+                  title={t('logout')}
+                  className="h-8 w-8"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  title={t('login')}
+                  className="h-8 w-8"
+                >
+                  <Link to="/auth">
+                    <LogIn className="h-4 w-4" />
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>

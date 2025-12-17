@@ -156,6 +156,25 @@ export const en: Record<TranslationKey, string> = {
   annualView: 'Annual View',
   annualViewTitle: 'Expenses by Category',
   
+  // Auth
+  login: 'Login',
+  signup: 'Sign up',
+  logout: 'Logout',
+  email: 'Email',
+  password: 'Password',
+  emailPlaceholder: 'your@email.com',
+  passwordPlaceholder: '••••••••',
+  authDescription: 'Login or create your account',
+  error: 'Error',
+  success: 'Success',
+  fillAllFields: 'Please fill all fields',
+  invalidCredentials: 'Invalid email or password',
+  loginSuccess: 'Login successful!',
+  signupSuccess: 'Account created! Check your email to confirm.',
+  passwordTooShort: 'Password must be at least 6 characters',
+  emailAlreadyRegistered: 'This email is already registered',
+  loading: 'Loading...',
+  
   // Months
   'month-0': 'January',
   'month-1': 'February',
