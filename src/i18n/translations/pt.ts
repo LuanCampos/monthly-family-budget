@@ -9,6 +9,9 @@ export const pt = {
   pendingChanges: 'alterações pendentes',
   syncToCloud: 'Sincronizar com nuvem',
   offlineFamily: 'Família Offline',
+  continueOffline: 'Continuar Offline',
+  continueOfflineDescription: 'Use o app sem conta. Seus dados ficarão salvos apenas neste dispositivo.',
+  or: 'ou',
   
   // Navigation & Actions
   import: 'Importar',
