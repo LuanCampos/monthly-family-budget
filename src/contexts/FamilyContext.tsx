@@ -256,11 +256,14 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Create family
   const createFamily = async (name: string) => {
-    if (!user) return { error: new Error('Not authenticated') };
+    // Get fresh session to ensure auth.uid() matches
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) return { error: new Error('Not authenticated') };
 
     const { data, error } = await supabase
       .from('families')
-      .insert({ name, created_by: user.id })
+      .insert({ name, created_by: session.user.id })
       .select()
       .single();
 
