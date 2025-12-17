@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useFamily } from '@/contexts/FamilyContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useOnline } from '@/contexts/OnlineContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -18,17 +18,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Users, ChevronDown, Plus, Check, Loader2 } from 'lucide-react';
+import { Users, ChevronDown, Plus, Check, Loader2, Cloud, WifiOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { isOfflineId } from '@/lib/offlineStorage';
 
 export const FamilySelector = () => {
   const { t } = useLanguage();
-  const { families, currentFamily, selectFamily, createFamily, myPendingInvitations } = useFamily();
+  const { families, currentFamily, selectFamily, createFamily } = useFamily();
+  const { syncFamily, isSyncing, isOnline } = useOnline();
   const { toast } = useToast();
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newFamilyName, setNewFamilyName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  const isCurrentOffline = currentFamily?.isOffline || isOfflineId(currentFamily?.id || '');
 
   const handleCreateFamily = async () => {
     if (!newFamilyName.trim()) return;
@@ -38,18 +42,19 @@ export const FamilySelector = () => {
     setIsCreating(false);
 
     if (error) {
-      toast({
-        title: t('error'),
-        description: error.message,
-        variant: 'destructive'
-      });
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
     } else {
-      toast({
-        title: t('success'),
-        description: t('familyCreated')
-      });
+      toast({ title: t('success'), description: t('familyCreated') });
       setShowCreateDialog(false);
       setNewFamilyName('');
+    }
+  };
+
+  const handleSyncFamily = async () => {
+    if (!currentFamily) return;
+    const { error } = await syncFamily(currentFamily.id);
+    if (error) {
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
     }
   };
 
@@ -59,16 +64,18 @@ export const FamilySelector = () => {
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <Users className="h-4 w-4" />
-            <span className="max-w-[100px] truncate">{currentFamily?.name || t('selectFamily')}</span>
-            <ChevronDown className="h-3 w-3" />
-            {myPendingInvitations.length > 0 && (
-              <span className="absolute -top-1 -right-1 h-4 w-4 text-xs bg-primary text-primary-foreground rounded-full flex items-center justify-center">
-                {myPendingInvitations.length}
-              </span>
+            <span className="hidden sm:inline max-w-[120px] truncate">
+              {currentFamily?.name || t('selectFamily')}
+            </span>
+            {isCurrentOffline && (
+              <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-amber-500/20 text-amber-500">
+                <WifiOff className="h-3 w-3" />
+              </Badge>
             )}
+            <ChevronDown className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="start" className="w-56">
           {families.map((family) => (
             <DropdownMenuItem
               key={family.id}
@@ -76,48 +83,58 @@ export const FamilySelector = () => {
               className="flex items-center justify-between"
             >
               <span className="truncate">{family.name}</span>
-              {family.id === currentFamily?.id && (
-                <Check className="h-4 w-4 text-primary" />
-              )}
+              <div className="flex items-center gap-1">
+                {(family.isOffline || isOfflineId(family.id)) && (
+                  <WifiOff className="h-3 w-3 text-amber-500" />
+                )}
+                {currentFamily?.id === family.id && (
+                  <Check className="h-4 w-4 text-primary" />
+                )}
+              </div>
             </DropdownMenuItem>
           ))}
-          {families.length > 0 && <DropdownMenuSeparator />}
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setShowCreateDialog(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            {t('createNewFamily')}
+            {t('createFamily')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {/* Sync button for offline families */}
+      {isCurrentOffline && isOnline && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSyncFamily}
+          disabled={isSyncing}
+          className="gap-1.5 text-amber-600 border-amber-500/50 hover:bg-amber-500/10"
+        >
+          {isSyncing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Cloud className="h-4 w-4" />
+          )}
+          <span className="hidden sm:inline">{t('syncToCloud')}</span>
+        </Button>
+      )}
+
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{t('createNewFamily')}</DialogTitle>
-            <DialogDescription>{t('createFamilyDescription')}</DialogDescription>
+            <DialogTitle>{t('createFamily')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">{t('familyName')}</label>
-              <Input
-                placeholder={t('familyNamePlaceholder')}
-                value={newFamilyName}
-                onChange={(e) => setNewFamilyName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreateFamily()}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                {t('cancel')}
-              </Button>
-              <Button onClick={handleCreateFamily} disabled={!newFamilyName.trim() || isCreating}>
-                {isCreating ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
-                {t('create')}
-              </Button>
-            </div>
+            <Input
+              placeholder={t('familyNamePlaceholder')}
+              value={newFamilyName}
+              onChange={(e) => setNewFamilyName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateFamily()}
+            />
+            <Button onClick={handleCreateFamily} disabled={isCreating || !newFamilyName.trim()} className="w-full">
+              {isCreating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+              {t('createFamily')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
