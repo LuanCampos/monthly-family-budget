@@ -640,6 +640,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                           <KeyRound className="h-4 w-4 mr-2" />{t('changePassword')}
                         </Button>
                       </div>
+                      <Button variant="outline" size="sm" className="w-full h-9 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleSignOut}>
+                        <LogOut className="h-4 w-4 mr-2" />{t('logout')}
+                      </Button>
                     </div>
                     <Separator className="bg-border" />
                   </>
@@ -727,15 +730,6 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                   </>
                 )}
 
-                {/* Logout */}
-                {user && (
-                  <>
-                    <Separator className="bg-border" />
-                    <Button variant="outline" className="w-full h-10 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleSignOut}>
-                      <LogOut className="h-4 w-4 mr-2" />{t('logout')}
-                    </Button>
-                  </>
-                )}
               </TabsContent>
 
               {/* Family Tab */}
