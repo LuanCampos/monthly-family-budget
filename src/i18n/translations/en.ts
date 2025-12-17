@@ -11,6 +11,9 @@ export const en: Record<TranslationKey, string> = {
   pendingChanges: 'pending changes',
   syncToCloud: 'Sync to cloud',
   offlineFamily: 'Offline Family',
+  continueOffline: 'Continue Offline',
+  continueOfflineDescription: 'Use the app without an account. Your data will only be saved on this device.',
+  or: 'or',
   
   // Navigation & Actions
   import: 'Import',
