@@ -3,6 +3,13 @@ export const pt = {
   appTitle: 'Orçamento doméstico',
   appSubtitle: 'Controlando o orçamento doméstico da familinha com base nas nossas metas.',
   
+  // Online/Offline
+  online: 'Online',
+  offline: 'Offline',
+  pendingChanges: 'alterações pendentes',
+  syncToCloud: 'Sincronizar com nuvem',
+  offlineFamily: 'Família Offline',
+  
   // Navigation & Actions
   import: 'Importar',
   export: 'Exportar',

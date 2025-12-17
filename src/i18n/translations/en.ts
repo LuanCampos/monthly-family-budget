@@ -5,6 +5,13 @@ export const en: Record<TranslationKey, string> = {
   appTitle: 'Home Budget',
   appSubtitle: 'Managing our family budget based on our goals.',
   
+  // Online/Offline
+  online: 'Online',
+  offline: 'Offline',
+  pendingChanges: 'pending changes',
+  syncToCloud: 'Sync to cloud',
+  offlineFamily: 'Offline Family',
+  
   // Navigation & Actions
   import: 'Import',
   export: 'Export',

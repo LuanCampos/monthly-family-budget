@@ -3,6 +3,7 @@ import { Month, Expense, CategoryKey, Subcategory, RecurringExpense } from '@/ty
 import { CATEGORIES } from '@/constants/categories';
 import { supabase } from '@/lib/supabase';
 import { useFamily } from '@/contexts/FamilyContext';
+import { offlineDB, generateOfflineId, isOfflineId, syncQueue } from '@/lib/offlineStorage';
 import { toast } from 'sonner';
 
 const generateMonthId = (year: number, month: number): string => {
@@ -41,7 +42,7 @@ const shouldIncludeRecurringInMonth = (
 };
 
 export const useBudget = () => {
-  const { currentFamilyId } = useFamily();
+  const { currentFamilyId, isCurrentFamilyOffline } = useFamily();
   
   const [months, setMonths] = useState<Month[]>([]);
   const [currentMonthId, setCurrentMonthId] = useState<string | null>(null);
@@ -58,10 +59,50 @@ export const useBudget = () => {
 
   const currentMonth = months.find(m => m.id === currentMonthId) || null;
 
-  // Load months from database
+  // Check if we should use offline storage
+  const useOffline = isCurrentFamilyOffline || !navigator.onLine;
+
+  // Load months from database or offline storage
   const loadMonths = useCallback(async () => {
     if (!currentFamilyId) return;
 
+    if (useOffline || isOfflineId(currentFamilyId)) {
+      // Load from IndexedDB
+      const offlineMonths = await offlineDB.getAllByIndex<any>('months', 'family_id', currentFamilyId);
+      
+      const monthsWithExpenses: Month[] = await Promise.all(
+        offlineMonths.map(async (m) => {
+          const expenses = await offlineDB.getAllByIndex<any>('expenses', 'month_id', m.id);
+          return {
+            id: m.id,
+            label: getMonthLabel(m.year, m.month),
+            year: m.year,
+            month: m.month,
+            income: m.income || 0,
+            expenses: expenses.map((e: any) => ({
+              id: e.id,
+              title: e.title,
+              category: e.category as CategoryKey,
+              subcategoryId: e.subcategory_id,
+              value: e.value,
+              isRecurring: e.is_recurring,
+              isPending: e.is_pending,
+              dueDay: e.due_day,
+              recurringExpenseId: e.recurring_expense_id,
+              installmentInfo: e.installment_current && e.installment_total ? {
+                current: e.installment_current,
+                total: e.installment_total
+              } : undefined
+            }))
+          };
+        })
+      );
+
+      setMonths(monthsWithExpenses.sort((a, b) => a.id.localeCompare(b.id)));
+      return;
+    }
+
+    // Load from Supabase
     const { data: monthsData, error } = await supabase
       .from('month')
       .select('*')
@@ -76,7 +117,6 @@ export const useBudget = () => {
 
     if (!monthsData) return;
 
-    // Load expenses for each month
     const monthsWithExpenses: Month[] = await Promise.all(
       monthsData.map(async (m) => {
         const { data: expenses } = await supabase
@@ -110,11 +150,29 @@ export const useBudget = () => {
     );
 
     setMonths(monthsWithExpenses);
-  }, [currentFamilyId]);
+  }, [currentFamilyId, useOffline]);
 
   // Load recurring expenses
   const loadRecurringExpenses = useCallback(async () => {
     if (!currentFamilyId) return;
+
+    if (useOffline || isOfflineId(currentFamilyId)) {
+      const data = await offlineDB.getAllByIndex<any>('recurring_expenses', 'family_id', currentFamilyId);
+      setRecurringExpenses(data.map(r => ({
+        id: r.id,
+        title: r.title,
+        category: r.category as CategoryKey,
+        subcategoryId: r.subcategory_id,
+        value: r.value,
+        isRecurring: true as const,
+        dueDay: r.due_day,
+        hasInstallments: r.has_installments,
+        totalInstallments: r.total_installments,
+        startYear: r.start_year,
+        startMonth: r.start_month
+      })));
+      return;
+    }
 
     const { data, error } = await supabase
       .from('recurring_expense')
@@ -139,11 +197,21 @@ export const useBudget = () => {
       startYear: r.start_year,
       startMonth: r.start_month
     })));
-  }, [currentFamilyId]);
+  }, [currentFamilyId, useOffline]);
 
   // Load subcategories
   const loadSubcategories = useCallback(async () => {
     if (!currentFamilyId) return;
+
+    if (useOffline || isOfflineId(currentFamilyId)) {
+      const data = await offlineDB.getAllByIndex<any>('subcategories', 'family_id', currentFamilyId);
+      setSubcategories(data.map(s => ({
+        id: s.id,
+        name: s.name,
+        categoryKey: s.category_key as CategoryKey
+      })));
+      return;
+    }
 
     const { data, error } = await supabase
       .from('subcategory')
@@ -160,11 +228,23 @@ export const useBudget = () => {
       name: s.name,
       categoryKey: s.category_key as CategoryKey
     })));
-  }, [currentFamilyId]);
+  }, [currentFamilyId, useOffline]);
 
   // Load category goals
   const loadCategoryGoals = useCallback(async () => {
     if (!currentFamilyId) return;
+
+    if (useOffline || isOfflineId(currentFamilyId)) {
+      const data = await offlineDB.getAllByIndex<any>('category_goals', 'family_id', currentFamilyId);
+      if (data && data.length > 0) {
+        const goals: Record<CategoryKey, number> = { ...categoryPercentages };
+        data.forEach(g => {
+          goals[g.category_key as CategoryKey] = g.percentage;
+        });
+        setCategoryPercentages(goals);
+      }
+      return;
+    }
 
     const { data, error } = await supabase
       .from('category_goal')
@@ -183,7 +263,7 @@ export const useBudget = () => {
       });
       setCategoryPercentages(goals);
     }
-  }, [currentFamilyId]);
+  }, [currentFamilyId, useOffline]);
 
   // Initial data load
   useEffect(() => {
@@ -210,9 +290,9 @@ export const useBudget = () => {
     loadData();
   }, [currentFamilyId, loadMonths, loadRecurringExpenses, loadSubcategories, loadCategoryGoals]);
 
-  // Set up realtime subscriptions
+  // Set up realtime subscriptions (only for cloud families)
   useEffect(() => {
-    if (!currentFamilyId) return;
+    if (!currentFamilyId || isOfflineId(currentFamilyId) || !navigator.onLine) return;
 
     const channel = supabase
       .channel(`budget-${currentFamilyId}`)
@@ -242,85 +322,120 @@ export const useBudget = () => {
   const addSubcategory = async (name: string, categoryKey: CategoryKey) => {
     if (!currentFamilyId) return;
 
-    const { error } = await supabase
-      .from('subcategory')
-      .insert({
-        family_id: currentFamilyId,
-        name,
-        category_key: categoryKey
-      });
+    const id = generateOfflineId('sub');
+    const data = {
+      id,
+      family_id: currentFamilyId,
+      name,
+      category_key: categoryKey
+    };
 
-    if (error) {
-      toast.error('Erro ao criar subcategoria');
-      console.error(error);
+    if (useOffline || isOfflineId(currentFamilyId)) {
+      await offlineDB.put('subcategories', data);
+      await loadSubcategories();
+      return;
     }
+
+    const { error } = await supabase.from('subcategory').insert(data);
+    if (error) {
+      // Fallback to offline
+      await offlineDB.put('subcategories', data);
+      await syncQueue.add({ type: 'subcategory', action: 'insert', data, familyId: currentFamilyId });
+      toast.warning('Salvo localmente. Sincronizará quando online.');
+    }
+    await loadSubcategories();
   };
 
   const updateSubcategory = async (id: string, name: string) => {
-    const { error } = await supabase
-      .from('subcategory')
-      .update({ name })
-      .eq('id', id);
+    if (useOffline || isOfflineId(currentFamilyId || '')) {
+      const sub = await offlineDB.get<any>('subcategories', id);
+      if (sub) {
+        await offlineDB.put('subcategories', { ...sub, name });
+        await loadSubcategories();
+      }
+      return;
+    }
 
+    const { error } = await supabase.from('subcategory').update({ name }).eq('id', id);
     if (error) {
       toast.error('Erro ao atualizar subcategoria');
-      console.error(error);
     }
+    await loadSubcategories();
   };
 
   const removeSubcategory = async (id: string) => {
-    // Remove subcategory from expenses first
-    await supabase
-      .from('expense')
-      .update({ subcategory_id: null })
-      .eq('subcategory_id', id);
-
-    await supabase
-      .from('recurring_expense')
-      .update({ subcategory_id: null })
-      .eq('subcategory_id', id);
-
-    const { error } = await supabase
-      .from('subcategory')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast.error('Erro ao remover subcategoria');
-      console.error(error);
+    if (useOffline || isOfflineId(currentFamilyId || '')) {
+      await offlineDB.delete('subcategories', id);
+      await loadSubcategories();
+      await loadMonths();
+      return;
     }
+
+    await supabase.from('expense').update({ subcategory_id: null }).eq('subcategory_id', id);
+    await supabase.from('recurring_expense').update({ subcategory_id: null }).eq('subcategory_id', id);
+    await supabase.from('subcategory').delete().eq('id', id);
+    await loadSubcategories();
+    await loadMonths();
   };
 
   // Month management
   const addMonth = async (year: number, month: number) => {
     if (!currentFamilyId) return false;
 
-    const id = generateMonthId(year, month);
+    const id = `${currentFamilyId}-${generateMonthId(year, month)}`;
 
-    // Check if month already exists
-    if (months.some(m => m.id === id)) {
+    if (months.some(m => m.year === year && m.month === month)) {
       return false;
     }
 
-    const { data: newMonthData, error } = await supabase
-      .from('month')
-      .insert({
-        id,
-        family_id: currentFamilyId,
-        year,
-        month,
-        income: 0
-      })
-      .select()
-      .single();
+    const monthData = {
+      id,
+      family_id: currentFamilyId,
+      year,
+      month,
+      income: 0
+    };
+
+    if (useOffline || isOfflineId(currentFamilyId)) {
+      await offlineDB.put('months', monthData);
+
+      // Add recurring expenses
+      for (const recurring of recurringExpenses) {
+        const result = shouldIncludeRecurringInMonth(recurring, year, month);
+        if (result.include) {
+          const expenseData = {
+            id: generateOfflineId('exp'),
+            month_id: id,
+            title: recurring.title,
+            category: recurring.category,
+            subcategory_id: recurring.subcategoryId,
+            value: recurring.value,
+            is_recurring: true,
+            is_pending: true,
+            due_day: recurring.dueDay,
+            recurring_expense_id: recurring.id,
+            installment_current: result.installmentNumber,
+            installment_total: recurring.totalInstallments
+          };
+          await offlineDB.put('expenses', expenseData);
+        }
+      }
+
+      setCurrentMonthId(id);
+      await loadMonths();
+      return true;
+    }
+
+    const { error } = await supabase.from('month').insert(monthData);
 
     if (error) {
-      toast.error('Erro ao criar mês');
-      console.error(error);
-      return false;
+      // Fallback to offline
+      await offlineDB.put('months', monthData);
+      await syncQueue.add({ type: 'month', action: 'insert', data: monthData, familyId: currentFamilyId });
+      toast.warning('Salvo localmente.');
     }
 
-    // Add recurring expenses to the new month
+    // Add recurring expenses
     for (const recurring of recurringExpenses) {
       const result = shouldIncludeRecurringInMonth(recurring, year, month);
       if (result.include) {
@@ -341,28 +456,25 @@ export const useBudget = () => {
     }
 
     setCurrentMonthId(id);
+    await loadMonths();
     return true;
   };
 
   const removeMonth = async (monthId: string) => {
-    // Delete all expenses first
-    await supabase.from('expense').delete().eq('month_id', monthId);
-
-    const { error } = await supabase
-      .from('month')
-      .delete()
-      .eq('id', monthId);
-
-    if (error) {
-      toast.error('Erro ao remover mês');
-      console.error(error);
-      return;
+    if (useOffline || isOfflineId(currentFamilyId || '')) {
+      const expenses = await offlineDB.getAllByIndex<any>('expenses', 'month_id', monthId);
+      for (const exp of expenses) await offlineDB.delete('expenses', exp.id);
+      await offlineDB.delete('months', monthId);
+    } else {
+      await supabase.from('expense').delete().eq('month_id', monthId);
+      await supabase.from('month').delete().eq('id', monthId);
     }
 
     if (currentMonthId === monthId) {
       const remaining = months.filter(m => m.id !== monthId);
       setCurrentMonthId(remaining.length ? remaining[remaining.length - 1].id : null);
     }
+    await loadMonths();
   };
 
   const selectMonth = (monthId: string) => {
@@ -372,15 +484,20 @@ export const useBudget = () => {
   const updateIncome = async (income: number) => {
     if (!currentMonthId) return;
 
-    const { error } = await supabase
-      .from('month')
-      .update({ income })
-      .eq('id', currentMonthId);
+    if (useOffline || isOfflineId(currentFamilyId || '')) {
+      const month = await offlineDB.get<any>('months', currentMonthId);
+      if (month) {
+        await offlineDB.put('months', { ...month, income });
+        await loadMonths();
+      }
+      return;
+    }
 
+    const { error } = await supabase.from('month').update({ income }).eq('id', currentMonthId);
     if (error) {
       toast.error('Erro ao atualizar renda');
-      console.error(error);
     }
+    await loadMonths();
   };
 
   // Expenses
@@ -392,7 +509,8 @@ export const useBudget = () => {
   ) => {
     if (!currentMonthId) return;
 
-    const { error } = await supabase.from('expense').insert({
+    const expenseData = {
+      id: generateOfflineId('exp'),
       month_id: currentMonthId,
       title,
       category,
@@ -400,12 +518,21 @@ export const useBudget = () => {
       value,
       is_recurring: false,
       is_pending: false
-    });
+    };
 
-    if (error) {
-      toast.error('Erro ao criar despesa');
-      console.error(error);
+    if (useOffline || isOfflineId(currentFamilyId || '')) {
+      await offlineDB.put('expenses', expenseData);
+      await loadMonths();
+      return;
     }
+
+    const { error } = await supabase.from('expense').insert(expenseData);
+    if (error) {
+      await offlineDB.put('expenses', expenseData);
+      await syncQueue.add({ type: 'expense', action: 'insert', data: expenseData, familyId: currentFamilyId || '' });
+      toast.warning('Salvo localmente.');
+    }
+    await loadMonths();
   };
 
   const updateExpense = async (
@@ -416,45 +543,59 @@ export const useBudget = () => {
     value: number,
     isPending?: boolean
   ) => {
-    const { error } = await supabase
-      .from('expense')
-      .update({
-        title,
-        category,
-        subcategory_id: subcategoryId || null,
-        value,
-        is_pending: isPending ?? false
-      })
-      .eq('id', id);
+    const updateData = {
+      title,
+      category,
+      subcategory_id: subcategoryId || null,
+      value,
+      is_pending: isPending ?? false
+    };
 
+    if (useOffline || isOfflineId(currentFamilyId || '')) {
+      const expense = await offlineDB.get<any>('expenses', id);
+      if (expense) {
+        await offlineDB.put('expenses', { ...expense, ...updateData });
+        await loadMonths();
+      }
+      return;
+    }
+
+    const { error } = await supabase.from('expense').update(updateData).eq('id', id);
     if (error) {
       toast.error('Erro ao atualizar despesa');
-      console.error(error);
     }
+    await loadMonths();
   };
 
   const confirmPayment = async (expenseId: string) => {
-    const { error } = await supabase
-      .from('expense')
-      .update({ is_pending: false })
-      .eq('id', expenseId);
+    if (useOffline || isOfflineId(currentFamilyId || '')) {
+      const expense = await offlineDB.get<any>('expenses', expenseId);
+      if (expense) {
+        await offlineDB.put('expenses', { ...expense, is_pending: false });
+        await loadMonths();
+      }
+      return;
+    }
 
+    const { error } = await supabase.from('expense').update({ is_pending: false }).eq('id', expenseId);
     if (error) {
       toast.error('Erro ao confirmar pagamento');
-      console.error(error);
     }
+    await loadMonths();
   };
 
   const removeExpense = async (expenseId: string) => {
-    const { error } = await supabase
-      .from('expense')
-      .delete()
-      .eq('id', expenseId);
+    if (useOffline || isOfflineId(currentFamilyId || '')) {
+      await offlineDB.delete('expenses', expenseId);
+      await loadMonths();
+      return;
+    }
 
+    const { error } = await supabase.from('expense').delete().eq('id', expenseId);
     if (error) {
       toast.error('Erro ao remover despesa');
-      console.error(error);
     }
+    await loadMonths();
   };
 
   // Recurring expenses
@@ -471,30 +612,80 @@ export const useBudget = () => {
   ) => {
     if (!currentFamilyId) return;
 
+    const id = generateOfflineId('rec');
+    const recurringData = {
+      id,
+      family_id: currentFamilyId,
+      title,
+      category,
+      subcategory_id: subcategoryId || null,
+      value,
+      due_day: dueDay,
+      has_installments: hasInstallments,
+      total_installments: totalInstallments,
+      start_year: startYear,
+      start_month: startMonth
+    };
+
+    if (useOffline || isOfflineId(currentFamilyId)) {
+      await offlineDB.put('recurring_expenses', recurringData);
+
+      // Add to current month if applicable
+      if (currentMonthId && currentMonth) {
+        const recurring: RecurringExpense = {
+          id,
+          title,
+          category,
+          subcategoryId,
+          value,
+          isRecurring: true,
+          dueDay,
+          hasInstallments,
+          totalInstallments,
+          startYear,
+          startMonth
+        };
+
+        const result = shouldIncludeRecurringInMonth(recurring, currentMonth.year, currentMonth.month);
+        if (result.include) {
+          const expenseData = {
+            id: generateOfflineId('exp'),
+            month_id: currentMonthId,
+            title,
+            category,
+            subcategory_id: subcategoryId || null,
+            value,
+            is_recurring: true,
+            is_pending: true,
+            due_day: dueDay,
+            recurring_expense_id: id,
+            installment_current: result.installmentNumber,
+            installment_total: totalInstallments
+          };
+          await offlineDB.put('expenses', expenseData);
+        }
+      }
+
+      await loadRecurringExpenses();
+      await loadMonths();
+      return;
+    }
+
     const { data: newRecurring, error } = await supabase
       .from('recurring_expense')
-      .insert({
-        family_id: currentFamilyId,
-        title,
-        category,
-        subcategory_id: subcategoryId || null,
-        value,
-        due_day: dueDay,
-        has_installments: hasInstallments,
-        total_installments: totalInstallments,
-        start_year: startYear,
-        start_month: startMonth
-      })
+      .insert(recurringData)
       .select()
       .single();
 
     if (error) {
-      toast.error('Erro ao criar despesa recorrente');
-      console.error(error);
+      await offlineDB.put('recurring_expenses', recurringData);
+      await syncQueue.add({ type: 'recurring_expense', action: 'insert', data: recurringData, familyId: currentFamilyId });
+      toast.warning('Salvo localmente.');
+      await loadRecurringExpenses();
       return;
     }
 
-    // Add to current month if applicable
+    // Add to current month
     if (currentMonthId && currentMonth) {
       const recurring: RecurringExpense = {
         id: newRecurring.id,
@@ -511,7 +702,6 @@ export const useBudget = () => {
       };
 
       const result = shouldIncludeRecurringInMonth(recurring, currentMonth.year, currentMonth.month);
-      
       if (result.include) {
         await supabase.from('expense').insert({
           month_id: currentMonthId,
@@ -528,6 +718,9 @@ export const useBudget = () => {
         });
       }
     }
+
+    await loadRecurringExpenses();
+    await loadMonths();
   };
 
   const updateRecurringExpense = async (
@@ -543,28 +736,33 @@ export const useBudget = () => {
     startMonth?: number,
     updatePastExpenses?: boolean
   ) => {
-    const { error } = await supabase
-      .from('recurring_expense')
-      .update({
-        title,
-        category,
-        subcategory_id: subcategoryId || null,
-        value,
-        due_day: dueDay,
-        has_installments: hasInstallments,
-        total_installments: totalInstallments,
-        start_year: startYear,
-        start_month: startMonth
-      })
-      .eq('id', id);
+    const updateData = {
+      title,
+      category,
+      subcategory_id: subcategoryId || null,
+      value,
+      due_day: dueDay,
+      has_installments: hasInstallments,
+      total_installments: totalInstallments,
+      start_year: startYear,
+      start_month: startMonth
+    };
 
-    if (error) {
-      toast.error('Erro ao atualizar despesa recorrente');
-      console.error(error);
+    if (useOffline || isOfflineId(currentFamilyId || '')) {
+      const rec = await offlineDB.get<any>('recurring_expenses', id);
+      if (rec) {
+        await offlineDB.put('recurring_expenses', { ...rec, ...updateData });
+        await loadRecurringExpenses();
+      }
       return;
     }
 
-    // Update linked expenses if requested
+    const { error } = await supabase.from('recurring_expense').update(updateData).eq('id', id);
+    if (error) {
+      toast.error('Erro ao atualizar despesa recorrente');
+      return;
+    }
+
     if (updatePastExpenses) {
       await supabase
         .from('expense')
@@ -577,27 +775,29 @@ export const useBudget = () => {
         })
         .eq('recurring_expense_id', id);
     }
+
+    await loadRecurringExpenses();
+    await loadMonths();
   };
 
   const removeRecurringExpense = async (id: string) => {
-    const { error } = await supabase
-      .from('recurring_expense')
-      .delete()
-      .eq('id', id);
+    if (useOffline || isOfflineId(currentFamilyId || '')) {
+      await offlineDB.delete('recurring_expenses', id);
+      await loadRecurringExpenses();
+      return;
+    }
 
+    const { error } = await supabase.from('recurring_expense').delete().eq('id', id);
     if (error) {
       toast.error('Erro ao remover despesa recorrente');
-      console.error(error);
     }
+    await loadRecurringExpenses();
   };
 
   const applyRecurringToCurrentMonth = async (recurringId: string): Promise<boolean> => {
     if (!currentMonthId || !currentMonth) return false;
 
-    // Check if already exists
-    const alreadyExists = currentMonth.expenses.some(
-      e => e.recurringExpenseId === recurringId
-    );
+    const alreadyExists = currentMonth.expenses.some(e => e.recurringExpenseId === recurringId);
     if (alreadyExists) return false;
 
     const recurring = recurringExpenses.find(r => r.id === recurringId);
@@ -606,7 +806,8 @@ export const useBudget = () => {
     const result = shouldIncludeRecurringInMonth(recurring, currentMonth.year, currentMonth.month);
     if (!result.include) return false;
 
-    const { error } = await supabase.from('expense').insert({
+    const expenseData = {
+      id: generateOfflineId('exp'),
       month_id: currentMonthId,
       title: recurring.title,
       category: recurring.category,
@@ -618,14 +819,21 @@ export const useBudget = () => {
       recurring_expense_id: recurringId,
       installment_current: result.installmentNumber,
       installment_total: recurring.totalInstallments
-    });
+    };
 
+    if (useOffline || isOfflineId(currentFamilyId || '')) {
+      await offlineDB.put('expenses', expenseData);
+      await loadMonths();
+      return true;
+    }
+
+    const { error } = await supabase.from('expense').insert(expenseData);
     if (error) {
       toast.error('Erro ao aplicar despesa recorrente');
-      console.error(error);
       return false;
     }
 
+    await loadMonths();
     return true;
   };
 
@@ -635,15 +843,19 @@ export const useBudget = () => {
 
     setCategoryPercentages(newGoals);
 
-    // Upsert each category goal
     for (const [categoryKey, percentage] of Object.entries(newGoals)) {
-      await supabase
-        .from('category_goal')
-        .upsert({
-          family_id: currentFamilyId,
-          category_key: categoryKey,
-          percentage
-        }, { onConflict: 'family_id,category_key' });
+      const goalData = {
+        id: `${currentFamilyId}-${categoryKey}`,
+        family_id: currentFamilyId,
+        category_key: categoryKey,
+        percentage
+      };
+
+      if (useOffline || isOfflineId(currentFamilyId)) {
+        await offlineDB.put('category_goals', goalData);
+      } else {
+        await supabase.from('category_goal').upsert(goalData, { onConflict: 'family_id,category_key' });
+      }
     }
   };
 
@@ -669,8 +881,7 @@ export const useBudget = () => {
         .reduce((sum, e) => sum + e.value, 0);
 
       const remaining = budget - spent;
-      const usedPercentage =
-        spent === 0 ? 0 : budget > 0 ? (spent / budget) * 100 : 0;
+      const usedPercentage = spent === 0 ? 0 : budget > 0 ? (spent / budget) * 100 : 0;
 
       return {
         ...cat,
@@ -688,13 +899,9 @@ export const useBudget = () => {
       return { totalSpent: 0, totalBudget: 0, usedPercentage: 0 };
     }
 
-    const totalSpent = currentMonth.expenses.reduce(
-      (sum, e) => sum + e.value,
-      0
-    );
+    const totalSpent = currentMonth.expenses.reduce((sum, e) => sum + e.value, 0);
     const totalBudget = currentMonth.income;
-    const usedPercentage =
-      totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+    const usedPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
     return { totalSpent, totalBudget, usedPercentage };
   };
@@ -711,10 +918,7 @@ export const useBudget = () => {
       currentMonthId,
     };
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json',
-    });
-
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -732,27 +936,22 @@ export const useBudget = () => {
       try {
         const data = JSON.parse(reader.result as string);
 
-        if (
-          !Array.isArray(data.months) ||
-          !Array.isArray(data.recurringExpenses) ||
-          !data.categoryPercentages
-        ) {
+        if (!Array.isArray(data.months) || !Array.isArray(data.recurringExpenses) || !data.categoryPercentages) {
           throw new Error('Invalid file structure');
         }
 
-        // Import subcategories
+        // Import to offline storage (works for both online and offline families)
         for (const sub of data.subcategories || []) {
-          await supabase.from('subcategory').upsert({
+          await offlineDB.put('subcategories', {
             id: sub.id,
             family_id: currentFamilyId,
             name: sub.name,
             category_key: sub.categoryKey
-          }, { onConflict: 'id' });
+          });
         }
 
-        // Import recurring expenses
         for (const rec of data.recurringExpenses) {
-          await supabase.from('recurring_expense').upsert({
+          await offlineDB.put('recurring_expenses', {
             id: rec.id,
             family_id: currentFamilyId,
             title: rec.title,
@@ -764,23 +963,23 @@ export const useBudget = () => {
             total_installments: rec.totalInstallments,
             start_year: rec.startYear,
             start_month: rec.startMonth
-          }, { onConflict: 'id' });
+          });
         }
 
-        // Import months and expenses
         for (const m of data.months) {
-          await supabase.from('month').upsert({
-            id: m.id,
+          const monthId = `${currentFamilyId}-${m.id.split('-').slice(-2).join('-')}`;
+          await offlineDB.put('months', {
+            id: monthId,
             family_id: currentFamilyId,
             year: m.year,
             month: m.month,
             income: m.income
-          }, { onConflict: 'id' });
+          });
 
           for (const exp of m.expenses) {
-            await supabase.from('expense').upsert({
-              id: exp.id,
-              month_id: m.id,
+            await offlineDB.put('expenses', {
+              id: generateOfflineId('exp'),
+              month_id: monthId,
               title: exp.title,
               category: exp.category,
               subcategory_id: exp.subcategoryId || null,
@@ -791,26 +990,19 @@ export const useBudget = () => {
               recurring_expense_id: exp.recurringExpenseId || null,
               installment_current: exp.installmentInfo?.current,
               installment_total: exp.installmentInfo?.total
-            }, { onConflict: 'id' });
+            });
           }
         }
 
-        // Import goals
         await updateGoals(data.categoryPercentages);
-
         toast.success('Dados importados com sucesso!');
-        
-        // Reload data
+
         await Promise.all([
           loadMonths(),
           loadRecurringExpenses(),
           loadSubcategories(),
           loadCategoryGoals()
         ]);
-
-        if (data.currentMonthId) {
-          setCurrentMonthId(data.currentMonthId);
-        }
       } catch (e) {
         console.error(e);
         toast.error('Arquivo inválido ou corrompido');

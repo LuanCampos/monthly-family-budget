@@ -19,6 +19,7 @@ import { AnnualViewChart } from '@/components/AnnualViewChart';
 import { FamilySetup } from '@/components/FamilySetup';
 import { FamilySelector } from '@/components/FamilySelector';
 import { FamilyManager } from '@/components/FamilyManager';
+import { OnlineStatusBar } from '@/components/OnlineStatusBar';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, Loader2 } from 'lucide-react';
@@ -378,6 +379,9 @@ const Index = () => {
           onCancel={() => setEditingExpense(null)}
         />
       )}
+
+      {/* Online Status Indicator */}
+      <OnlineStatusBar />
     </div>
   );
 };
