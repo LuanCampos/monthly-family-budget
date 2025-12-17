@@ -182,8 +182,6 @@ export const en: Record<TranslationKey, string> = {
   backToLogin: 'Back to login',
   resetEmailSent: 'Reset email sent! Check your inbox.',
   enterEmailForReset: 'Enter your email to reset password',
-  continueWithGoogle: 'Continue with Google',
-  or: 'or',
   
   // Account Settings
   accountSettings: 'Account Settings',
@@ -194,6 +192,9 @@ export const en: Record<TranslationKey, string> = {
   displayNameRequired: 'Display name is required',
   profileUpdated: 'Profile updated successfully!',
   emailCannotBeChanged: 'Email cannot be changed',
+  currentPassword: 'Current password',
+  currentPasswordPlaceholder: 'Enter your current password',
+  currentPasswordIncorrect: 'Current password is incorrect',
   newPassword: 'New password',
   newPasswordPlaceholder: 'Enter new password',
   confirmPassword: 'Confirm password',
@@ -201,11 +202,6 @@ export const en: Record<TranslationKey, string> = {
   passwordsDoNotMatch: 'Passwords do not match',
   passwordUpdated: 'Password updated successfully!',
   updatePassword: 'Update password',
-  connections: 'Connections',
-  connected: 'Connected',
-  notConnected: 'Not connected',
-  connect: 'Connect',
-  connectionsDescription: 'Link external accounts for easier login',
   
   // Months
   'month-0': 'January',
