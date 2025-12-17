@@ -17,13 +17,11 @@ import { SubcategoryManager } from '@/components/SubcategoryManager';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { AnnualViewChart } from '@/components/AnnualViewChart';
 import { FamilySetup } from '@/components/FamilySetup';
-import { FamilySelector } from '@/components/FamilySelector';
 
 import { OnlineStatusBar } from '@/components/OnlineStatusBar';
 import { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, Loader2, Menu } from 'lucide-react';
+import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -71,7 +69,6 @@ const Index = () => {
   const [sortType, setSortType] = useState<SortType>('category');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [showAnnualView, setShowAnnualView] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const categorySummary = getCategorySummary();
   const { totalSpent, totalBudget, usedPercentage } = getTotals();
@@ -133,63 +130,26 @@ const Index = () => {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
-            {/* Mobile: Menu + Month */}
-            <div className="flex items-center gap-2 min-w-0 flex-1 sm:flex-none">
-              {/* Mobile hamburger menu */}
-              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild className="sm:hidden">
-                  <Button variant="ghost" size="icon" className="h-9 w-9 flex-shrink-0">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[280px] p-0">
-                  <SheetHeader className="p-4 border-b border-border">
-                    <SheetTitle className="flex items-center gap-2">
-                      <Wallet className="h-5 w-5 text-primary" />
-                      {t('appTitle')}
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="p-4 space-y-4">
-                    <div className="space-y-2">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {t('family')}
-                      </span>
-                      <FamilySelector />
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-
-              {/* Desktop: Logo + Title + Family */}
-              <div className="hidden sm:flex items-center gap-2">
-                <Wallet className="h-6 w-6 text-primary flex-shrink-0" />
-                <h1 className="text-lg font-bold text-foreground leading-tight">
-                  {t('appTitle')}
-                </h1>
-                <FamilySelector />
-              </div>
-
-              {/* Mobile: Month selector takes more space */}
-              <div className="flex-1 sm:hidden">
-                <MonthSelector
-                  months={months}
-                  currentMonth={currentMonth}
-                  onSelectMonth={selectMonth}
-                  onAddMonth={addMonth}
-                />
-              </div>
+            {/* Logo + Title */}
+            <div className="flex items-center gap-2 min-w-0">
+              <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+              <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight hidden sm:block">
+                {t('appTitle')}
+              </h1>
             </div>
 
-            {/* Desktop: Month + Settings */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="hidden sm:block">
-                <MonthSelector
-                  months={months}
-                  currentMonth={currentMonth}
-                  onSelectMonth={selectMonth}
-                  onAddMonth={addMonth}
-                />
-              </div>
+            {/* Month Selector (center) */}
+            <div className="flex-1 max-w-xs sm:max-w-sm">
+              <MonthSelector
+                months={months}
+                currentMonth={currentMonth}
+                onSelectMonth={selectMonth}
+                onAddMonth={addMonth}
+              />
+            </div>
+
+            {/* Settings (single menu) */}
+            <div className="flex-shrink-0">
               <SettingsPanel 
                 currentMonthLabel={currentMonth ? `${t(`month-${currentMonth.month - 1}` as any)} ${currentMonth.year}` : undefined}
                 onDeleteMonth={currentMonth ? () => removeMonth(currentMonth.id) : undefined}
