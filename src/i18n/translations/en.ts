@@ -129,7 +129,8 @@ export const en: Record<TranslationKey, string> = {
   
   // Empty States
   emptyStateTitle: 'Start by adding a month to manage your budget.',
-  emptyStateSubtitle: 'Click the + button next to the month selector.',
+  emptyStateSubtitle: 'Create your first month to start tracking your expenses.',
+  createFirstMonth: 'Create first month',
   
   // Update Options
   updateRecurringTitle: 'Apply changes',

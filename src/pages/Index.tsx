@@ -138,8 +138,11 @@ const Index = () => {
               </h1>
             </div>
 
+            {/* Spacer on mobile */}
+            <div className="flex-1 sm:hidden" />
+
             {/* Month Selector */}
-            <div className="flex-1 sm:flex-initial sm:max-w-sm">
+            <div className="flex-shrink-0">
               <MonthSelector
                 months={months}
                 currentMonth={currentMonth}
@@ -331,9 +334,16 @@ const Index = () => {
             <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
               {t('emptyStateTitle')}
             </h2>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-md">
+            <p className="text-sm sm:text-base text-muted-foreground max-w-md mb-6">
               {t('emptyStateSubtitle')}
             </p>
+            <MonthSelector
+              months={months}
+              currentMonth={currentMonth}
+              onSelectMonth={selectMonth}
+              onAddMonth={addMonth}
+              showCreateButton
+            />
           </div>
         )}
       </main>

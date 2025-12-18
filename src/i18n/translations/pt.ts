@@ -127,7 +127,8 @@ export const pt = {
   
   // Empty States
   emptyStateTitle: 'Comece adicionando um mês para gerenciar seu orçamento.',
-  emptyStateSubtitle: 'Clique no botão + ao lado do seletor de mês.',
+  emptyStateSubtitle: 'Crie seu primeiro mês para começar a controlar suas despesas.',
+  createFirstMonth: 'Criar primeiro mês',
   
   // Update Options
   updateRecurringTitle: 'Aplicar alterações',
