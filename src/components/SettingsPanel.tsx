@@ -1036,8 +1036,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('deleteFamily')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('deleteFamilyConfirm')}</AlertDialogDescription>
+            <AlertDialogTitle>{t('deleteFamilyConfirm')}</AlertDialogTitle>
+            <AlertDialogDescription className={!isCurrentOffline ? "text-destructive font-medium" : ""}>
+              {isCurrentOffline ? t('deleteFamilyWarning') : t('deleteFamilyWarningOnline')}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>

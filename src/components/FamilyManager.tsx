@@ -514,8 +514,8 @@ export const FamilyManager = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('deleteFamilyConfirm')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('deleteFamilyWarning')}
+            <AlertDialogDescription className={!currentFamily?.isOffline ? "text-destructive font-medium" : ""}>
+              {currentFamily?.isOffline ? t('deleteFamilyWarning') : t('deleteFamilyWarningOnline')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
