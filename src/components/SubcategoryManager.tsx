@@ -85,7 +85,7 @@ export const SubcategoryManager = ({
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
+        <DialogContent className="bg-card border-border sm:max-w-lg max-h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
             <DialogTitle>{t('manageSubcategories')}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">

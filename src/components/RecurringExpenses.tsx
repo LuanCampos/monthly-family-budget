@@ -261,7 +261,7 @@ export const RecurringExpenses = ({
           else setIsOpen(true);
         }}
       >
-        <DialogContent className="bg-card border-border sm:max-w-lg max-h-[85vh] flex flex-col gap-0 p-0">
+        <DialogContent className="bg-card border-border sm:max-w-xl max-h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
             <DialogTitle>
               {view === 'list'
@@ -471,18 +471,18 @@ export const RecurringExpenses = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="h-10" onClick={() => setShowUpdateDialog(false)}>
+            <AlertDialogCancel className="h-9" onClick={() => setShowUpdateDialog(false)}>
               {t('cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => confirmUpdate(true)}
-              className="h-10 bg-secondary text-foreground hover:bg-secondary/80"
+              className="h-9 bg-secondary text-foreground hover:bg-secondary/80"
             >
               {t('updateAll')}
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => confirmUpdate(false)}
-              className="h-10 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="h-9 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {t('updateFutureOnly')}
             </AlertDialogAction>
