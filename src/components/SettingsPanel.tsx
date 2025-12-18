@@ -111,6 +111,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
   const isAdmin = userRole === 'owner' || userRole === 'admin';
   const isCurrentOffline = currentFamily?.isOffline || isOfflineId(currentFamily?.id || '');
+  const isOnlyMember = members.length === 1;
+  const adminCount = members.filter(m => m.role === 'owner' || m.role === 'admin').length;
+  const isOnlyAdmin = isAdmin && adminCount === 1 && members.length > 1;
 
   useEffect(() => {
     if (user) {
@@ -996,10 +999,21 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
                     {/* Leave/Delete family */}
                     <div className="space-y-2">
-                      <Button variant="outline" className="w-full text-destructive hover:text-destructive" onClick={() => setShowLeaveAlert(true)}>
-                        <LogOut className="h-4 w-4 mr-2" />{t('leaveFamily')}
-                      </Button>
-                      {isAdmin && (
+                      {!isOnlyMember && (
+                        <Button 
+                          variant="outline" 
+                          className="w-full text-destructive hover:text-destructive" 
+                          onClick={() => setShowLeaveAlert(true)}
+                          disabled={isOnlyAdmin}
+                          title={isOnlyAdmin ? t('promoteAdminFirst') : undefined}
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />{t('leaveFamily')}
+                        </Button>
+                      )}
+                      {isOnlyAdmin && !isOnlyMember && (
+                        <p className="text-xs text-muted-foreground text-center">{t('promoteAdminFirst')}</p>
+                      )}
+                      {(isAdmin || isOnlyMember) && (
                         <Button variant="destructive" className="w-full" onClick={() => setShowDeleteAlert(true)}>
                           <Trash2 className="h-4 w-4 mr-2" />{t('deleteFamily')}
                         </Button>

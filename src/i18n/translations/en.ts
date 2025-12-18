@@ -284,6 +284,7 @@ export const en: Record<TranslationKey, string> = {
   pendingInvitations: 'Pending invitations',
   noFamilySelected: 'No family selected',
   leave: 'Leave',
+  promoteAdminFirst: 'Promote another member to admin before leaving',
   
   // Email Verification
   emailVerificationTitle: 'Verify your email',
