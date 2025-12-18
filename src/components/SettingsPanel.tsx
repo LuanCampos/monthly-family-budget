@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import TriggerButton from '@/components/ui/trigger-button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -42,7 +44,9 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { useOnline } from '@/contexts/OnlineContext';
 import { offlineAdapter } from '@/lib/offlineAdapter';
+import { clearOfflineCache } from '@/lib/offlineStorage';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -136,6 +140,8 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
     if (!user) return '';
     return user.user_metadata?.display_name || user.user_metadata?.full_name || user.email;
   };
+
+  // Using shared TriggerButton from ui/ to reduce duplication and match other dialogs
 
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
@@ -423,25 +429,19 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 rounded-full p-0">
-            {user ? (
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.user_metadata?.avatar_url} alt={getDisplayName()} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">{getUserInitials()}</AvatarFallback>
-              </Avatar>
-            ) : (
-              <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
-            )}
-          </Button>
+          <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
         </DialogTrigger>
-        <DialogContent aria-describedby={undefined} className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
+          <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <User className="h-5 w-5" />
               {t('editProfile')}
             </DialogTitle>
+            <DialogDescription>
+              {t('profileDialogDescription')}
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <div className="flex-1 overflow-y-auto dashboard-card-content space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">{t('email')}</Label>
               <Input id="email" type="email" value={user?.email || ''} disabled className="bg-muted" />
@@ -468,25 +468,19 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 rounded-full p-0">
-            {user ? (
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.user_metadata?.avatar_url} alt={getDisplayName()} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">{getUserInitials()}</AvatarFallback>
-              </Avatar>
-            ) : (
-              <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
-            )}
-          </Button>
+          <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
         </DialogTrigger>
-        <DialogContent aria-describedby={undefined} className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
+          <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <KeyRound className="h-5 w-5" />
               {t('changePassword')}
             </DialogTitle>
+            <DialogDescription>
+              {t('passwordDialogDescription')}
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <div className="flex-1 overflow-y-auto dashboard-card-content space-y-4">
             <div className="space-y-2">
               <Label htmlFor="currentPassword">{t('currentPassword')}</Label>
               <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder={t('currentPasswordPlaceholder')} />
@@ -516,18 +510,19 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 rounded-full p-0">
-            <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
+          <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
         </DialogTrigger>
-        <DialogContent aria-describedby={undefined} className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
+          <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold">
               <LogIn className="h-5 w-5" />
               {t('loginOrSignup')}
             </DialogTitle>
+            <DialogDescription>
+              {t('authDialogDescription')}
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <div className="flex-1 overflow-y-auto dashboard-card-content space-y-4">
             <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as 'login' | 'signup')} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="login">{t('login')}</TabsTrigger>
@@ -649,25 +644,11 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 rounded-full p-0 relative">
-            {user ? (
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.user_metadata?.avatar_url} alt={getDisplayName()} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">{getUserInitials()}</AvatarFallback>
-              </Avatar>
-            ) : (
-              <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
-            )}
-            {myPendingInvitations.length > 0 && (
-              <span className="absolute -top-1 -right-1 h-4 w-4 text-xs bg-destructive text-destructive-foreground rounded-full flex items-center justify-center">
-                {myPendingInvitations.length}
-              </span>
-            )}
-          </Button>
+          <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
         </DialogTrigger>
-        <DialogContent aria-describedby={undefined} className="bg-card border-border sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0">
-          <DialogHeader className="px-5 pt-5 pb-3 flex-shrink-0">
-            <DialogTitle className="text-base font-semibold">{t('settings')}</DialogTitle>
+        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0">
+          <DialogHeader className="dashboard-card-header px-5 pt-5 pb-3 flex-shrink-0">
+            <DialogTitle className="text-lg font-semibold">{t('settings')}</DialogTitle>
           </DialogHeader>
           
           <Tabs defaultValue={myPendingInvitations.length > 0 ? 'family' : 'general'} className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -683,90 +664,97 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
+            <div className="flex-1 overflow-y-auto dashboard-card-content min-h-0">
               {/* General Tab */}
               <TabsContent value="general" className="mt-0 space-y-6">
                 {/* User Account Section */}
-                {user ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-11 w-11">
-                        <AvatarImage src={user.user_metadata?.avatar_url} alt={getDisplayName()} />
-                        <AvatarFallback className="bg-primary text-primary-foreground">{getUserInitials()}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{getDisplayName()}</p>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  {user ? (
+                    <div className="dashboard-card">
+                      <div className="dashboard-card-content space-y-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-11 w-11">
+                            <AvatarImage src={user.user_metadata?.avatar_url} alt={getDisplayName()} />
+                            <AvatarFallback className="bg-primary text-primary-foreground">{getUserInitials()}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{getDisplayName()}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => setActiveSection('profile')} className="flex-1 h-8 text-xs">
+                            <User className="h-3.5 w-3.5 mr-1.5" />{t('editProfile')}
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setActiveSection('password')} className="flex-1 h-8 text-xs">
+                            <KeyRound className="h-3.5 w-3.5 mr-1.5" />{t('changePassword')}
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setActiveSection('profile')} className="flex-1 h-8 text-xs">
-                        <User className="h-3.5 w-3.5 mr-1.5" />{t('editProfile')}
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setActiveSection('password')} className="flex-1 h-8 text-xs">
-                        <KeyRound className="h-3.5 w-3.5 mr-1.5" />{t('changePassword')}
-                      </Button>
+                  ) : (
+                    <div className="dashboard-card">
+                      <div className="dashboard-card-content space-y-3">
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                          <WifiOff className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">{t('offlineMode')}</span>
+                        </div>
+                        <Button variant="outline" className="w-full h-9" onClick={() => setActiveSection('auth')}>
+                          <LogIn className="h-4 w-4 mr-2" />{t('loginOrSignup')}
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-                      <WifiOff className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">{t('offlineMode')}</span>
-                    </div>
-                    <Button variant="outline" className="w-full h-9" onClick={() => setActiveSection('auth')}>
-                      <LogIn className="h-4 w-4 mr-2" />{t('loginOrSignup')}
-                    </Button>
-                  </div>
-                )}
+                  )}
 
                 {/* Preferences Section */}
-                <div className="space-y-3">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('preferences')}</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{t('language')}</span>
+                <div className="dashboard-card">
+                  <div className="dashboard-card-content">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('preferences')}</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{t('language')}</span>
+                        </div>
+                        <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+                          <SelectTrigger className="w-36 h-9 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            {languages.map((lang) => <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
-                        <SelectTrigger className="w-32 h-8 text-sm"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-card border-border">
-                          {languages.map((lang) => <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-2">
-                        <Coins className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{t('currency')}</span>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                          <Coins className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{t('currency')}</span>
+                        </div>
+                        <Select value={currency} onValueChange={(v) => setCurrency(v as CurrencyCode)}>
+                          <SelectTrigger className="w-36 h-9 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            {currencies.map((curr) => <SelectItem key={curr.code} value={curr.code}>{curr.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <Select value={currency} onValueChange={(v) => setCurrency(v as CurrencyCode)}>
-                        <SelectTrigger className="w-32 h-8 text-sm"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-card border-border">
-                          {currencies.map((curr) => <SelectItem key={curr.code} value={curr.code}>{curr.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-2">
-                        <Palette className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{t('theme')}</span>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                          <Palette className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{t('theme')}</span>
+                        </div>
+                        <Select value={theme} onValueChange={(v) => setTheme(v as ThemeKey)}>
+                          <SelectTrigger className="w-36 h-9 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            {themes.map((themeOption) => <SelectItem key={themeOption.key} value={themeOption.key}>{t(themeOption.labelKey as TranslationKey)}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <Select value={theme} onValueChange={(v) => setTheme(v as ThemeKey)}>
-                        <SelectTrigger className="w-32 h-8 text-sm"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-card border-border">
-                          {themes.map((themeOption) => <SelectItem key={themeOption.key} value={themeOption.key}>{t(themeOption.labelKey as TranslationKey)}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
                     </div>
                   </div>
                 </div>
 
                 {/* Danger Zone - More subtle */}
-                <div className="space-y-2 pt-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('dataManagement')}</p>
-                  <div className="space-y-1.5">
+                <div className="dashboard-card">
+                  <div className="dashboard-card-content">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('dataManagement')}</p>
+                    <div className="space-y-1.5">
                     {onDeleteMonth && currentMonthLabel && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -775,7 +763,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                             <span className="text-sm">{t('delete')} "{currentMonthLabel}"</span>
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-card border-border sm:max-w-md">
+                        <AlertDialogContent className="sm:max-w-md dashboard-card">
                           <AlertDialogHeader>
                             <AlertDialogTitle>{t('deleteMonth')}</AlertDialogTitle>
                             <AlertDialogDescription>{t('deleteMonthConfirm')} <strong>{currentMonthLabel}</strong>? {t('deleteMonthWarning')}</AlertDialogDescription>
@@ -803,7 +791,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                           <span className="text-sm">{t('clearOfflineCache')}</span>
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-card border-border sm:max-w-md">
+                      <AlertDialogContent className="sm:max-w-md dashboard-card">
                         <AlertDialogHeader>
                           <AlertDialogTitle>{t('clearOfflineCache')}</AlertDialogTitle>
                           <AlertDialogDescription>{t('clearOfflineCacheWarning')}</AlertDialogDescription>
@@ -827,14 +815,16 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                     )}
                   </div>
                 </div>
+              </div>
               </TabsContent>
 
               {/* Family Tab */}
               <TabsContent value="family" className="mt-0 space-y-5">
                 {/* Family Selector */}
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('selectFamily')}</p>
-                  <DropdownMenu>
+                <div className="dashboard-card">
+                  <div className="dashboard-card-content space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('selectFamily')}</p>
+                    <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="w-full justify-between h-10">
                         <div className="flex items-center gap-2 min-w-0">
@@ -886,28 +876,31 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  </div>
                 </div>
 
                 {/* Pending invitations for current user - Highlighted */}
                 {myPendingInvitations.length > 0 && (
-                  <div className="space-y-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
-                    <p className="text-xs font-medium uppercase tracking-wider">{t('pendingInvitations')}</p>
-                    {myPendingInvitations.map((invitation) => (
-                      <div key={invitation.id} className="flex items-center justify-between p-2 rounded-md bg-background">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm truncate">{invitation.family_name}</p>
-                          <p className="text-xs text-muted-foreground">{t('invitedToFamily')}</p>
+                  <div className="dashboard-card">
+                    <div className="dashboard-card-content p-3 rounded-lg bg-primary/10 border border-primary/20 space-y-2">
+                      <p className="text-xs font-medium uppercase tracking-wider mb-2">{t('pendingInvitations')}</p>
+                      {myPendingInvitations.map((invitation) => (
+                        <div key={invitation.id} className="flex items-center justify-between p-2 rounded-md bg-background">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm truncate">{invitation.family_name}</p>
+                            <p className="text-xs text-muted-foreground">{t('invitedToFamily')}</p>
+                          </div>
+                          <div className="flex items-center gap-1 ml-2">
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleRejectInvitation(invitation.id)} disabled={processingAction === invitation.id}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" className="h-7 px-2 text-xs" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id}>
+                              {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : t('accept')}
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 ml-2">
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleRejectInvitation(invitation.id)} disabled={processingAction === invitation.id}>
-                            <X className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" className="h-7 px-2 text-xs" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id}>
-                            {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : t('accept')}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -915,89 +908,98 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                   <>
                     {/* Family name editing - Inline */}
                     {isAdmin && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('familyName')}</p>
-                        {editingName ? (
-                          <div className="flex gap-2">
-                            <Input className="h-9" value={newFamilyName} onChange={(e) => setNewFamilyName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleUpdateFamilyName()} />
-                            <Button size="sm" className="h-9" onClick={handleUpdateFamilyName}>{t('save')}</Button>
-                            <Button size="sm" variant="ghost" className="h-9" onClick={() => setEditingName(false)}>{t('cancel')}</Button>
-                          </div>
-                        ) : (
-                          <Button variant="ghost" size="sm" className="h-8 px-2 text-sm" onClick={() => { setNewFamilyName(currentFamily.name); setEditingName(true); }}>
-                            {t('edit')}
-                          </Button>
-                        )}
+                      <div className="dashboard-card">
+                        <div className="dashboard-card-content space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('familyName')}</p>
+                          {editingName ? (
+                            <div className="flex gap-2">
+                              <Input className="h-9" value={newFamilyName} onChange={(e) => setNewFamilyName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleUpdateFamilyName()} />
+                              <Button size="sm" className="h-9" onClick={handleUpdateFamilyName}>{t('save')}</Button>
+                              <Button size="sm" variant="ghost" className="h-9" onClick={() => setEditingName(false)}>{t('cancel')}</Button>
+                            </div>
+                          ) : (
+                            <Button variant="ghost" size="sm" className="h-8 px-2 text-sm" onClick={() => { setNewFamilyName(currentFamily.name); setEditingName(true); }}>
+                              {t('edit')}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     )}
 
                     {/* Invite member - Admin only */}
                     {isAdmin && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('inviteMember')}</p>
-                        <div className="flex gap-2">
-                          <Input className="h-9" placeholder={t('inviteEmailPlaceholder')} type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleInvite()} />
-                          <Button size="sm" className="h-9 px-3" onClick={handleInvite} disabled={!inviteEmail.trim() || isInviting}>
-                            {isInviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                          </Button>
+                      <div className="dashboard-card">
+                        <div className="dashboard-card-content space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('inviteMember')}</p>
+                          <div className="flex gap-2">
+                            <Input className="h-9" placeholder={t('inviteEmailPlaceholder')} type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleInvite()} />
+                            <Button size="sm" className="h-9 px-3" onClick={handleInvite} disabled={!inviteEmail.trim() || isInviting}>
+                              {isInviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
 
                     {/* Members list - Cleaner */}
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('members')}</p>
-                      <div className="space-y-1">
-                        {members.map((member) => (
-                          <div key={member.id} className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-muted/30 -mx-2">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              {getRoleIcon(member.role)}
-                              <div className="min-w-0">
-                                <p className="text-sm truncate">{member.user_id === user?.id ? t('you') : member.user_email || t('member')}</p>
-                                <p className="text-[11px] text-muted-foreground capitalize">{getRoleLabel(member.role)}</p>
+                    <div className="dashboard-card">
+                      <div className="dashboard-card-content">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('members')}</p>
+                        <div className="space-y-1">
+                          {members.map((member) => (
+                            <div key={member.id} className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-muted/30 -mx-2">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                {getRoleIcon(member.role)}
+                                <div className="min-w-0">
+                                  <p className="text-sm truncate">{member.user_id === user?.id ? t('you') : member.user_email || t('member')}</p>
+                                  <p className="text-[11px] text-muted-foreground capitalize">{getRoleLabel(member.role)}</p>
+                                </div>
                               </div>
+                              {isAdmin && member.user_id !== user?.id && (
+                                <div className="flex items-center gap-1">
+                                  <Select value={member.role === 'owner' ? 'admin' : member.role} onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)} disabled={processingAction === member.id}>
+                                    <SelectTrigger className="w-20 h-7 text-xs"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="admin">{t('role_admin')}</SelectItem>
+                                      <SelectItem value="member">{t('role_member')}</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveMember(member.id)} disabled={processingAction === member.id}>
+                                    {processingAction === member.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                                  </Button>
+                                </div>
+                              )}
                             </div>
-                            {isAdmin && member.user_id !== user?.id && (
-                              <div className="flex items-center gap-1">
-                                <Select value={member.role === 'owner' ? 'admin' : member.role} onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)} disabled={processingAction === member.id}>
-                                  <SelectTrigger className="w-20 h-7 text-xs"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="admin">{t('role_admin')}</SelectItem>
-                                    <SelectItem value="member">{t('role_member')}</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveMember(member.id)} disabled={processingAction === member.id}>
-                                  {processingAction === member.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
 
                     {/* Pending sent invitations - Subtle */}
                     {isAdmin && pendingInvitations.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('pendingSent')}</p>
-                        <div className="space-y-1">
-                          {pendingInvitations.map((invitation) => (
-                            <div key={invitation.id} className="flex items-center justify-between py-1.5 px-2 rounded-md bg-muted/20 -mx-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                <span className="text-sm text-muted-foreground truncate">{invitation.email}</span>
+                      <div className="dashboard-card">
+                        <div className="dashboard-card-content space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('pendingSent')}</p>
+                          <div className="space-y-1">
+                            {pendingInvitations.map((invitation) => (
+                              <div key={invitation.id} className="flex items-center justify-between py-1.5 px-2 rounded-md bg-muted/20 -mx-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                  <span className="text-sm text-muted-foreground truncate">{invitation.email}</span>
+                                </div>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCancelInvitation(invitation.id)} disabled={processingAction === invitation.id}>
+                                  {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                                </Button>
                               </div>
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCancelInvitation(invitation.id)} disabled={processingAction === invitation.id}>
-                                {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
-                              </Button>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}
 
                     {/* Danger Zone - Leave/Delete family */}
-                    <div className="space-y-1.5 pt-3 border-t border-border/50">
+                    <div className="dashboard-card">
+                      <div className="dashboard-card-content space-y-1.5 pt-3 border-t border-border/50">
                       {!isOnlyMember && (
                         <>
                           <Button 
@@ -1026,6 +1028,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                           <span className="text-sm">{t('deleteFamily')}</span>
                         </Button>
                       )}
+                      </div>
                     </div>
                   </>
                 ) : (
@@ -1042,7 +1045,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
       {/* Delete Alert */}
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent className="sm:max-w-md">
+        <AlertDialogContent className="sm:max-w-md dashboard-card">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('deleteFamilyConfirm')}</AlertDialogTitle>
             <AlertDialogDescription className={!isCurrentOffline ? "text-destructive font-medium" : ""}>
@@ -1058,7 +1061,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
       {/* Leave Alert */}
       <AlertDialog open={showLeaveAlert} onOpenChange={setShowLeaveAlert}>
-        <AlertDialogContent className="sm:max-w-md">
+        <AlertDialogContent className="sm:max-w-md dashboard-card">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('leaveFamilyConfirm')}</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
@@ -1077,6 +1080,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-base">{t('createFamily')}</DialogTitle>
+            <DialogDescription>
+              {t('createFamilyDialogDescription')}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input

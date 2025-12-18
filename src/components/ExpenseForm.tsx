@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { DialogDescription } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CategoryKey, Subcategory } from '@/types/budget';
 import { DEFAULT_CATEGORY } from '@/constants/categories';
@@ -119,11 +120,14 @@ export const ExpenseForm = ({
         </DialogTrigger>
       )}
 
-      <DialogContent aria-describedby={undefined} className="bg-card border-border sm:max-w-md flex flex-col gap-0 p-0">
+      <DialogContent className="bg-card border-border sm:max-w-md flex flex-col gap-0 p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
           <DialogTitle>
             {mode === 'create' ? t('newExpense') : t('editExpense')}
           </DialogTitle>
+          <DialogDescription>
+            {t('expenseFormDialogDescription')}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="px-6 py-4">

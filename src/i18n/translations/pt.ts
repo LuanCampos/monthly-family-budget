@@ -224,6 +224,7 @@ export const pt = {
   account: 'Conta',
   preferences: 'Preferências',
   dataManagement: 'Gerenciamento de Dados',
+  settingsDialogDescription: 'Ajuste configurações de conta, preferências e gerenciamento de família.',
   clearOfflineCache: 'Excluir cache offline',
   clearOfflineCacheWarning: 'Remove todos os dados offline salvos neste dispositivo (famílias, meses e gastos). Esta ação não pode ser desfeita.',
   offlineCacheCleared: 'Cache offline excluído. Recarregando…',
@@ -232,6 +233,14 @@ export const pt = {
   changePassword: 'Alterar Senha',
   loginOrSignup: 'Entrar ou Criar Conta',
   confirmNewPassword: 'Confirmar Nova Senha',
+  profileDialogDescription: 'Atualize seu nome de exibição e informações de perfil.',
+  passwordDialogDescription: 'Altere sua senha de acesso com segurança.',
+  authDialogDescription: 'Entre ou crie uma conta para sincronizar seus dados.',
+
+  createFamilyDialogDescription: 'Crie uma nova família para compartilhar orçamentos e colaborar.',
+
+  expenseFormDialogDescription: 'Adicione ou edite um gasto com título, categoria e valor.',
+  limitsDialogDescription: 'Defina percentuais por categoria para distribuir o orçamento mensal.',
   
   // Months
   'month-0': 'Janeiro',

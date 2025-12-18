@@ -1,71 +1,64 @@
-Project: Monthly Family Budget - AI coding instructions
+Project: Monthly Family Budget (Vite + React + TypeScript)
 
-Summary
-- This is a Vite + React + TypeScript single-page app using shadcn-ui components and Supabase as the backend.
-- Key runtime behaviors: cloud vs offline families, Supabase realtime channels, and IndexedDB offline sync implemented in `src/hooks/useBudget.ts` and `src/lib/offlineStorage.ts`.
+Purpose: Give AI coding agents the precise, actionable context they need to be productive editing this repository.
 
-Architecture & Big Picture
-- Frontend-only SPA: `src/main.tsx` mounts `src/App.tsx`, which composes providers (React Query, Theme, Language, Currency, Auth, Online, Family).
-- `src/pages/Index.tsx` is the main UI surface that wires many components (`ExpenseChart`, `ExpenseList`, `RecurringExpenses`, `SubcategoryManager`) and shows how data flows from `useBudget()`.
-- Data layer: `useBudget()` (hook) orchestrates data access. It reads/writes either to Supabase (cloud) or to an IndexedDB offline store (`src/lib/offlineStorage.ts`) depending on `isOfflineId(familyId)` and `navigator.onLine`.
-- Realtime: Supabase realtime channels are created in `useBudget()` for `month`, `expense`, `recurring_expense`, `subcategory`, and `category_goal` tables.
-- Auth: `src/contexts/AuthContext.tsx` uses Supabase client in `src/lib/supabase.ts` and handles session lifecycle and special hash-based post-auth flows.
+Quick facts
+- Tech: Vite, React 18, TypeScript, Tailwind CSS, shadcn-ui components.
+- App entry: `src/main.tsx` -> `src/App.tsx`.
+- Key folders: `src/components` (UI and feature components), `src/lib` (services/adapters), `src/contexts` (React context providers), `src/pages`.
+- Dev commands: `npm i`, `npm run dev`, `npm run build`, `npm run preview` (see `package.json`).
 
-Important Files/Directories (quick refs)
-- App entry: src/main.tsx
-- App composition: src/App.tsx
-- Data orchestration: src/hooks/useBudget.ts
-- Offline DB & sync: src/lib/offlineStorage.ts
-- Supabase client: src/lib/supabase.ts
-- Auth provider: src/contexts/AuthContext.tsx
-- UI components: src/components/* and src/components/ui/* (shadcn-ui wrappers)
-- Constants: src/constants/categories.ts
-- Types: src/types/budget.ts
+Big-picture architecture
+- Single-page React app built with Vite and TypeScript. Routing uses `react-router-dom` and views live under `src/pages`.
+- UI is component-driven and integrates shadcn-style primitives under `src/components/ui/*` (Radix wrappers and custom styling). When adding UI, prefer using existing `ui/*` wrappers for consistent behavior.
+- State & data flows:
+  - Local UI state is inside components and hooks in `src/hooks`.
+  - Application-level context providers are in `src/contexts` (e.g., `FamilyContext`, `CurrencyContext`, `ThemeContext`, `AuthContext`). Use these for cross-cutting app state.
+  - Network and storage logic lives under `src/lib`:
+    - `supabase.ts` initializes the Supabase client.
+    - `budgetService.ts` exposes higher-level data operations.
+    - `offlineAdapter.ts` and `offlineStorage.ts` handle offline-first logic — prefer using `budgetService` which coordinates online/offline handling.
 
-Developer Workflows
-- Local dev: `npm i` then `npm run dev` (Vite on port 8080; base set to /monthly-family-budget/ in vite.config.ts).
-- Build / preview: `npm run build` and `npm run preview`.
-- Linting: `npm run lint` (ESLint configured).
-- Notes:
-  - The Vite dev server host is configured to `::` and port `8080` in `vite.config.ts`.
-  - `lovable-tagger` runs only in development mode for component tagging.
+Key integration points
+- Supabase: the app uses `@supabase/supabase-js` in `src/lib/supabase.ts`. Changes that affect auth or DB schemas may require updating client code here.
+- React Query: `@tanstack/react-query` is used for server-state caching and fetching; check `src/hooks/useBudgetApi.ts` and `useBudget.ts` patterns.
+- Charts: `recharts` and custom chart components live in `src/components/*Chart.tsx` (e.g., `ExpenseChart.tsx`, `AnnualViewChart.tsx`). When passing data to charts, follow the existing data-format shapes used in those components.
 
-Project-specific Conventions & Patterns
-- Provider-first composition: `App.tsx` nests many context providers — when adding cross-cutting state, register it at top-level so components can consume it.
-- Cloud vs Offline branching: Many hooks and lib functions use a `shouldUseOffline(familyId)` pattern. Follow existing pattern when adding CRUD operations: check offline path first, then cloud path, and queue failed cloud operations in `syncQueue`.
-- Offline IDs vs UUIDs: `generateOfflineId()` is used for local records; cloud inserts should avoid sending custom `id` values (Supabase tables use UUIDs).
-- Realtime channels: When mutating database tables, be aware `useBudget()` subscribes on tables and reloads on change — avoid redundant refreshes or race conditions when performing batch updates.
-- i18n: Text is fetched via `useLanguage()` and `t('key')` — use translation keys from `src/i18n/translations/*`.
-- UI primitives: `src/components/ui/*` are local wrappers around radix/ui + shadcn styles — use them for consistent styling.
+Project-specific conventions
+- Use the `ui/*` primitives for controls (inputs, dialogs, selects) to preserve styling and accessibility. Examples: `src/components/ui/input.tsx`, `ui/dialog.tsx`.
+- Hooks naming: custom hooks live in `src/hooks` and follow `useXxx` naming (e.g., `useBudget`, `useBudgetApi`). Prefer returning stable references and memoized handlers.
+- Context providers are JSX wrappers that supply app-level state. The provider files also typically expose small helper functions to consume the context.
+- Types: shared domain types are in `src/types/budget.ts`. When adding fields, update these types first and propagate to related `useBudget*` hooks and `budgetService`.
+- Forms: `react-hook-form` is used with zod for validation in many places — inspect `ExpenseFormFields.tsx` and `RecurringExpenseFormFields.tsx` for patterns.
 
-Integration Points & External Dependencies
-- Supabase: `src/lib/supabase.ts` holds the project URL and anon key. Many functions use `supabase.from(...).select/...` patterns.
-- IndexedDB offline store: `src/lib/offlineStorage.ts` and `offlineDB` implement local persistence and a `syncQueue` for eventual upload.
-- React Query: used for global cache/queries in `App.tsx` via `QueryClient` (but note: `useBudget()` uses manual fetching, not react-query hooks).
-- Push notifications / toasts: `sonner` and custom `use-toast` hook are used for user feedback.
+Workflow notes & debugging
+- Start dev server: `npm run dev`. Vite hot-module-replacement is enabled. Use the browser console and Vite terminal for errors.
+- Build for production: `npm run build` or `npm run build:dev` for a development-mode build.
+- Lint: `npm run lint` uses `eslint` configured at repo root. Follow existing lint rules.
+- If changing auth, check `src/contexts/AuthContext.tsx` and `src/lib/supabase.ts` to ensure session handling remains consistent.
 
-Examples to follow (copyable patterns)
-- Checking offline vs cloud before write (from `useBudget.ts`):
-  - if (shouldUseOffline(currentFamilyId)) { await offlineDB.put(...); await loadX(); return; }
-  - else: perform `supabase.from('table').insert/update` and on error fallback to offline + `syncQueue.add(...)`
-- Subscriptions setup (from `useBudget.ts`):
-  - Create a channel: `supabase.channel('budget-${familyId}').on('postgres_changes', { ... }, handler).subscribe()`
-  - Remove channel on cleanup with `supabase.removeChannel(channel)`
-- Auth flow: `AuthContext` first subscribes `supabase.auth.onAuthStateChange`, then fetches `supabase.auth.getSession()`; when implementing auth-affecting features, follow the same sequence.
+Files to inspect for common tasks (examples)
+- Add a new page: mirror `src/pages/Index.tsx`, add route in routing root (see `src/App.tsx`).
+- Add a new API call: extend `src/lib/budgetService.ts`, then add a typed hook in `src/hooks/useBudgetApi.ts` and a React Query key there.
+- Update types: edit `src/types/budget.ts` and search for usages across `src/hooks` and `src/components`.
+- Offline behavior: modify `src/lib/offlineAdapter.ts` and `src/lib/offlineStorage.ts`; test with the app in the browser offline mode.
 
-What to avoid / gotchas
-- Never assume online-only: many codepaths must handle offline families (IDs flagged via `isOfflineId`). Missing offline handling will break use cases.
-- Do not write to Supabase with custom `id` values for tables that expect UUIDs — use offline IDs only for local DB.
-- Be careful mutating global state while realtime listeners also trigger reloads; prefer idempotent operations.
-- Secrets: Supabase anon key is stored in `src/lib/supabase.ts`. Treat it as a public anon key (used client-side) but do not push server-side service keys here.
+Examples (copyable)
+- Creating a new hook registration:
+  - File: `src/hooks/useMyFeature.tsx`
+  - Pattern: export a `useMyFeature()` hook that returns state and actions. Use React Query for server calls when applicable.
+- Registering a context provider:
+  - File: `src/contexts/MyContext.tsx`
+  - Pattern: export a provider component and `useMyContext()` consumer helper.
 
-If you change data shapes
-- Update `src/types/budget.ts` types and any mappings in `useBudget.ts` and `offlineStorage.ts`. Search for conversions like `category_key` -> `category` and `installment_current` -> `installmentInfo`.
+Editing guidance for AI agents
+- Preserve style and patterns: keep TypeScript types, follow `src/components/ui/*` wrappers for UI elements, reuse existing hooks and providers instead of creating global singletons.
+- Keep changes minimal and focused; update types in `src/types/budget.ts` when you add domain fields.
+- When editing network code, prefer adding functions to `budgetService.ts` and exposing hooks in `useBudgetApi.ts`.
+- Run `npm run dev` and test critical flows for changes that touch auth, offline sync, or budgets.
 
-When to run tests / run the app locally
-- No test runner is present. Verify changes manually via `npm run dev` then exercise offline/cloud flows by switching network or using an offline family id pattern (see `offlineStorage` helpers).
+If you modify this file
+- Merge non-destructively: if `.github/copilot-instructions.md` already exists, update the relevant sections and preserve any added project-specific notes.
 
-Further notes / TODOs for maintainers
-- Consider centralizing data fetching into React Query for cache consistency. Current code uses manual state management in `useBudget()`.
-
-Questions? Tell me which area to expand (offline sync, Supabase schema mapping, or component conventions) and I'll iterate.
+Questions
+- If anything in these notes is unclear or you want more examples (routing, query keys, offline-sync), ask and I'll expand specific sections.

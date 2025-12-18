@@ -226,6 +226,7 @@ export const en: Record<TranslationKey, string> = {
   account: 'Account',
   preferences: 'Preferences',
   dataManagement: 'Data Management',
+  settingsDialogDescription: 'Adjust account settings, preferences and family management options.',
   clearOfflineCache: 'Delete offline cache',
   clearOfflineCacheWarning: 'Removes all offline data saved on this device (families, months, and expenses). This action cannot be undone.',
   offlineCacheCleared: 'Offline cache deleted. Reloading…',
@@ -234,6 +235,14 @@ export const en: Record<TranslationKey, string> = {
   changePassword: 'Change Password',
   loginOrSignup: 'Login or Sign Up',
   confirmNewPassword: 'Confirm New Password',
+  profileDialogDescription: 'Update your display name and profile information.',
+  passwordDialogDescription: 'Change your account password securely.',
+  authDialogDescription: 'Log in or create an account to sync your data.',
+
+  createFamilyDialogDescription: 'Create a new family to share budgets and collaborate.',
+
+  expenseFormDialogDescription: 'Add or edit an expense with title, category and value.',
+  limitsDialogDescription: 'Set category percentages to distribute your monthly budget.',
   
   // Months
   'month-0': 'January',
