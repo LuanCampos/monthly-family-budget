@@ -137,6 +137,10 @@ export const pt = {
   updateFutureOnly: 'Apenas Futuros',
   updateAll: 'Atualizar Todos',
   
+  // Delete Recurring Expense
+  deleteRecurringExpense: 'Excluir gasto recorrente',
+  deleteRecurringExpenseConfirm: 'Tem certeza que deseja excluir este gasto recorrente? Esta ação não pode ser desfeita.',
+  
   // Settings
   settings: 'Configurações',
   language: 'Idioma',
