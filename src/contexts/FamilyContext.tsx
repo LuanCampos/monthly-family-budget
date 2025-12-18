@@ -384,7 +384,9 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const lastFamiliesLengthRef = useRef<number>(0);
 
   // Handle case where currentFamilyId is set but family is not found in the array
-  // This can happen when switching to an offline family that hasn't been loaded yet
+  // This can happen when:
+  // 1. Switching to an offline family that hasn't been loaded yet
+  // 2. User was removed from a family by another admin
   useEffect(() => {
     const handleMissingFamily = async () => {
       if (!currentFamilyId || loading) return;
@@ -403,9 +405,33 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (attemptedReloadRef.current === currentFamilyId && 
           lastFamiliesLengthRef.current === families.length) {
         // We already tried to reload for this ID and family still not found
-        console.log('Family not found after reload, clearing invalid ID:', currentFamilyId);
-        setCurrentFamilyId(null);
-        localStorage.removeItem('current-family-id');
+        // User was likely removed from this family - select another one if available
+        console.log('Family not found after reload, selecting another family:', currentFamilyId);
+        
+        // Find remaining families to select from
+        const remainingFamilies = families.filter(f => f.id !== currentFamilyId);
+        
+        if (remainingFamilies.length > 0) {
+          // Select the first available family
+          setCurrentFamilyId(remainingFamilies[0].id);
+          localStorage.setItem('current-family-id', remainingFamilies[0].id);
+          // Save to cloud preferences if user is logged in
+          if (user && !isOfflineId(remainingFamilies[0].id)) {
+            supabase
+              .from('user_preference')
+              .upsert({
+                user_id: user.id,
+                current_family_id: remainingFamilies[0].id,
+                updated_at: new Date().toISOString()
+              }, { onConflict: 'user_id' })
+              .then(() => {});
+          }
+        } else {
+          // No families left
+          setCurrentFamilyId(null);
+          localStorage.removeItem('current-family-id');
+        }
+        
         attemptedReloadRef.current = null;
         return;
       }
@@ -419,7 +445,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
     
     handleMissingFamily();
-  }, [currentFamilyId, families.length, loading, refreshFamilies]);
+  }, [currentFamilyId, families, loading, refreshFamilies, user]);
 
   // Create offline family (always works, even without auth)
   const createOfflineFamily = async (name: string) => {
