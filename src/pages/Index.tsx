@@ -147,6 +147,7 @@ const Index = () => {
             currentMonth={null}
             onSelectMonth={selectMonth}
             onAddMonth={addMonth}
+            showCreateButton
           />
         </div>
       </div>
