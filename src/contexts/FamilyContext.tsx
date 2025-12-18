@@ -175,59 +175,68 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [currentFamilyId, user?.id]);
 
-  // Load invitations
-  const refreshInvitations = useCallback(async () => {
-    if (!user) {
-      setPendingInvitations([]);
+  // Load only MY pending invitations (invitations sent TO me)
+  // This can be called even when on offline family
+  const refreshMyInvitations = useCallback(async () => {
+    if (!user?.email) {
       setMyPendingInvitations([]);
       return;
     }
 
     try {
-      // Family invitations (for admins)
-      if (currentFamilyId && !isOfflineId(currentFamilyId)) {
-        const { data: familyInvites } = await supabase
-          .from('family_invitation')
-          .select('*')
-          .eq('family_id', currentFamilyId)
-          .eq('status', 'pending');
+      const { data: myInvites } = await supabase
+        .from('family_invitation')
+        .select(`
+          *,
+          family (name)
+        `)
+        .eq('email', user.email)
+        .eq('status', 'pending');
 
-        if (familyInvites) {
-          setPendingInvitations(familyInvites);
-        }
-      } else {
-        setPendingInvitations([]);
+      if (myInvites) {
+        setMyPendingInvitations(
+          myInvites.map((inv: any) => ({
+            ...inv,
+            family_name: inv.family?.name
+          }))
+        );
       }
-
-      // My pending invitations (may fail if RLS not configured - silently handle)
-      try {
-        const { data: myInvites } = await supabase
-          .from('family_invitation')
-          .select(`
-            *,
-            family (name)
-          `)
-          .eq('email', user.email)
-          .eq('status', 'pending');
-
-        if (myInvites) {
-          setMyPendingInvitations(
-            myInvites.map((inv: any) => ({
-              ...inv,
-              family_name: inv.family?.name
-            }))
-          );
-        }
-      } catch {
-        // RLS may not allow this query - silently ignore
-        setMyPendingInvitations([]);
-      }
-    } catch (e) {
-      console.log('Family tables not yet created');
-      setPendingInvitations([]);
+    } catch {
+      // RLS may not allow this query - silently ignore
       setMyPendingInvitations([]);
     }
-  }, [user, currentFamilyId]);
+  }, [user?.email]);
+
+  // Load family-specific invitations (invitations sent FROM current family)
+  // Only called for online families
+  const refreshFamilyInvitations = useCallback(async () => {
+    if (!currentFamilyId || isOfflineId(currentFamilyId)) {
+      setPendingInvitations([]);
+      return;
+    }
+
+    try {
+      const { data: familyInvites } = await supabase
+        .from('family_invitation')
+        .select('*')
+        .eq('family_id', currentFamilyId)
+        .eq('status', 'pending');
+
+      if (familyInvites) {
+        setPendingInvitations(familyInvites);
+      }
+    } catch {
+      setPendingInvitations([]);
+    }
+  }, [currentFamilyId]);
+
+  // Combined refresh for backwards compatibility
+  const refreshInvitations = useCallback(async () => {
+    await Promise.all([
+      refreshMyInvitations(),
+      refreshFamilyInvitations()
+    ]);
+  }, [refreshMyInvitations, refreshFamilyInvitations]);
 
   // Load user preferences to get current family
   const loadUserPreferences = useCallback(async () => {
@@ -285,24 +294,34 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setLoading(true);
       await refreshFamilies();
       await loadUserPreferences();
+      // Only check MY invitations during initial load (not family-specific)
       if (user) {
-        await refreshInvitations();
+        await refreshMyInvitations();
       }
       setLoading(false);
     };
     init();
-  }, [user, refreshFamilies, loadUserPreferences, refreshInvitations]);
+  }, [user, refreshFamilies, loadUserPreferences, refreshMyInvitations]);
 
-  // Load members when family changes
+  // Load members and family invitations when family changes
   useEffect(() => {
-    if (currentFamilyId) {
-      refreshMembers();
-      refreshInvitations();
+    if (!currentFamilyId) return;
+    
+    // Always refresh members (handles both online and offline)
+    refreshMembers();
+    
+    // Only refresh family invitations for online families
+    if (!isOfflineId(currentFamilyId)) {
+      refreshFamilyInvitations();
+    } else {
+      // Clear family invitations when switching to offline
+      setPendingInvitations([]);
     }
-  }, [currentFamilyId, refreshMembers, refreshInvitations]);
+  }, [currentFamilyId, refreshMembers, refreshFamilyInvitations]);
 
   // Track which family IDs we've already tried to reload for
   const attemptedReloadRef = useRef<string | null>(null);
+  const lastFamiliesLengthRef = useRef<number>(0);
 
   // Handle case where currentFamilyId is set but family is not found in the array
   // This can happen when switching to an offline family that hasn't been loaded yet
@@ -316,11 +335,13 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (familyExists) {
         // Reset the ref when family is found
         attemptedReloadRef.current = null;
+        lastFamiliesLengthRef.current = families.length;
         return;
       }
       
-      // Only try to reload once per family ID to prevent loops
-      if (attemptedReloadRef.current === currentFamilyId) {
+      // Don't retry if families length hasn't changed (prevents infinite loops)
+      if (attemptedReloadRef.current === currentFamilyId && 
+          lastFamiliesLengthRef.current === families.length) {
         // We already tried to reload for this ID and family still not found
         console.log('Family not found after reload, clearing invalid ID:', currentFamilyId);
         setCurrentFamilyId(null);
@@ -331,13 +352,14 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       // Mark that we're attempting reload for this family ID
       attemptedReloadRef.current = currentFamilyId;
+      lastFamiliesLengthRef.current = families.length;
       
-      // Try to reload families
+      // Try to reload families only once
       await refreshFamilies();
     };
     
     handleMissingFamily();
-  }, [currentFamilyId, families, loading, refreshFamilies]);
+  }, [currentFamilyId, families.length, loading, refreshFamilies]);
 
   // Create offline family (always works, even without auth)
   const createOfflineFamily = async (name: string) => {
