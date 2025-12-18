@@ -77,7 +77,7 @@ export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
+        <DialogContent aria-describedby={undefined} className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
             <DialogTitle className="text-foreground">
               {t('editGoals')}
