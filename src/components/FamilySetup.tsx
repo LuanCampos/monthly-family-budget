@@ -686,7 +686,17 @@ export const FamilySetup = () => {
           <Button
             variant="ghost"
             className="w-full text-muted-foreground hover:text-foreground"
-            onClick={signOut}
+            onClick={async () => {
+              try {
+                await signOut();
+              } catch (error) {
+                toast({
+                  title: t('error'),
+                  description: String(error),
+                  variant: 'destructive',
+                });
+              }
+            }}
           >
             <LogOut className="h-4 w-4 mr-2" />
             {t('logout')}
