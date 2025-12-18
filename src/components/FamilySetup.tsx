@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Users, Plus, Mail, Check, X, Loader2, WifiOff, Lock, User, ArrowLeft, LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { getAppBaseUrl } from '@/lib/appBaseUrl';
 
 export const FamilySetup = () => {
   const { t } = useLanguage();
@@ -204,7 +205,7 @@ export const FamilySetup = () => {
 
     setIsAuthLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin,
+      redirectTo: getAppBaseUrl(),
     });
     setIsAuthLoading(false);
 
@@ -286,10 +287,10 @@ export const FamilySetup = () => {
         setIsAuthLoading(true);
         const { error } = await supabase.auth.resend({
           type: 'signup',
-          email: pendingEmailVerification,
-          options: {
-            emailRedirectTo: window.location.origin,
-          },
+           email: pendingEmailVerification,
+           options: {
+             emailRedirectTo: getAppBaseUrl(),
+           },
         });
         setIsAuthLoading(false);
 

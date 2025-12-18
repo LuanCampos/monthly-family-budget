@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { getAppBaseUrl } from '@/lib/appBaseUrl';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -25,6 +28,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
+  const [postAuthType, setPostAuthType] = useState<'signup' | 'recovery' | null>(null);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) return;
+
+    const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+    const type = params.get('type');
+
+    if (type === 'signup' || type === 'recovery') {
+      setPostAuthType(type);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!postAuthType) return;
+
+    // Só mostra sucesso quando realmente existe sessão (evita falso positivo)
+    if (postAuthType === 'signup' && user) {
+      toast({
+        title: t('success'),
+        description: t('emailConfirmedSuccess'),
+      });
+    }
+
+    // Remove o hash da URL para não expor tokens no navegador/histórico
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    setPostAuthType(null);
+  }, [loading, postAuthType, user, t]);
+
+
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -59,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: getAppBaseUrl(),
         data: displayName ? { display_name: displayName } : undefined,
       },
     });
