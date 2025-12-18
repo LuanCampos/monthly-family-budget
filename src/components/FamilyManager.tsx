@@ -35,7 +35,6 @@ import {
   UserPlus, 
   Mail, 
   Crown, 
-  Shield, 
   User,
   Trash2,
   X,
@@ -76,7 +75,6 @@ export const FamilyManager = () => {
   const [processingAction, setProcessingAction] = useState<string | null>(null);
 
   const isAdmin = userRole === 'owner' || userRole === 'admin';
-  const isOwner = userRole === 'owner';
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
@@ -238,11 +236,17 @@ export const FamilyManager = () => {
   };
 
   const getRoleIcon = (role: FamilyRole) => {
-    switch (role) {
-      case 'owner': return <Crown className="h-4 w-4 text-yellow-500" />;
-      case 'admin': return <Shield className="h-4 w-4 text-blue-500" />;
-      default: return <User className="h-4 w-4 text-muted-foreground" />;
+    if (role === 'owner' || role === 'admin') {
+      return <Crown className="h-4 w-4 text-yellow-500" />;
     }
+    return <User className="h-4 w-4 text-muted-foreground" />;
+  };
+  
+  const getRoleLabel = (role: FamilyRole) => {
+    if (role === 'owner' || role === 'admin') {
+      return t('role_admin');
+    }
+    return t('role_member');
   };
 
   if (!currentFamily) return null;
@@ -318,30 +322,25 @@ export const FamilyManager = () => {
                         <p className="font-medium text-sm">
                           {member.user_id === user?.id ? t('you') : member.user_email || t('member')}
                         </p>
-                        <p className="text-xs text-muted-foreground capitalize">{t(`role_${member.role}`)}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{getRoleLabel(member.role)}</p>
                       </div>
                     </div>
-              {/* Admin pode gerenciar membros (exceto owner e a si mesmo) */}
-                    {/* Admin não pode alterar outro admin, apenas owner pode */}
-                    {isAdmin && member.role !== 'owner' && member.user_id !== user?.id && (isOwner || member.role !== 'admin') && (
+                    {/* Admin pode gerenciar outros membros (exceto a si mesmo) */}
+                    {isAdmin && member.user_id !== user?.id && (
                       <div className="flex items-center gap-2">
-                        {isOwner ? (
-                          <Select
-                            value={member.role}
-                            onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)}
-                            disabled={processingAction === member.id}
-                          >
-                            <SelectTrigger className="w-28 h-8">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="admin">{t('role_admin')}</SelectItem>
-                              <SelectItem value="member">{t('role_member')}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <span className="text-xs text-muted-foreground px-2">{t(`role_${member.role}`)}</span>
-                        )}
+                        <Select
+                          value={member.role === 'owner' ? 'admin' : member.role}
+                          onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)}
+                          disabled={processingAction === member.id}
+                        >
+                          <SelectTrigger className="w-28 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">{t('role_admin')}</SelectItem>
+                            <SelectItem value="member">{t('role_member')}</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -474,17 +473,15 @@ export const FamilyManager = () => {
               )}
 
               <div className="pt-4 border-t border-border space-y-3">
-                {/* Qualquer membro (exceto owner) pode sair */}
-                {!isOwner && (
-                  <Button
-                    variant="outline"
-                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => setShowLeaveAlert(true)}
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    {t('leaveFamily')}
-                  </Button>
-                )}
+                {/* Qualquer membro pode sair */}
+                <Button
+                  variant="outline"
+                  className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => setShowLeaveAlert(true)}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {t('leaveFamily')}
+                </Button>
                 {/* Admin e Owner podem excluir a família */}
                 {isAdmin && (
                   <Button
