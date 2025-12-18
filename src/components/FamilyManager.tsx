@@ -75,6 +75,9 @@ export const FamilyManager = () => {
   const [processingAction, setProcessingAction] = useState<string | null>(null);
 
   const isAdmin = userRole === 'owner' || userRole === 'admin';
+  const isOnlyMember = members.length === 1;
+  const adminCount = members.filter(m => m.role === 'owner' || m.role === 'admin').length;
+  const isOnlyAdmin = isAdmin && adminCount === 1 && members.length > 1;
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
@@ -473,17 +476,24 @@ export const FamilyManager = () => {
               )}
 
               <div className="pt-4 border-t border-border space-y-3">
-                {/* Qualquer membro pode sair */}
-                <Button
-                  variant="outline"
-                  className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => setShowLeaveAlert(true)}
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  {t('leaveFamily')}
-                </Button>
-                {/* Admin e Owner podem excluir a família */}
-                {isAdmin && (
+                {/* Se for único membro, não pode sair, apenas excluir */}
+                {!isOnlyMember && (
+                  <Button
+                    variant="outline"
+                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => setShowLeaveAlert(true)}
+                    disabled={isOnlyAdmin}
+                    title={isOnlyAdmin ? t('promoteAdminFirst') : undefined}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    {t('leaveFamily')}
+                  </Button>
+                )}
+                {isOnlyAdmin && !isOnlyMember && (
+                  <p className="text-xs text-muted-foreground text-center">{t('promoteAdminFirst')}</p>
+                )}
+                {/* Admin pode excluir (ou único membro) */}
+                {(isAdmin || isOnlyMember) && (
                   <Button
                     variant="destructive"
                     className="w-full"

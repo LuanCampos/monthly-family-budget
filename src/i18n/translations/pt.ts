@@ -282,6 +282,7 @@ export const pt = {
   pendingInvitations: 'Convites pendentes',
   noFamilySelected: 'Nenhuma família selecionada',
   leave: 'Sair',
+  promoteAdminFirst: 'Promova outro membro a admin antes de sair',
   
   // Email Verification
   emailVerificationTitle: 'Verifique seu e-mail',
