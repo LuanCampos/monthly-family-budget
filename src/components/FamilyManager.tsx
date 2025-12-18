@@ -321,25 +321,31 @@ export const FamilyManager = () => {
                         <p className="text-xs text-muted-foreground capitalize">{t(`role_${member.role}`)}</p>
                       </div>
                     </div>
-                    {isAdmin && member.role !== 'owner' && member.user_id !== user?.id && (
+              {/* Admin pode gerenciar membros (exceto owner e a si mesmo) */}
+                    {/* Admin não pode alterar outro admin, apenas owner pode */}
+                    {isAdmin && member.role !== 'owner' && member.user_id !== user?.id && (isOwner || member.role !== 'admin') && (
                       <div className="flex items-center gap-2">
-                        <Select
-                          value={member.role}
-                          onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)}
-                          disabled={processingAction === member.id}
-                        >
-                          <SelectTrigger className="w-24 h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">{t('role_admin')}</SelectItem>
-                            <SelectItem value="member">{t('role_member')}</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {isOwner ? (
+                          <Select
+                            value={member.role}
+                            onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)}
+                            disabled={processingAction === member.id}
+                          >
+                            <SelectTrigger className="w-28 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">{t('role_admin')}</SelectItem>
+                              <SelectItem value="member">{t('role_member')}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span className="text-xs text-muted-foreground px-2">{t(`role_${member.role}`)}</span>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive"
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
                           onClick={() => handleRemoveMember(member.id)}
                           disabled={processingAction === member.id}
                         >
@@ -467,18 +473,20 @@ export const FamilyManager = () => {
                 </div>
               )}
 
-              <div className="pt-4 border-t border-border space-y-2">
+              <div className="pt-4 border-t border-border space-y-3">
+                {/* Qualquer membro (exceto owner) pode sair */}
                 {!isOwner && (
                   <Button
                     variant="outline"
-                    className="w-full text-destructive hover:text-destructive"
+                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={() => setShowLeaveAlert(true)}
                   >
                     <LogOut className="h-4 w-4 mr-2" />
                     {t('leaveFamily')}
                   </Button>
                 )}
-                {isOwner && (
+                {/* Admin e Owner podem excluir a família */}
+                {isAdmin && (
                   <Button
                     variant="destructive"
                     className="w-full"
