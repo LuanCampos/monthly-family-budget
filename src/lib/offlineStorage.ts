@@ -1,6 +1,6 @@
 // Offline storage using IndexedDB for robust local persistence
 const DB_NAME = 'budget-offline-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export interface OfflineFamily {
   id: string;
@@ -32,59 +32,119 @@ const openDB = (): Promise<IDBDatabase> => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => reject(request.error);
+
+    // If an upgrade is blocked by another open tab, avoid hanging forever.
+    request.onblocked = () => {
+      reject(new Error('Banco local bloqueado por outra aba/janela. Feche outras abas e recarregue.'));
+    };
+
     request.onsuccess = () => {
       db = request.result;
+
+      // If another tab triggers an upgrade, close this connection cleanly.
+      db.onversionchange = () => {
+        try {
+          db?.close();
+        } finally {
+          db = null;
+        }
+      };
+
       resolve(db);
     };
 
     request.onupgradeneeded = (event) => {
       const database = (event.target as IDBOpenDBRequest).result;
+      const tx = (event.target as IDBOpenDBRequest).transaction;
+
+      const ensureStore = (
+        storeName: string,
+        options: IDBObjectStoreParameters,
+        ensureIndexes?: (store: IDBObjectStore) => void
+      ) => {
+        let store: IDBObjectStore;
+
+        if (!database.objectStoreNames.contains(storeName)) {
+          store = database.createObjectStore(storeName, options);
+        } else {
+          // Existing store: we can only access it via the upgrade transaction.
+          store = (tx as IDBTransaction).objectStore(storeName);
+        }
+
+        ensureIndexes?.(store);
+      };
 
       // Families store
-      if (!database.objectStoreNames.contains('families')) {
-        database.createObjectStore('families', { keyPath: 'id' });
-      }
+      ensureStore('families', { keyPath: 'id' });
 
       // Months store
-      if (!database.objectStoreNames.contains('months')) {
-        const monthStore = database.createObjectStore('months', { keyPath: 'id' });
-        monthStore.createIndex('family_id', 'family_id', { unique: false });
-      }
+      ensureStore('months', { keyPath: 'id' }, (store) => {
+        if (!store.indexNames.contains('family_id')) {
+          store.createIndex('family_id', 'family_id', { unique: false });
+        }
+        // Back-compat (older builds)
+        if (!store.indexNames.contains('familyId')) {
+          store.createIndex('familyId', 'familyId', { unique: false });
+        }
+      });
 
       // Expenses store
-      if (!database.objectStoreNames.contains('expenses')) {
-        const expenseStore = database.createObjectStore('expenses', { keyPath: 'id' });
-        expenseStore.createIndex('month_id', 'month_id', { unique: false });
-      }
+      ensureStore('expenses', { keyPath: 'id' }, (store) => {
+        if (!store.indexNames.contains('month_id')) {
+          store.createIndex('month_id', 'month_id', { unique: false });
+        }
+        // Back-compat (older builds)
+        if (!store.indexNames.contains('monthId')) {
+          store.createIndex('monthId', 'monthId', { unique: false });
+        }
+      });
 
       // Recurring expenses store
-      if (!database.objectStoreNames.contains('recurring_expenses')) {
-        const recurringStore = database.createObjectStore('recurring_expenses', { keyPath: 'id' });
-        recurringStore.createIndex('family_id', 'family_id', { unique: false });
-      }
+      ensureStore('recurring_expenses', { keyPath: 'id' }, (store) => {
+        if (!store.indexNames.contains('family_id')) {
+          store.createIndex('family_id', 'family_id', { unique: false });
+        }
+        // Back-compat (older builds)
+        if (!store.indexNames.contains('familyId')) {
+          store.createIndex('familyId', 'familyId', { unique: false });
+        }
+      });
 
       // Subcategories store
-      if (!database.objectStoreNames.contains('subcategories')) {
-        const subStore = database.createObjectStore('subcategories', { keyPath: 'id' });
-        subStore.createIndex('family_id', 'family_id', { unique: false });
-      }
+      ensureStore('subcategories', { keyPath: 'id' }, (store) => {
+        if (!store.indexNames.contains('family_id')) {
+          store.createIndex('family_id', 'family_id', { unique: false });
+        }
+        // Back-compat (older builds)
+        if (!store.indexNames.contains('familyId')) {
+          store.createIndex('familyId', 'familyId', { unique: false });
+        }
+      });
 
       // Category goals store
-      if (!database.objectStoreNames.contains('category_goals')) {
-        const goalStore = database.createObjectStore('category_goals', { keyPath: 'id' });
-        goalStore.createIndex('family_id', 'family_id', { unique: false });
-      }
+      ensureStore('category_goals', { keyPath: 'id' }, (store) => {
+        if (!store.indexNames.contains('family_id')) {
+          store.createIndex('family_id', 'family_id', { unique: false });
+        }
+        // Back-compat (older builds)
+        if (!store.indexNames.contains('familyId')) {
+          store.createIndex('familyId', 'familyId', { unique: false });
+        }
+      });
 
       // Sync queue store
-      if (!database.objectStoreNames.contains('sync_queue')) {
-        const syncStore = database.createObjectStore('sync_queue', { keyPath: 'id' });
-        syncStore.createIndex('familyId', 'familyId', { unique: false });
-      }
+      ensureStore('sync_queue', { keyPath: 'id' }, (store) => {
+        if (!store.indexNames.contains('familyId')) {
+          store.createIndex('familyId', 'familyId', { unique: false });
+        }
+        // Back-compat (older builds)
+        if (!store.indexNames.contains('family_id')) {
+          store.createIndex('family_id', 'family_id', { unique: false });
+        }
+      });
 
       // User preferences store
-      if (!database.objectStoreNames.contains('user_preferences')) {
-        database.createObjectStore('user_preferences', { keyPath: 'user_id' });
-      }
+      ensureStore('user_preferences', { keyPath: 'user_id' });
     };
   });
 };

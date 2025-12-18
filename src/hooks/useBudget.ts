@@ -287,13 +287,19 @@ export const useBudget = () => {
       }
 
       setLoading(true);
-      await Promise.all([
-        loadMonths(),
-        loadRecurringExpenses(),
-        loadSubcategories(),
-        loadCategoryGoals()
-      ]);
-      setLoading(false);
+      try {
+        await Promise.all([
+          loadMonths(),
+          loadRecurringExpenses(),
+          loadSubcategories(),
+          loadCategoryGoals()
+        ]);
+      } catch (error) {
+        console.error('Erro ao carregar dados do orçamento:', error);
+        toast.error('Erro ao carregar dados desta família. Tente recarregar a página.');
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadData();
