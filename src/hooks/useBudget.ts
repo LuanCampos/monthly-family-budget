@@ -323,27 +323,34 @@ export const useBudget = () => {
   const addSubcategory = async (name: string, categoryKey: CategoryKey) => {
     if (!currentFamilyId) return;
 
-    const id = generateOfflineId('sub');
-    const data = {
-      id,
+    // For offline DB we need a local id, but for cloud inserts we must NOT send custom IDs (table uses UUID)
+    const offlineId = generateOfflineId('sub');
+    const offlineData = {
+      id: offlineId,
       family_id: currentFamilyId,
       name,
-      category_key: categoryKey
+      category_key: categoryKey,
     };
 
     if (useOffline || isOfflineId(currentFamilyId)) {
-      await offlineDB.put('subcategories', data);
+      await offlineDB.put('subcategories', offlineData);
       await loadSubcategories();
       return;
     }
 
-    const { error } = await supabase.from('subcategory').insert(data);
+    const { error } = await supabase.from('subcategory').insert({
+      family_id: currentFamilyId,
+      name,
+      category_key: categoryKey,
+    });
+
     if (error) {
       // Fallback to offline
-      await offlineDB.put('subcategories', data);
-      await syncQueue.add({ type: 'subcategory', action: 'insert', data, familyId: currentFamilyId });
+      await offlineDB.put('subcategories', offlineData);
+      await syncQueue.add({ type: 'subcategory', action: 'insert', data: offlineData, familyId: currentFamilyId });
       toast.warning('Salvo localmente. Sincronizará quando online.');
     }
+
     await loadSubcategories();
   };
 
@@ -383,22 +390,23 @@ export const useBudget = () => {
   const addMonth = async (year: number, month: number) => {
     if (!currentFamilyId) return false;
 
-    const id = `${currentFamilyId}-${generateMonthId(year, month)}`;
+    // Keep deterministic IDs only for offline storage. Cloud tables use UUIDs.
+    const offlineMonthId = `${currentFamilyId}-${generateMonthId(year, month)}`;
 
     if (months.some(m => m.year === year && m.month === month)) {
       return false;
     }
 
-    const monthData = {
-      id,
+    const offlineMonthData = {
+      id: offlineMonthId,
       family_id: currentFamilyId,
       year,
       month,
-      income: 0
+      income: 0,
     };
 
     if (useOffline || isOfflineId(currentFamilyId)) {
-      await offlineDB.put('months', monthData);
+      await offlineDB.put('months', offlineMonthData);
 
       // Add recurring expenses
       for (const recurring of recurringExpenses) {
@@ -407,7 +415,7 @@ export const useBudget = () => {
           const expenseData = {
             id: generateOfflineId('exp'),
             family_id: currentFamilyId,
-            month_id: id,
+            month_id: offlineMonthId,
             title: recurring.title,
             category_key: recurring.category,
             subcategory_id: recurring.subcategoryId,
@@ -417,33 +425,46 @@ export const useBudget = () => {
             due_day: recurring.dueDay,
             recurring_expense_id: recurring.id,
             installment_current: result.installmentNumber,
-            installment_total: recurring.totalInstallments
+            installment_total: recurring.totalInstallments,
           };
           await offlineDB.put('expenses', expenseData);
         }
       }
 
-      setCurrentMonthId(id);
+      setCurrentMonthId(offlineMonthId);
       await loadMonths();
       return true;
     }
 
-    const { error } = await supabase.from('month').insert(monthData);
+    const { data: createdMonth, error } = await supabase
+      .from('month')
+      .insert({
+        family_id: currentFamilyId,
+        year,
+        month,
+        income: 0,
+      })
+      .select()
+      .single();
 
-    if (error) {
+    if (error || !createdMonth) {
       // Fallback to offline
-      await offlineDB.put('months', monthData);
-      await syncQueue.add({ type: 'month', action: 'insert', data: monthData, familyId: currentFamilyId });
+      await offlineDB.put('months', offlineMonthData);
+      await syncQueue.add({ type: 'month', action: 'insert', data: offlineMonthData, familyId: currentFamilyId });
       toast.warning('Salvo localmente.');
+
+      setCurrentMonthId(offlineMonthId);
+      await loadMonths();
+      return true;
     }
 
-    // Add recurring expenses
+    // Add recurring expenses into the created cloud month
     for (const recurring of recurringExpenses) {
       const result = shouldIncludeRecurringInMonth(recurring, year, month);
       if (result.include) {
         await supabase.from('expense').insert({
           family_id: currentFamilyId,
-          month_id: id,
+          month_id: createdMonth.id,
           title: recurring.title,
           category_key: recurring.category,
           subcategory_id: recurring.subcategoryId,
@@ -453,12 +474,12 @@ export const useBudget = () => {
           due_day: recurring.dueDay,
           recurring_expense_id: recurring.id,
           installment_current: result.installmentNumber,
-          installment_total: recurring.totalInstallments
+          installment_total: recurring.totalInstallments,
         });
       }
     }
 
-    setCurrentMonthId(id);
+    setCurrentMonthId(createdMonth.id);
     await loadMonths();
     return true;
   };
@@ -512,7 +533,7 @@ export const useBudget = () => {
   ) => {
     if (!currentMonthId) return;
 
-    const expenseData = {
+    const offlineExpenseData = {
       id: generateOfflineId('exp'),
       family_id: currentFamilyId,
       month_id: currentMonthId,
@@ -521,21 +542,33 @@ export const useBudget = () => {
       subcategory_id: subcategoryId || null,
       value,
       is_recurring: false,
-      is_pending: false
+      is_pending: false,
     };
 
     if (useOffline || isOfflineId(currentFamilyId || '')) {
-      await offlineDB.put('expenses', expenseData);
+      await offlineDB.put('expenses', offlineExpenseData);
       await loadMonths();
       return;
     }
 
-    const { error } = await supabase.from('expense').insert(expenseData);
+    // Cloud insert: do not send custom id (UUID in DB)
+    const { error } = await supabase.from('expense').insert({
+      family_id: currentFamilyId,
+      month_id: currentMonthId,
+      title,
+      category_key: category,
+      subcategory_id: subcategoryId || null,
+      value,
+      is_recurring: false,
+      is_pending: false,
+    });
+
     if (error) {
-      await offlineDB.put('expenses', expenseData);
-      await syncQueue.add({ type: 'expense', action: 'insert', data: expenseData, familyId: currentFamilyId || '' });
+      await offlineDB.put('expenses', offlineExpenseData);
+      await syncQueue.add({ type: 'expense', action: 'insert', data: offlineExpenseData, familyId: currentFamilyId || '' });
       toast.warning('Salvo localmente.');
     }
+
     await loadMonths();
   };
 
@@ -616,9 +649,9 @@ export const useBudget = () => {
   ) => {
     if (!currentFamilyId) return;
 
-    const id = generateOfflineId('rec');
-    const recurringData = {
-      id,
+    const offlineId = generateOfflineId('rec');
+    const offlineRecurringData = {
+      id: offlineId,
       family_id: currentFamilyId,
       title,
       category_key: category,
@@ -628,16 +661,16 @@ export const useBudget = () => {
       has_installments: hasInstallments,
       total_installments: totalInstallments,
       start_year: startYear,
-      start_month: startMonth
+      start_month: startMonth,
     };
 
     if (useOffline || isOfflineId(currentFamilyId)) {
-      await offlineDB.put('recurring_expenses', recurringData);
+      await offlineDB.put('recurring_expenses', offlineRecurringData);
 
       // Add to current month if applicable
       if (currentMonthId && currentMonth) {
         const recurring: RecurringExpense = {
-          id,
+          id: offlineId,
           title,
           category,
           subcategoryId,
@@ -647,7 +680,7 @@ export const useBudget = () => {
           hasInstallments,
           totalInstallments,
           startYear,
-          startMonth
+          startMonth,
         };
 
         const result = shouldIncludeRecurringInMonth(recurring, currentMonth.year, currentMonth.month);
@@ -663,9 +696,9 @@ export const useBudget = () => {
             is_recurring: true,
             is_pending: true,
             due_day: dueDay,
-            recurring_expense_id: id,
+            recurring_expense_id: offlineId,
             installment_current: result.installmentNumber,
-            installment_total: totalInstallments
+            installment_total: totalInstallments,
           };
           await offlineDB.put('expenses', expenseData);
         }
@@ -676,15 +709,27 @@ export const useBudget = () => {
       return;
     }
 
+    // Cloud insert: do not send custom id (UUID in DB)
     const { data: newRecurring, error } = await supabase
       .from('recurring_expense')
-      .insert(recurringData)
+      .insert({
+        family_id: currentFamilyId,
+        title,
+        category_key: category,
+        subcategory_id: subcategoryId || null,
+        value,
+        due_day: dueDay,
+        has_installments: hasInstallments,
+        total_installments: totalInstallments,
+        start_year: startYear,
+        start_month: startMonth,
+      })
       .select()
       .single();
 
-    if (error) {
-      await offlineDB.put('recurring_expenses', recurringData);
-      await syncQueue.add({ type: 'recurring_expense', action: 'insert', data: recurringData, familyId: currentFamilyId });
+    if (error || !newRecurring) {
+      await offlineDB.put('recurring_expenses', offlineRecurringData);
+      await syncQueue.add({ type: 'recurring_expense', action: 'insert', data: offlineRecurringData, familyId: currentFamilyId });
       toast.warning('Salvo localmente.');
       await loadRecurringExpenses();
       return;
@@ -812,7 +857,7 @@ export const useBudget = () => {
     const result = shouldIncludeRecurringInMonth(recurring, currentMonth.year, currentMonth.month);
     if (!result.include) return false;
 
-    const expenseData = {
+    const offlineExpenseData = {
       id: generateOfflineId('exp'),
       family_id: currentFamilyId,
       month_id: currentMonthId,
@@ -825,16 +870,31 @@ export const useBudget = () => {
       due_day: recurring.dueDay,
       recurring_expense_id: recurringId,
       installment_current: result.installmentNumber,
-      installment_total: recurring.totalInstallments
+      installment_total: recurring.totalInstallments,
     };
 
     if (useOffline || isOfflineId(currentFamilyId || '')) {
-      await offlineDB.put('expenses', expenseData);
+      await offlineDB.put('expenses', offlineExpenseData);
       await loadMonths();
       return true;
     }
 
-    const { error } = await supabase.from('expense').insert(expenseData);
+    // Cloud insert: do not send custom id (UUID in DB)
+    const { error } = await supabase.from('expense').insert({
+      family_id: currentFamilyId,
+      month_id: currentMonthId,
+      title: recurring.title,
+      category_key: recurring.category,
+      subcategory_id: recurring.subcategoryId || null,
+      value: recurring.value,
+      is_recurring: true,
+      is_pending: true,
+      due_day: recurring.dueDay,
+      recurring_expense_id: recurringId,
+      installment_current: result.installmentNumber,
+      installment_total: recurring.totalInstallments,
+    });
+
     if (error) {
       toast.error('Erro ao aplicar despesa recorrente');
       return false;
@@ -851,17 +911,47 @@ export const useBudget = () => {
     setCategoryPercentages(newGoals);
 
     for (const [categoryKey, percentage] of Object.entries(newGoals)) {
-      const goalData = {
+      const offlineGoalData = {
         id: `${currentFamilyId}-${categoryKey}`,
         family_id: currentFamilyId,
         category_key: categoryKey,
-        percentage
+        percentage,
       };
 
       if (useOffline || isOfflineId(currentFamilyId)) {
-        await offlineDB.put('category_goals', goalData);
+        await offlineDB.put('category_goals', offlineGoalData);
+        continue;
+      }
+
+      // Cloud: category_goal.id is UUID; do not send custom id.
+      // Also avoid relying on a unique constraint that may not exist.
+      const { data: existing, error: selectError } = await supabase
+        .from('category_goal')
+        .select('id')
+        .eq('family_id', currentFamilyId)
+        .eq('category_key', categoryKey)
+        .maybeSingle();
+
+      if (selectError) {
+        console.error('Error checking existing goal:', selectError);
+        continue;
+      }
+
+      if (existing?.id) {
+        const { error } = await supabase
+          .from('category_goal')
+          .update({ percentage })
+          .eq('id', existing.id);
+        if (error) console.error('Error updating goal:', error);
       } else {
-        await supabase.from('category_goal').upsert(goalData, { onConflict: 'family_id,category_key' });
+        const { error } = await supabase
+          .from('category_goal')
+          .insert({
+            family_id: currentFamilyId,
+            category_key: categoryKey,
+            percentage,
+          });
+        if (error) console.error('Error inserting goal:', error);
       }
     }
   };
