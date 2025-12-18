@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Trash2, Pencil, RefreshCw, X, AlertCircle, Calendar, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Expense, Subcategory, CategoryKey } from '@/types/budget';
+import { Expense, Subcategory, CategoryKey, RecurringExpense } from '@/types/budget';
 import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -20,6 +20,7 @@ import {
 interface ExpenseListProps {
   expenses: Expense[];
   subcategories: Subcategory[];
+  recurringExpenses: RecurringExpense[];
   onRemove: (id: string) => void | Promise<void>;
   onEdit: (expense: Expense) => void;
   onConfirmPayment: (id: string) => void | Promise<void>;
@@ -56,7 +57,7 @@ const generateSubcategoryColor = (
   return `hsl(${h}, ${s}%, ${newL}%)`;
 };
 
-export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfirmPayment, sortType, sortDirection }: ExpenseListProps) => {
+export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemove, onEdit, onConfirmPayment, sortType, sortDirection }: ExpenseListProps) => {
   const { t } = useLanguage();
   const { formatCurrency } = useCurrency();
   const [filter, setFilter] = useState<FilterType>(null);
@@ -94,7 +95,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
       return expense.subcategoryId === filter.value;
     }
     if (filter.type === 'recurring') {
-      return expense.isRecurring;
+      return expense.recurringExpenseId && recurringExpenses.some(r => r.id === expense.recurringExpenseId);
     }
     if (filter.type === 'pending') {
       return expense.isPending;
@@ -232,7 +233,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
                         </button>
                       )}
                 
-                      {expense.isRecurring && (
+                      {expense.recurringExpenseId && recurringExpenses.some(r => r.id === expense.recurringExpenseId) && (
                         <button
                           onClick={() => setFilter({ type: 'recurring' })}
                           className="inline-flex items-center text-xs px-1.5 py-0.5 rounded-full bg-muted/70 text-muted-foreground hover:bg-muted transition-colors"
