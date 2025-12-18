@@ -118,9 +118,10 @@ const Index = () => {
     );
   }
 
-  // Show family setup if no valid family exists
-  // Check both currentFamilyId AND currentFamily to handle stale localStorage values
-  if (!currentFamilyId || !currentFamily) {
+  // Show family setup if no family ID exists
+  // For offline families, currentFamily might not be in the array initially
+  // but we should still proceed if we have a valid offline family ID
+  if (!currentFamilyId) {
     return <FamilySetup />;
   }
 
