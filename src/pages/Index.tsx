@@ -118,8 +118,9 @@ const Index = () => {
     );
   }
 
-  // Show family setup if user is logged in but has no family
-  if (!currentFamilyId) {
+  // Show family setup if no valid family exists
+  // Check both currentFamilyId AND currentFamily to handle stale localStorage values
+  if (!currentFamilyId || !currentFamily) {
     return <FamilySetup />;
   }
 
