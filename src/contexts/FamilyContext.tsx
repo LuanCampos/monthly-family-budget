@@ -472,6 +472,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         family_id: family.id,
         user_id: sessionUser.id,
         role: 'owner',
+        user_email: sessionUser.email || null,
       });
 
     if (memberError && (memberError as any).code !== '23505') {
@@ -637,7 +638,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       .insert({
         family_id: invitation.family_id,
         user_id: user.id,
-        role: 'member'
+        role: 'member',
+        user_email: user.email || null,
       });
 
     if (memberError) return { error: memberError };
