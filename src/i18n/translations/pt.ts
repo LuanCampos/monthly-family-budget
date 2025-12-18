@@ -1,7 +1,7 @@
 export const pt = {
   // App
-  appTitle: 'Orçamento doméstico',
-  appSubtitle: 'Controlando o orçamento doméstico da familinha com base nas nossas metas.',
+  appTitle: 'Orçamento familiar',
+  appSubtitle: 'Controlando o orçamento familiar da familinha com base nas nossas metas.',
   
   // Online/Offline
   online: 'Online',
