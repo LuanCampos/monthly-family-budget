@@ -21,21 +21,25 @@ export interface SyncQueueItem {
 }
 
 let db: IDBDatabase | null = null;
+let dbPromise: Promise<IDBDatabase> | null = null;
 
 const openDB = (): Promise<IDBDatabase> => {
-  return new Promise((resolve, reject) => {
-    if (db) {
-      resolve(db);
-      return;
-    }
+  if (db) return Promise.resolve(db);
+  if (dbPromise) return dbPromise;
 
+  dbPromise = new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onerror = () => reject(request.error);
+    const fail = (error: unknown) => {
+      dbPromise = null;
+      reject(error);
+    };
+
+    request.onerror = () => fail(request.error);
 
     // If an upgrade is blocked by another open tab, avoid hanging forever.
     request.onblocked = () => {
-      reject(new Error('Banco local bloqueado por outra aba/janela. Feche outras abas e recarregue.'));
+      fail(new Error('Banco local bloqueado por outra aba/janela. Feche outras abas e recarregue.'));
     };
 
     request.onsuccess = () => {
@@ -47,6 +51,7 @@ const openDB = (): Promise<IDBDatabase> => {
           db?.close();
         } finally {
           db = null;
+          dbPromise = null;
         }
       };
 
@@ -147,7 +152,28 @@ const openDB = (): Promise<IDBDatabase> => {
       ensureStore('user_preferences', { keyPath: 'user_id' });
     };
   });
+
+  return dbPromise;
 };
+
+export const clearOfflineCache = async (): Promise<void> => {
+  try {
+    db?.close();
+  } catch {
+    // ignore
+  }
+
+  db = null;
+  dbPromise = null;
+
+  await new Promise<void>((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(DB_NAME);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error('Não foi possível limpar o cache offline porque outra aba está usando o app. Feche outras abas e tente novamente.'));
+  });
+};
+
 
 // Generic CRUD operations
 export const offlineDB = {
