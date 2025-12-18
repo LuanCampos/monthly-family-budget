@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { offlineDB, generateOfflineId, isOfflineId, syncQueue } from '@/lib/offlineStorage';
@@ -300,6 +300,44 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       refreshInvitations();
     }
   }, [currentFamilyId, refreshMembers, refreshInvitations]);
+
+  // Track which family IDs we've already tried to reload for
+  const attemptedReloadRef = useRef<string | null>(null);
+
+  // Handle case where currentFamilyId is set but family is not found in the array
+  // This can happen when switching to an offline family that hasn't been loaded yet
+  useEffect(() => {
+    const handleMissingFamily = async () => {
+      if (!currentFamilyId || loading) return;
+      
+      // Check if family exists in current list
+      const familyExists = families.some(f => f.id === currentFamilyId);
+      
+      if (familyExists) {
+        // Reset the ref when family is found
+        attemptedReloadRef.current = null;
+        return;
+      }
+      
+      // Only try to reload once per family ID to prevent loops
+      if (attemptedReloadRef.current === currentFamilyId) {
+        // We already tried to reload for this ID and family still not found
+        console.log('Family not found after reload, clearing invalid ID:', currentFamilyId);
+        setCurrentFamilyId(null);
+        localStorage.removeItem('current-family-id');
+        attemptedReloadRef.current = null;
+        return;
+      }
+      
+      // Mark that we're attempting reload for this family ID
+      attemptedReloadRef.current = currentFamilyId;
+      
+      // Try to reload families
+      await refreshFamilies();
+    };
+    
+    handleMissingFamily();
+  }, [currentFamilyId, families, loading, refreshFamilies]);
 
   // Create offline family (always works, even without auth)
   const createOfflineFamily = async (name: string) => {
