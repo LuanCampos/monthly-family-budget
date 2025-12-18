@@ -9,7 +9,7 @@ import { ExpenseChart } from '@/components/ExpenseChart';
 import { SubcategoryChart } from '@/components/SubcategoryChart';
 import { CategoryLegend } from '@/components/CategoryLegend';
 import { SummaryTable } from '@/components/SummaryTable';
-import { GoalsPanel } from '@/components/GoalsPanel';
+import { LimitsPanel } from '@/components/LimitsPanel';
 import { ExpenseForm } from '@/components/ExpenseForm';
 import { RecurringExpenses } from '@/components/RecurringExpenses';
 import { ExpenseList, SortType, SortDirection } from '@/components/ExpenseList';
@@ -251,16 +251,16 @@ const BudgetContent = () => {
                 </div>
               </div>
 
-              {/* Goals Card */}
+              {/* Limits Card */}
               <div className="dashboard-card lg:col-span-3">
                 <div className="dashboard-card-header">
                   <div className="flex items-center gap-2">
                     <Target className="h-4 w-4 text-primary" />
-                    <span className="dashboard-card-title">{t('goals')}</span>
+                    <span className="dashboard-card-title">{t('limits')}</span>
                   </div>
                 </div>
                 <div className="dashboard-card-content">
-                  <GoalsPanel
+                  <LimitsPanel
                     percentages={categoryPercentages}
                     onEdit={updateGoals}
                   />

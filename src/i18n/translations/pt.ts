@@ -45,7 +45,7 @@ export const pt = {
   categories: 'Categorias',
   expenses: 'Gastos',
   summary: 'Resumo',
-  goals: 'Metas',
+  limits: 'Limites',
   
   // Category Names (capitalized)
   'essenciais': 'Essenciais',
@@ -110,8 +110,8 @@ export const pt = {
   noSubcategoryExpenses: 'Nenhuma sub-categoria com gastos',
   notSpecified: 'Não especificado',
 
-  // Goals
-  editGoals: 'Editar Metas',
+  // Limits
+  editLimits: 'Editar Limites',
   percentage: 'Porcentagem',
   total: 'Total',
   
