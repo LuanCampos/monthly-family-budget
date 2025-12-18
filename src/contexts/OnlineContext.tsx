@@ -128,7 +128,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           .insert({
             family_id: newFamilyId,
             title: rec.title,
-            category: rec.category,
+            category_key: rec.category_key,
             subcategory_id: rec.subcategory_id ? idMap[rec.subcategory_id] : null,
             value: rec.value,
             due_day: rec.due_day,
@@ -163,7 +163,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           await supabase.from('expense').insert({
             month_id: idMap[month.id],
             title: exp.title,
-            category: exp.category,
+            category_key: exp.category_key,
             subcategory_id: exp.subcategory_id ? idMap[exp.subcategory_id] : null,
             value: exp.value,
             is_recurring: exp.is_recurring,
