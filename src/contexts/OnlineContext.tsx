@@ -79,13 +79,6 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return { error: new Error('Família não encontrada') };
       }
 
-      // Debug logs for authentication
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      console.log("SESSION NO INSERT:", currentSession);
-
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      console.log("USER NO INSERT:", currentUser);
-
       // Create family in cloud
       const { data: cloudFamily, error: familyError } = await supabase
         .from('family')
@@ -95,8 +88,6 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         })
         .select()
         .single();
-
-      console.log("INSERT RESULT:", { cloudFamily, familyError });
 
       if (familyError) {
         return { error: familyError };
