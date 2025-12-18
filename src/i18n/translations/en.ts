@@ -280,4 +280,12 @@ export const en: Record<TranslationKey, string> = {
   pendingInvitations: 'Pending invitations',
   noFamilySelected: 'No family selected',
   leave: 'Leave',
+  
+  // Email Verification
+  emailVerificationTitle: 'Verify your email',
+  emailVerificationDescription: 'We sent a confirmation link to',
+  emailVerificationInstructions: 'Click the link in the email to activate your account.',
+  resendVerificationEmail: 'Resend email',
+  verificationEmailResent: 'Verification email resent!',
+  checkSpamFolder: "Didn't find it? Check your spam folder.",
 };

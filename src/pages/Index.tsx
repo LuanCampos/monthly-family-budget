@@ -125,6 +125,32 @@ const Index = () => {
     return <FamilySetup />;
   }
 
+  // Show create first month UI when no months exist
+  if (months.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center space-y-6 max-w-md">
+          <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+            <Calendar className="h-8 w-8 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-foreground">
+              {t('emptyStateTitle')}
+            </h2>
+            <p className="text-muted-foreground">
+              {t('emptyStateSubtitle')}
+            </p>
+          </div>
+          <MonthSelector
+            months={months}
+            currentMonth={null}
+            onSelectMonth={selectMonth}
+            onAddMonth={addMonth}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

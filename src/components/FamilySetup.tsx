@@ -31,6 +31,7 @@ export const FamilySetup = () => {
   const [displayName, setDisplayName] = useState('');
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [pendingEmailVerification, setPendingEmailVerification] = useState<string | null>(null);
 
   const handleCreateFamily = async () => {
     if (!familyName.trim()) return;
@@ -181,6 +182,7 @@ export const FamilySetup = () => {
         });
       }
     } else {
+      setPendingEmailVerification(email);
       toast({
         title: t('success'),
         description: t('signupSuccess'),
@@ -272,6 +274,91 @@ export const FamilySetup = () => {
                   {t('backToLogin')}
                 </Button>
               </form>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Email verification pending
+    if (pendingEmailVerification) {
+      const handleResendVerification = async () => {
+        setIsAuthLoading(true);
+        const { error } = await supabase.auth.resend({
+          type: 'signup',
+          email: pendingEmailVerification,
+          options: {
+            emailRedirectTo: window.location.origin,
+          },
+        });
+        setIsAuthLoading(false);
+
+        if (error) {
+          toast({
+            title: t('error'),
+            description: error.message,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: t('success'),
+            description: t('verificationEmailResent'),
+          });
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <Mail className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-primary">
+                {t('emailVerificationTitle')}
+              </CardTitle>
+              <CardDescription className="space-y-2">
+                <p>{t('emailVerificationDescription')}</p>
+                <p className="font-medium text-foreground">{pendingEmailVerification}</p>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                {t('emailVerificationInstructions')}
+              </p>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleResendVerification}
+                disabled={isAuthLoading}
+              >
+                {isAuthLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('loading')}
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2 h-4 w-4" />
+                    {t('resendVerificationEmail')}
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                {t('checkSpamFolder')}
+              </p>
+              <Separator />
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setPendingEmailVerification(null);
+                  setShowAuthForm(true);
+                }}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {t('backToLogin')}
+              </Button>
             </CardContent>
           </Card>
         </div>

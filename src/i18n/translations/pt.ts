@@ -278,6 +278,14 @@ export const pt = {
   pendingInvitations: 'Convites pendentes',
   noFamilySelected: 'Nenhuma família selecionada',
   leave: 'Sair',
+  
+  // Email Verification
+  emailVerificationTitle: 'Verifique seu e-mail',
+  emailVerificationDescription: 'Enviamos um link de confirmação para',
+  emailVerificationInstructions: 'Clique no link do e-mail para ativar sua conta.',
+  resendVerificationEmail: 'Reenviar e-mail',
+  verificationEmailResent: 'E-mail de verificação reenviado!',
+  checkSpamFolder: 'Não encontrou? Verifique sua pasta de spam.',
 };
 
 export type TranslationKey = keyof typeof pt;
