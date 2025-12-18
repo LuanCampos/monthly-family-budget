@@ -135,7 +135,7 @@ const Index = () => {
             {/* Logo + Title */}
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink">
               <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
-              <h1 className="text-[13px] sm:text-lg font-bold text-foreground leading-snug">
+              <h1 className="text-sm sm:text-lg font-bold text-foreground leading-tight">
                 {t('appTitle')}
               </h1>
             </div>
