@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, Shield, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud } from 'lucide-react';
+import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, Shield, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -41,7 +41,7 @@ import { TranslationKey } from '@/i18n/translations/pt';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { useOnline } from '@/contexts/OnlineContext';
-import { isOfflineId } from '@/lib/offlineStorage';
+import { clearOfflineCache, isOfflineId } from '@/lib/offlineStorage';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -280,6 +280,24 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
     const { error } = await syncFamily(currentFamily.id);
     if (error) {
       toast({ title: t('error'), description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleClearOfflineCache = async () => {
+    setProcessingAction('clear-offline-cache');
+    try {
+      await clearOfflineCache();
+      localStorage.removeItem('current-family-id');
+      toast({ title: t('success'), description: t('offlineCacheCleared') });
+      setTimeout(() => window.location.reload(), 350);
+    } catch (error) {
+      toast({
+        title: t('error'),
+        description: (error as Error)?.message || t('offlineCacheClearError'),
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingAction(null);
     }
   };
 
@@ -744,12 +762,14 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                   </div>
                 </div>
 
-                {/* Delete Month */}
-                {onDeleteMonth && currentMonthLabel && (
-                  <>
-                    <Separator className="bg-border" />
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t('dataManagement')}</Label>
+                {/* Data Management */}
+                <>
+                  <Separator className="bg-border" />
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t('dataManagement')}</Label>
+
+                    {/* Delete Month */}
+                    {onDeleteMonth && currentMonthLabel && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="outline" className="w-full h-10 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive">
@@ -767,9 +787,42 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    </div>
-                  </>
-                )}
+                    )}
+
+                    {/* Clear Offline Cache */}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full h-10 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          disabled={processingAction === 'clear-offline-cache'}
+                        >
+                          {processingAction === 'clear-offline-cache' ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <HardDrive className="h-4 w-4 mr-2" />
+                          )}
+                          {t('clearOfflineCache')}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="bg-card border-border sm:max-w-md">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t('clearOfflineCache')}</AlertDialogTitle>
+                          <AlertDialogDescription>{t('clearOfflineCacheWarning')}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="h-10">{t('cancel')}</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="h-10 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={handleClearOfflineCache}
+                          >
+                            {t('delete')}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </>
 
               </TabsContent>
 
