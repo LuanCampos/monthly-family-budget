@@ -61,6 +61,7 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+          hover: "hsl(var(--card-hover))",
         },
         category: {
           "custos-fixos": "hsl(var(--category-custos-fixos))",
