@@ -406,6 +406,7 @@ export const useBudget = () => {
         if (result.include) {
           const expenseData = {
             id: generateOfflineId('exp'),
+            family_id: currentFamilyId,
             month_id: id,
             title: recurring.title,
             category_key: recurring.category,
@@ -441,6 +442,7 @@ export const useBudget = () => {
       const result = shouldIncludeRecurringInMonth(recurring, year, month);
       if (result.include) {
         await supabase.from('expense').insert({
+          family_id: currentFamilyId,
           month_id: id,
           title: recurring.title,
           category_key: recurring.category,
@@ -512,6 +514,7 @@ export const useBudget = () => {
 
     const expenseData = {
       id: generateOfflineId('exp'),
+      family_id: currentFamilyId,
       month_id: currentMonthId,
       title,
       category_key: category,
@@ -651,6 +654,7 @@ export const useBudget = () => {
         if (result.include) {
           const expenseData = {
             id: generateOfflineId('exp'),
+            family_id: currentFamilyId,
             month_id: currentMonthId,
             title,
             category_key: category,
@@ -705,6 +709,7 @@ export const useBudget = () => {
       const result = shouldIncludeRecurringInMonth(recurring, currentMonth.year, currentMonth.month);
       if (result.include) {
         await supabase.from('expense').insert({
+          family_id: currentFamilyId,
           month_id: currentMonthId,
           title,
           category_key: category,
@@ -809,6 +814,7 @@ export const useBudget = () => {
 
     const expenseData = {
       id: generateOfflineId('exp'),
+      family_id: currentFamilyId,
       month_id: currentMonthId,
       title: recurring.title,
       category_key: recurring.category,

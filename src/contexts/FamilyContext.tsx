@@ -184,25 +184,40 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     try {
-      const { data: myInvites } = await supabase
+      // First get invitations without JOIN to avoid RLS issues
+      const { data: myInvites, error } = await supabase
         .from('family_invitation')
-        .select(`
-          *,
-          family (name)
-        `)
+        .select('*')
         .eq('email', user.email)
         .eq('status', 'pending');
 
-      if (myInvites) {
+      if (error) {
+        console.log('Error fetching invitations:', error);
+        setMyPendingInvitations([]);
+        return;
+      }
+
+      if (myInvites && myInvites.length > 0) {
+        // Fetch family names separately
+        const familyIds = [...new Set(myInvites.map(inv => inv.family_id))];
+        const { data: familiesData } = await supabase
+          .from('family')
+          .select('id, name')
+          .in('id', familyIds);
+
+        const familyNameMap = new Map(familiesData?.map(f => [f.id, f.name]) || []);
+
         setMyPendingInvitations(
           myInvites.map((inv: any) => ({
             ...inv,
-            family_name: inv.family?.name
+            family_name: familyNameMap.get(inv.family_id) || 'Família'
           }))
         );
+      } else {
+        setMyPendingInvitations([]);
       }
-    } catch {
-      // RLS may not allow this query - silently ignore
+    } catch (e) {
+      console.log('Error in refreshMyInvitations:', e);
       setMyPendingInvitations([]);
     }
   }, [user?.email]);
