@@ -81,4 +81,53 @@ Notes & verification
 --------------------
 - Local tooling: node is installed on the machine, but the env terminal needs to be configured by some commands to use it, because is a powershell terminal and don't have a lot of access yet.
 
+Windows terminal PATH issue (observed and fixed in this session)
+------------------------------------------------------------
+
+Observed symptom: new PowerShell or VS Code integrated terminals sometimes report errors like `node : The term 'node' is not recognized` or `npm : The term 'npm' is not recognized` even when Node.js is installed on the machine.
+
+What I inspected and fixed in this session:
+- Printed the session PATH, the User PATH and Machine PATH to locate Node installation entries.
+- Found `C:\Program Files\nodejs` on the Machine PATH but the session PATH had malformed or missing entries that prevented `node` being found.
+- Cleaned problematic user PATH entries (removed any stray references to `node.exe` and stray quotes) and ensured `C:\Program Files\nodejs` was present in the **User** PATH via a safe call to set the environment variable. Then I updated the current session PATH so commands worked immediately.
+
+Commands/steps to reproduce the fix manually (PowerShell):
+
+1. Inspect PATHs (shows what's currently visible to the session and stored on the system):
+
+```powershell
+echo $env:Path
+[Environment]::GetEnvironmentVariable('Path','User')
+[Environment]::GetEnvironmentVariable('Path','Machine')
+```
+
+2. If `node` isn't found, add `C:\Program Files\nodejs` to the User PATH and remove malformed entries (two approaches):
+
+- Manual (safe):
+	- Open Start → "Edit environment variables for your account" → Edit `Path` → Remove bad entries (those containing `node.exe` or stray quotes) and add `C:\Program Files\nodejs` if missing. Save and close.
+
+- Scripted (example; run as your user in PowerShell):
+
+```powershell
+# Remove entries containing node.exe or stray quotes and add Program Files nodejs to User PATH
+$userPath = [Environment]::GetEnvironmentVariable('Path','User') -split ';' | Where-Object {$_ -and ($_ -notmatch 'node\.exe') -and ($_ -notmatch '"')} 
+if(-not ($userPath -contains 'C:\Program Files\nodejs')){ $userPath += 'C:\Program Files\nodejs' }
+[Environment]::SetEnvironmentVariable('Path', ($userPath -join ';'), 'User')
+
+# Update the current terminal session (temporary) so node is immediately available
+$env:Path = $env:Path + ';C:\Program Files\nodejs'
+
+# Verify
+where.exe node
+node -v
+npm -v
+```
+
+3. Restart VS Code (important): VS Code reads environment variables when it starts. After changing User or System PATH you must restart VS Code for the integrated terminal to inherit the new PATH.
+
+Notes and recommendations:
+- If the issue recurs between sessions, check for startup scripts, shell profile files, or third-party installers that may be writing malformed PATH entries.
+- Consider using `nvm-windows` to manage Node versions reliably — it tends to produce cleaner PATH changes and avoids directly modifying system PATH to point at a specific installation directory.
+- Add an `.nvmrc` with the project's Node version in the repo root and document the preferred Node version in `README.md` or `ARCHITECTURE.md` to standardize environments.
+
 Checkpoint: when continuing next time, open this file and pick the next uncompleted step under "What remains". Prefer small, behavior-preserving PRs and include unit tests for `storageAdapter` before changing contexts that depend on it.

@@ -371,3 +371,15 @@ export const deleteExpensesByMonth = async (monthId: string) => {
   }
   return budgetService.deleteExpensesByMonth(monthId);
 };
+
+export const deleteMonthById = async (familyId: string | null, monthId: string) => {
+  if (!familyId) return;
+  if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
+    const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', monthId);
+    for (const e of expenses) await offlineAdapter.delete('expenses', e.id);
+    await offlineAdapter.delete('months', monthId);
+    return;
+  }
+  await budgetService.deleteExpensesByMonth(monthId);
+  return budgetService.deleteMonthById(monthId);
+};

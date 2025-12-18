@@ -2,6 +2,8 @@ Project: Monthly Family Budget (Vite + React + TypeScript)
 
 Purpose: Give AI coding agents the precise, actionable context they need to be productive editing this repository.
 
+Note: Also read .github/ARCHITECTURE.md — it contains environment setup and troubleshooting steps (Windows PATH fixes, Node version recommendation, and onboarding notes).
+
 Quick facts
 - Tech: Vite, React 18, TypeScript, Tailwind CSS, shadcn-ui components.
 - App entry: `src/main.tsx` -> `src/App.tsx`.

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRef } from 'react';
 import { Month, Expense, CategoryKey, Subcategory, RecurringExpense } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
 import * as storageAdapter from '@/lib/storageAdapter';
@@ -77,6 +78,9 @@ export const useBudget = () => {
     setCategoryPercentages,
     loadMonthsRef: async () => {},
   }), [currentFamilyId, shouldUseOffline, setMonths, setRecurringExpenses, setSubcategories, categoryPercentages, setCategoryPercentages]);
+
+  // Track a pending created month id so we can reliably select it after months refresh
+  const pendingCreatedMonthIdRef = useRef<string | null>(null);
 
   // Load months from database or offline storage
   const loadMonths = useCallback(async () => {
@@ -205,102 +209,45 @@ export const useBudget = () => {
   // Month management
   const addMonth = async (year: number, month: number) => {
     if (!currentFamilyId) return false;
+    if (months.some(m => m.year === year && m.month === month)) return false;
 
-    // Keep deterministic IDs only for offline storage. Cloud tables use UUIDs.
-    const offlineMonthId = `${currentFamilyId}-${generateMonthId(year, month)}`;
+    // Use storageAdapter which normalizes offline/online behavior
+    const res = await storageAdapter.insertMonth(currentFamilyId, year, month);
+    if (!res) return false;
 
-    if (months.some(m => m.year === year && m.month === month)) {
-      return false;
+    // Try to extract the new id from possible shapes: offline object, direct data, or { data, error }
+    const created = res as any;
+    let newId: string | null = null;
+    if (created.id) newId = created.id;
+    else if (created.data && created.data.id) newId = created.data.id;
+
+    // Reload months from adapter to ensure state contains the created month
+    const refreshed = await storageAdapter.getMonthsWithExpenses(currentFamilyId);
+    // If id wasn't present in the response, find the created month by year/month
+    if (!newId) {
+      const found = refreshed.find(m => m.year === year && m.month === month);
+      newId = found?.id ?? null;
     }
 
-    const offlineMonthData = {
-      id: offlineMonthId,
-      family_id: currentFamilyId,
-      year,
-      month,
-      income: 0,
-    };
-
-    if (shouldUseOffline(currentFamilyId)) {
-      await offlineAdapter.put('months', offlineMonthData as any);
-
-      // Add recurring expenses
-      for (const recurring of recurringExpenses) {
-        const result = shouldIncludeRecurringInMonth(recurring, year, month);
-        if (result.include) {
-          const expenseData = {
-            id: offlineAdapter.generateOfflineId('exp'),
-            family_id: currentFamilyId,
-            month_id: offlineMonthId,
-            title: recurring.title,
-            category_key: recurring.category,
-            subcategory_id: recurring.subcategoryId,
-            value: recurring.value,
-            is_recurring: true,
-            is_pending: true,
-            due_day: recurring.dueDay,
-            recurring_expense_id: recurring.id,
-            installment_current: result.installmentNumber,
-            installment_total: recurring.totalInstallments,
-          };
-          await offlineAdapter.put('expenses', expenseData as any);
-        }
-      }
-
-      setCurrentMonthId(offlineMonthId);
-      await loadMonths();
-      return true;
+    // If we have a new id, mark it as pending and update months. An effect will select it
+    if (newId) {
+      pendingCreatedMonthIdRef.current = newId;
     }
-
-    const createdMonth = await storageAdapter.insertMonth(currentFamilyId, year, month);
-
-    if (error || !createdMonth) {
-      // Fallback to offline
-      await offlineAdapter.put('months', offlineMonthData as any);
-      await offlineAdapter.sync.add({ type: 'month', action: 'insert', data: offlineMonthData, familyId: currentFamilyId });
-      toast.warning('Salvo localmente.');
-
-      setCurrentMonthId(offlineMonthId);
-      await loadMonths();
-      return true;
-    }
-
-    // Add recurring expenses into the created cloud month
-    for (const recurring of recurringExpenses) {
-      const result = shouldIncludeRecurringInMonth(recurring, year, month);
-      if (result.include) {
-        await storageAdapter.insertExpense(currentFamilyId, {
-          family_id: currentFamilyId,
-          month_id: (createdMonth as any).id || createdMonth.id,
-          title: recurring.title,
-          category_key: recurring.category,
-          subcategory_id: recurring.subcategoryId,
-          value: recurring.value,
-          is_recurring: true,
-          is_pending: true,
-          due_day: recurring.dueDay,
-          recurring_expense_id: recurring.id,
-          installment_current: result.installmentNumber,
-          installment_total: recurring.totalInstallments,
-        });
-      }
-    }
-
-    setCurrentMonthId(createdMonth.id);
-    await loadMonths();
+    setMonths(refreshed);
     return true;
   };
 
-  const removeMonth = async (monthId: string) => {
-    if (shouldUseOffline(currentFamilyId)) {
-      const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', monthId);
-      for (const exp of expenses) await offlineAdapter.delete('expenses', exp.id);
-      await offlineAdapter.delete('months', monthId);
-    } else {
-      await storageAdapter.deleteExpensesByMonth(monthId);
-      const svc = await import('@/lib/budgetService');
-      await svc.deleteMonthById(monthId);
+  // Effect: when months refresh, if there's a pending created month, select it once present
+  useEffect(() => {
+    const pendingId = pendingCreatedMonthIdRef.current;
+    if (pendingId && months.some(m => m.id === pendingId)) {
+      setCurrentMonthId(pendingId);
+      pendingCreatedMonthIdRef.current = null;
     }
+  }, [months]);
+
+  const removeMonth = async (monthId: string) => {
+    await storageAdapter.deleteMonthById(currentFamilyId, monthId);
 
     if (currentMonthId === monthId) {
       const remaining = months.filter(m => m.id !== monthId);
