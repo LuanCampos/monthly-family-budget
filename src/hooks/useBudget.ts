@@ -42,7 +42,7 @@ const shouldIncludeRecurringInMonth = (
 };
 
 export const useBudget = () => {
-  const { currentFamilyId, isCurrentFamilyOffline } = useFamily();
+  const { currentFamilyId } = useFamily();
   
   const [months, setMonths] = useState<Month[]>([]);
   const [currentMonthId, setCurrentMonthId] = useState<string | null>(null);
@@ -59,15 +59,18 @@ export const useBudget = () => {
 
   const currentMonth = months.find(m => m.id === currentMonthId) || null;
 
-  // Check if we should use offline storage
-  // Use isOfflineId as primary check since isCurrentFamilyOffline might not be updated yet
-  const useOffline = isOfflineId(currentFamilyId || '') || isCurrentFamilyOffline || !navigator.onLine;
+  // Helper to check if we should use offline storage
+  // Always check isOfflineId directly with the familyId parameter to avoid stale closures
+  const shouldUseOffline = (familyId: string | null): boolean => {
+    if (!familyId) return false;
+    return isOfflineId(familyId) || !navigator.onLine;
+  };
 
   // Load months from database or offline storage
   const loadMonths = useCallback(async () => {
     if (!currentFamilyId) return;
 
-    if (useOffline || isOfflineId(currentFamilyId)) {
+    if (shouldUseOffline(currentFamilyId)) {
       // Load from IndexedDB
       const offlineMonths = await offlineDB.getAllByIndex<any>('months', 'family_id', currentFamilyId);
       
@@ -151,13 +154,13 @@ export const useBudget = () => {
     );
 
     setMonths(monthsWithExpenses);
-  }, [currentFamilyId, useOffline]);
+  }, [currentFamilyId]);
 
   // Load recurring expenses
   const loadRecurringExpenses = useCallback(async () => {
     if (!currentFamilyId) return;
 
-    if (useOffline || isOfflineId(currentFamilyId)) {
+    if (shouldUseOffline(currentFamilyId)) {
       const data = await offlineDB.getAllByIndex<any>('recurring_expenses', 'family_id', currentFamilyId);
       setRecurringExpenses(data.map(r => ({
         id: r.id,
@@ -198,13 +201,13 @@ export const useBudget = () => {
       startYear: r.start_year,
       startMonth: r.start_month
     })));
-  }, [currentFamilyId, useOffline]);
+  }, [currentFamilyId]);
 
   // Load subcategories
   const loadSubcategories = useCallback(async () => {
     if (!currentFamilyId) return;
 
-    if (useOffline || isOfflineId(currentFamilyId)) {
+    if (shouldUseOffline(currentFamilyId)) {
       const data = await offlineDB.getAllByIndex<any>('subcategories', 'family_id', currentFamilyId);
       setSubcategories(data.map(s => ({
         id: s.id,
@@ -229,13 +232,13 @@ export const useBudget = () => {
       name: s.name,
       categoryKey: s.category_key as CategoryKey
     })));
-  }, [currentFamilyId, useOffline]);
+  }, [currentFamilyId]);
 
   // Load category goals
   const loadCategoryGoals = useCallback(async () => {
     if (!currentFamilyId) return;
 
-    if (useOffline || isOfflineId(currentFamilyId)) {
+    if (shouldUseOffline(currentFamilyId)) {
       const data = await offlineDB.getAllByIndex<any>('category_goals', 'family_id', currentFamilyId);
       if (data && data.length > 0) {
         const goals: Record<CategoryKey, number> = { ...categoryPercentages };
@@ -264,7 +267,7 @@ export const useBudget = () => {
       });
       setCategoryPercentages(goals);
     }
-  }, [currentFamilyId, useOffline]);
+  }, [currentFamilyId]);
 
   // Initial data load - reset state and reload when family changes
   useEffect(() => {
@@ -346,7 +349,7 @@ export const useBudget = () => {
       category_key: categoryKey,
     };
 
-    if (useOffline || isOfflineId(currentFamilyId)) {
+    if (shouldUseOffline(currentFamilyId)) {
       await offlineDB.put('subcategories', offlineData);
       await loadSubcategories();
       return;
@@ -369,7 +372,7 @@ export const useBudget = () => {
   };
 
   const updateSubcategory = async (id: string, name: string) => {
-    if (useOffline || isOfflineId(currentFamilyId || '')) {
+    if (shouldUseOffline(currentFamilyId)) {
       const sub = await offlineDB.get<any>('subcategories', id);
       if (sub) {
         await offlineDB.put('subcategories', { ...sub, name });
@@ -386,7 +389,7 @@ export const useBudget = () => {
   };
 
   const removeSubcategory = async (id: string) => {
-    if (useOffline || isOfflineId(currentFamilyId || '')) {
+    if (shouldUseOffline(currentFamilyId)) {
       await offlineDB.delete('subcategories', id);
       await loadSubcategories();
       await loadMonths();
@@ -419,7 +422,7 @@ export const useBudget = () => {
       income: 0,
     };
 
-    if (useOffline || isOfflineId(currentFamilyId)) {
+    if (shouldUseOffline(currentFamilyId)) {
       await offlineDB.put('months', offlineMonthData);
 
       // Add recurring expenses
@@ -499,7 +502,7 @@ export const useBudget = () => {
   };
 
   const removeMonth = async (monthId: string) => {
-    if (useOffline || isOfflineId(currentFamilyId || '')) {
+    if (shouldUseOffline(currentFamilyId)) {
       const expenses = await offlineDB.getAllByIndex<any>('expenses', 'month_id', monthId);
       for (const exp of expenses) await offlineDB.delete('expenses', exp.id);
       await offlineDB.delete('months', monthId);
@@ -522,7 +525,7 @@ export const useBudget = () => {
   const updateIncome = async (income: number) => {
     if (!currentMonthId) return;
 
-    if (useOffline || isOfflineId(currentFamilyId || '')) {
+    if (shouldUseOffline(currentFamilyId)) {
       const month = await offlineDB.get<any>('months', currentMonthId);
       if (month) {
         await offlineDB.put('months', { ...month, income });
@@ -559,7 +562,7 @@ export const useBudget = () => {
       is_pending: false,
     };
 
-    if (useOffline || isOfflineId(currentFamilyId || '')) {
+    if (shouldUseOffline(currentFamilyId)) {
       await offlineDB.put('expenses', offlineExpenseData);
       await loadMonths();
       return;
@@ -602,7 +605,7 @@ export const useBudget = () => {
       is_pending: isPending ?? false
     };
 
-    if (useOffline || isOfflineId(currentFamilyId || '')) {
+    if (shouldUseOffline(currentFamilyId)) {
       const expense = await offlineDB.get<any>('expenses', id);
       if (expense) {
         await offlineDB.put('expenses', { ...expense, ...updateData });
@@ -619,7 +622,7 @@ export const useBudget = () => {
   };
 
   const confirmPayment = async (expenseId: string) => {
-    if (useOffline || isOfflineId(currentFamilyId || '')) {
+    if (shouldUseOffline(currentFamilyId)) {
       const expense = await offlineDB.get<any>('expenses', expenseId);
       if (expense) {
         await offlineDB.put('expenses', { ...expense, is_pending: false });
@@ -636,7 +639,7 @@ export const useBudget = () => {
   };
 
   const removeExpense = async (expenseId: string) => {
-    if (useOffline || isOfflineId(currentFamilyId || '')) {
+    if (shouldUseOffline(currentFamilyId)) {
       await offlineDB.delete('expenses', expenseId);
       await loadMonths();
       return;
@@ -678,7 +681,7 @@ export const useBudget = () => {
       start_month: startMonth,
     };
 
-    if (useOffline || isOfflineId(currentFamilyId)) {
+    if (shouldUseOffline(currentFamilyId)) {
       await offlineDB.put('recurring_expenses', offlineRecurringData);
 
       // Add to current month if applicable
@@ -813,7 +816,7 @@ export const useBudget = () => {
       start_month: startMonth
     };
 
-    if (useOffline || isOfflineId(currentFamilyId || '')) {
+    if (shouldUseOffline(currentFamilyId)) {
       const rec = await offlineDB.get<any>('recurring_expenses', id);
       if (rec) {
         await offlineDB.put('recurring_expenses', { ...rec, ...updateData });
@@ -846,7 +849,7 @@ export const useBudget = () => {
   };
 
   const removeRecurringExpense = async (id: string) => {
-    if (useOffline || isOfflineId(currentFamilyId || '')) {
+    if (shouldUseOffline(currentFamilyId)) {
       await offlineDB.delete('recurring_expenses', id);
       await loadRecurringExpenses();
       return;
@@ -887,7 +890,7 @@ export const useBudget = () => {
       installment_total: recurring.totalInstallments,
     };
 
-    if (useOffline || isOfflineId(currentFamilyId || '')) {
+    if (shouldUseOffline(currentFamilyId)) {
       await offlineDB.put('expenses', offlineExpenseData);
       await loadMonths();
       return true;
@@ -932,7 +935,7 @@ export const useBudget = () => {
         percentage,
       };
 
-      if (useOffline || isOfflineId(currentFamilyId)) {
+      if (shouldUseOffline(currentFamilyId)) {
         await offlineDB.put('category_goals', offlineGoalData);
         continue;
       }
