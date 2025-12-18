@@ -174,7 +174,7 @@ export const pt = {
   // Auth
   login: 'Entrar',
   signup: 'Cadastrar',
-  logout: 'Sair',
+  logout: 'Encerrar sessão',
   email: 'E-mail',
   password: 'Senha',
   emailPlaceholder: 'seu@email.com',
