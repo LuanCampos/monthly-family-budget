@@ -31,6 +31,7 @@ interface MonthSelectorProps {
   currentMonth: Month | null;
   onSelectMonth: (monthId: string) => void;
   onAddMonth: (year: number, month: number) => boolean | Promise<boolean>;
+  showCreateButton?: boolean;
 }
 
 const MONTH_KEYS = [
@@ -43,6 +44,7 @@ export const MonthSelector = ({
   currentMonth,
   onSelectMonth,
   onAddMonth,
+  showCreateButton = false,
 }: MonthSelectorProps) => {
   const { t } = useLanguage();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -73,6 +75,57 @@ export const MonthSelector = ({
     const monthName = t(monthKey);
     return `${monthName.slice(0, 3)}/${month.year.toString().slice(-2)}`;
   };
+
+  if (showCreateButton) {
+    return (
+      <>
+        <Button 
+          onClick={() => setIsDialogOpen(true)}
+          className="h-10 px-4 bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          {t('createFirstMonth' as any)}
+        </Button>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="bg-card border-border max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="text-foreground">
+                {t('addMonth')}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="flex gap-3 mt-4">
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="flex-1 bg-secondary border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {MONTH_KEYS.map((key, index) => (
+                    <SelectItem
+                      key={index}
+                      value={(index + 1).toString()}
+                    >
+                      {t(key as TranslationKey)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <YearSelector value={selectedYear} onValueChange={setSelectedYear} />
+            </div>
+
+            <Button
+              onClick={handleAddMonth}
+              className="mt-4 w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {t('add')}
+            </Button>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
 
   return (
     <>
