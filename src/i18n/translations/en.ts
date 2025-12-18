@@ -262,6 +262,7 @@ export const en: Record<TranslationKey, string> = {
   create: 'Create',
   familySettings: 'Family Settings',
   members: 'Members',
+  inviteMember: 'Invite member',
   inviteEmailPlaceholder: 'Guest email',
   invitationSent: 'Invitation sent!',
   you: 'You',

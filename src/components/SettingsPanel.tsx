@@ -660,128 +660,114 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
             )}
           </Button>
         </DialogTrigger>
-        <DialogContent aria-describedby={undefined} className="bg-card border-border sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
-            <DialogTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              {t('settings')}
-            </DialogTitle>
+        <DialogContent aria-describedby={undefined} className="bg-card border-border sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0">
+          <DialogHeader className="px-5 pt-5 pb-3 flex-shrink-0">
+            <DialogTitle className="text-base font-semibold">{t('settings')}</DialogTitle>
           </DialogHeader>
           
           <Tabs defaultValue={myPendingInvitations.length > 0 ? 'family' : 'general'} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <TabsList className="grid w-full grid-cols-2 mx-6 mt-4 flex-shrink-0" style={{ width: 'calc(100% - 3rem)' }}>
-              <TabsTrigger value="general">{t('preferences')}</TabsTrigger>
-              <TabsTrigger value="family" className="relative">
+            <TabsList className="grid w-full grid-cols-2 mx-5 flex-shrink-0 h-9" style={{ width: 'calc(100% - 2.5rem)' }}>
+              <TabsTrigger value="general" className="text-sm">{t('preferences')}</TabsTrigger>
+              <TabsTrigger value="family" className="relative text-sm">
                 {t('family')}
                 {myPendingInvitations.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 text-xs bg-destructive text-destructive-foreground rounded-full">
+                  <span className="ml-1.5 px-1.5 py-0.5 text-[10px] bg-destructive text-destructive-foreground rounded-full">
                     {myPendingInvitations.length}
                   </span>
                 )}
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+            <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
               {/* General Tab */}
-              <TabsContent value="general" className="mt-0 space-y-5">
+              <TabsContent value="general" className="mt-0 space-y-6">
                 {/* User Account Section */}
                 {user ? (
-                  <>
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t('account')}</Label>
-                      <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.user_metadata?.avatar_url} alt={getDisplayName()} />
-                          <AvatarFallback className="bg-primary text-primary-foreground text-sm">{getUserInitials()}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{getDisplayName()}</p>
-                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                        </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-11 w-11">
+                        <AvatarImage src={user.user_metadata?.avatar_url} alt={getDisplayName()} />
+                        <AvatarFallback className="bg-primary text-primary-foreground">{getUserInitials()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{getDisplayName()}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setActiveSection('profile')} className="h-9">
-                          <User className="h-4 w-4 mr-2" />{t('editProfile')}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setActiveSection('password')} className="h-9">
-                          <KeyRound className="h-4 w-4 mr-2" />{t('changePassword')}
-                        </Button>
-                      </div>
-                      <Button variant="outline" size="sm" className="w-full h-9 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleSignOut}>
-                        <LogOut className="h-4 w-4 mr-2" />{t('logout')}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setActiveSection('profile')} className="flex-1 h-8 text-xs">
+                        <User className="h-3.5 w-3.5 mr-1.5" />{t('editProfile')}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setActiveSection('password')} className="flex-1 h-8 text-xs">
+                        <KeyRound className="h-3.5 w-3.5 mr-1.5" />{t('changePassword')}
                       </Button>
                     </div>
-                    <Separator className="bg-border" />
-                  </>
+                  </div>
                 ) : (
-                  <>
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t('account')}</Label>
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-muted-foreground text-sm">
-                        <WifiOff className="h-4 w-4" />
-                        {t('offlineMode')}
-                      </div>
-                      <Button variant="outline" className="w-full h-10" onClick={() => setActiveSection('auth')}>
-                        <LogIn className="h-4 w-4 mr-2" />{t('loginOrSignup')}
-                      </Button>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                      <WifiOff className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">{t('offlineMode')}</span>
                     </div>
-                    <Separator className="bg-border" />
-                  </>
+                    <Button variant="outline" className="w-full h-9" onClick={() => setActiveSection('auth')}>
+                      <LogIn className="h-4 w-4 mr-2" />{t('loginOrSignup')}
+                    </Button>
+                  </div>
                 )}
 
                 {/* Preferences Section */}
-                <div className="space-y-4">
-                  <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t('preferences')}</Label>
-                  
+                <div className="space-y-3">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('preferences')}</p>
                   <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-sm font-medium">
-                      <Globe className="h-4 w-4 text-muted-foreground" />{t('language')}
-                    </Label>
-                    <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
-                      <SelectTrigger className="h-10 bg-secondary/50 border-border"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {languages.map((lang) => <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-sm font-medium">
-                      <Coins className="h-4 w-4 text-muted-foreground" />{t('currency')}
-                    </Label>
-                    <Select value={currency} onValueChange={(v) => setCurrency(v as CurrencyCode)}>
-                      <SelectTrigger className="h-10 bg-secondary/50 border-border"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {currencies.map((curr) => <SelectItem key={curr.code} value={curr.code}>{curr.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-sm font-medium">
-                      <Palette className="h-4 w-4 text-muted-foreground" />{t('theme')}
-                    </Label>
-                    <Select value={theme} onValueChange={(v) => setTheme(v as ThemeKey)}>
-                      <SelectTrigger className="h-10 bg-secondary/50 border-border"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {themes.map((themeOption) => <SelectItem key={themeOption.key} value={themeOption.key}>{t(themeOption.labelKey as TranslationKey)}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{t('language')}</span>
+                      </div>
+                      <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+                        <SelectTrigger className="w-32 h-8 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          {languages.map((lang) => <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <Coins className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{t('currency')}</span>
+                      </div>
+                      <Select value={currency} onValueChange={(v) => setCurrency(v as CurrencyCode)}>
+                        <SelectTrigger className="w-32 h-8 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          {currencies.map((curr) => <SelectItem key={curr.code} value={curr.code}>{curr.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <Palette className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{t('theme')}</span>
+                      </div>
+                      <Select value={theme} onValueChange={(v) => setTheme(v as ThemeKey)}>
+                        <SelectTrigger className="w-32 h-8 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          {themes.map((themeOption) => <SelectItem key={themeOption.key} value={themeOption.key}>{t(themeOption.labelKey as TranslationKey)}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
-                {/* Data Management */}
-                <>
-                  <Separator className="bg-border" />
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t('dataManagement')}</Label>
-
-                    {/* Delete Month */}
+                {/* Danger Zone - More subtle */}
+                <div className="space-y-2 pt-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('dataManagement')}</p>
+                  <div className="space-y-1.5">
                     {onDeleteMonth && currentMonthLabel && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="outline" className="w-full h-10 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive">
-                            <Trash2 className="h-4 w-4 mr-2" />{t('delete')} "{currentMonthLabel}"
+                          <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5 mr-2" />
+                            <span className="text-sm">{t('delete')} "{currentMonthLabel}"</span>
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent className="bg-card border-border sm:max-w-md">
@@ -790,27 +776,26 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                             <AlertDialogDescription>{t('deleteMonthConfirm')} <strong>{currentMonthLabel}</strong>? {t('deleteMonthWarning')}</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="h-10">{t('cancel')}</AlertDialogCancel>
-                            <AlertDialogAction className="h-10 bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={onDeleteMonth}>{t('delete')}</AlertDialogAction>
+                            <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
+                            <AlertDialogAction className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={onDeleteMonth}>{t('delete')}</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
                     )}
-
-                    {/* Clear Offline Cache */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
-                          variant="outline"
-                          className="w-full h-10 border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start h-8 text-muted-foreground hover:text-destructive"
                           disabled={processingAction === 'clear-offline-cache'}
                         >
                           {processingAction === 'clear-offline-cache' ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
                           ) : (
-                            <HardDrive className="h-4 w-4 mr-2" />
+                            <HardDrive className="h-3.5 w-3.5 mr-2" />
                           )}
-                          {t('clearOfflineCache')}
+                          <span className="text-sm">{t('clearOfflineCache')}</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="bg-card border-border sm:max-w-md">
@@ -819,9 +804,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                           <AlertDialogDescription>{t('clearOfflineCacheWarning')}</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel className="h-10">{t('cancel')}</AlertDialogCancel>
+                          <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
                           <AlertDialogAction
-                            className="h-10 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             onClick={handleClearOfflineCache}
                           >
                             {t('delete')}
@@ -829,31 +814,36 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                    {user && (
+                      <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-muted-foreground hover:text-destructive" onClick={handleSignOut}>
+                        <LogOut className="h-3.5 w-3.5 mr-2" />
+                        <span className="text-sm">{t('logout')}</span>
+                      </Button>
+                    )}
                   </div>
-                </>
-
+                </div>
               </TabsContent>
 
               {/* Family Tab */}
-              <TabsContent value="family" className="mt-0 space-y-4">
+              <TabsContent value="family" className="mt-0 space-y-5">
                 {/* Family Selector */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t('selectFamily')}</Label>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('selectFamily')}</p>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between">
+                      <Button variant="outline" className="w-full justify-between h-10">
                         <div className="flex items-center gap-2 min-w-0">
-                          <Users className="h-4 w-4 flex-shrink-0" />
-                          <span className="truncate">
+                          <Users className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                          <span className="truncate font-medium">
                             {currentFamily?.name || t('selectFamily')}
                           </span>
                           {isCurrentOffline && (
-                            <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-amber-500/20 text-amber-500 flex-shrink-0">
+                            <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-amber-500/20 text-amber-500 flex-shrink-0">
                               <WifiOff className="h-3 w-3" />
                             </Badge>
                           )}
                         </div>
-                        <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                        <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-56">
@@ -893,137 +883,150 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                   </DropdownMenu>
                 </div>
 
+                {/* Pending invitations for current user - Highlighted */}
+                {myPendingInvitations.length > 0 && (
+                  <div className="space-y-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                    <p className="text-xs font-medium uppercase tracking-wider">{t('pendingInvitations')}</p>
+                    {myPendingInvitations.map((invitation) => (
+                      <div key={invitation.id} className="flex items-center justify-between p-2 rounded-md bg-background">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{invitation.family_name}</p>
+                          <p className="text-xs text-muted-foreground">{t('invitedToFamily')}</p>
+                        </div>
+                        <div className="flex items-center gap-1 ml-2">
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleRejectInvitation(invitation.id)} disabled={processingAction === invitation.id}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" className="h-7 px-2 text-xs" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id}>
+                            {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : t('accept')}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {currentFamily ? (
                   <>
-                    {/* Family name editing */}
+                    {/* Family name editing - Inline */}
                     {isAdmin && (
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t('familyName')}</Label>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('familyName')}</p>
                         {editingName ? (
                           <div className="flex gap-2">
-                            <Input value={newFamilyName} onChange={(e) => setNewFamilyName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleUpdateFamilyName()} />
-                            <Button size="sm" onClick={handleUpdateFamilyName}>{t('save')}</Button>
-                            <Button size="sm" variant="outline" onClick={() => setEditingName(false)}>{t('cancel')}</Button>
+                            <Input className="h-9" value={newFamilyName} onChange={(e) => setNewFamilyName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleUpdateFamilyName()} />
+                            <Button size="sm" className="h-9" onClick={handleUpdateFamilyName}>{t('save')}</Button>
+                            <Button size="sm" variant="ghost" className="h-9" onClick={() => setEditingName(false)}>{t('cancel')}</Button>
                           </div>
                         ) : (
-                          <Button variant="outline" size="sm" onClick={() => { setNewFamilyName(currentFamily.name); setEditingName(true); }}>{t('edit')}</Button>
-                        )
-                        }
+                          <Button variant="ghost" size="sm" className="h-8 px-2 text-sm" onClick={() => { setNewFamilyName(currentFamily.name); setEditingName(true); }}>
+                            {t('edit')}
+                          </Button>
+                        )}
                       </div>
                     )}
 
-                    {/* Pending invitations for current user */}
-                    {myPendingInvitations.length > 0 && (
-                      <div className="space-y-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
-                        <Label className="text-sm font-medium">{t('pendingInvitations')}</Label>
-                        {myPendingInvitations.map((invitation) => (
-                          <div key={invitation.id} className="flex items-center justify-between p-2 rounded bg-background">
-                            <div>
-                              <p className="font-medium text-sm">{invitation.family_name}</p>
-                              <p className="text-xs text-muted-foreground">{t('invitedToFamily')}</p>
+                    {/* Invite member - Admin only */}
+                    {isAdmin && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('inviteMember')}</p>
+                        <div className="flex gap-2">
+                          <Input className="h-9" placeholder={t('inviteEmailPlaceholder')} type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleInvite()} />
+                          <Button size="sm" className="h-9 px-3" onClick={handleInvite} disabled={!inviteEmail.trim() || isInviting}>
+                            {isInviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Members list - Cleaner */}
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('members')}</p>
+                      <div className="space-y-1">
+                        {members.map((member) => (
+                          <div key={member.id} className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-muted/30 -mx-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {getRoleIcon(member.role)}
+                              <div className="min-w-0">
+                                <p className="text-sm truncate">{member.user_id === user?.id ? t('you') : member.user_email || t('member')}</p>
+                                <p className="text-[11px] text-muted-foreground capitalize">{getRoleLabel(member.role)}</p>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Button size="sm" variant="outline" onClick={() => handleRejectInvitation(invitation.id)} disabled={processingAction === invitation.id}>
-                                <X className="h-4 w-4" />
-                              </Button>
-                              <Button size="sm" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id}>
-                                {processingAction === invitation.id ? <Loader2 className="h-4 w-4 animate-spin" /> : t('accept')}
-                              </Button>
-                            </div>
+                            {isAdmin && member.user_id !== user?.id && (
+                              <div className="flex items-center gap-1">
+                                <Select value={member.role === 'owner' ? 'admin' : member.role} onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)} disabled={processingAction === member.id}>
+                                  <SelectTrigger className="w-20 h-7 text-xs"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="admin">{t('role_admin')}</SelectItem>
+                                    <SelectItem value="member">{t('role_member')}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveMember(member.id)} disabled={processingAction === member.id}>
+                                  {processingAction === member.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
-                    )}
-
-                    <Separator />
-
-                    {/* Invite member */}
-                    {isAdmin && (
-                      <div className="flex gap-2">
-                        <Input placeholder={t('inviteEmailPlaceholder')} type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleInvite()} />
-                        <Button onClick={handleInvite} disabled={!inviteEmail.trim() || isInviting}>
-                          {isInviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* Members list */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">{t('members')}</Label>
-                      {members.map((member) => (
-                        <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card">
-                          <div className="flex items-center gap-3">
-                            {getRoleIcon(member.role)}
-                            <div>
-                              <p className="font-medium text-sm">{member.user_id === user?.id ? t('you') : member.user_email || t('member')}</p>
-                              <p className="text-xs text-muted-foreground capitalize">{getRoleLabel(member.role)}</p>
-                            </div>
-                          </div>
-                          {isAdmin && member.user_id !== user?.id && (
-                            <div className="flex items-center gap-2">
-                              <Select value={member.role === 'owner' ? 'admin' : member.role} onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)} disabled={processingAction === member.id}>
-                                <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="admin">{t('role_admin')}</SelectItem>
-                                  <SelectItem value="member">{t('role_member')}</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveMember(member.id)} disabled={processingAction === member.id}>
-                                {processingAction === member.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      ))}
                     </div>
 
-                    {/* Pending sent invitations */}
+                    {/* Pending sent invitations - Subtle */}
                     {isAdmin && pendingInvitations.length > 0 && (
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-muted-foreground">{t('pendingSent')}</Label>
-                        {pendingInvitations.map((invitation) => (
-                          <div key={invitation.id} className="flex items-center justify-between p-3 rounded-lg border border-dashed border-border bg-muted/30">
-                            <div className="flex items-center gap-3">
-                              <Mail className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm">{invitation.email}</span>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('pendingSent')}</p>
+                        <div className="space-y-1">
+                          {pendingInvitations.map((invitation) => (
+                            <div key={invitation.id} className="flex items-center justify-between py-1.5 px-2 rounded-md bg-muted/20 -mx-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                <span className="text-sm text-muted-foreground truncate">{invitation.email}</span>
+                              </div>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCancelInvitation(invitation.id)} disabled={processingAction === invitation.id}>
+                                {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                              </Button>
                             </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCancelInvitation(invitation.id)} disabled={processingAction === invitation.id}>
-                              {processingAction === invitation.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-                            </Button>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     )}
 
-                    <Separator />
-
-                    {/* Leave/Delete family */}
-                    <div className="space-y-2">
+                    {/* Danger Zone - Leave/Delete family */}
+                    <div className="space-y-1.5 pt-3 border-t border-border/50">
                       {!isOnlyMember && (
-                        <Button 
-                          variant="outline" 
-                          className="w-full text-destructive hover:text-destructive" 
-                          onClick={() => setShowLeaveAlert(true)}
-                          disabled={isOnlyAdmin}
-                          title={isOnlyAdmin ? t('promoteAdminFirst') : undefined}
-                        >
-                          <LogOut className="h-4 w-4 mr-2" />{t('leaveFamily')}
-                        </Button>
-                      )}
-                      {isOnlyAdmin && !isOnlyMember && (
-                        <p className="text-xs text-muted-foreground text-center">{t('promoteAdminFirst')}</p>
+                        <>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="w-full justify-start h-8 text-muted-foreground hover:text-destructive" 
+                            onClick={() => setShowLeaveAlert(true)}
+                            disabled={isOnlyAdmin}
+                          >
+                            <LogOut className="h-3.5 w-3.5 mr-2" />
+                            <span className="text-sm">{t('leaveFamily')}</span>
+                          </Button>
+                          {isOnlyAdmin && (
+                            <p className="text-[11px] text-muted-foreground pl-6">{t('promoteAdminFirst')}</p>
+                          )}
+                        </>
                       )}
                       {(isAdmin || isOnlyMember) && (
-                        <Button variant="destructive" className="w-full" onClick={() => setShowDeleteAlert(true)}>
-                          <Trash2 className="h-4 w-4 mr-2" />{t('deleteFamily')}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="w-full justify-start h-8 text-muted-foreground hover:text-destructive" 
+                          onClick={() => setShowDeleteAlert(true)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-2" />
+                          <span className="text-sm">{t('deleteFamily')}</span>
                         </Button>
                       )}
                     </div>
                   </>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>{t('noFamilySelected')}</p>
+                    <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                    <p className="text-sm">{t('noFamilySelected')}</p>
                   </div>
                 )}
               </TabsContent>
@@ -1034,7 +1037,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
       {/* Delete Alert */}
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('deleteFamilyConfirm')}</AlertDialogTitle>
             <AlertDialogDescription className={!isCurrentOffline ? "text-destructive font-medium" : ""}>
@@ -1042,40 +1045,41 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('delete')}</AlertDialogAction>
+            <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteFamily} className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Leave Alert */}
       <AlertDialog open={showLeaveAlert} onOpenChange={setShowLeaveAlert}>
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('leaveFamily')}</AlertDialogTitle>
             <AlertDialogDescription>{t('leaveFamilyConfirm')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLeaveFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('leave')}</AlertDialogAction>
+            <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLeaveFamily} className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('leave')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Create Family Dialog */}
       <Dialog open={showCreateFamilyDialog} onOpenChange={setShowCreateFamilyDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>{t('createFamily')}</DialogTitle>
+            <DialogTitle className="text-base">{t('createFamily')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Input
+              className="h-10"
               placeholder={t('familyNamePlaceholder')}
               value={createFamilyName}
               onChange={(e) => setCreateFamilyName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreateFamily()}
             />
-            <Button onClick={handleCreateFamily} disabled={isCreatingFamily || !createFamilyName.trim()} className="w-full">
+            <Button onClick={handleCreateFamily} disabled={isCreatingFamily || !createFamilyName.trim()} className="w-full h-9">
               {isCreatingFamily ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
               {t('createFamily')}
             </Button>
