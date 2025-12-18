@@ -443,14 +443,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Create family (cloud if online + authenticated, offline otherwise)
   const createFamily = async (name: string) => {
-    // Check if we can create in cloud
-    const ensuredSession = session ?? (await supabase.auth.getSession()).data.session;
-    const sessionUser = ensuredSession?.user;
+    // Always get fresh session from Supabase to ensure we have the latest auth state
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const sessionUser = currentSession?.user;
 
     if (!navigator.onLine || !sessionUser) {
       // Create offline family
+      console.log('Creating offline family. Online:', navigator.onLine, 'User:', !!sessionUser);
       return createOfflineFamily(name);
     }
+
+    console.log('Creating cloud family for user:', sessionUser.email);
 
     // Create cloud family
     const { data: family, error } = await supabase
