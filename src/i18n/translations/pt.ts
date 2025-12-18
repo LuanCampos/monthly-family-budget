@@ -260,6 +260,7 @@ export const pt = {
   create: 'Criar',
   familySettings: 'Configurações da Família',
   members: 'Membros',
+  inviteMember: 'Convidar membro',
   inviteEmailPlaceholder: 'E-mail do convidado',
   invitationSent: 'Convite enviado!',
   you: 'Você',
