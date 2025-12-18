@@ -290,6 +290,7 @@ export const pt = {
   resendVerificationEmail: 'Reenviar e-mail',
   verificationEmailResent: 'E-mail de verificação reenviado!',
   checkSpamFolder: 'Não encontrou? Verifique sua pasta de spam.',
+  emailConfirmedSuccess: 'E-mail confirmado! Você já pode entrar.',
 };
 
 export type TranslationKey = keyof typeof pt;

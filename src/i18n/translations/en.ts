@@ -292,4 +292,5 @@ export const en: Record<TranslationKey, string> = {
   resendVerificationEmail: 'Resend email',
   verificationEmailResent: 'Verification email resent!',
   checkSpamFolder: "Didn't find it? Check your spam folder.",
+  emailConfirmedSuccess: 'Email confirmed! You can use the app now.',
 };

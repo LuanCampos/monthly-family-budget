@@ -13,7 +13,7 @@ import "./index.css";
     const query = params.get('q')?.replace(/~and~/g, '&') || '';
     
     // Reconstruct the original URL (just clear the redirect params, keep the hash)
-    const base = '/monthly-family-budget/';
+    const base = import.meta.env.BASE_URL;
     let newUrl = base;
     if (path) {
       newUrl += path;
