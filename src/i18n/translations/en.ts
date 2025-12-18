@@ -33,6 +33,7 @@ export const en: Record<TranslationKey, string> = {
   selectMonth: 'Select a month',
   noMonthSelected: 'No month selected',
   addMonth: 'Add Month',
+  selectMonthAndYear: 'Select the month and year to add',
   deleteMonth: 'Delete month',
   deleteMonthConfirm: 'Are you sure you want to delete the month',
   deleteMonthWarning: 'This action cannot be undone.',

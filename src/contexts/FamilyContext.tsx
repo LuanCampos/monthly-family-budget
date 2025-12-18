@@ -199,23 +199,28 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setPendingInvitations([]);
       }
 
-      // My pending invitations
-      const { data: myInvites } = await supabase
-        .from('family_invitation')
-        .select(`
-          *,
-          family (name)
-        `)
-        .eq('email', user.email)
-        .eq('status', 'pending');
+      // My pending invitations (may fail if RLS not configured - silently handle)
+      try {
+        const { data: myInvites } = await supabase
+          .from('family_invitation')
+          .select(`
+            *,
+            family (name)
+          `)
+          .eq('email', user.email)
+          .eq('status', 'pending');
 
-      if (myInvites) {
-        setMyPendingInvitations(
-          myInvites.map((inv: any) => ({
-            ...inv,
-            family_name: inv.family?.name
-          }))
-        );
+        if (myInvites) {
+          setMyPendingInvitations(
+            myInvites.map((inv: any) => ({
+              ...inv,
+              family_name: inv.family?.name
+            }))
+          );
+        }
+      } catch {
+        // RLS may not allow this query - silently ignore
+        setMyPendingInvitations([]);
       }
     } catch (e) {
       console.log('Family tables not yet created');

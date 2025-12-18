@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -93,6 +94,9 @@ export const MonthSelector = ({
               <DialogTitle className="text-foreground">
                 {t('addMonth')}
               </DialogTitle>
+              <DialogDescription className="sr-only">
+                {t('selectMonthAndYear' as any)}
+              </DialogDescription>
             </DialogHeader>
 
             <div className="flex gap-3 mt-4">
@@ -175,6 +179,9 @@ export const MonthSelector = ({
             <DialogTitle className="text-foreground">
               {t('addMonth')}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              {t('selectMonthAndYear' as any)}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="flex gap-3 mt-4">

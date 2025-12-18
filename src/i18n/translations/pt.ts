@@ -31,6 +31,7 @@ export const pt = {
   selectMonth: 'Selecione um mês',
   noMonthSelected: 'Nenhum mês selecionado',
   addMonth: 'Adicionar Mês',
+  selectMonthAndYear: 'Selecione o mês e ano para adicionar',
   deleteMonth: 'Excluir mês',
   deleteMonthConfirm: 'Tem certeza que deseja excluir o mês',
   deleteMonthWarning: 'Esta ação não pode ser desfeita.',
