@@ -78,7 +78,8 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
     removeMember,
     updateFamilyName,
     deleteFamily,
-    leaveFamily
+    leaveFamily,
+    refreshFamilies
   } = useFamily();
   const { syncFamily, isSyncing, isOnline } = useOnline();
   
@@ -279,9 +280,13 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
   const handleSyncFamily = async () => {
     if (!currentFamily) return;
-    const { error } = await syncFamily(currentFamily.id);
+    const { newFamilyId, error } = await syncFamily(currentFamily.id);
     if (error) {
       toast({ title: t('error'), description: error.message, variant: 'destructive' });
+    } else if (newFamilyId) {
+      // Refresh families to get the new cloud family and select it
+      await refreshFamilies();
+      await selectFamily(newFamilyId);
     }
   };
 
