@@ -255,13 +255,19 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Load user preferences to get current family
   const loadUserPreferences = useCallback(async () => {
-    // First check localStorage for offline preference
-    const savedFamilyId = localStorage.getItem('current-family-id');
-    if (savedFamilyId) {
-      setCurrentFamilyId(savedFamilyId);
+    // If no user, only allow offline families from localStorage
+    if (!user) {
+      const savedFamilyId = localStorage.getItem('current-family-id');
+      // Only restore if it's an offline family ID
+      if (savedFamilyId && isOfflineId(savedFamilyId)) {
+        setCurrentFamilyId(savedFamilyId);
+      } else {
+        // Clear any cloud family selection when logged out
+        setCurrentFamilyId(null);
+        localStorage.removeItem('current-family-id');
+      }
+      return;
     }
-
-    if (!user) return;
 
     try {
       const { data } = await supabase
@@ -273,6 +279,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (data?.current_family_id) {
         setCurrentFamilyId(data.current_family_id);
         localStorage.setItem('current-family-id', data.current_family_id);
+      } else {
+        // User logged in but no family preference - check localStorage for offline family
+        const savedFamilyId = localStorage.getItem('current-family-id');
+        if (savedFamilyId && isOfflineId(savedFamilyId)) {
+          setCurrentFamilyId(savedFamilyId);
+        }
       }
     } catch (e) {
       console.log('User preferences table not yet created');
@@ -300,6 +312,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }, { onConflict: 'user_id' });
     } catch (e) {
       console.log('User preferences table not yet created');
+    }
+  }, [user]);
+
+  // Reset state when user logs out
+  useEffect(() => {
+    if (!user) {
+      // Clear all cloud-related state on logout
+      setMembers([]);
+      setPendingInvitations([]);
+      setMyPendingInvitations([]);
+      // currentFamilyId and families are handled by loadUserPreferences/refreshFamilies
     }
   }, [user]);
 

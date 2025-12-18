@@ -118,9 +118,9 @@ const Index = () => {
     );
   }
 
-  // Show family setup if no family ID exists
-  // For offline families, currentFamily might not be in the array initially
-  // but we should still proceed if we have a valid offline family ID
+  // Show family setup if:
+  // - No user logged in AND no offline family selected, OR
+  // - User logged in but no family selected
   if (!currentFamilyId) {
     return <FamilySetup />;
   }
