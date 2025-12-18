@@ -348,20 +348,117 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [user]);
 
+  // Track user ID to detect login changes
+  const prevUserIdRef = useRef<string | null>(null);
+
   // Initial load
   useEffect(() => {
     const init = async () => {
       setLoading(true);
-      await refreshFamilies();
-      await loadUserPreferences();
-      // Only check MY invitations during initial load (not family-specific)
+      
+      // Load families first
+      const offlineFamilies = await loadOfflineFamilies();
+      let allFamilies = offlineFamilies;
+
       if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('family_member')
+            .select(`
+              family_id,
+              family (
+                id,
+                name,
+                created_by,
+                created_at
+              )
+            `)
+            .eq('user_id', user.id);
+
+          if (!error && data) {
+            const cloudFamilies = data
+              .map((d: any) => ({ ...d.family, isOffline: false }))
+              .filter(Boolean) as Family[];
+            
+            allFamilies = [...cloudFamilies, ...offlineFamilies];
+          }
+        } catch (e) {
+          console.log('Error loading families, using offline only');
+        }
+      }
+      
+      setFamilies(allFamilies);
+      
+      // Load user preferences
+      let selectedFamilyId: string | null = null;
+      
+      if (!user) {
+        const savedFamilyId = localStorage.getItem('current-family-id');
+        if (savedFamilyId && isOfflineId(savedFamilyId)) {
+          selectedFamilyId = savedFamilyId;
+        }
+      } else {
+        try {
+          const { data } = await supabase
+            .from('user_preference')
+            .select('current_family_id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (data?.current_family_id) {
+            // Verify this family exists in the loaded families
+            const familyExists = allFamilies.some(f => f.id === data.current_family_id);
+            if (familyExists) {
+              selectedFamilyId = data.current_family_id;
+            }
+          }
+          
+          // If no valid preference found, check localStorage for offline family
+          if (!selectedFamilyId) {
+            const savedFamilyId = localStorage.getItem('current-family-id');
+            if (savedFamilyId && isOfflineId(savedFamilyId)) {
+              const offlineExists = allFamilies.some(f => f.id === savedFamilyId);
+              if (offlineExists) {
+                selectedFamilyId = savedFamilyId;
+              }
+            }
+          }
+        } catch (e) {
+          console.log('User preferences table not yet created');
+        }
+        
+        // Auto-select first family if user has families but no selection
+        if (!selectedFamilyId && allFamilies.length > 0) {
+          selectedFamilyId = allFamilies[0].id;
+          // Save this auto-selection
+          localStorage.setItem('current-family-id', selectedFamilyId);
+          if (!isOfflineId(selectedFamilyId)) {
+            supabase
+              .from('user_preference')
+              .upsert({
+                user_id: user.id,
+                current_family_id: selectedFamilyId,
+                updated_at: new Date().toISOString()
+              }, { onConflict: 'user_id' })
+              .then(() => {});
+          }
+        }
+        
         await refreshMyInvitations();
       }
+      
+      setCurrentFamilyId(selectedFamilyId);
+      if (selectedFamilyId) {
+        localStorage.setItem('current-family-id', selectedFamilyId);
+      } else {
+        localStorage.removeItem('current-family-id');
+      }
+      
+      prevUserIdRef.current = user?.id || null;
       setLoading(false);
     };
     init();
-  }, [user, refreshFamilies, loadUserPreferences, refreshMyInvitations]);
+  }, [user, loadOfflineFamilies, refreshMyInvitations]);
 
   // Load members and family invitations when family changes
   useEffect(() => {
