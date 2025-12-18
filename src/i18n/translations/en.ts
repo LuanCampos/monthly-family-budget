@@ -2,7 +2,7 @@ import { TranslationKey } from './pt';
 
 export const en: Record<TranslationKey, string> = {
   // App
-  appTitle: 'Home Budget',
+  appTitle: 'Family Budget',
   appSubtitle: 'Managing our family budget based on our goals.',
   
   // Online/Offline
