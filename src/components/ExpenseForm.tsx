@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { DialogDescription } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CategoryKey, Subcategory } from '@/types/budget';
+import { CategoryKey, Subcategory } from '@/types';
 import { DEFAULT_CATEGORY } from '@/constants/categories';
 import { ExpenseFormFields } from './ExpenseFormFields';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';

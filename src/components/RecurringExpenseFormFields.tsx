@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { YearSelector } from '@/components/ui/year-selector';
-import { CategoryKey, Subcategory } from '@/types/budget';
+import { CategoryKey, Subcategory } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';

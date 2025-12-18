@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Month, Expense, CategoryKey, Subcategory, RecurringExpense } from '@/types/budget';
+import { Month, Expense, CategoryKey, Subcategory, RecurringExpense } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
-import * as budgetService from '@/lib/budgetService';
+import * as storageAdapter from '@/lib/storageAdapter';
 import { useFamily } from '@/contexts/FamilyContext';
 import { offlineAdapter } from '@/lib/offlineAdapter';
 import { toast } from 'sonner';
@@ -82,185 +82,35 @@ export const useBudget = () => {
   const loadMonths = useCallback(async () => {
     if (!currentFamilyId) return;
 
-      if (shouldUseOffline(currentFamilyId)) {
-        // Load from IndexedDB
-        const offlineMonths = await offlineAdapter.getAllByIndex<any>('months', 'family_id', currentFamilyId);
-      
-        const monthsWithExpenses: Month[] = await Promise.all(
-          offlineMonths.map(async (m) => {
-            const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', m.id);
-            return {
-              id: m.id,
-              label: getMonthLabel(m.year, m.month),
-              year: m.year,
-              month: m.month,
-              income: m.income || 0,
-              expenses: expenses.map((e: any) => ({
-                id: e.id,
-                title: e.title,
-                category: e.category_key as CategoryKey,
-                subcategoryId: e.subcategory_id,
-                value: e.value,
-                isRecurring: e.is_recurring,
-                isPending: e.is_pending,
-                dueDay: e.due_day,
-                recurringExpenseId: e.recurring_expense_id,
-                installmentInfo: e.installment_current && e.installment_total ? {
-                  current: e.installment_current,
-                  total: e.installment_total
-                } : undefined
-              }))
-            };
-          })
-        );
-
-        setMonths(monthsWithExpenses.sort((a, b) => a.id.localeCompare(b.id)));
-        return;
-      }
-
-    // Load from Supabase
-      const { data: monthsData, error } = await budgetService.getMonths(currentFamilyId);
-
-    if (error) {
-      console.error('Error loading months:', error);
-      return;
-    }
-
-    if (!monthsData) return;
-
-    const monthsWithExpenses: Month[] = await Promise.all(
-      monthsData.map(async (m) => {
-        const { data: expenses } = await budgetService.getExpensesByMonth(m.id);
-
-        return {
-          id: m.id,
-          label: getMonthLabel(m.year, m.month),
-          year: m.year,
-          month: m.month,
-          income: m.income || 0,
-          expenses: (expenses || []).map(e => ({
-          id: e.id,
-          title: e.title,
-          category: e.category_key as CategoryKey,
-          subcategoryId: e.subcategory_id,
-            value: e.value,
-            isRecurring: e.is_recurring,
-            isPending: e.is_pending,
-            dueDay: e.due_day,
-            recurringExpenseId: e.recurring_expense_id,
-            installmentInfo: e.installment_current && e.installment_total ? {
-              current: e.installment_current,
-              total: e.installment_total
-            } : undefined
-          }))
-        };
-      })
-    );
-
-    setMonths(monthsWithExpenses);
+      const monthsWithExpenses = await storageAdapter.getMonthsWithExpenses(currentFamilyId);
+      setMonths(monthsWithExpenses);
   }, [currentFamilyId]);
 
   // Load recurring expenses
   const loadRecurringExpenses = useCallback(async () => {
     if (!currentFamilyId) return;
 
-    if (shouldUseOffline(currentFamilyId)) {
-      const data = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', currentFamilyId);
-      setRecurringExpenses(data.map(r => ({
-        id: r.id,
-        title: r.title,
-        category: r.category_key as CategoryKey,
-        subcategoryId: r.subcategory_id,
-        value: r.value,
-        isRecurring: true as const,
-        dueDay: r.due_day,
-        hasInstallments: r.has_installments,
-        totalInstallments: r.total_installments,
-        startYear: r.start_year,
-        startMonth: r.start_month
-      })));
-      return;
-    }
-
-    const { data, error } = await budgetService.getRecurringExpenses(currentFamilyId);
-
-    if (error) {
-      console.error('Error loading recurring expenses:', error);
-      return;
-    }
-
-    setRecurringExpenses((data || []).map(r => ({
-      id: r.id,
-      title: r.title,
-      category: r.category_key as CategoryKey,
-      subcategoryId: r.subcategory_id,
-      value: r.value,
-      isRecurring: true as const,
-      dueDay: r.due_day,
-      hasInstallments: r.has_installments,
-      totalInstallments: r.total_installments,
-      startYear: r.start_year,
-      startMonth: r.start_month
-    })));
+    const recs = await storageAdapter.getRecurringExpenses(currentFamilyId);
+    setRecurringExpenses(recs);
   }, [currentFamilyId]);
 
   // Load subcategories
   const loadSubcategories = useCallback(async () => {
     if (!currentFamilyId) return;
 
-    if (shouldUseOffline(currentFamilyId)) {
-      const data = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', currentFamilyId);
-      setSubcategories(data.map(s => ({
-        id: s.id,
-        name: s.name,
-        categoryKey: s.category_key as CategoryKey
-      })));
-      return;
-    }
-
-    const { data, error } = await budgetService.getSubcategories(currentFamilyId);
-
-    if (error) {
-      console.error('Error loading subcategories:', error);
-      return;
-    }
-
-    setSubcategories((data || []).map(s => ({
-      id: s.id,
-      name: s.name,
-      categoryKey: s.category_key as CategoryKey
-    })));
+    const subs = await storageAdapter.getSubcategories(currentFamilyId);
+    setSubcategories(subs);
   }, [currentFamilyId]);
 
   // Load category goals
   const loadCategoryGoals = useCallback(async () => {
     if (!currentFamilyId) return;
 
-    if (shouldUseOffline(currentFamilyId)) {
-      const data = await offlineAdapter.getAllByIndex<any>('category_goals', 'family_id', currentFamilyId);
-      if (data && data.length > 0) {
-        const goals: Record<CategoryKey, number> = { ...categoryPercentages };
-        data.forEach(g => {
-          goals[g.category_key as CategoryKey] = g.percentage;
-        });
-        setCategoryPercentages(goals);
-      }
-      return;
-    }
-
-    const { data, error } = await budgetService.getCategoryGoals(currentFamilyId);
-
-    if (error) {
-      console.error('Error loading category goals:', error);
-      return;
-    }
-
-    if (data && data.length > 0) {
-      const goals: Record<CategoryKey, number> = { ...categoryPercentages };
-      data.forEach(g => {
-        goals[g.category_key as CategoryKey] = g.percentage;
-      });
-      setCategoryPercentages(goals);
+    const goals = await storageAdapter.getCategoryGoals(currentFamilyId);
+    if (goals && goals.length > 0) {
+      const gp: Record<CategoryKey, number> = { ...categoryPercentages };
+      goals.forEach((g: any) => { gp[g.category_key as CategoryKey] = g.percentage; });
+      setCategoryPercentages(gp);
     }
   }, [currentFamilyId]);
 
@@ -313,7 +163,7 @@ export const useBudget = () => {
   useEffect(() => {
     if (!currentFamilyId || offlineAdapter.isOfflineId(currentFamilyId) || !navigator.onLine) return;
 
-    const channel = budgetService.createChannel(`budget-${currentFamilyId}`)
+    const channel = storageAdapter.createChannel(`budget-${currentFamilyId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'month', filter: `family_id=eq.${currentFamilyId}` }, () => {
         api.loadMonths();
       })
@@ -332,7 +182,7 @@ export const useBudget = () => {
       .subscribe();
 
     return () => {
-      budgetService.removeChannel(channel);
+      storageAdapter.removeChannel(channel);
     };
   }, [currentFamilyId, api]);
 
@@ -402,7 +252,7 @@ export const useBudget = () => {
       return true;
     }
 
-    const { data: createdMonth, error } = await budgetService.insertMonth(currentFamilyId, year, month);
+    const createdMonth = await storageAdapter.insertMonth(currentFamilyId, year, month);
 
     if (error || !createdMonth) {
       // Fallback to offline
@@ -419,9 +269,9 @@ export const useBudget = () => {
     for (const recurring of recurringExpenses) {
       const result = shouldIncludeRecurringInMonth(recurring, year, month);
       if (result.include) {
-        await budgetService.insertExpense({
+        await storageAdapter.insertExpense(currentFamilyId, {
           family_id: currentFamilyId,
-          month_id: createdMonth.id,
+          month_id: (createdMonth as any).id || createdMonth.id,
           title: recurring.title,
           category_key: recurring.category,
           subcategory_id: recurring.subcategoryId,
@@ -447,8 +297,9 @@ export const useBudget = () => {
       for (const exp of expenses) await offlineAdapter.delete('expenses', exp.id);
       await offlineAdapter.delete('months', monthId);
     } else {
-      await budgetService.deleteExpensesByMonth(monthId);
-      await supabase.from('month').delete().eq('id', monthId);
+      await storageAdapter.deleteExpensesByMonth(monthId);
+      const svc = await import('@/lib/budgetService');
+      await svc.deleteMonthById(monthId);
     }
 
     if (currentMonthId === monthId) {

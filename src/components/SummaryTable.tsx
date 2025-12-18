@@ -1,4 +1,4 @@
-import { CategoryKey } from '@/types/budget';
+import { CategoryKey } from '@/types';
 import { formatPercentage } from '@/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';

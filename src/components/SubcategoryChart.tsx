@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CategoryKey, Expense, Subcategory } from '@/types/budget';
+import { CategoryKey, Expense, Subcategory } from '@/types';
 import { getCategoryByKey } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';

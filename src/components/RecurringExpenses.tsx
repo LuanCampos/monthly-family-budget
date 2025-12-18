@@ -3,7 +3,7 @@ import { Plus, Trash2, RefreshCw, Pencil, Calendar, Check, ArrowUpDown, ArrowUp,
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { CategoryKey, Subcategory, RecurringExpense, Expense } from '@/types/budget';
+import { CategoryKey, Subcategory, RecurringExpense, Expense } from '@/types';
 import { getCategoryByKey, DEFAULT_CATEGORY, CATEGORIES } from '@/constants/categories';
 import { RecurringExpenseFormFields } from './RecurringExpenseFormFields';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';

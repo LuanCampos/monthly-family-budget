@@ -85,6 +85,10 @@ export const deleteExpensesByMonth = async (monthId: string) => {
   return supabase.from('expense').delete().eq('month_id', monthId);
 };
 
+export const deleteMonthById = async (monthId: string) => {
+  return supabase.from('month').delete().eq('id', monthId);
+};
+
 export const clearRecurringSubcategoryReferences = async (id: string) => {
   return supabase.from('recurring_expense').update({ subcategory_id: null }).eq('subcategory_id', id);
 };

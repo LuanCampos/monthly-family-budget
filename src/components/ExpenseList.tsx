@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Trash2, Pencil, RefreshCw, X, AlertCircle, Calendar, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Expense, Subcategory, CategoryKey, RecurringExpense } from '@/types/budget';
+import { Expense, Subcategory, CategoryKey, RecurringExpense } from '@/types';
 import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';

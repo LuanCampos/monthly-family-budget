@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Month, RecurringExpense, Subcategory, CategoryKey } from '@/types/budget';
+import { Month, RecurringExpense, Subcategory, CategoryKey } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
 
 export const useBudgetState = () => {
