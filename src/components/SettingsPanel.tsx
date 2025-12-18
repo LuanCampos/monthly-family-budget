@@ -41,7 +41,7 @@ import { TranslationKey } from '@/i18n/translations/pt';
 import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { useOnline } from '@/contexts/OnlineContext';
-import { clearOfflineCache, isOfflineId } from '@/lib/offlineStorage';
+import { offlineAdapter } from '@/lib/offlineAdapter';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -111,7 +111,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   const [createFamilyName, setCreateFamilyName] = useState('');
 
   const isAdmin = userRole === 'owner' || userRole === 'admin';
-  const isCurrentOffline = currentFamily?.isOffline || isOfflineId(currentFamily?.id || '');
+  const isCurrentOffline = currentFamily?.isOffline || offlineAdapter.isOfflineId(currentFamily?.id || '');
   const isOnlyMember = members.length === 1;
   const adminCount = members.filter(m => m.role === 'owner' || m.role === 'admin').length;
   const isOnlyAdmin = isAdmin && adminCount === 1 && members.length > 1;
@@ -860,7 +860,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                         >
                           <span className="truncate">{family.name}</span>
                           <div className="flex items-center gap-1">
-                            {(family.isOffline || isOfflineId(family.id)) && (
+                            {(family.isOffline || offlineAdapter.isOfflineId(family.id)) && (
                               <WifiOff className="h-3 w-3 text-amber-500" />
                             )}
                             {currentFamily?.id === family.id && (

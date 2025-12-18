@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { offlineDB, syncQueue, SyncQueueItem, isOfflineId } from '@/lib/offlineStorage';
+import { offlineAdapter } from '@/lib/offlineAdapter';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -50,7 +50,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Count pending sync items
   const updatePendingCount = useCallback(async () => {
-    const items = await syncQueue.getAll();
+    const items = await offlineAdapter.sync.getAll();
     setPendingSyncCount(items.length);
   }, []);
 
@@ -74,7 +74,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       // Get offline family
-      const offlineFamily = await offlineDB.get<any>('families', familyId);
+      const offlineFamily = await offlineAdapter.get<any>('families', familyId);
       if (!offlineFamily) {
         return { error: new Error('Família não encontrada') };
       }
@@ -106,7 +106,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const idMap: Record<string, string> = { [familyId]: newFamilyId };
 
       // Sync subcategories
-      const subcategories = await offlineDB.getAllByIndex<any>('subcategories', 'family_id', familyId);
+      const subcategories = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', familyId);
       for (const sub of subcategories) {
         const { data } = await supabase
           .from('subcategory')
@@ -121,7 +121,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       // Sync recurring expenses
-      const recurringExpenses = await offlineDB.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
+      const recurringExpenses = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
       for (const rec of recurringExpenses) {
         const { data } = await supabase
           .from('recurring_expense')
@@ -143,7 +143,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       // Sync months
-      const months = await offlineDB.getAllByIndex<any>('months', 'family_id', familyId);
+      const months = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
       for (const month of months) {
         const newMonthId = month.id.replace(familyId, newFamilyId);
         await supabase.from('month').insert({
@@ -158,7 +158,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Sync expenses
       for (const month of months) {
-        const expenses = await offlineDB.getAllByIndex<any>('expenses', 'month_id', month.id);
+        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
         for (const exp of expenses) {
           await supabase.from('expense').insert({
             month_id: idMap[month.id],
@@ -177,7 +177,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       // Sync category goals
-      const goals = await offlineDB.getAllByIndex<any>('category_goals', 'family_id', familyId);
+      const goals = await offlineAdapter.getAllByIndex<any>('category_goals', 'family_id', familyId);
       for (const goal of goals) {
         await supabase.from('category_goal').upsert({
           family_id: newFamilyId,
@@ -187,19 +187,19 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       // Clean up local offline data for this family
-      for (const sub of subcategories) await offlineDB.delete('subcategories', sub.id);
-      for (const rec of recurringExpenses) await offlineDB.delete('recurring_expenses', rec.id);
+      for (const sub of subcategories) await offlineAdapter.delete('subcategories', sub.id);
+      for (const rec of recurringExpenses) await offlineAdapter.delete('recurring_expenses', rec.id);
       for (const month of months) {
-        const expenses = await offlineDB.getAllByIndex<any>('expenses', 'month_id', month.id);
-        for (const exp of expenses) await offlineDB.delete('expenses', exp.id);
-        await offlineDB.delete('months', month.id);
+        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
+        for (const exp of expenses) await offlineAdapter.delete('expenses', exp.id);
+        await offlineAdapter.delete('months', month.id);
       }
-      for (const goal of goals) await offlineDB.delete('category_goals', goal.id);
-      await offlineDB.delete('families', familyId);
+      for (const goal of goals) await offlineAdapter.delete('category_goals', goal.id);
+      await offlineAdapter.delete('families', familyId);
 
       // Clear sync queue for this family
-      const queueItems = await syncQueue.getByFamily(familyId);
-      for (const item of queueItems) await syncQueue.remove(item.id);
+      const queueItems = await offlineAdapter.sync.getByFamily(familyId);
+      for (const item of queueItems) await offlineAdapter.sync.remove(item.id);
 
       await updatePendingCount();
       toast.success('Família sincronizada com sucesso!');
@@ -219,11 +219,11 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     setIsSyncing(true);
     try {
-      const items = await syncQueue.getAll();
+      const items = await offlineAdapter.sync.getAll();
       
       for (const item of items) {
         try {
-          if (isOfflineId(item.familyId)) {
+          if (offlineAdapter.isOfflineId(item.familyId)) {
             // Skip items for offline families - they need full family sync
             continue;
           }
@@ -236,7 +236,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             await supabase.from(item.type).delete().eq('id', item.data.id);
           }
 
-          await syncQueue.remove(item.id);
+          await offlineAdapter.sync.remove(item.id);
         } catch (error) {
           console.error('Error syncing item:', item, error);
         }

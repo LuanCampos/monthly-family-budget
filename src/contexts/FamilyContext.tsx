@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { offlineDB, generateOfflineId, isOfflineId, syncQueue } from '@/lib/offlineStorage';
+import { offlineAdapter } from '@/lib/offlineAdapter';
 
 export type FamilyRole = 'owner' | 'admin' | 'member';
 
@@ -90,12 +90,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const currentFamily = families.find(f => f.id === currentFamilyId) || null;
   const userRole = members.find(m => m.user_id === user?.id && m.family_id === currentFamilyId)?.role || null;
-  const isCurrentFamilyOffline = currentFamily?.isOffline ?? isOfflineId(currentFamilyId || '');
+  const isCurrentFamilyOffline = currentFamily?.isOffline ?? offlineAdapter.isOfflineId(currentFamilyId || '');
 
   // Load offline families
   const loadOfflineFamilies = useCallback(async (): Promise<Family[]> => {
     try {
-      const offlineFamilies = await offlineDB.getAll<Family>('families');
+      const offlineFamilies = await offlineAdapter.getAll<Family>('families');
       return offlineFamilies.map(f => ({ ...f, isOffline: true }));
     } catch {
       return [];
@@ -149,7 +149,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     // Offline families don't have cloud members
-    if (isOfflineId(currentFamilyId)) {
+    if (offlineAdapter.isOfflineId(currentFamilyId || '')) {
       setMembers([{
         id: 'offline-member',
         family_id: currentFamilyId,
@@ -247,7 +247,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Load family-specific invitations (invitations sent FROM current family)
   // Only called for online families
   const refreshFamilyInvitations = useCallback(async () => {
-    if (!currentFamilyId || isOfflineId(currentFamilyId)) {
+    if (!currentFamilyId || offlineAdapter.isOfflineId(currentFamilyId || '')) {
       setPendingInvitations([]);
       return;
     }
@@ -281,7 +281,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!user) {
       const savedFamilyId = localStorage.getItem('current-family-id');
       // Only restore if it's an offline family ID
-      if (savedFamilyId && isOfflineId(savedFamilyId)) {
+      if (savedFamilyId && offlineAdapter.isOfflineId(savedFamilyId)) {
         setCurrentFamilyId(savedFamilyId);
       } else {
         // Clear any cloud family selection when logged out
@@ -304,7 +304,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       } else {
         // User logged in but no family preference - check localStorage for offline family
         const savedFamilyId = localStorage.getItem('current-family-id');
-        if (savedFamilyId && isOfflineId(savedFamilyId)) {
+        if (savedFamilyId && offlineAdapter.isOfflineId(savedFamilyId)) {
           setCurrentFamilyId(savedFamilyId);
         }
       }
@@ -322,7 +322,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       localStorage.removeItem('current-family-id');
     }
 
-    if (!user || !familyId || isOfflineId(familyId)) return;
+    if (!user || !familyId || offlineAdapter.isOfflineId(familyId)) return;
 
     try {
       await supabase
@@ -394,7 +394,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       if (!user) {
         const savedFamilyId = localStorage.getItem('current-family-id');
-        if (savedFamilyId && isOfflineId(savedFamilyId)) {
+        if (savedFamilyId && offlineAdapter.isOfflineId(savedFamilyId)) {
           selectedFamilyId = savedFamilyId;
         }
       } else {
@@ -416,7 +416,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           // If no valid preference found, check localStorage for offline family
           if (!selectedFamilyId) {
             const savedFamilyId = localStorage.getItem('current-family-id');
-            if (savedFamilyId && isOfflineId(savedFamilyId)) {
+            if (savedFamilyId && offlineAdapter.isOfflineId(savedFamilyId)) {
               const offlineExists = allFamilies.some(f => f.id === savedFamilyId);
               if (offlineExists) {
                 selectedFamilyId = savedFamilyId;
@@ -432,7 +432,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           selectedFamilyId = allFamilies[0].id;
           // Save this auto-selection
           localStorage.setItem('current-family-id', selectedFamilyId);
-          if (!isOfflineId(selectedFamilyId)) {
+          if (!offlineAdapter.isOfflineId(selectedFamilyId || '')) {
             supabase
               .from('user_preference')
               .upsert({
@@ -468,7 +468,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     refreshMembers();
     
     // Only refresh family invitations for online families
-    if (!isOfflineId(currentFamilyId)) {
+    if (!offlineAdapter.isOfflineId(currentFamilyId || '')) {
       refreshFamilyInvitations();
     } else {
       // Clear family invitations when switching to offline
@@ -513,7 +513,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setCurrentFamilyId(remainingFamilies[0].id);
           localStorage.setItem('current-family-id', remainingFamilies[0].id);
           // Save to cloud preferences if user is logged in
-          if (user && !isOfflineId(remainingFamilies[0].id)) {
+          if (user && !offlineAdapter.isOfflineId(remainingFamilies[0].id)) {
             supabase
               .from('user_preference')
               .upsert({
@@ -546,7 +546,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Create offline family (always works, even without auth)
   const createOfflineFamily = async (name: string) => {
-    const id = generateOfflineId('family');
+    const id = offlineAdapter.generateOfflineId('family');
     const now = new Date().toISOString();
 
     const family: Family = {
@@ -557,7 +557,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       isOffline: true,
     };
 
-    await offlineDB.put('families', family);
+    await offlineAdapter.put('families', family as any);
     await refreshFamilies();
     await selectFamily(id);
 
@@ -619,10 +619,10 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Update family name
   const updateFamilyName = async (familyId: string, name: string) => {
-    if (isOfflineId(familyId)) {
-      const family = await offlineDB.get<Family>('families', familyId);
+    if (offlineAdapter.isOfflineId(familyId)) {
+      const family = await offlineAdapter.get<Family>('families', familyId);
       if (family) {
-        await offlineDB.put('families', { ...family, name });
+        await offlineAdapter.put('families', { ...family, name } as any);
         await refreshFamilies();
       }
       return { error: null };
@@ -639,25 +639,25 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Delete family
   const deleteFamily = async (familyId: string) => {
-    if (isOfflineId(familyId)) {
+    if (offlineAdapter.isOfflineId(familyId)) {
       // Delete offline family and all related data
-      const months = await offlineDB.getAllByIndex<any>('months', 'family_id', familyId);
+      const months = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
       for (const month of months) {
-        const expenses = await offlineDB.getAllByIndex<any>('expenses', 'month_id', month.id);
-        for (const exp of expenses) await offlineDB.delete('expenses', exp.id);
-        await offlineDB.delete('months', month.id);
+        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
+        for (const exp of expenses) await offlineAdapter.delete('expenses', exp.id);
+        await offlineAdapter.delete('months', month.id);
       }
       
-      const recurring = await offlineDB.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
-      for (const rec of recurring) await offlineDB.delete('recurring_expenses', rec.id);
+      const recurring = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
+      for (const rec of recurring) await offlineAdapter.delete('recurring_expenses', rec.id);
       
-      const subs = await offlineDB.getAllByIndex<any>('subcategories', 'family_id', familyId);
-      for (const sub of subs) await offlineDB.delete('subcategories', sub.id);
+      const subs = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', familyId);
+      for (const sub of subs) await offlineAdapter.delete('subcategories', sub.id);
       
-      const goals = await offlineDB.getAllByIndex<any>('category_goals', 'family_id', familyId);
-      for (const goal of goals) await offlineDB.delete('category_goals', goal.id);
+      const goals = await offlineAdapter.getAllByIndex<any>('category_goals', 'family_id', familyId);
+      for (const goal of goals) await offlineAdapter.delete('category_goals', goal.id);
       
-      await offlineDB.delete('families', familyId);
+      await offlineAdapter.delete('families', familyId);
 
       if (currentFamilyId === familyId) {
         const remaining = families.filter(f => f.id !== familyId);
@@ -696,7 +696,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const leaveFamily = async (familyId: string) => {
     if (!user) return { error: new Error('Not authenticated') };
 
-    if (isOfflineId(familyId)) {
+    if (offlineAdapter.isOfflineId(familyId)) {
       return deleteFamily(familyId);
     }
 
@@ -725,7 +725,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const inviteMember = async (email: string) => {
     if (!user || !currentFamilyId) return { error: new Error('Not authenticated or no family selected') };
     
-    if (isOfflineId(currentFamilyId)) {
+    if (offlineAdapter.isOfflineId(currentFamilyId || '')) {
       return { error: new Error('Convites não disponíveis em famílias offline. Sincronize primeiro.') };
     }
 
