@@ -332,6 +332,7 @@ const BudgetContent = () => {
                 <ExpenseList
                   expenses={currentMonth?.expenses || []}
                   subcategories={subcategories}
+                  recurringExpenses={recurringExpenses}
                   onRemove={removeExpense}
                   onEdit={handleEditExpense}
                   onConfirmPayment={confirmPayment}
