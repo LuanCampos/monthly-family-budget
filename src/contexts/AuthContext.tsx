@@ -106,7 +106,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Some sessions can fail server-side revocation (e.g. /logout 403). In that case,
+    // we still want to reliably clear the local session so the user can log out.
+    const { error } = await supabase.auth.signOut(); // default: global
+
+    if (error) {
+      // Fallback: local sign out (clears storage without calling the server)
+      await supabase.auth.signOut({ scope: 'local' });
+
+      // Last resort: ensure token is removed from storage
+      try {
+        for (const key of Object.keys(localStorage)) {
+          if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
   };
 
   return (
