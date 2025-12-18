@@ -66,15 +66,13 @@ export const MonthSelector = ({
     }
   };
 
-  const getMonthLabel = (month: Month) => {
-    const monthKey = `month-${month.month - 1}` as TranslationKey;
-    return `${t(monthKey)} ${month.year}`;
-  };
-
-  const getShortMonthLabel = (month: Month) => {
+  const getMonthLabel = (month: Month, abbreviated = false) => {
     const monthKey = `month-${month.month - 1}` as TranslationKey;
     const monthName = t(monthKey);
-    return `${monthName.slice(0, 3)}/${month.year.toString().slice(-2)}`;
+    if (abbreviated) {
+      return `${monthName.slice(0, 3)}/${month.year.toString().slice(-2)}`;
+    }
+    return `${monthName} ${month.year}`;
   };
 
   if (showCreateButton) {
@@ -137,17 +135,20 @@ export const MonthSelector = ({
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
-            className="h-9 sm:h-10 px-2.5 sm:px-4 bg-secondary/50 border-border hover:bg-secondary text-foreground font-medium text-sm w-full sm:w-auto justify-between sm:justify-start"
+            className="h-9 sm:h-10 px-2 sm:px-4 bg-secondary/50 border-border hover:bg-secondary text-foreground font-medium text-xs sm:text-sm w-full sm:w-auto justify-between sm:justify-start"
           >
             <div className="flex items-center min-w-0">
-              <Calendar className="h-4 w-4 mr-1.5 sm:mr-2 text-primary flex-shrink-0" />
+              <Calendar className="h-4 w-4 mr-1 sm:mr-2 text-primary flex-shrink-0" />
               {currentMonth ? (
-                <span className="truncate">{getMonthLabel(currentMonth)}</span>
+                <>
+                  <span className="sm:hidden">{getMonthLabel(currentMonth, true)}</span>
+                  <span className="hidden sm:inline">{getMonthLabel(currentMonth)}</span>
+                </>
               ) : (
                 <span className="text-muted-foreground truncate">{t('selectMonth')}</span>
               )}
             </div>
-            <ChevronDown className="ml-1.5 sm:ml-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <ChevronDown className="ml-1 sm:ml-2 h-4 w-4 text-muted-foreground flex-shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-card border-border min-w-[180px]" align="end">
