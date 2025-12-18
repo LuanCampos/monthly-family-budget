@@ -266,14 +266,19 @@ export const useBudget = () => {
     }
   }, [currentFamilyId, useOffline]);
 
-  // Initial data load
+  // Initial data load - reset state and reload when family changes
   useEffect(() => {
     const loadData = async () => {
+      // Reset all state when family changes or is cleared
+      setMonths([]);
+      setRecurringExpenses([]);
+      setSubcategories([]);
+      setCurrentMonthId(null);
+      setCategoryPercentages(
+        Object.fromEntries(CATEGORIES.map(c => [c.key, c.percentage])) as Record<CategoryKey, number>
+      );
+
       if (!currentFamilyId) {
-        setMonths([]);
-        setRecurringExpenses([]);
-        setSubcategories([]);
-        setCurrentMonthId(null);
         setLoading(false);
         return;
       }
@@ -289,7 +294,16 @@ export const useBudget = () => {
     };
 
     loadData();
-  }, [currentFamilyId, loadMonths, loadRecurringExpenses, loadSubcategories, loadCategoryGoals]);
+  }, [currentFamilyId]);
+
+  // Auto-select the most recent month after months are loaded
+  useEffect(() => {
+    if (months.length > 0 && !currentMonthId) {
+      // Select the most recent month (last in the sorted array)
+      const mostRecent = months[months.length - 1];
+      setCurrentMonthId(mostRecent.id);
+    }
+  }, [months, currentMonthId]);
 
   // Set up realtime subscriptions (only for cloud families)
   useEffect(() => {
