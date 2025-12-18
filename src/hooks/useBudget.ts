@@ -82,7 +82,7 @@ export const useBudget = () => {
             expenses: expenses.map((e: any) => ({
               id: e.id,
               title: e.title,
-              category: e.category as CategoryKey,
+              category: e.category_key as CategoryKey,
               subcategoryId: e.subcategory_id,
               value: e.value,
               isRecurring: e.is_recurring,
@@ -131,10 +131,10 @@ export const useBudget = () => {
           month: m.month,
           income: m.income || 0,
           expenses: (expenses || []).map(e => ({
-            id: e.id,
-            title: e.title,
-            category: e.category as CategoryKey,
-            subcategoryId: e.subcategory_id,
+          id: e.id,
+          title: e.title,
+          category: e.category_key as CategoryKey,
+          subcategoryId: e.subcategory_id,
             value: e.value,
             isRecurring: e.is_recurring,
             isPending: e.is_pending,
@@ -161,7 +161,7 @@ export const useBudget = () => {
       setRecurringExpenses(data.map(r => ({
         id: r.id,
         title: r.title,
-        category: r.category as CategoryKey,
+        category: r.category_key as CategoryKey,
         subcategoryId: r.subcategory_id,
         value: r.value,
         isRecurring: true as const,
@@ -187,7 +187,7 @@ export const useBudget = () => {
     setRecurringExpenses((data || []).map(r => ({
       id: r.id,
       title: r.title,
-      category: r.category as CategoryKey,
+      category: r.category_key as CategoryKey,
       subcategoryId: r.subcategory_id,
       value: r.value,
       isRecurring: true as const,
@@ -407,7 +407,7 @@ export const useBudget = () => {
             id: generateOfflineId('exp'),
             month_id: id,
             title: recurring.title,
-            category: recurring.category,
+            category_key: recurring.category,
             subcategory_id: recurring.subcategoryId,
             value: recurring.value,
             is_recurring: true,
@@ -442,7 +442,7 @@ export const useBudget = () => {
         await supabase.from('expense').insert({
           month_id: id,
           title: recurring.title,
-          category: recurring.category,
+          category_key: recurring.category,
           subcategory_id: recurring.subcategoryId,
           value: recurring.value,
           is_recurring: true,
@@ -513,7 +513,7 @@ export const useBudget = () => {
       id: generateOfflineId('exp'),
       month_id: currentMonthId,
       title,
-      category,
+      category_key: category,
       subcategory_id: subcategoryId || null,
       value,
       is_recurring: false,
@@ -545,7 +545,7 @@ export const useBudget = () => {
   ) => {
     const updateData = {
       title,
-      category,
+      category_key: category,
       subcategory_id: subcategoryId || null,
       value,
       is_pending: isPending ?? false
@@ -617,7 +617,7 @@ export const useBudget = () => {
       id,
       family_id: currentFamilyId,
       title,
-      category,
+      category_key: category,
       subcategory_id: subcategoryId || null,
       value,
       due_day: dueDay,
@@ -652,7 +652,7 @@ export const useBudget = () => {
             id: generateOfflineId('exp'),
             month_id: currentMonthId,
             title,
-            category,
+            category_key: category,
             subcategory_id: subcategoryId || null,
             value,
             is_recurring: true,
@@ -706,7 +706,7 @@ export const useBudget = () => {
         await supabase.from('expense').insert({
           month_id: currentMonthId,
           title,
-          category,
+          category_key: category,
           subcategory_id: subcategoryId || null,
           value,
           is_recurring: true,
@@ -738,7 +738,7 @@ export const useBudget = () => {
   ) => {
     const updateData = {
       title,
-      category,
+      category_key: category,
       subcategory_id: subcategoryId || null,
       value,
       due_day: dueDay,
@@ -768,7 +768,7 @@ export const useBudget = () => {
         .from('expense')
         .update({
           title,
-          category,
+          category_key: category,
           subcategory_id: subcategoryId || null,
           value,
           due_day: dueDay
@@ -810,7 +810,7 @@ export const useBudget = () => {
       id: generateOfflineId('exp'),
       month_id: currentMonthId,
       title: recurring.title,
-      category: recurring.category,
+      category_key: recurring.category,
       subcategory_id: recurring.subcategoryId || null,
       value: recurring.value,
       is_recurring: true,
@@ -955,7 +955,7 @@ export const useBudget = () => {
             id: rec.id,
             family_id: currentFamilyId,
             title: rec.title,
-            category: rec.category,
+            category_key: rec.category,
             subcategory_id: rec.subcategoryId || null,
             value: rec.value,
             due_day: rec.dueDay,
@@ -981,7 +981,7 @@ export const useBudget = () => {
               id: generateOfflineId('exp'),
               month_id: monthId,
               title: exp.title,
-              category: exp.category,
+              category_key: exp.category,
               subcategory_id: exp.subcategoryId || null,
               value: exp.value,
               is_recurring: exp.isRecurring,
