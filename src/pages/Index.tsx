@@ -30,10 +30,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const Index = () => {
+// Inner component that uses useBudget - will be remounted when family changes via key
+const BudgetContent = () => {
   const { t } = useLanguage();
-  const { user, loading: authLoading } = useAuth();
-  const { currentFamily, currentFamilyId, loading: familyLoading } = useFamily();
   
   const {
     months,
@@ -58,8 +57,6 @@ const Index = () => {
     removeSubcategory,
     getCategorySummary,
     getTotals,
-    exportBudget,
-    importBudget,
     removeMonth,
     categoryPercentages,
     updateGoals,
@@ -106,24 +103,13 @@ const Index = () => {
     setEditingExpense(null);
   };
 
-  const handleImportFile = (file: File) => {
-    importBudget(file);
-  };
-
-  // Show loading while checking auth/family/budget
-  if (authLoading || familyLoading || budgetLoading) {
+  // Show loading while budget data loads
+  if (budgetLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  }
-
-  // Show family setup if:
-  // - No user logged in AND no offline family selected, OR
-  // - User logged in but no family selected
-  if (!currentFamilyId) {
-    return <FamilySetup />;
   }
 
   // Show create first month UI when no months exist
@@ -428,6 +414,30 @@ const Index = () => {
       <OnlineStatusBar />
     </div>
   );
+};
+
+// Main Index component - handles auth/family loading and provides key for remounting
+const Index = () => {
+  const { loading: authLoading } = useAuth();
+  const { currentFamilyId, loading: familyLoading } = useFamily();
+
+  // Show loading while checking auth/family
+  if (authLoading || familyLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show family setup if no family selected
+  if (!currentFamilyId) {
+    return <FamilySetup />;
+  }
+
+  // Render BudgetContent with key - forces remount when family changes
+  // This cleanly resets all state (including IndexedDB hooks) without a full page reload
+  return <BudgetContent key={currentFamilyId} />;
 };
 
 export default Index;

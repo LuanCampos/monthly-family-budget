@@ -464,17 +464,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Select family
   const selectFamily = async (familyId: string) => {
-    // If switching to an offline family (different from current), reload the page
-    // to ensure IndexedDB connections are fresh and avoid state issues
-    const switchingToOffline = isOfflineId(familyId);
-    const alreadyOnThisFamily = currentFamilyId === familyId;
-
-    if (switchingToOffline && !alreadyOnThisFamily) {
-      localStorage.setItem('current-family-id', familyId);
-      window.location.reload();
-      return;
-    }
-
     setCurrentFamilyId(familyId);
     await saveCurrentFamily(familyId);
   };
