@@ -519,8 +519,8 @@ export const FamilyManager = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteFamily} className="bg-destructive text-destructive-foreground">
+            <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteFamily} className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -529,17 +529,17 @@ export const FamilyManager = () => {
 
       {/* Leave Alert */}
       <AlertDialog open={showLeaveAlert} onOpenChange={setShowLeaveAlert}>
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>{t('leaveFamilyConfirm')}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription className="text-muted-foreground">
               {t('leaveFamilyWarning')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLeaveFamily}>
-              {t('leaveFamily')}
+            <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLeaveFamily} className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t('leave')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
