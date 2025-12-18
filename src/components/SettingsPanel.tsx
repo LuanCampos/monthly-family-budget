@@ -1055,8 +1055,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
       <AlertDialog open={showLeaveAlert} onOpenChange={setShowLeaveAlert}>
         <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('leaveFamily')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('leaveFamilyConfirm')}</AlertDialogDescription>
+            <AlertDialogTitle>{t('leaveFamilyConfirm')}</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              {t('leaveFamilyWarning')}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
