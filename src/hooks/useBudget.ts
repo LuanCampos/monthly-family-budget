@@ -60,7 +60,8 @@ export const useBudget = () => {
   const currentMonth = months.find(m => m.id === currentMonthId) || null;
 
   // Check if we should use offline storage
-  const useOffline = isCurrentFamilyOffline || !navigator.onLine;
+  // Use isOfflineId as primary check since isCurrentFamilyOffline might not be updated yet
+  const useOffline = isOfflineId(currentFamilyId || '') || isCurrentFamilyOffline || !navigator.onLine;
 
   // Load months from database or offline storage
   const loadMonths = useCallback(async () => {
