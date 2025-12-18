@@ -41,6 +41,7 @@ const Index = () => {
     currentMonthId,
     recurringExpenses,
     subcategories,
+    loading: budgetLoading,
     addMonth,
     selectMonth,
     updateIncome,
@@ -109,8 +110,8 @@ const Index = () => {
     importBudget(file);
   };
 
-  // Show loading while checking auth/family
-  if (authLoading || familyLoading) {
+  // Show loading while checking auth/family/budget
+  if (authLoading || familyLoading || budgetLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
