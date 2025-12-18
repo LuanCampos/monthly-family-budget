@@ -47,7 +47,7 @@ export const en: Record<TranslationKey, string> = {
   categories: 'Categories',
   expenses: 'Expenses',
   summary: 'Summary',
-  goals: 'Goals',
+  limits: 'Limits',
   
   // Category Names (capitalized)
   'essenciais': 'Essentials',
@@ -112,8 +112,8 @@ export const en: Record<TranslationKey, string> = {
   noSubcategoryExpenses: 'No subcategory with expenses',
   notSpecified: 'Not specified',
 
-  // Goals
-  editGoals: 'Edit Goals',
+  // Limits
+  editLimits: 'Edit Limits',
   percentage: 'Percentage',
   total: 'Total',
   

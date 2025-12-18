@@ -15,12 +15,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-interface GoalsPanelProps {
+interface LimitsPanelProps {
   percentages: Record<CategoryKey, number>;
   onEdit: (percentages: Record<CategoryKey, number>) => void | Promise<void>;
 }
 
-export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
+export const LimitsPanel = ({ percentages, onEdit }: LimitsPanelProps) => {
   const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [localPercentages, setLocalPercentages] =
@@ -80,7 +80,7 @@ export const GoalsPanel = ({ percentages, onEdit }: GoalsPanelProps) => {
         <DialogContent aria-describedby={undefined} className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
             <DialogTitle className="text-foreground">
-              {t('editGoals')}
+              {t('editLimits')}
             </DialogTitle>
           </DialogHeader>
 
