@@ -76,6 +76,8 @@ export const en: Record<TranslationKey, string> = {
   expenseCategory: 'Category',
   expenseSubcategory: 'Subcategory',
   saveChanges: 'Save changes',
+  deleteExpense: 'Delete expense',
+  deleteExpenseMessage: 'Are you sure you want to delete this expense? This action cannot be undone.',
   
   // Recurring Expenses
   recurringExpenses: 'Recurring Expenses',
