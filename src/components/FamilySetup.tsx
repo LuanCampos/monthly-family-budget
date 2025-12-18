@@ -8,14 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Users, Plus, Mail, Check, X, Loader2, WifiOff, Lock, User, ArrowLeft, LogIn } from 'lucide-react';
+import { Users, Plus, Mail, Check, X, Loader2, WifiOff, Lock, User, ArrowLeft, LogIn, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { getAppBaseUrl } from '@/lib/appBaseUrl';
 
 export const FamilySetup = () => {
   const { t } = useLanguage();
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, signOut } = useAuth();
   const { createFamily, createOfflineFamily, myPendingInvitations, acceptInvitation, rejectInvitation, loading } = useFamily();
   const { toast } = useToast();
   
@@ -680,6 +680,17 @@ export const FamilySetup = () => {
               )}
             </TabsContent>
           </Tabs>
+          
+          {/* Botão de logout para trocar de conta */}
+          <Separator className="my-4" />
+          <Button
+            variant="ghost"
+            className="w-full text-muted-foreground hover:text-foreground"
+            onClick={signOut}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            {t('logout')}
+          </Button>
         </CardContent>
       </Card>
     </div>
