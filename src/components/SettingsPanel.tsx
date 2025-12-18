@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, Shield, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive } from 'lucide-react';
+import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -110,7 +110,6 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   const [createFamilyName, setCreateFamilyName] = useState('');
 
   const isAdmin = userRole === 'owner' || userRole === 'admin';
-  const isOwner = userRole === 'owner';
   const isCurrentOffline = currentFamily?.isOffline || isOfflineId(currentFamily?.id || '');
 
   useEffect(() => {
@@ -398,11 +397,17 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   };
 
   const getRoleIcon = (role: FamilyRole) => {
-    switch (role) {
-      case 'owner': return <Crown className="h-4 w-4 text-yellow-500" />;
-      case 'admin': return <Shield className="h-4 w-4 text-blue-500" />;
-      default: return <User className="h-4 w-4 text-muted-foreground" />;
+    if (role === 'owner' || role === 'admin') {
+      return <Crown className="h-4 w-4 text-yellow-500" />;
     }
+    return <User className="h-4 w-4 text-muted-foreground" />;
+  };
+  
+  const getRoleLabel = (role: FamilyRole) => {
+    if (role === 'owner' || role === 'admin') {
+      return t('role_admin');
+    }
+    return t('role_member');
   };
 
   // Profile section
@@ -948,12 +953,12 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                             {getRoleIcon(member.role)}
                             <div>
                               <p className="font-medium text-sm">{member.user_id === user?.id ? t('you') : member.user_email || t('member')}</p>
-                              <p className="text-xs text-muted-foreground capitalize">{t(`role_${member.role}`)}</p>
+                              <p className="text-xs text-muted-foreground capitalize">{getRoleLabel(member.role)}</p>
                             </div>
                           </div>
-                          {isAdmin && member.role !== 'owner' && member.user_id !== user?.id && (
+                          {isAdmin && member.user_id !== user?.id && (
                             <div className="flex items-center gap-2">
-                              <Select value={member.role} onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)} disabled={processingAction === member.id}>
+                              <Select value={member.role === 'owner' ? 'admin' : member.role} onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)} disabled={processingAction === member.id}>
                                 <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="admin">{t('role_admin')}</SelectItem>
@@ -991,12 +996,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
                     {/* Leave/Delete family */}
                     <div className="space-y-2">
-                      {!isOwner && (
-                        <Button variant="outline" className="w-full text-destructive hover:text-destructive" onClick={() => setShowLeaveAlert(true)}>
-                          <LogOut className="h-4 w-4 mr-2" />{t('leaveFamily')}
-                        </Button>
-                      )}
-                      {isOwner && (
+                      <Button variant="outline" className="w-full text-destructive hover:text-destructive" onClick={() => setShowLeaveAlert(true)}>
+                        <LogOut className="h-4 w-4 mr-2" />{t('leaveFamily')}
+                      </Button>
+                      {isAdmin && (
                         <Button variant="destructive" className="w-full" onClick={() => setShowDeleteAlert(true)}>
                           <Trash2 className="h-4 w-4 mr-2" />{t('deleteFamily')}
                         </Button>
