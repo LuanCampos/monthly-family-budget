@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Plus, Trash2, RefreshCw, Pencil, Calendar, Check } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, Pencil, Calendar, Check, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CategoryKey, Subcategory, RecurringExpense, Expense } from '@/types/budget';
-import { getCategoryByKey, DEFAULT_CATEGORY } from '@/constants/categories';
+import { getCategoryByKey, DEFAULT_CATEGORY, CATEGORIES } from '@/constants/categories';
 import { RecurringExpenseFormFields } from './RecurringExpenseFormFields';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -20,6 +20,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+
+type SortType = 'category' | 'value' | 'dueDate';
+type SortDirection = 'asc' | 'desc';
 
 type ViewMode = 'list' | 'add' | 'edit';
 
@@ -70,6 +73,10 @@ export const RecurringExpenses = ({
   const [view, setView] = useState<ViewMode>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  
+  const [sortType, setSortType] = useState<SortType>('category');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<CategoryKey>(DEFAULT_CATEGORY);
@@ -185,6 +192,55 @@ export const RecurringExpenses = ({
     return sub?.name || null;
   };
 
+  const handleSort = (type: SortType) => {
+    if (sortType === type) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortType(type);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (type: SortType) => {
+    if (sortType !== type) return <ArrowUpDown className="h-3.5 w-3.5" />;
+    return sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />;
+  };
+
+  const sortedExpenses = [...expenses].sort((a, b) => {
+    let result = 0;
+    
+    if (sortType === 'category') {
+      const catIndexA = CATEGORIES.findIndex(c => c.key === a.category);
+      const catIndexB = CATEGORIES.findIndex(c => c.key === b.category);
+      result = catIndexA - catIndexB;
+      
+      if (result === 0) {
+        const subA = subcategories.find(s => s.id === a.subcategoryId)?.name ?? 'ZZZ';
+        const subB = subcategories.find(s => s.id === b.subcategoryId)?.name ?? 'ZZZ';
+        result = subA.localeCompare(subB);
+      }
+      
+      if (result === 0) {
+        result = a.title.localeCompare(b.title);
+      }
+    } else if (sortType === 'value') {
+      result = a.value - b.value;
+    } else if (sortType === 'dueDate') {
+      const dueDayA = a.dueDay ?? 31;
+      const dueDayB = b.dueDay ?? 31;
+      result = dueDayA - dueDayB;
+    }
+    
+    return sortDirection === 'asc' ? result : -result;
+  });
+
+  const handleDeleteConfirm = () => {
+    if (deleteId) {
+      onRemove(deleteId);
+      setDeleteId(null);
+    }
+  };
+
   return (
     <>
       <Button
@@ -223,13 +279,47 @@ export const RecurringExpenses = ({
 
           <div className="flex-1 overflow-y-auto px-6 py-4">
             {view === 'list' && (
-              <div className="space-y-2">
+              <div className="space-y-3">
+                {expenses.length > 0 && (
+                  <div className="flex items-center gap-1 pb-2 border-b border-border">
+                    <span className="text-xs text-muted-foreground mr-2">{t('sortBy')}:</span>
+                    <Button
+                      variant={sortType === 'category' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => handleSort('category')}
+                      className="h-7 text-xs gap-1"
+                    >
+                      {t('sortCategory')}
+                      {getSortIcon('category')}
+                    </Button>
+                    <Button
+                      variant={sortType === 'value' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => handleSort('value')}
+                      className="h-7 text-xs gap-1"
+                    >
+                      {t('sortValue')}
+                      {getSortIcon('value')}
+                    </Button>
+                    <Button
+                      variant={sortType === 'dueDate' ? 'secondary' : 'ghost'}
+                      size="sm"
+                      onClick={() => handleSort('dueDate')}
+                      className="h-7 text-xs gap-1"
+                    >
+                      {t('sortDueDate')}
+                      {getSortIcon('dueDate')}
+                    </Button>
+                  </div>
+                )}
+                
                 {expenses.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8 text-sm">
                     {t('noRecurringExpenses')}
                   </p>
                 ) : (
-                  expenses.map((exp) => {
+                  <div className="space-y-2">
+                  {sortedExpenses.map((exp) => {
                     const cat = getCategoryByKey(exp.category);
                     const subName = getSubcategoryName(exp.subcategoryId);
                     const isInCurrentMonth = currentMonthExpenses.some(
@@ -311,7 +401,7 @@ export const RecurringExpenses = ({
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => onRemove(exp.id)}
+                            onClick={() => setDeleteId(exp.id)}
                             className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -319,7 +409,8 @@ export const RecurringExpenses = ({
                         </div>
                       </div>
                     );
-                  })
+                  })}
+                  </div>
                 )}
               </div>
             )}
@@ -394,6 +485,26 @@ export const RecurringExpenses = ({
               className="h-10 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {t('updateFutureOnly')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent className="bg-card border-border max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteRecurringExpense')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteRecurringExpenseConfirm')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

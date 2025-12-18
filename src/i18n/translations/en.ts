@@ -139,6 +139,10 @@ export const en: Record<TranslationKey, string> = {
   updateFutureOnly: 'Only Future',
   updateAll: 'Update All',
   
+  // Delete Recurring Expense
+  deleteRecurringExpense: 'Delete recurring expense',
+  deleteRecurringExpenseConfirm: 'Are you sure you want to delete this recurring expense? This action cannot be undone.',
+  
   // Settings
   settings: 'Settings',
   language: 'Language',
