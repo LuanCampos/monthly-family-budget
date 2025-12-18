@@ -74,6 +74,8 @@ export const pt = {
   expenseCategory: 'Categoria',
   expenseSubcategory: 'Subcategoria',
   saveChanges: 'Salvar alterações',
+  deleteExpense: 'Excluir gasto',
+  deleteExpenseMessage: 'Tem certeza que deseja excluir este gasto? Esta ação não pode ser desfeita.',
   
   // Recurring Expenses
   recurringExpenses: 'Gastos Recorrentes',

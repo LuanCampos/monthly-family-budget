@@ -61,6 +61,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
   const { formatCurrency } = useCurrency();
   const [filter, setFilter] = useState<FilterType>(null);
   const [confirmPaymentId, setConfirmPaymentId] = useState<string | null>(null);
+  const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
 
   if (expenses.length === 0) {
     return (
@@ -161,6 +162,13 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
     if (confirmPaymentId) {
       onConfirmPayment(confirmPaymentId);
       setConfirmPaymentId(null);
+    }
+  };
+
+  const handleDeleteExpense = () => {
+    if (deleteExpenseId) {
+      onRemove(deleteExpenseId);
+      setDeleteExpenseId(null);
     }
   };
 
@@ -281,7 +289,7 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onRemove(expense.id)}
+                      onClick={() => setDeleteExpenseId(expense.id)}
                       className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -309,6 +317,26 @@ export const ExpenseList = ({ expenses, subcategories, onRemove, onEdit, onConfi
               className="h-9 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {t('confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteExpenseId} onOpenChange={(open) => !open && setDeleteExpenseId(null)}>
+        <AlertDialogContent className="bg-card border-border max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteExpense')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteExpenseMessage')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteExpense}
+              className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
