@@ -184,7 +184,29 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     try {
-      // First get invitations without JOIN to avoid RLS issues
+      // Try to get invitations with family join - this works if RLS allows
+      const { data: myInvitesWithFamily, error: joinError } = await supabase
+        .from('family_invitation')
+        .select(`
+          *,
+          family:family_id (
+            name
+          )
+        `)
+        .eq('email', user.email)
+        .eq('status', 'pending');
+
+      if (!joinError && myInvitesWithFamily) {
+        setMyPendingInvitations(
+          myInvitesWithFamily.map((inv: any) => ({
+            ...inv,
+            family_name: inv.family?.name || 'Família'
+          }))
+        );
+        return;
+      }
+
+      // Fallback: get invitations without join (RLS might block the join)
       const { data: myInvites, error } = await supabase
         .from('family_invitation')
         .select('*')
@@ -198,7 +220,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       if (myInvites && myInvites.length > 0) {
-        // Fetch family names separately
+        // Try to fetch family names separately (might fail due to RLS)
         const familyIds = [...new Set(myInvites.map(inv => inv.family_id))];
         const { data: familiesData } = await supabase
           .from('family')
@@ -210,7 +232,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setMyPendingInvitations(
           myInvites.map((inv: any) => ({
             ...inv,
-            family_name: familyNameMap.get(inv.family_id) || 'Família'
+            family_name: familyNameMap.get(inv.family_id) || inv.family_name || 'Família'
           }))
         );
       } else {
@@ -580,12 +602,14 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { error: new Error('Convites não disponíveis em famílias offline. Sincronize primeiro.') };
     }
 
+    // Include family_name in the invitation for display purposes
     const { error } = await supabase
       .from('family_invitation')
       .insert({
         family_id: currentFamilyId,
         email: email.toLowerCase(),
-        invited_by: user.id
+        invited_by: user.id,
+        family_name: currentFamily?.name || 'Família'
       });
 
     if (!error) await refreshInvitations();
@@ -618,8 +642,14 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     if (memberError) return { error: memberError };
 
+    // Refresh families first and wait for it to complete
     await refreshFamilies();
     await refreshInvitations();
+    
+    // Small delay to ensure state is updated before selecting
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Now select the family
     await selectFamily(invitation.family_id);
 
     return { error: null };
