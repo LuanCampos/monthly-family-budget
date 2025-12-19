@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -12,6 +14,7 @@ import { CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
+import { Plus, Equal, X } from 'lucide-react';
 
 interface ExpenseFormFieldsProps {
   title: string;
@@ -38,6 +41,8 @@ export const ExpenseFormFields = ({
 }: ExpenseFormFieldsProps) => {
   const { t } = useLanguage();
   const { currencySymbol } = useCurrency();
+  const [showAdder, setShowAdder] = useState(false);
+  const [addValue, setAddValue] = useState('');
   
   const filteredSubcategories = subcategories.filter(
     (sub) => sub.categoryKey === category
@@ -46,6 +51,25 @@ export const ExpenseFormFields = ({
   const handleCategoryChange = (newCategory: CategoryKey) => {
     onCategoryChange(newCategory);
     onSubcategoryChange('');
+  };
+
+  const parseValue = (val: string): number => {
+    if (!val) return 0;
+    return parseFloat(val.replace(',', '.')) || 0;
+  };
+
+  const formatValue = (num: number): string => {
+    if (num === 0) return '';
+    return num.toFixed(2).replace('.', ',');
+  };
+
+  const handleSum = () => {
+    const currentValue = parseValue(value);
+    const valueToAdd = parseValue(addValue);
+    const total = currentValue + valueToAdd;
+    onValueChange(formatValue(total));
+    setAddValue('');
+    setShowAdder(false);
   };
 
   return (
@@ -117,21 +141,76 @@ export const ExpenseFormFields = ({
         <Label htmlFor="value" className="text-sm font-medium">
           {t('expenseValue')}
         </Label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-            {currencySymbol}
-          </span>
-          <Input
-            id="value"
-            type="text"
-            inputMode="decimal"
-            value={value}
-            onChange={(e) =>
-              onValueChange(e.target.value.replace(/[^\d,]/g, ''))
-            }
-            className="h-10 pl-10 bg-secondary/50 border-border"
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+              {currencySymbol}
+            </span>
+            <Input
+              id="value"
+              type="text"
+              inputMode="decimal"
+              value={value}
+              onChange={(e) =>
+                onValueChange(e.target.value.replace(/[^\d,]/g, ''))
+              }
+              className="h-10 pl-10 bg-secondary/50 border-border"
+            />
+          </div>
+          {!showAdder && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              onClick={() => setShowAdder(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
         </div>
+        
+        {showAdder && (
+          <div className="flex gap-2 items-center animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                {currencySymbol}
+              </span>
+              <Input
+                type="text"
+                inputMode="decimal"
+                value={addValue}
+                onChange={(e) =>
+                  setAddValue(e.target.value.replace(/[^\d,]/g, ''))
+                }
+                placeholder="0,00"
+                className="h-10 pl-10 bg-secondary/50 border-border"
+                autoFocus
+              />
+            </div>
+            <Button
+              type="button"
+              variant="default"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              onClick={handleSum}
+            >
+              <Equal className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              onClick={() => {
+                setShowAdder(false);
+                setAddValue('');
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
