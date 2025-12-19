@@ -137,8 +137,8 @@ export const pt = {
   // Update Options
   updateRecurringTitle: 'Aplicar alterações',
   updateRecurringDescription: 'Deseja aplicar as alterações apenas aos gastos futuros ou também atualizar os gastos já criados em meses anteriores?',
-  updateFutureOnly: 'Apenas Futuros',
-  updateAll: 'Atualizar Todos',
+  updateFutureOnly: 'Futuros',
+  updateAll: 'Todos',
   
   // Delete Recurring Expense
   deleteRecurringExpense: 'Excluir gasto recorrente',
