@@ -394,7 +394,11 @@ export const useBudget = () => {
   };
 
   const applyRecurringToCurrentMonth = async (recurringId: string): Promise<boolean> => {
-    return await api.applyRecurringToMonth(recurringExpenses.find(r => r.id === recurringId) as any, currentMonthId as string);
+    const result = await api.applyRecurringToMonth(recurringExpenses.find(r => r.id === recurringId) as any, currentMonthId as string);
+    if (result) {
+      await api.loadMonths();
+    }
+    return result;
   };
 
   // Goals
