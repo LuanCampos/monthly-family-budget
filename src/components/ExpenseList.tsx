@@ -277,7 +277,7 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
                     {formatCurrency(expense.value)}
                   </span>
 
-                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="icon"
