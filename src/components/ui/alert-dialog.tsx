@@ -61,7 +61,7 @@ const AlertDialogFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+    className={cn("flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-2", className)}
     {...props}
   />
 ));
@@ -87,7 +87,7 @@ const AlertDialogAction = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Action>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action>
 >(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Action ref={ref} className={cn(buttonVariants(), "h-9", className)} {...props} />
+  <AlertDialogPrimitive.Action ref={ref} className={cn(buttonVariants(), "h-11 text-base font-medium", className)} {...props} />
 ));
 AlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName;
 
@@ -97,7 +97,7 @@ const AlertDialogCancel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Cancel
     ref={ref}
-    className={cn(buttonVariants({ variant: "outline" }), "h-9", className)}
+    className={cn(buttonVariants({ variant: "outline" }), "h-11 text-base font-medium", className)}
     {...props}
   />
 ));
