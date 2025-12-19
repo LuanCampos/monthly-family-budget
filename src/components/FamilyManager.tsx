@@ -278,7 +278,7 @@ export const FamilyManager = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs defaultValue={myPendingInvitations.length > 0 ? 'invitations' : 'members'}>
+            <Tabs defaultValue={myPendingInvitations.length > 0 ? 'invitations' : 'members'}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="members">{t('members')}</TabsTrigger>
               <TabsTrigger value="invitations" className="relative">
@@ -295,78 +295,84 @@ export const FamilyManager = () => {
             {/* Members Tab */}
             <TabsContent value="members" className="space-y-4 mt-4">
               {isAdmin && (
-                <div className="flex gap-2">
-                  <Input
-                    placeholder={t('inviteEmailPlaceholder')}
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
-                  />
-                  <Button onClick={handleInvite} disabled={!inviteEmail.trim() || isInviting}>
-                    {isInviting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <UserPlus className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                <section aria-label="invite" className="flex flex-col gap-2">
+                  <h3 className="text-sm font-semibold">{t('invite')}</h3>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={t('inviteEmailPlaceholder')}
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
+                    />
+                    <Button onClick={handleInvite} disabled={!inviteEmail.trim() || isInviting}>
+                      {isInviting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <UserPlus className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </section>
               )}
 
-              <div className="space-y-2">
-                {members.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between p-3 rounded-lg border border-border bg-card"
-                  >
-                    <div className="flex items-center gap-3">
-                      {getRoleIcon(member.role)}
-                      <div>
-                        <p className="font-medium text-sm">
-                          {member.user_id === user?.id ? t('you') : member.user_email || t('member')}
-                        </p>
-                        <p className="text-xs text-muted-foreground capitalize">{getRoleLabel(member.role)}</p>
+              <section aria-label="members-list" className="space-y-2">
+                <h3 className="text-sm font-semibold">{t('members')}</h3>
+                <div className="space-y-2">
+                  {members.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-3 rounded-lg border border-border bg-card"
+                    >
+                      <div className="flex items-center gap-3">
+                        {getRoleIcon(member.role)}
+                        <div>
+                          <p className="font-medium text-sm">
+                            {member.user_id === user?.id ? t('you') : member.user_email || t('member')}
+                          </p>
+                          <p className="text-xs text-muted-foreground capitalize">{getRoleLabel(member.role)}</p>
+                        </div>
                       </div>
+                      {/* Admin pode gerenciar outros membros (exceto a si mesmo) */}
+                      {isAdmin && member.user_id !== user?.id && (
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={member.role === 'owner' ? 'admin' : member.role}
+                            onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)}
+                            disabled={processingAction === member.id}
+                          >
+                            <SelectTrigger className="w-28 h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">{t('role_admin')}</SelectItem>
+                              <SelectItem value="member">{t('role_member')}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            onClick={() => handleRemoveMember(member.id)}
+                            disabled={processingAction === member.id}
+                          >
+                            {processingAction === member.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    {/* Admin pode gerenciar outros membros (exceto a si mesmo) */}
-                    {isAdmin && member.user_id !== user?.id && (
-                      <div className="flex items-center gap-2">
-                        <Select
-                          value={member.role === 'owner' ? 'admin' : member.role}
-                          onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)}
-                          disabled={processingAction === member.id}
-                        >
-                          <SelectTrigger className="w-28 h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">{t('role_admin')}</SelectItem>
-                            <SelectItem value="member">{t('role_member')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                          onClick={() => handleRemoveMember(member.id)}
-                          disabled={processingAction === member.id}
-                        >
-                          {processingAction === member.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </section>
 
               {/* Pending invitations from this family */}
               {isAdmin && pendingInvitations.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">{t('pendingSent')}</p>
+                <section aria-label="pending-sent" className="space-y-2">
+                  <h3 className="text-sm font-semibold">{t('pendingSent')}</h3>
                   {pendingInvitations.map((invitation) => (
                     <div
                       key={invitation.id}
@@ -391,7 +397,7 @@ export const FamilyManager = () => {
                       </Button>
                     </div>
                   ))}
-                </div>
+                </section>
               )}
             </TabsContent>
 
@@ -442,10 +448,10 @@ export const FamilyManager = () => {
 
             {/* Settings Tab */}
             <TabsContent value="settings" className="space-y-4 mt-4">
-              {isAdmin && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{t('familyName')}</label>
-                  {editingName ? (
+              <section aria-label="family-details" className="space-y-2">
+                <h3 className="text-sm font-semibold">{t('familyDetails')}</h3>
+                {isAdmin ? (
+                  editingName ? (
                     <div className="flex gap-2">
                       <Input
                         value={newFamilyName}
@@ -471,16 +477,21 @@ export const FamilyManager = () => {
                         {t('edit')}
                       </Button>
                     </div>
-                  )}
-                </div>
-              )}
+                  )
+                ) : (
+                  <div className="p-3 rounded-lg border border-border bg-card">
+                    <span>{currentFamily.name}</span>
+                  </div>
+                )}
+              </section>
 
-              <div className="pt-4 border-t border-border space-y-3">
+              <section aria-label="danger-zone" className="pt-4 border-t border-border space-y-3">
+                <h3 className="text-sm font-semibold text-destructive">{t('dangerZone')}</h3>
                 {/* Se for único membro, não pode sair, apenas excluir */}
                 {!isOnlyMember && (
                   <Button
                     variant="outline"
-                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 ring-1 ring-destructive/20 rounded"
                     onClick={() => setShowLeaveAlert(true)}
                     disabled={isOnlyAdmin}
                     title={isOnlyAdmin ? t('promoteAdminFirst') : undefined}
@@ -496,14 +507,14 @@ export const FamilyManager = () => {
                 {(isAdmin || isOnlyMember) && (
                   <Button
                     variant="destructive"
-                    className="w-full"
+                    className="w-full ring-1 ring-destructive/20 rounded"
                     onClick={() => setShowDeleteAlert(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     {t('deleteFamily')}
                   </Button>
                 )}
-              </div>
+              </section>
             </TabsContent>
           </Tabs>
         </DialogContent>

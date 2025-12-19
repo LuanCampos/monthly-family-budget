@@ -757,8 +757,8 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                     <div className="space-y-1.5">
                     {onDeleteMonth && currentMonthLabel && (
                       <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-muted-foreground hover:text-destructive">
+                          <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-destructive ring-1 ring-destructive/20 rounded">
                             <Trash2 className="h-3.5 w-3.5 mr-2" />
                             <span className="text-sm">{t('delete')} "{currentMonthLabel}"</span>
                           </Button>
@@ -780,7 +780,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="w-full justify-start h-8 text-muted-foreground hover:text-destructive"
+                          className="w-full justify-start h-8 text-destructive ring-1 ring-destructive/20 rounded"
                           disabled={processingAction === 'clear-offline-cache'}
                         >
                           {processingAction === 'clear-offline-cache' ? (
@@ -1005,7 +1005,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            className="w-full justify-start h-8 text-muted-foreground hover:text-destructive" 
+                            className="w-full justify-start h-8 text-destructive ring-1 ring-destructive/20 rounded" 
                             onClick={() => setShowLeaveAlert(true)}
                             disabled={isOnlyAdmin}
                           >
@@ -1021,7 +1021,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          className="w-full justify-start h-8 text-muted-foreground hover:text-destructive" 
+                          className="w-full justify-start h-8 text-destructive ring-1 ring-destructive/20 rounded" 
                           onClick={() => setShowDeleteAlert(true)}
                         >
                           <Trash2 className="h-3.5 w-3.5 mr-2" />
