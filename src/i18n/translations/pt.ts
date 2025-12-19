@@ -300,6 +300,9 @@ export const pt = {
   noFamilySelected: 'Nenhuma família selecionada',
   leave: 'Sair',
   promoteAdminFirst: 'Promova outro membro a admin antes de sair',
+  invite: 'Convidar',
+  familyDetails: 'Detalhes da Família',
+  dangerZone: 'Zona de Perigo',
   
   // Email Verification
   emailVerificationTitle: 'Verifique seu e-mail',

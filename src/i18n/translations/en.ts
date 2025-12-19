@@ -302,6 +302,9 @@ export const en: Record<TranslationKey, string> = {
   noFamilySelected: 'No family selected',
   leave: 'Leave',
   promoteAdminFirst: 'Promote another member to admin before leaving',
+  invite: 'Invite',
+  familyDetails: 'Family Details',
+  dangerZone: 'Danger Zone',
   
   // Email Verification
   emailVerificationTitle: 'Verify your email',

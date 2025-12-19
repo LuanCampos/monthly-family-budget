@@ -485,29 +485,31 @@ export const FamilyManager = () => {
                 )}
               </section>
 
-              <section aria-label="danger-zone" className="pt-4 border-t border-border space-y-3">
-                <h3 className="text-sm font-semibold text-destructive">{t('dangerZone')}</h3>
+              <section aria-label="danger-zone" className="pt-4 border-t border-border space-y-3 flex flex-col items-center">
+                <h3 className="text-sm font-semibold text-destructive w-full">{t('dangerZone')}</h3>
                 {/* Se for único membro, não pode sair, apenas excluir */}
                 {!isOnlyMember && (
-                  <Button
-                    variant="outline"
-                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 ring-1 ring-destructive/20 rounded"
-                    onClick={() => setShowLeaveAlert(true)}
-                    disabled={isOnlyAdmin}
-                    title={isOnlyAdmin ? t('promoteAdminFirst') : undefined}
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    {t('leaveFamily')}
-                  </Button>
-                )}
-                {isOnlyAdmin && !isOnlyMember && (
-                  <p className="text-xs text-muted-foreground text-center">{t('promoteAdminFirst')}</p>
+                  <div className="flex flex-col items-center w-full">
+                    <Button
+                      variant="outline"
+                      className="w-3/4 text-destructive hover:text-destructive hover:bg-destructive/10 ring-1 ring-destructive/20 rounded"
+                      onClick={() => setShowLeaveAlert(true)}
+                      disabled={isOnlyAdmin}
+                      title={isOnlyAdmin ? t('promoteAdminFirst') : undefined}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      {t('leaveFamily')}
+                    </Button>
+                    {isOnlyAdmin && (
+                      <p className="text-xs text-muted-foreground text-center mt-1">{t('promoteAdminFirst')}</p>
+                    )}
+                  </div>
                 )}
                 {/* Admin pode excluir (ou único membro) */}
                 {(isAdmin || isOnlyMember) && (
                   <Button
                     variant="destructive"
-                    className="w-full ring-1 ring-destructive/20 rounded"
+                    className="w-3/4 ring-1 ring-destructive/20 rounded"
                     onClick={() => setShowDeleteAlert(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
