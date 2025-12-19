@@ -33,9 +33,16 @@ export const LimitsPanel = ({ percentages, onEdit }: LimitsPanelProps) => {
 
   const total = Object.values(localPercentages).reduce((a, b) => a + b, 0);
 
-  const handleSave = () => {
-    onEdit(localPercentages);
-    setIsEditing(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onEdit(localPercentages);
+      setIsEditing(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleInputChange = (key: CategoryKey, value: string) => {
@@ -142,9 +149,10 @@ export const LimitsPanel = ({ percentages, onEdit }: LimitsPanelProps) => {
           <div className="px-6 py-4 border-t border-border bg-secondary/30">
             <Button
               onClick={handleSave}
+              disabled={isSaving}
               className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {t('save')}
+              {isSaving ? t('saving') : t('save')}
             </Button>
           </div>
         </DialogContent>
