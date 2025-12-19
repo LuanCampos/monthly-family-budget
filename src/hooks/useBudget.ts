@@ -335,25 +335,34 @@ export const useBudget = () => {
   ) => {
     if (!currentFamilyId) return;
 
-    const offlineId = offlineAdapter.generateOfflineId('rec');
-    const offlineRecurringData = {
-      id: offlineId,
-      family_id: currentFamilyId,
-      title,
-      category_key: category,
-      subcategory_id: subcategoryId || null,
-      value,
-      due_day: dueDay,
-      has_installments: hasInstallments,
-      total_installments: totalInstallments,
-      start_year: startYear,
-      start_month: startMonth,
-    };
-
-    await api.insertRecurring({ title, category_key: category, subcategory_id: subcategoryId || null, value, due_day: dueDay, has_installments: hasInstallments, total_installments: totalInstallments, start_year: startYear, start_month: startMonth });
+    await api.insertRecurring({ 
+      title, 
+      category_key: category, 
+      subcategory_id: subcategoryId || null, 
+      value, 
+      due_day: dueDay, 
+      has_installments: hasInstallments, 
+      total_installments: totalInstallments, 
+      start_year: startYear, 
+      start_month: startMonth 
+    });
+    
     if (currentMonthId && currentMonth) {
-      await api.applyRecurringToMonth({ id: '', title, category, subcategoryId, value, isRecurring: true, dueDay, hasInstallments, totalInstallments, startYear, startMonth } as any, currentMonthId);
+      await api.applyRecurringToMonth({ 
+        id: '', 
+        title, 
+        category, 
+        subcategoryId, 
+        value, 
+        isRecurring: true, 
+        dueDay, 
+        hasInstallments, 
+        totalInstallments, 
+        startYear, 
+        startMonth 
+      } as any, currentMonthId);
     }
+    
     await api.loadRecurringExpenses();
     await api.loadMonths();
   };
