@@ -666,7 +666,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
             <div className="flex-1 overflow-y-auto dashboard-card-content min-h-0">
               {/* General Tab */}
-              <TabsContent value="general" className="mt-0 space-y-6">
+              <TabsContent value="general" className="mt-0 space-y-5">
                 {/* User Account Section */}
                   {user ? (
                     <div className="dashboard-card">
