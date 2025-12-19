@@ -4,9 +4,17 @@ import { offlineAdapter } from '@/lib/offlineAdapter';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+export interface SyncProgress {
+  step: string;
+  current: number;
+  total: number;
+  details?: string;
+}
+
 interface OnlineContextType {
   isOnline: boolean;
   isSyncing: boolean;
+  syncProgress: SyncProgress | null;
   pendingSyncCount: number;
   syncNow: () => Promise<void>;
   syncFamily: (familyId: string) => Promise<{ newFamilyId?: string; error?: Error }>;
@@ -26,6 +34,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { session } = useAuth();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState<SyncProgress | null>(null);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
 
   // Monitor online status
@@ -60,7 +69,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => clearInterval(interval);
   }, [updatePendingCount]);
 
-  // Sync a specific offline family to cloud
+  // Sync a specific offline family to cloud with progress tracking and rollback
   const syncFamily = async (familyId: string): Promise<{ newFamilyId?: string; error?: Error }> => {
     if (!session?.user) {
       return { error: new Error('Você precisa estar logado para sincronizar') };
@@ -71,6 +80,35 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     setIsSyncing(true);
+    setSyncProgress({ step: 'Preparando...', current: 0, total: 100 });
+
+    let newFamilyId: string | null = null;
+    const createdCloudIds: { table: string; id: string }[] = [];
+
+    // Rollback function to clean up partially synced data
+    const rollback = async () => {
+      setSyncProgress({ step: 'Revertendo alterações...', current: 0, total: createdCloudIds.length });
+      
+      for (let i = createdCloudIds.length - 1; i >= 0; i--) {
+        const { table, id } = createdCloudIds[i];
+        try {
+          await supabase.from(table).delete().eq('id', id);
+          setSyncProgress({ step: 'Revertendo alterações...', current: createdCloudIds.length - i, total: createdCloudIds.length });
+        } catch (e) {
+          console.error(`Failed to rollback ${table}:${id}`, e);
+        }
+      }
+
+      // Delete family member and family if they were created
+      if (newFamilyId) {
+        try {
+          await supabase.from('family_member').delete().eq('family_id', newFamilyId);
+          await supabase.from('family').delete().eq('id', newFamilyId);
+        } catch (e) {
+          console.error('Failed to rollback family', e);
+        }
+      }
+    };
 
     try {
       // Get offline family
@@ -79,7 +117,29 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return { error: new Error('Família não encontrada') };
       }
 
-      // Create family in cloud
+      // Count total items for progress
+      const subcategories = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', familyId);
+      const recurringExpenses = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
+      const months = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
+      const goals = await offlineAdapter.getAllByIndex<any>('category_goals', 'family_id', familyId);
+      
+      let totalExpenses = 0;
+      for (const month of months) {
+        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
+        totalExpenses += expenses.length;
+      }
+
+      const totalItems = 1 + subcategories.length + recurringExpenses.length + months.length + totalExpenses + goals.length;
+      let syncedItems = 0;
+
+      const updateProgress = (step: string, details?: string) => {
+        syncedItems++;
+        setSyncProgress({ step, current: syncedItems, total: totalItems, details });
+      };
+
+      // Step 1: Create family in cloud
+      setSyncProgress({ step: 'Criando família na nuvem...', current: 0, total: totalItems });
+      
       const { data: cloudFamily, error: familyError } = await supabase
         .from('family')
         .insert({
@@ -90,25 +150,29 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .single();
 
       if (familyError) {
-        return { error: familyError };
+        throw new Error(`Erro ao criar família: ${familyError.message}`);
       }
 
-      const newFamilyId = cloudFamily.id;
+      newFamilyId = cloudFamily.id;
+      updateProgress('Família criada', offlineFamily.name);
 
       // Create owner membership
-      await supabase.from('family_member').insert({
+      const { error: memberError } = await supabase.from('family_member').insert({
         family_id: newFamilyId,
         user_id: session.user.id,
         role: 'owner',
       });
 
+      if (memberError) {
+        throw new Error(`Erro ao criar membro: ${memberError.message}`);
+      }
+
       // ID mapping for related records
       const idMap: Record<string, string> = { [familyId]: newFamilyId };
 
-      // Sync subcategories
-      const subcategories = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', familyId);
+      // Step 2: Sync subcategories
       for (const sub of subcategories) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('subcategory')
           .insert({
             family_id: newFamilyId,
@@ -117,13 +181,21 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           })
           .select()
           .single();
-        if (data) idMap[sub.id] = data.id;
+        
+        if (error) {
+          throw new Error(`Erro ao sincronizar subcategoria "${sub.name}": ${error.message}`);
+        }
+        
+        if (data) {
+          idMap[sub.id] = data.id;
+          createdCloudIds.push({ table: 'subcategory', id: data.id });
+        }
+        updateProgress('Sincronizando subcategorias', sub.name);
       }
 
-      // Sync recurring expenses
-      const recurringExpenses = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
+      // Step 3: Sync recurring expenses
       for (const rec of recurringExpenses) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('recurring_expense')
           .insert({
             family_id: newFamilyId,
@@ -139,54 +211,88 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           })
           .select()
           .single();
-        if (data) idMap[rec.id] = data.id;
+        
+        if (error) {
+          throw new Error(`Erro ao sincronizar gasto recorrente "${rec.title}": ${error.message}`);
+        }
+        
+        if (data) {
+          idMap[rec.id] = data.id;
+          createdCloudIds.push({ table: 'recurring_expense', id: data.id });
+        }
+        updateProgress('Sincronizando gastos recorrentes', rec.title);
       }
 
-      // Sync months
-      const months = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
+      // Step 4: Sync months
       for (const month of months) {
         const newMonthId = month.id.replace(familyId, newFamilyId);
-        await supabase.from('month').insert({
+        const { error } = await supabase.from('month').insert({
           id: newMonthId,
           family_id: newFamilyId,
           year: month.year,
           month: month.month,
           income: month.income,
         });
+        
+        if (error) {
+          throw new Error(`Erro ao sincronizar mês ${month.month}/${month.year}: ${error.message}`);
+        }
+        
         idMap[month.id] = newMonthId;
+        createdCloudIds.push({ table: 'month', id: newMonthId });
+        updateProgress('Sincronizando meses', `${month.month}/${month.year}`);
       }
 
-      // Sync expenses
+      // Step 5: Sync expenses
       for (const month of months) {
         const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
         for (const exp of expenses) {
-          await supabase.from('expense').insert({
-            month_id: idMap[month.id],
-            title: exp.title,
-            category_key: exp.category_key,
-            subcategory_id: exp.subcategory_id ? idMap[exp.subcategory_id] : null,
-            value: exp.value,
-            is_recurring: exp.is_recurring,
-            is_pending: exp.is_pending,
-            due_day: exp.due_day,
-            recurring_expense_id: exp.recurring_expense_id ? idMap[exp.recurring_expense_id] : null,
-            installment_current: exp.installment_current,
-            installment_total: exp.installment_total,
-          });
+          const { data, error } = await supabase
+            .from('expense')
+            .insert({
+              month_id: idMap[month.id],
+              title: exp.title,
+              category_key: exp.category_key,
+              subcategory_id: exp.subcategory_id ? idMap[exp.subcategory_id] : null,
+              value: exp.value,
+              is_recurring: exp.is_recurring,
+              is_pending: exp.is_pending,
+              due_day: exp.due_day,
+              recurring_expense_id: exp.recurring_expense_id ? idMap[exp.recurring_expense_id] : null,
+              installment_current: exp.installment_current,
+              installment_total: exp.installment_total,
+            })
+            .select()
+            .single();
+          
+          if (error) {
+            throw new Error(`Erro ao sincronizar gasto "${exp.title}": ${error.message}`);
+          }
+          
+          if (data) {
+            createdCloudIds.push({ table: 'expense', id: data.id });
+          }
+          updateProgress('Sincronizando gastos', exp.title);
         }
       }
 
-      // Sync category goals
-      const goals = await offlineAdapter.getAllByIndex<any>('category_goals', 'family_id', familyId);
+      // Step 6: Sync category goals
       for (const goal of goals) {
-        await supabase.from('category_goal').upsert({
+        const { error } = await supabase.from('category_goal').upsert({
           family_id: newFamilyId,
           category_key: goal.category_key,
           percentage: goal.percentage,
         });
+        
+        if (error) {
+          throw new Error(`Erro ao sincronizar meta: ${error.message}`);
+        }
+        updateProgress('Sincronizando metas', goal.category_key);
       }
 
-      // Clean up local offline data for this family
+      // Step 7: Clean up local offline data
+      setSyncProgress({ step: 'Limpando dados locais...', current: totalItems, total: totalItems });
+      
       for (const sub of subcategories) await offlineAdapter.delete('subcategories', sub.id);
       for (const rec of recurringExpenses) await offlineAdapter.delete('recurring_expenses', rec.id);
       for (const month of months) {
@@ -202,14 +308,26 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       for (const item of queueItems) await offlineAdapter.sync.remove(item.id);
 
       await updatePendingCount();
+      
+      setSyncProgress({ step: 'Concluído!', current: totalItems, total: totalItems });
       toast.success('Família sincronizada com sucesso!');
 
       return { newFamilyId };
     } catch (error) {
       console.error('Sync error:', error);
+      
+      // Attempt rollback
+      if (createdCloudIds.length > 0 || newFamilyId) {
+        toast.error('Erro na sincronização. Revertendo alterações...');
+        await rollback();
+        toast.info('Alterações revertidas. Seus dados locais foram preservados.');
+      }
+      
       return { error: error as Error };
     } finally {
       setIsSyncing(false);
+      // Clear progress after a short delay to show completion
+      setTimeout(() => setSyncProgress(null), 2000);
     }
   };
 
@@ -263,6 +381,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       value={{
         isOnline,
         isSyncing,
+        syncProgress,
         pendingSyncCount,
         syncNow,
         syncFamily,

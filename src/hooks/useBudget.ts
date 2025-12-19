@@ -61,23 +61,15 @@ export const useBudget = () => {
     setCategoryPercentages,
     currentMonth,
   } = useBudgetState();
-  // Helper to check if we should use offline storage
-  // Always check isOfflineId directly with the familyId parameter to avoid stale closures
-  const shouldUseOffline = (familyId: string | null): boolean => {
-    if (!familyId) return false;
-    return offlineAdapter.isOfflineId(familyId) || !navigator.onLine;
-  };
 
   const api = useMemo(() => createBudgetApi({
     currentFamilyId,
-    shouldUseOffline,
     setMonths,
     setRecurringExpenses,
     setSubcategories,
     categoryPercentages,
     setCategoryPercentages,
-    loadMonthsRef: async () => {},
-  }), [currentFamilyId, shouldUseOffline, setMonths, setRecurringExpenses, setSubcategories, categoryPercentages, setCategoryPercentages]);
+  }), [currentFamilyId, setMonths, setRecurringExpenses, setSubcategories, categoryPercentages, setCategoryPercentages]);
 
   // Track a pending created month id so we can reliably select it after months refresh
   const pendingCreatedMonthIdRef = useRef<string | null>(null);
