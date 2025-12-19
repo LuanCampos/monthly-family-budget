@@ -32,6 +32,7 @@ export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => 
           {currencySymbol}
         </span>
         <Input
+          name="incomeAmount"
           type="text"
           inputMode="decimal"
           value={inputValue}

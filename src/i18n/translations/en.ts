@@ -305,6 +305,12 @@ export const en: Record<TranslationKey, string> = {
   invite: 'Invite',
   familyDetails: 'Family Details',
   dangerZone: 'Danger Zone',
+  openFamilySettings: 'Open family settings',
+  sendInvitation: 'Send invitation',
+  removeMember: 'Remove member',
+  cancelInvitation: 'Cancel invitation',
+  rejectInvitation: 'Reject invitation',
+  acceptInvitation: 'Accept invitation',
   
   // Email Verification
   emailVerificationTitle: 'Verify your email',

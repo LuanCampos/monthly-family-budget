@@ -4,6 +4,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Explicit top-level compatibility fallbacks (ensure final compiled CSS contains both prefixed and unprefixed properties) */
+html, :host, body {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Ensure backdrop-filter support class exists for both prefixed and unprefixed support queries */
+@supports (backdrop-filter: none) {
+  .supports-\[backdrop-filter\]\:bg-background\/60 {
+    background-color: hsl(var(--background) / .6);
+    backdrop-filter: var(--tw-backdrop-blur, none);
+  }
+}
+@supports (-webkit-backdrop-filter: none) {
+  .supports-\[backdrop-filter\]\:bg-background\/60 {
+    background-color: hsl(var(--background) / .6);
+    -webkit-backdrop-filter: var(--tw-backdrop-blur, none);
+  }
+}
+
 @layer base {
   :root {
     --background: 30 6% 9%;
@@ -60,6 +82,17 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Cross-browser compatibility fallbacks */
+@layer base {
+  /* Prevent unexpected text size changes on mobile browsers */
+  html, body {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 }
 
@@ -159,4 +192,40 @@
       @apply min-h-[44px] min-w-[44px];
     }
   }
+
+  /* vendor-prefixed user-select utilities for Safari support */
+  .select-none {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  .select-text {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+  .select-all {
+    -webkit-user-select: all;
+    -moz-user-select: all;
+    -ms-user-select: all;
+    user-select: all;
+  }
+  .select-auto {
+    -webkit-user-select: auto;
+    -moz-user-select: auto;
+    -ms-user-select: auto;
+    user-select: auto;
+  }
+
+  /* Fallback for backdrop-filter on Safari */
+  /* Target common Tailwind backdrop-blur utility classes with reasonable defaults */
+  .backdrop-blur-sm { -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+  .backdrop-blur { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .backdrop-blur-md { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  .backdrop-blur-lg { -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  .backdrop-blur-xl { -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); }
+  .backdrop-blur-2xl { -webkit-backdrop-filter: blur(40px); backdrop-filter: blur(40px); }
+  .backdrop-blur-3xl { -webkit-backdrop-filter: blur(64px); backdrop-filter: blur(64px); }
 }
