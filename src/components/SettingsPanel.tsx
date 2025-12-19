@@ -46,6 +46,7 @@ import { useOnline } from '@/contexts/OnlineContext';
 import { offlineAdapter } from '@/lib/offlineAdapter';
 import { clearOfflineCache } from '@/lib/offlineStorage';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -85,7 +86,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
     leaveFamily,
     refreshFamilies
   } = useFamily();
-  const { syncFamily, isSyncing, isOnline } = useOnline();
+  const { syncFamily, isSyncing, syncProgress, isOnline } = useOnline();
   
   const [activeSection, setActiveSection] = useState<'main' | 'profile' | 'password' | 'auth'>('main');
   const [displayName, setDisplayName] = useState('');
@@ -882,15 +883,24 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                               </DropdownMenuItem>
                             ))}
                             <DropdownMenuSeparator />
-                            {isCurrentOffline && isOnline && (
+                            {isCurrentOffline && isOnline && !isSyncing && (
                               <DropdownMenuItem onClick={handleSyncFamily} disabled={isSyncing}>
-                                {isSyncing ? (
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                  <Cloud className="h-4 w-4 mr-2" />
-                                )}
+                                <Cloud className="h-4 w-4 mr-2" />
                                 {t('syncToCloud')}
                               </DropdownMenuItem>
+                            )}
+                            {isSyncing && syncProgress && (
+                              <div className="px-2 py-3 space-y-2">
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  <span className="truncate">{syncProgress.step}</span>
+                                </div>
+                                <Progress value={(syncProgress.current / syncProgress.total) * 100} className="h-1.5" />
+                                <div className="flex justify-between text-[10px] text-muted-foreground">
+                                  <span>{syncProgress.details}</span>
+                                  <span>{syncProgress.current}/{syncProgress.total}</span>
+                                </div>
+                              </div>
                             )}
                             <DropdownMenuItem onClick={() => setShowCreateFamilyDialog(true)}>
                               <Plus className="h-4 w-4 mr-2" />
