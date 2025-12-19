@@ -76,18 +76,18 @@ export const ExpenseForm = ({
     }
   }, [mode, initialData]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const numericValue = parseCurrencyInput(value);
     if (!title.trim() || numericValue <= 0) return;
 
     const finalSubcategoryId = subcategoryId || undefined;
 
     if (mode === 'create' && onAdd) {
-      onAdd(title.trim(), category, finalSubcategoryId, numericValue);
+      await onAdd(title.trim(), category, finalSubcategoryId, numericValue);
     }
 
     if (mode === 'edit' && onUpdate && initialData) {
-      onUpdate(initialData.id, title.trim(), category, finalSubcategoryId, numericValue, isPending);
+      await onUpdate(initialData.id, title.trim(), category, finalSubcategoryId, numericValue, isPending);
     }
 
     resetForm();

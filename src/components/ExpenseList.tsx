@@ -159,16 +159,16 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
     return '';
   };
 
-  const handleConfirmPayment = () => {
+  const handleConfirmPayment = async () => {
     if (confirmPaymentId) {
-      onConfirmPayment(confirmPaymentId);
+      await onConfirmPayment(confirmPaymentId);
       setConfirmPaymentId(null);
     }
   };
 
-  const handleDeleteExpense = () => {
+  const handleDeleteExpense = async () => {
     if (deleteExpenseId) {
-      onRemove(deleteExpenseId);
+      await onRemove(deleteExpenseId);
       setDeleteExpenseId(null);
     }
   };

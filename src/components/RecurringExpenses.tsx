@@ -126,7 +126,7 @@ export const RecurringExpenses = ({
     setView('edit');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const numericValue = parseCurrencyInput(value);
     if (!title.trim() || numericValue <= 0) return;
 
@@ -137,7 +137,7 @@ export const RecurringExpenses = ({
     const finalStartMonth = hasInstallments && startMonth ? parseInt(startMonth) : undefined;
 
     if (view === 'add') {
-      onAdd(
+      await onAdd(
         title.trim(), 
         category, 
         finalSubcategoryId, 
@@ -157,7 +157,7 @@ export const RecurringExpenses = ({
     }
   };
 
-  const confirmUpdate = (updatePast: boolean) => {
+  const confirmUpdate = async (updatePast: boolean) => {
     if (!editingId) return;
 
     const numericValue = parseCurrencyInput(value);
@@ -167,7 +167,7 @@ export const RecurringExpenses = ({
     const finalStartYear = hasInstallments && startYear ? parseInt(startYear) : undefined;
     const finalStartMonth = hasInstallments && startMonth ? parseInt(startMonth) : undefined;
 
-    onUpdate(
+    await onUpdate(
       editingId,
       title.trim(),
       category,
