@@ -689,6 +689,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                             <KeyRound className="h-3.5 w-3.5 mr-1.5" />{t('changePassword')}
                           </Button>
                         </div>
+                        <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-muted-foreground hover:text-destructive" onClick={handleSignOut}>
+                          <LogOut className="h-3.5 w-3.5 mr-2" />
+                          <span className="text-sm">{t('logout')}</span>
+                        </Button>
                       </div>
                     </div>
                   ) : (
@@ -749,18 +753,6 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                     </div>
                   </div>
                 </div>
-
-                {/* Account actions - Logout */}
-                {user && (
-                  <div className="dashboard-card">
-                    <div className="dashboard-card-content">
-                      <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-muted-foreground hover:text-destructive" onClick={handleSignOut}>
-                        <LogOut className="h-3.5 w-3.5 mr-2" />
-                        <span className="text-sm">{t('logout')}</span>
-                      </Button>
-                    </div>
-                  </div>
-                )}
 
                 {/* Danger Zone - More subtle */}
                 <div className="dashboard-card">
