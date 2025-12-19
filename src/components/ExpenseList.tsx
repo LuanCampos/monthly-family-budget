@@ -314,10 +314,10 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmPayment}
-              className="h-9 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {t('confirm')}
             </AlertDialogAction>
@@ -334,10 +334,10 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteExpense}
-              className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t('delete')}
             </AlertDialogAction>

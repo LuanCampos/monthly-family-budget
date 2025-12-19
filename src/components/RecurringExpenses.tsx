@@ -473,19 +473,19 @@ export const RecurringExpenses = ({
               {t('updateRecurringDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="h-9" onClick={() => setShowUpdateDialog(false)}>
+          <AlertDialogFooter className="flex-col sm:flex-row">
+            <AlertDialogCancel onClick={() => setShowUpdateDialog(false)}>
               {t('cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => confirmUpdate(true)}
-              className="h-9 bg-secondary text-foreground hover:bg-secondary/80"
+              className="bg-secondary text-foreground hover:bg-secondary/80"
             >
               {t('updateAll')}
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => confirmUpdate(false)}
-              className="h-9 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {t('updateFutureOnly')}
             </AlertDialogAction>
@@ -502,10 +502,10 @@ export const RecurringExpenses = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="h-9">{t('cancel')}</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="h-9 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t('delete')}
             </AlertDialogAction>
