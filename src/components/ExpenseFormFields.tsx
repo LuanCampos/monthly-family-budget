@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useImperativeHandle, forwardRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,11 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
 import { Plus, Equal, X } from 'lucide-react';
 
+export interface ExpenseFormFieldsRef {
+  /** Applies pending sum if any and returns the final formatted value */
+  applyPendingSum: () => string | null;
+}
+
 interface ExpenseFormFieldsProps {
   title: string;
   category: CategoryKey;
@@ -28,7 +33,7 @@ interface ExpenseFormFieldsProps {
   onValueChange: (value: string) => void;
 }
 
-export const ExpenseFormFields = ({
+export const ExpenseFormFields = forwardRef<ExpenseFormFieldsRef, ExpenseFormFieldsProps>(({
   title,
   category,
   subcategoryId,
@@ -38,20 +43,11 @@ export const ExpenseFormFields = ({
   onCategoryChange,
   onSubcategoryChange,
   onValueChange,
-}: ExpenseFormFieldsProps) => {
+}, ref) => {
   const { t } = useLanguage();
   const { currencySymbol } = useCurrency();
   const [showAdder, setShowAdder] = useState(false);
   const [addValue, setAddValue] = useState('');
-  
-  const filteredSubcategories = subcategories.filter(
-    (sub) => sub.categoryKey === category
-  );
-
-  const handleCategoryChange = (newCategory: CategoryKey) => {
-    onCategoryChange(newCategory);
-    onSubcategoryChange('');
-  };
 
   const parseValue = (val: string): number => {
     if (!val) return 0;
@@ -62,6 +58,32 @@ export const ExpenseFormFields = ({
     if (num === 0) return '';
     return num.toFixed(2).replace('.', ',');
   };
+
+  useImperativeHandle(ref, () => ({
+    applyPendingSum: (): string | null => {
+      if (showAdder && addValue) {
+        const currentValue = parseValue(value);
+        const valueToAdd = parseValue(addValue);
+        const total = currentValue + valueToAdd;
+        const formattedTotal = formatValue(total);
+        onValueChange(formattedTotal);
+        setAddValue('');
+        setShowAdder(false);
+        return formattedTotal;
+      }
+      return null;
+    },
+  }));
+  
+  const filteredSubcategories = subcategories.filter(
+    (sub) => sub.categoryKey === category
+  );
+
+  const handleCategoryChange = (newCategory: CategoryKey) => {
+    onCategoryChange(newCategory);
+    onSubcategoryChange('');
+  };
+
 
   const handleSum = () => {
     const currentValue = parseValue(value);
@@ -214,4 +236,4 @@ export const ExpenseFormFields = ({
       </div>
     </div>
   );
-};
+});

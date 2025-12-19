@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +12,7 @@ import { DialogDescription } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CategoryKey, Subcategory } from '@/types';
 import { DEFAULT_CATEGORY } from '@/constants/categories';
-import { ExpenseFormFields } from './ExpenseFormFields';
+import { ExpenseFormFields, ExpenseFormFieldsRef } from './ExpenseFormFields';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -46,6 +46,7 @@ export const ExpenseForm = ({
   disabled,
 }: ExpenseFormProps) => {
   const { t } = useLanguage();
+  const formFieldsRef = useRef<ExpenseFormFieldsRef>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<CategoryKey>(DEFAULT_CATEGORY);
@@ -77,7 +78,11 @@ export const ExpenseForm = ({
   }, [mode, initialData]);
 
   const handleSubmit = async () => {
-    const numericValue = parseCurrencyInput(value);
+    // Apply any pending sum before submitting
+    const summedValue = formFieldsRef.current?.applyPendingSum();
+    const valueToUse = summedValue ?? value;
+    
+    const numericValue = parseCurrencyInput(valueToUse);
     if (!title.trim() || numericValue <= 0) return;
 
     const finalSubcategoryId = subcategoryId || undefined;
@@ -132,6 +137,7 @@ export const ExpenseForm = ({
 
         <div className="px-6 py-4">
           <ExpenseFormFields
+            ref={formFieldsRef}
             title={title}
             category={category}
             subcategoryId={subcategoryId}
