@@ -41,9 +41,9 @@ export const SubcategoryManager = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newName.trim()) return;
-    onAdd(newName.trim(), newCategory);
+    await onAdd(newName.trim(), newCategory);
     setNewName('');
   };
 
@@ -52,9 +52,9 @@ export const SubcategoryManager = ({
     setEditingName(sub.name);
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (editingId && editingName.trim()) {
-      onUpdate(editingId, editingName.trim());
+      await onUpdate(editingId, editingName.trim());
     }
     setEditingId(null);
     setEditingName('');
