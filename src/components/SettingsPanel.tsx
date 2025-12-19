@@ -750,15 +750,27 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                   </div>
                 </div>
 
+                {/* Account actions - Logout */}
+                {user && (
+                  <div className="dashboard-card">
+                    <div className="dashboard-card-content">
+                      <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-muted-foreground hover:text-destructive" onClick={handleSignOut}>
+                        <LogOut className="h-3.5 w-3.5 mr-2" />
+                        <span className="text-sm">{t('logout')}</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Danger Zone - More subtle */}
                 <div className="dashboard-card">
                   <div className="dashboard-card-content">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('dataManagement')}</p>
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 flex flex-col items-center">
                     {onDeleteMonth && currentMonthLabel && (
                       <AlertDialog>
                           <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-destructive ring-1 ring-destructive/20 rounded">
+                          <Button variant="ghost" size="sm" className="w-3/4 justify-center h-8 text-destructive ring-1 ring-destructive/20 rounded">
                             <Trash2 className="h-3.5 w-3.5 mr-2" />
                             <span className="text-sm">{t('delete')} "{currentMonthLabel}"</span>
                           </Button>
@@ -780,7 +792,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="w-full justify-start h-8 text-destructive ring-1 ring-destructive/20 rounded"
+                          className="w-3/4 justify-center h-8 text-destructive ring-1 ring-destructive/20 rounded"
                           disabled={processingAction === 'clear-offline-cache'}
                         >
                           {processingAction === 'clear-offline-cache' ? (
@@ -807,12 +819,6 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
-                    {user && (
-                      <Button variant="ghost" size="sm" className="w-full justify-start h-8 text-muted-foreground hover:text-destructive" onClick={handleSignOut}>
-                        <LogOut className="h-3.5 w-3.5 mr-2" />
-                        <span className="text-sm">{t('logout')}</span>
-                      </Button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -999,13 +1005,13 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
                     {/* Danger Zone - Leave/Delete family */}
                     <div className="dashboard-card">
-                      <div className="dashboard-card-content space-y-1.5 pt-3 border-t border-border/50">
+                      <div className="dashboard-card-content space-y-1.5 pt-3 border-t border-border/50 flex flex-col items-center">
                       {!isOnlyMember && (
-                        <>
+                        <div className="flex flex-col items-center w-full">
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            className="w-full justify-start h-8 text-destructive ring-1 ring-destructive/20 rounded" 
+                            className="w-3/4 justify-center h-8 text-destructive ring-1 ring-destructive/20 rounded" 
                             onClick={() => setShowLeaveAlert(true)}
                             disabled={isOnlyAdmin}
                           >
@@ -1013,15 +1019,15 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                             <span className="text-sm">{t('leaveFamily')}</span>
                           </Button>
                           {isOnlyAdmin && (
-                            <p className="text-[11px] text-muted-foreground pl-6">{t('promoteAdminFirst')}</p>
+                            <p className="text-[11px] text-muted-foreground text-center mt-1">{t('promoteAdminFirst')}</p>
                           )}
-                        </>
+                        </div>
                       )}
                       {(isAdmin || isOnlyMember) && (
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          className="w-full justify-start h-8 text-destructive ring-1 ring-destructive/20 rounded" 
+                          className="w-3/4 justify-center h-8 text-destructive ring-1 ring-destructive/20 rounded" 
                           onClick={() => setShowDeleteAlert(true)}
                         >
                           <Trash2 className="h-3.5 w-3.5 mr-2" />

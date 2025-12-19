@@ -1,5 +1,6 @@
 import { CATEGORIES } from '@/constants/categories';
 import * as storageAdapter from '@/lib/storageAdapter';
+import * as budgetService from '@/lib/budgetService';
 import { offlineAdapter } from '@/lib/offlineAdapter';
 import { Month, CategoryKey, RecurringExpense, Subcategory } from '@/types';
 import { toast } from 'sonner';
