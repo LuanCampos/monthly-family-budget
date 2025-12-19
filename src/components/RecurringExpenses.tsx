@@ -473,19 +473,19 @@ export const RecurringExpenses = ({
               {t('updateRecurringDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row">
-            <AlertDialogCancel onClick={() => setShowUpdateDialog(false)}>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+            <AlertDialogCancel onClick={() => setShowUpdateDialog(false)} className="sm:flex-none">
               {t('cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => confirmUpdate(true)}
-              className="bg-secondary text-foreground hover:bg-secondary/80"
+              className="bg-secondary text-foreground hover:bg-secondary/80 sm:flex-none"
             >
               {t('updateAll')}
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => confirmUpdate(false)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 sm:flex-none"
             >
               {t('updateFutureOnly')}
             </AlertDialogAction>
