@@ -139,8 +139,8 @@ export const en: Record<TranslationKey, string> = {
   // Update Options
   updateRecurringTitle: 'Apply changes',
   updateRecurringDescription: 'Do you want to apply changes only to future expenses or also update expenses already created in previous months?',
-  updateFutureOnly: 'Only Future',
-  updateAll: 'Update All',
+  updateFutureOnly: 'Future',
+  updateAll: 'All',
   
   // Delete Recurring Expense
   deleteRecurringExpense: 'Delete recurring expense',
