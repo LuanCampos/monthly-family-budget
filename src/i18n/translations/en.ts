@@ -20,6 +20,7 @@ export const en: Record<TranslationKey, string> = {
   import: 'Import',
   export: 'Export',
   save: 'Save',
+  saving: 'Saving...',
   cancel: 'Cancel',
   add: 'Add',
   edit: 'Edit',

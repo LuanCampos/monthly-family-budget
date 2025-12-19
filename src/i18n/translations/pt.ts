@@ -18,6 +18,7 @@ export const pt = {
   import: 'Importar',
   export: 'Exportar',
   save: 'Salvar',
+  saving: 'Salvando...',
   cancel: 'Cancelar',
   add: 'Adicionar',
   edit: 'Editar',
