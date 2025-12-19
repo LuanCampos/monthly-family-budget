@@ -820,62 +820,98 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
               {/* Family Tab */}
               <TabsContent value="family" className="mt-0 space-y-5">
-                {/* Family Selector */}
+                {/* Family Selector with inline edit */}
                 <div className="dashboard-card">
-                  <div className="dashboard-card-content space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('selectFamily')}</p>
-                    <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-10">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Users className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                          <span className="truncate font-medium">
-                            {currentFamily?.name || t('selectFamily')}
-                          </span>
-                          {isCurrentOffline && (
-                            <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-amber-500/20 text-amber-500 flex-shrink-0">
-                              <WifiOff className="h-3 w-3" />
-                            </Badge>
-                          )}
-                        </div>
-                        <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-56">
-                      {families.map((family) => (
-                        <DropdownMenuItem
-                          key={family.id}
-                          onClick={() => selectFamily(family.id)}
-                          className="flex items-center justify-between"
-                        >
-                          <span className="truncate">{family.name}</span>
-                          <div className="flex items-center gap-1">
-                            {(family.isOffline || offlineAdapter.isOfflineId(family.id)) && (
-                              <WifiOff className="h-3 w-3 text-amber-500" />
+                  <div className="dashboard-card-content space-y-3">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('selectFamily')}</p>
+                    
+                    {editingName ? (
+                      <div className="flex gap-2">
+                        <Input 
+                          className="h-10 flex-1" 
+                          value={newFamilyName} 
+                          onChange={(e) => setNewFamilyName(e.target.value)} 
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleUpdateFamilyName();
+                            if (e.key === 'Escape') setEditingName(false);
+                          }}
+                          autoFocus
+                        />
+                        <Button size="sm" className="h-10 px-3" onClick={handleUpdateFamilyName}>
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-10 px-3" onClick={() => setEditingName(false)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="flex-1 justify-between h-10">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Users className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                                <span className="truncate font-medium">
+                                  {currentFamily?.name || t('selectFamily')}
+                                </span>
+                                {isCurrentOffline && (
+                                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-amber-500/20 text-amber-500 flex-shrink-0">
+                                    <WifiOff className="h-3 w-3" />
+                                  </Badge>
+                                )}
+                              </div>
+                              <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-56">
+                            {families.map((family) => (
+                              <DropdownMenuItem
+                                key={family.id}
+                                onClick={() => selectFamily(family.id)}
+                                className="flex items-center justify-between"
+                              >
+                                <span className="truncate">{family.name}</span>
+                                <div className="flex items-center gap-1">
+                                  {(family.isOffline || offlineAdapter.isOfflineId(family.id)) && (
+                                    <WifiOff className="h-3 w-3 text-amber-500" />
+                                  )}
+                                  {currentFamily?.id === family.id && (
+                                    <Check className="h-4 w-4 text-primary" />
+                                  )}
+                                </div>
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
+                            {isCurrentOffline && isOnline && (
+                              <DropdownMenuItem onClick={handleSyncFamily} disabled={isSyncing}>
+                                {isSyncing ? (
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                  <Cloud className="h-4 w-4 mr-2" />
+                                )}
+                                {t('syncToCloud')}
+                              </DropdownMenuItem>
                             )}
-                            {currentFamily?.id === family.id && (
-                              <Check className="h-4 w-4 text-primary" />
-                            )}
-                          </div>
-                        </DropdownMenuItem>
-                      ))}
-                      <DropdownMenuSeparator />
-                      {isCurrentOffline && isOnline && (
-                        <DropdownMenuItem onClick={handleSyncFamily} disabled={isSyncing}>
-                          {isSyncing ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <Cloud className="h-4 w-4 mr-2" />
-                          )}
-                          {t('syncToCloud')}
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem onClick={() => setShowCreateFamilyDialog(true)}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        {t('createFamily')}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                            <DropdownMenuItem onClick={() => setShowCreateFamilyDialog(true)}>
+                              <Plus className="h-4 w-4 mr-2" />
+                              {t('createFamily')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        
+                        {isAdmin && currentFamily && (
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-10 w-10 flex-shrink-0" 
+                            onClick={() => { setNewFamilyName(currentFamily.name); setEditingName(true); }}
+                            title={t('edit')}
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -906,27 +942,6 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
                 {currentFamily ? (
                   <>
-                    {/* Family name editing - Inline */}
-                    {isAdmin && (
-                      <div className="dashboard-card">
-                        <div className="dashboard-card-content space-y-2">
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('familyName')}</p>
-                          {editingName ? (
-                            <div className="flex gap-2">
-                              <Input className="h-9" value={newFamilyName} onChange={(e) => setNewFamilyName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleUpdateFamilyName()} />
-                              <Button size="sm" className="h-9" onClick={handleUpdateFamilyName}>{t('save')}</Button>
-                              <Button size="sm" variant="ghost" className="h-9" onClick={() => setEditingName(false)}>{t('cancel')}</Button>
-                            </div>
-                          ) : (
-                            <Button variant="ghost" size="sm" className="h-8 px-2 text-sm" onClick={() => { setNewFamilyName(currentFamily.name); setEditingName(true); }}>
-                              {t('edit')}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Invite member - Admin only */}
                     {isAdmin && (
                       <div className="dashboard-card">
                         <div className="dashboard-card-content space-y-2">
