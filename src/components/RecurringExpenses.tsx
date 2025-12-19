@@ -378,6 +378,7 @@ export const RecurringExpenses = ({
                             variant="ghost"
                             size="icon"
                             onClick={handleApply}
+                            aria-label={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
                             disabled={isInCurrentMonth}
                             title={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
                             className={`h-8 w-8 ${
@@ -394,6 +395,7 @@ export const RecurringExpenses = ({
                             size="icon"
                             onClick={() => openEdit(exp)}
                             className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                            aria-label={t('edit')}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -403,6 +405,7 @@ export const RecurringExpenses = ({
                             size="icon"
                             onClick={() => setDeleteId(exp.id)}
                             className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            aria-label={t('delete')}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

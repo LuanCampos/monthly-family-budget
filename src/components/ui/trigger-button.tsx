@@ -19,6 +19,7 @@ const TriggerButton = React.forwardRef<HTMLButtonElement, TriggerButtonProps>(
         variant="ghost"
         size="icon"
         className={cn('h-9 w-9 sm:h-10 sm:w-10 rounded-full p-0 relative', className)}
+        aria-label={props['aria-label'] ?? 'Open user menu'}
         {...props}
       >
         {user ? (

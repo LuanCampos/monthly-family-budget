@@ -38,6 +38,7 @@ Workflow notes & debugging
 - Build for production: `npm run build` or `npm run build:dev` for a development-mode build.
 - Lint: `npm run lint` uses `eslint` configured at repo root. Follow existing lint rules.
 - If changing auth, check `src/contexts/AuthContext.tsx` and `src/lib/supabase.ts` to ensure session handling remains consistent.
+- Read `.github/FIX_NPM.md` for troubleshooting Windows PATH issues with Node.js and npm.
 
 Files to inspect for common tasks (examples)
 - Add a new page: mirror `src/pages/Index.tsx`, add route in routing root (see `src/App.tsx`).

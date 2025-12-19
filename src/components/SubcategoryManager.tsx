@@ -128,6 +128,7 @@ export const SubcategoryManager = ({
                 onClick={handleAdd}
                 size="icon"
                 className="h-10 w-10 bg-primary text-primary-foreground hover:bg-primary/90 flex-shrink-0"
+                aria-label={t('addSubcategory')}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -180,6 +181,7 @@ export const SubcategoryManager = ({
                                 size="icon"
                                 onClick={saveEdit}
                                 className="h-8 w-8 text-primary hover:bg-primary/10"
+                                aria-label={t('save')}
                               >
                                 <Check className="h-4 w-4" />
                               </Button>
@@ -188,6 +190,7 @@ export const SubcategoryManager = ({
                                 size="icon"
                                 onClick={cancelEdit}
                                 className="h-8 w-8 text-muted-foreground hover:bg-muted"
+                                aria-label={t('cancel')}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -203,6 +206,7 @@ export const SubcategoryManager = ({
                                   size="icon"
                                   onClick={() => startEdit(sub)}
                                   className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                  aria-label={t('edit')}
                                 >
                                   <Pencil className="h-3.5 w-3.5" />
                                 </Button>
@@ -211,6 +215,7 @@ export const SubcategoryManager = ({
                                   size="icon"
                                   onClick={() => onRemove(sub.id)}
                                   className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  aria-label={t('delete')}
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </Button>

@@ -282,6 +282,7 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
                       variant="ghost"
                       size="icon"
                       onClick={() => onEdit(expense)}
+                      aria-label={t('edit')}
                       className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -291,6 +292,7 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
                       variant="ghost"
                       size="icon"
                       onClick={() => setDeleteExpenseId(expense.id)}
+                      aria-label={t('delete')}
                       className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="h-3.5 w-3.5" />

@@ -258,7 +258,7 @@ export const FamilyManager = () => {
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="icon" className="relative" aria-label={t('openFamilySettings')}>
             <Settings className="h-4 w-4" />
             {myPendingInvitations.length > 0 && (
               <span className="absolute -top-1 -right-1 h-4 w-4 text-xs bg-primary text-primary-foreground rounded-full flex items-center justify-center">
@@ -305,7 +305,7 @@ export const FamilyManager = () => {
                       onChange={(e) => setInviteEmail(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleInvite()}
                     />
-                    <Button onClick={handleInvite} disabled={!inviteEmail.trim() || isInviting}>
+                    <Button onClick={handleInvite} disabled={!inviteEmail.trim() || isInviting} aria-label={t('sendInvitation')}>
                       {isInviting ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
@@ -355,6 +355,7 @@ export const FamilyManager = () => {
                             className="h-8 w-8 text-destructive hover:bg-destructive/10"
                             onClick={() => handleRemoveMember(member.id)}
                             disabled={processingAction === member.id}
+                            aria-label={t('removeMember')}
                           >
                             {processingAction === member.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -388,6 +389,7 @@ export const FamilyManager = () => {
                         className="h-8 w-8"
                         onClick={() => handleCancelInvitation(invitation.id)}
                         disabled={processingAction === invitation.id}
+                        aria-label={t('cancelInvitation')}
                       >
                         {processingAction === invitation.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -425,6 +427,7 @@ export const FamilyManager = () => {
                           variant="outline"
                           onClick={() => handleRejectInvitation(invitation.id)}
                           disabled={processingAction === invitation.id}
+                          aria-label={t('rejectInvitation')}
                         >
                           <X className="h-4 w-4" />
                         </Button>

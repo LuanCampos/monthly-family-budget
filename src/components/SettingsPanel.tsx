@@ -906,6 +906,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                             className="h-10 w-10 flex-shrink-0" 
                             onClick={() => { setNewFamilyName(currentFamily.name); setEditingName(true); }}
                             title={t('edit')}
+                            aria-label={t('edit')}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -927,10 +928,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                             <p className="text-xs text-muted-foreground">{t('invitedToFamily')}</p>
                           </div>
                           <div className="flex items-center gap-1 ml-2">
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleRejectInvitation(invitation.id)} disabled={processingAction === invitation.id}>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleRejectInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('rejectInvitation')}>
                               <X className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" className="h-7 px-2 text-xs" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id}>
+                            <Button size="sm" className="h-7 px-2 text-xs" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('acceptInvitation')}>
                               {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : t('accept')}
                             </Button>
                           </div>
@@ -979,7 +980,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                                       <SelectItem value="member">{t('role_member')}</SelectItem>
                                     </SelectContent>
                                   </Select>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveMember(member.id)} disabled={processingAction === member.id}>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveMember(member.id)} disabled={processingAction === member.id} aria-label={t('removeMember')}>
                                     {processingAction === member.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
                                   </Button>
                                 </div>
@@ -1002,7 +1003,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                                   <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                                   <span className="text-sm text-muted-foreground truncate">{invitation.email}</span>
                                 </div>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCancelInvitation(invitation.id)} disabled={processingAction === invitation.id}>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCancelInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('cancelInvitation')}>
                                   {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
                                 </Button>
                               </div>
