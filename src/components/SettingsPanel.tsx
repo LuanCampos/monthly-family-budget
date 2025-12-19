@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive } from 'lucide-react';
+import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TriggerButton from '@/components/ui/trigger-button';
 import {
@@ -907,7 +907,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                             onClick={() => { setNewFamilyName(currentFamily.name); setEditingName(true); }}
                             title={t('edit')}
                           >
-                            <Settings className="h-4 w-4" />
+                            <Pencil className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
