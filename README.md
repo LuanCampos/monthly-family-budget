@@ -1,73 +1,50 @@
-# Welcome to your Lovable project
+# Monthly Family Budget
 
-## Project info
+![Release](https://img.shields.io/badge/release-v1.0-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+![Demo](https://img.shields.io/badge/demo-gh-pages-purple)
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+A cloud-first, multi-user family budget manager built with Vite, React and TypeScript. It supports online collaboration via Supabase and works offline with local persistence and background sync.
 
-## How can I edit this code?
+Live demo: https://luancampos.github.io/monthly-family-budget/
 
-There are several ways of editing your application.
+Other languages: Português — see README.pt-BR.md
 
-**Use Lovable**
+Key features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+- Cloud-first collaboration with Supabase for shared family workspaces
+- Offline-capable with local persistence and a sync queue
+- Built with React, TypeScript, Vite, Tailwind CSS and shadcn-ui primitives
+- Income input, expense entries, recurring expenses, categories/subcategories, charts, monthly summaries, family invites and role-based membership
 
-Changes made via Lovable will be committed automatically to this repo.
+Quick start (development)
 
-**Use your preferred IDE**
+Clone and run locally:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+git clone https://github.com/luancampos/monthly-family-budget.git
+cd monthly-family-budget
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Open the app at `http://localhost:8080` (or the URL Vite prints).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Recommended commands
 
-**Use GitHub Codespaces**
+- Install dependencies: `npm install`
+- Start dev server: `npm run dev`
+- Build for production: `npm run build`
+- Preview production build: `npm run preview`
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Contributing
 
-## What technologies are used for this project?
+- Open an issue to propose changes or report bugs
+- Create a branch for your change: `git checkout -b feat/your-feature`
+- Keep changes focused and add tests or verifications when appropriate
+- Use existing `src/components/ui/*` primitives for new UI elements to keep consistency
 
-This project is built with:
+License
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
