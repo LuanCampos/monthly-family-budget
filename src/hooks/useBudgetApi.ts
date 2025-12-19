@@ -114,9 +114,10 @@ export const createBudgetApi = (opts: {
       return storageAdapter.applyRecurringToMonth(currentFamilyId, recurring, monthId);
     },
     
-    // Goals - delegate to storageAdapter
+    // Goals - delegate to storageAdapter and update local state
     updateGoals: async (newGoals: Record<CategoryKey, number>) => {
-      return storageAdapter.updateGoals(currentFamilyId, newGoals);
+      await storageAdapter.updateGoals(currentFamilyId, newGoals);
+      setCategoryPercentages(newGoals);
     }
   } as const;
 };
