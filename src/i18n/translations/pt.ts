@@ -303,12 +303,6 @@ export const pt = {
   invite: 'Convidar',
   familyDetails: 'Detalhes da Família',
   dangerZone: 'Zona de Perigo',
-  openFamilySettings: 'Abrir configurações da família',
-  sendInvitation: 'Enviar convite',
-  removeMember: 'Remover membro',
-  cancelInvitation: 'Cancelar convite',
-  rejectInvitation: 'Rejeitar convite',
-  acceptInvitation: 'Aceitar convite',
   
   // Email Verification
   emailVerificationTitle: 'Verifique seu e-mail',

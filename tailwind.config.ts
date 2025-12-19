@@ -89,12 +89,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: { transform: "scaleY(0)", transformOrigin: "top" },
-          to: { transform: "scaleY(1)", transformOrigin: "top" },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: { transform: "scaleY(1)", transformOrigin: "top" },
-          to: { transform: "scaleY(0)", transformOrigin: "top" },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
         "fade-in": {
           from: { opacity: "0", transform: "translateY(10px)" },
