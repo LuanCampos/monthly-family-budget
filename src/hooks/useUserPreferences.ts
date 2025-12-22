@@ -1,19 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import * as userService from '@/lib/userService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme, ThemeKey } from '@/contexts/ThemeContext';
 import { useCurrency, CurrencyCode } from '@/contexts/CurrencyContext';
-
-interface UserPreference {
-  id: string;
-  user_id: string;
-  language: string | null;
-  currency: string | null;
-  theme: string | null;
-  current_family_id: string | null;
-  updated_at: string;
-}
 
 export const useUserPreferences = (user: User | null, loading: boolean) => {
   const { setLanguage } = useLanguage();
@@ -37,11 +27,7 @@ export const useUserPreferences = (user: User | null, loading: boolean) => {
 
     const loadPreferences = async () => {
       try {
-        const { data, error } = await supabase
-          .from('user_preference')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        const { data, error } = await userService.getUserPreferences(user.id);
 
         if (error) {
           console.error('Error loading user preferences:', error);
@@ -49,7 +35,7 @@ export const useUserPreferences = (user: User | null, loading: boolean) => {
         }
 
         if (data) {
-          const prefs = data as UserPreference;
+          const prefs = data as userService.UserPreference;
           
           if (prefs.language && (prefs.language === 'pt' || prefs.language === 'en')) {
             setLanguage(prefs.language);
