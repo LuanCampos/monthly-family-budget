@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { getAppBaseUrl } from '@/lib/appBaseUrl';
+import * as userService from '@/lib/userService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 
@@ -84,6 +85,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // When a user becomes available, ensure server has initial preferences copied
+  // from localStorage if the server record is missing or missing fields.
+  useEffect(() => {
+    if (!user) return;
+
+    const syncLocalPreferencesToServer = async () => {
+      try {
+        const { data, error } = await userService.getUserPreferences(user.id);
+        if (error) return;
+
+        const localTheme = typeof window !== 'undefined' ? localStorage.getItem('budget-app-theme') : null;
+        const localLanguage = typeof window !== 'undefined' ? localStorage.getItem('budget-app-language') : null;
+        const localCurrency = typeof window !== 'undefined' ? localStorage.getItem('budget-app-currency') : null;
+
+        const payload: any = { user_id: user.id };
+        let shouldUpsert = false;
+
+        if (!data) {
+          // No server record: explicitly write all three preferences to ensure
+          // the server reflects the app's current state. Use localStorage
+          // values when available, otherwise use sensible defaults so the
+          // server doesn't end up with an unexpected default.
+          const browserLang = typeof navigator !== 'undefined' ? navigator.language.slice(0, 2) : 'en';
+          const themeToWrite = localTheme || 'dark';
+          const languageToWrite = (localLanguage === 'pt' || localLanguage === 'en') ? localLanguage : (browserLang === 'pt' ? 'pt' : 'en');
+          const currencyToWrite = (localCurrency === 'BRL' || localCurrency === 'USD') ? localCurrency : 'BRL';
+
+          payload.theme = themeToWrite;
+          payload.language = languageToWrite;
+          payload.currency = currencyToWrite;
+          shouldUpsert = true;
+        } else {
+          // Partial record: fill missing fields from localStorage
+          const prefs = data as userService.UserPreference;
+          if ((!prefs.theme || prefs.theme === null) && localTheme) { payload.theme = localTheme; shouldUpsert = true; }
+          if ((!prefs.language || prefs.language === null) && localLanguage) { payload.language = localLanguage; shouldUpsert = true; }
+          if ((!prefs.currency || prefs.currency === null) && localCurrency) { payload.currency = localCurrency; shouldUpsert = true; }
+        }
+
+        if (shouldUpsert) {
+          try {
+            await userService.upsertUserPreference(payload);
+          } catch (upsertErr) {
+            // Non-fatal, log for diagnostics
+            console.error('Failed to upsert user preferences on first auth:', upsertErr);
+          }
+        }
+      } catch (err) {
+        console.error('Error syncing local preferences to server:', err);
+      }
+    };
+
+    syncLocalPreferencesToServer();
+  }, [user]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
