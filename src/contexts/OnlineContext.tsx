@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
 import { offlineAdapter } from '@/lib/offlineAdapter';
+import * as familyService from '@/lib/familyService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -92,7 +92,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       for (let i = createdCloudIds.length - 1; i >= 0; i--) {
         const { table, id } = createdCloudIds[i];
         try {
-          await supabase.from(table).delete().eq('id', id);
+          await familyService.deleteByIdFromTable(table, id);
           setSyncProgress({ step: 'Revertendo alterações...', current: createdCloudIds.length - i, total: createdCloudIds.length });
         } catch (e) {
           console.error(`Failed to rollback ${table}:${id}`, e);
@@ -102,8 +102,8 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Delete family member and family if they were created
       if (newFamilyId) {
         try {
-          await supabase.from('family_member').delete().eq('family_id', newFamilyId);
-          await supabase.from('family').delete().eq('id', newFamilyId);
+          await familyService.deleteMembersByFamily(newFamilyId);
+          await familyService.deleteFamily(newFamilyId);
         } catch (e) {
           console.error('Failed to rollback family', e);
         }
@@ -140,14 +140,10 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Step 1: Create family in cloud
       setSyncProgress({ step: 'Criando família na nuvem...', current: 0, total: totalItems });
       
-      const { data: cloudFamily, error: familyError } = await supabase
-        .from('family')
-        .insert({
-          name: offlineFamily.name,
-          created_by: session.user.id,
-        })
-        .select()
-        .single();
+      const { data: cloudFamily, error: familyError } = await familyService.insertFamily(
+        offlineFamily.name,
+        session.user.id
+      );
 
       if (familyError) {
         throw new Error(`Erro ao criar família: ${familyError.message}`);
@@ -157,7 +153,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       updateProgress('Família criada', offlineFamily.name);
 
       // Create owner membership
-      const { error: memberError } = await supabase.from('family_member').insert({
+      const { error: memberError } = await familyService.insertFamilyMember({
         family_id: newFamilyId,
         user_id: session.user.id,
         role: 'owner',
@@ -172,15 +168,11 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Step 2: Sync subcategories
       for (const sub of subcategories) {
-        const { data, error } = await supabase
-          .from('subcategory')
-          .insert({
-            family_id: newFamilyId,
-            name: sub.name,
-            category_key: sub.category_key,
-          })
-          .select()
-          .single();
+        const { data, error } = await familyService.insertSubcategoryForSync({
+          family_id: newFamilyId,
+          name: sub.name,
+          category_key: sub.category_key,
+        });
         
         if (error) {
           throw new Error(`Erro ao sincronizar subcategoria "${sub.name}": ${error.message}`);
@@ -195,22 +187,18 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Step 3: Sync recurring expenses
       for (const rec of recurringExpenses) {
-        const { data, error } = await supabase
-          .from('recurring_expense')
-          .insert({
-            family_id: newFamilyId,
-            title: rec.title,
-            category_key: rec.category_key,
-            subcategory_id: rec.subcategory_id ? idMap[rec.subcategory_id] : null,
-            value: rec.value,
-            due_day: rec.due_day,
-            has_installments: rec.has_installments,
-            total_installments: rec.total_installments,
-            start_year: rec.start_year,
-            start_month: rec.start_month,
-          })
-          .select()
-          .single();
+        const { data, error } = await familyService.insertRecurringForSync({
+          family_id: newFamilyId,
+          title: rec.title,
+          category_key: rec.category_key,
+          subcategory_id: rec.subcategory_id ? idMap[rec.subcategory_id] : null,
+          value: rec.value,
+          due_day: rec.due_day,
+          has_installments: rec.has_installments,
+          total_installments: rec.total_installments,
+          start_year: rec.start_year,
+          start_month: rec.start_month,
+        });
         
         if (error) {
           throw new Error(`Erro ao sincronizar gasto recorrente "${rec.title}": ${error.message}`);
@@ -226,7 +214,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Step 4: Sync months
       for (const month of months) {
         const newMonthId = month.id.replace(familyId, newFamilyId);
-        const { error } = await supabase.from('month').insert({
+        const { error } = await familyService.insertMonthWithId({
           id: newMonthId,
           family_id: newFamilyId,
           year: month.year,
@@ -247,23 +235,19 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       for (const month of months) {
         const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
         for (const exp of expenses) {
-          const { data, error } = await supabase
-            .from('expense')
-            .insert({
-              month_id: idMap[month.id],
-              title: exp.title,
-              category_key: exp.category_key,
-              subcategory_id: exp.subcategory_id ? idMap[exp.subcategory_id] : null,
-              value: exp.value,
-              is_recurring: exp.is_recurring,
-              is_pending: exp.is_pending,
-              due_day: exp.due_day,
-              recurring_expense_id: exp.recurring_expense_id ? idMap[exp.recurring_expense_id] : null,
-              installment_current: exp.installment_current,
-              installment_total: exp.installment_total,
-            })
-            .select()
-            .single();
+          const { data, error } = await familyService.insertExpenseForSync({
+            month_id: idMap[month.id],
+            title: exp.title,
+            category_key: exp.category_key,
+            subcategory_id: exp.subcategory_id ? idMap[exp.subcategory_id] : null,
+            value: exp.value,
+            is_recurring: exp.is_recurring,
+            is_pending: exp.is_pending,
+            due_day: exp.due_day,
+            recurring_expense_id: exp.recurring_expense_id ? idMap[exp.recurring_expense_id] : null,
+            installment_current: exp.installment_current,
+            installment_total: exp.installment_total,
+          });
           
           if (error) {
             throw new Error(`Erro ao sincronizar gasto "${exp.title}": ${error.message}`);
@@ -278,7 +262,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Step 6: Sync category goals
       for (const goal of goals) {
-        const { error } = await supabase.from('category_goal').upsert({
+        const { error } = await familyService.upsertCategoryGoal({
           family_id: newFamilyId,
           category_key: goal.category_key,
           percentage: goal.percentage,
@@ -347,11 +331,11 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
 
           if (item.action === 'insert') {
-            await supabase.from(item.type).insert(item.data);
+            await familyService.insertToTable(item.type, item.data);
           } else if (item.action === 'update') {
-            await supabase.from(item.type).update(item.data).eq('id', item.data.id);
+            await familyService.updateInTable(item.type, item.data.id, item.data);
           } else if (item.action === 'delete') {
-            await supabase.from(item.type).delete().eq('id', item.data.id);
+            await familyService.deleteByIdFromTable(item.type, item.data.id);
           }
 
           await offlineAdapter.sync.remove(item.id);

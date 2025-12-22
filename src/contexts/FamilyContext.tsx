@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import * as familyService from '@/lib/familyService';
+import * as userService from '@/lib/userService';
 import { useAuth } from '@/contexts/AuthContext';
 import { offlineAdapter } from '@/lib/offlineAdapter';
 
@@ -112,18 +114,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     try {
-      const { data, error } = await supabase
-        .from('family_member')
-        .select(`
-          family_id,
-          family (
-            id,
-            name,
-            created_by,
-            created_at
-          )
-        `)
-        .eq('user_id', user.id);
+      const { data, error } = await familyService.getFamiliesByUser(user.id);
 
       if (!error && data) {
         const cloudFamilies = data
@@ -161,10 +152,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     try {
-      const { data, error } = await supabase
-        .from('family_member')
-        .select('*')
-        .eq('family_id', currentFamilyId);
+      const { data, error } = await familyService.getMembersByFamily(currentFamilyId);
 
       if (!error && data) {
         setMembers(data);
@@ -185,16 +173,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       // Try to get invitations with family join - this works if RLS allows
-      const { data: myInvitesWithFamily, error: joinError } = await supabase
-        .from('family_invitation')
-        .select(`
-          *,
-          family:family_id (
-            name
-          )
-        `)
-        .eq('email', user.email)
-        .eq('status', 'pending');
+      const { data: myInvitesWithFamily, error: joinError } = await familyService.getInvitationsByEmail(user.email);
 
       if (!joinError && myInvitesWithFamily) {
         setMyPendingInvitations(
@@ -207,11 +186,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       // Fallback: get invitations without join (RLS might block the join)
-      const { data: myInvites, error } = await supabase
-        .from('family_invitation')
-        .select('*')
-        .eq('email', user.email)
-        .eq('status', 'pending');
+      const { data: myInvites, error } = await familyService.getInvitationsByEmailSimple(user.email);
 
       if (error) {
         console.log('Error fetching invitations:', error);
@@ -222,10 +197,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (myInvites && myInvites.length > 0) {
         // Try to fetch family names separately (might fail due to RLS)
         const familyIds = [...new Set(myInvites.map(inv => inv.family_id))];
-        const { data: familiesData } = await supabase
-          .from('family')
-          .select('id, name')
-          .in('id', familyIds);
+        const { data: familiesData } = await familyService.getFamilyNamesByIds(familyIds);
 
         const familyNameMap = new Map(familiesData?.map(f => [f.id, f.name]) || []);
 
@@ -253,11 +225,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     try {
-      const { data: familyInvites } = await supabase
-        .from('family_invitation')
-        .select('*')
-        .eq('family_id', currentFamilyId)
-        .eq('status', 'pending');
+      const { data: familyInvites } = await familyService.getInvitationsByFamily(currentFamilyId);
 
       if (familyInvites) {
         setPendingInvitations(familyInvites);
@@ -292,11 +260,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     try {
-      const { data } = await supabase
-        .from('user_preference')
-        .select('current_family_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const { data } = await userService.getCurrentFamilyPreference(user.id);
 
       if (data?.current_family_id) {
         setCurrentFamilyId(data.current_family_id);
@@ -325,13 +289,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!user || !familyId || offlineAdapter.isOfflineId(familyId)) return;
 
     try {
-      await supabase
-        .from('user_preference')
-        .upsert({
-          user_id: user.id,
-          current_family_id: familyId,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
+      await userService.updateCurrentFamily(user.id, familyId);
     } catch (e) {
       console.log('User preferences table not yet created');
     }
@@ -362,18 +320,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (user) {
         try {
-          const { data, error } = await supabase
-            .from('family_member')
-            .select(`
-              family_id,
-              family (
-                id,
-                name,
-                created_by,
-                created_at
-              )
-            `)
-            .eq('user_id', user.id);
+          const { data, error } = await familyService.getFamiliesByUser(user.id);
 
           if (!error && data) {
             const cloudFamilies = data
@@ -399,11 +346,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       } else {
         try {
-          const { data } = await supabase
-            .from('user_preference')
-            .select('current_family_id')
-            .eq('user_id', user.id)
-            .maybeSingle();
+          const { data } = await userService.getCurrentFamilyPreference(user.id);
 
           if (data?.current_family_id) {
             // Verify this family exists in the loaded families
@@ -433,14 +376,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           // Save this auto-selection
           localStorage.setItem('current-family-id', selectedFamilyId);
           if (!offlineAdapter.isOfflineId(selectedFamilyId || '')) {
-            supabase
-              .from('user_preference')
-              .upsert({
-                user_id: user.id,
-                current_family_id: selectedFamilyId,
-                updated_at: new Date().toISOString()
-              }, { onConflict: 'user_id' })
-              .then(() => {});
+            userService.updateCurrentFamily(user.id, selectedFamilyId).then(() => {});
           }
         }
         
@@ -514,14 +450,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           localStorage.setItem('current-family-id', remainingFamilies[0].id);
           // Save to cloud preferences if user is logged in
           if (user && !offlineAdapter.isOfflineId(remainingFamilies[0].id)) {
-            supabase
-              .from('user_preference')
-              .upsert({
-                user_id: user.id,
-                current_family_id: remainingFamilies[0].id,
-                updated_at: new Date().toISOString()
-              }, { onConflict: 'user_id' })
-              .then(() => {});
+            userService.updateCurrentFamily(user.id, remainingFamilies[0].id).then(() => {});
           }
         } else {
           // No families left
@@ -567,7 +496,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Create family (cloud if online + authenticated, offline otherwise)
   const createFamily = async (name: string) => {
     // Always get fresh session from Supabase to ensure we have the latest auth state
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const { data: { session: currentSession } } = await userService.getSession();
     const sessionUser = currentSession?.user;
 
     if (!navigator.onLine || !sessionUser) {
@@ -579,11 +508,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     console.log('Creating cloud family for user:', sessionUser.email);
 
     // Create cloud family
-    const { data: family, error } = await supabase
-      .from('family')
-      .insert({ name, created_by: sessionUser.id })
-      .select()
-      .single();
+    const { data: family, error } = await familyService.insertFamily(name, sessionUser.id);
 
     if (error) {
       // Fallback to offline on error
@@ -592,14 +517,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     // Ensure creator becomes a member/owner
-    const { error: memberError } = await supabase
-      .from('family_member')
-      .insert({
-        family_id: family.id,
-        user_id: sessionUser.id,
-        role: 'owner',
-        user_email: sessionUser.email || null,
-      });
+    const { error: memberError } = await familyService.insertFamilyMember({
+      family_id: family.id,
+      user_id: sessionUser.id,
+      role: 'owner',
+      user_email: sessionUser.email || null,
+    });
 
     if (memberError && (memberError as any).code !== '23505') {
       console.error('Member creation error:', memberError);
@@ -628,10 +551,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { error: null };
     }
 
-    const { error } = await supabase
-      .from('family')
-      .update({ name })
-      .eq('id', familyId);
+    const { error } = await familyService.updateFamilyName(familyId, name);
 
     if (!error) await refreshFamilies();
     return { error };
@@ -672,10 +592,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { error: null };
     }
 
-    const { error } = await supabase
-      .from('family')
-      .delete()
-      .eq('id', familyId);
+    const { error } = await familyService.deleteFamily(familyId);
 
     if (!error) {
       if (currentFamilyId === familyId) {
@@ -700,11 +617,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return deleteFamily(familyId);
     }
 
-    const { error } = await supabase
-      .from('family_member')
-      .delete()
-      .eq('family_id', familyId)
-      .eq('user_id', user.id);
+    const { error } = await familyService.deleteMemberByFamilyAndUser(familyId, user.id);
 
     if (!error) {
       if (currentFamilyId === familyId) {
@@ -730,14 +643,12 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     // Include family_name in the invitation for display purposes
-    const { error } = await supabase
-      .from('family_invitation')
-      .insert({
-        family_id: currentFamilyId,
-        email: email.toLowerCase(),
-        invited_by: user.id,
-        family_name: currentFamily?.name || 'Família'
-      });
+    const { error } = await familyService.insertInvitation({
+      family_id: currentFamilyId,
+      email: email.toLowerCase(),
+      invited_by: user.id,
+      family_name: currentFamily?.name || 'Família'
+    });
 
     if (!error) await refreshInvitations();
     return { error };
@@ -751,22 +662,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!invitation) return { error: new Error('Invitation not found') };
 
     // Update invitation status
-    const { error: updateError } = await supabase
-      .from('family_invitation')
-      .update({ status: 'accepted' })
-      .eq('id', invitationId);
+    const { error: updateError } = await familyService.updateInvitationStatus(invitationId, 'accepted');
 
     if (updateError) return { error: updateError };
 
     // Add user to family
-    const { error: memberError } = await supabase
-      .from('family_member')
-      .insert({
-        family_id: invitation.family_id,
-        user_id: user.id,
-        role: 'member',
-        user_email: user.email || null,
-      });
+    const { error: memberError } = await familyService.insertFamilyMember({
+      family_id: invitation.family_id,
+      user_id: user.id,
+      role: 'member',
+      user_email: user.email || null,
+    });
 
     if (memberError) return { error: memberError };
 
@@ -785,10 +691,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Reject invitation
   const rejectInvitation = async (invitationId: string) => {
-    const { error } = await supabase
-      .from('family_invitation')
-      .update({ status: 'rejected' })
-      .eq('id', invitationId);
+    const { error } = await familyService.updateInvitationStatus(invitationId, 'rejected');
 
     if (!error) await refreshInvitations();
     return { error };
@@ -796,10 +699,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Cancel invitation
   const cancelInvitation = async (invitationId: string) => {
-    const { error } = await supabase
-      .from('family_invitation')
-      .delete()
-      .eq('id', invitationId);
+    const { error } = await familyService.deleteInvitation(invitationId);
 
     if (!error) await refreshInvitations();
     return { error };
@@ -807,10 +707,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Update member role
   const updateMemberRole = async (memberId: string, role: FamilyRole) => {
-    const { error } = await supabase
-      .from('family_member')
-      .update({ role })
-      .eq('id', memberId);
+    const { error } = await familyService.updateMemberRole(memberId, role);
 
     if (!error) await refreshMembers();
     return { error };
@@ -818,10 +715,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Remove member
   const removeMember = async (memberId: string) => {
-    const { error } = await supabase
-      .from('family_member')
-      .delete()
-      .eq('id', memberId);
+    const { error } = await familyService.deleteMember(memberId);
 
     if (!error) await refreshMembers();
     return { error };
