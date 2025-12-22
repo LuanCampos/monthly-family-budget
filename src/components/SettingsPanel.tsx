@@ -44,6 +44,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from '@/hooks/use-toast';
 import { useOnline } from '@/contexts/OnlineContext';
 import { offlineAdapter } from '@/lib/offlineAdapter';
+import * as userService from '@/lib/userService';
 import { clearOfflineCache } from '@/lib/offlineStorage';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -211,6 +212,39 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   const handleSignOut = async () => {
     await signOut();
     setOpen(false);
+  };
+
+  const handleThemeChange = async (newTheme: ThemeKey) => {
+    try {
+      // Apply immediately in UI
+      setTheme(newTheme);
+
+      // If there's a logged-in user, try to persist preference server-side
+      if (user) {
+        const payload = { user_id: user.id, theme: newTheme };
+        try {
+          const res = await userService.upsertUserPreference(payload);
+          // Supabase response has error field
+          if ((res as any).error) {
+            throw (res as any).error;
+          }
+        } catch (err) {
+          // Fallback: save to offline store and enqueue sync
+          try {
+            await offlineAdapter.put('user_preferences', { user_id: user.id, theme: newTheme, updated_at: new Date().toISOString() });
+            await offlineAdapter.sync.add({ type: 'user_preference', action: 'upsert', data: { user_id: user.id, theme: newTheme }, familyId: '' });
+          } catch (offlineErr) {
+            console.error('Failed to persist theme preference offline:', offlineErr);
+          }
+        }
+      } else {
+        // Not logged in: nothing more to persist (localStorage already handled by ThemeProvider)
+      }
+    } catch (err) {
+      // Error here is non-fatal because we already applied the theme and
+      // attempted server/offline persistence. Log for diagnostics only.
+      console.error('Error handling theme change:', err);
+    }
   };
 
   // Auth handlers for offline mode
@@ -746,7 +780,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                           <Palette className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">{t('theme')}</span>
                         </div>
-                        <Select value={theme} onValueChange={(v) => setTheme(v as ThemeKey)}>
+                        <Select value={theme} onValueChange={(v) => handleThemeChange(v as ThemeKey)}>
                           <SelectTrigger className="w-36 h-9 text-sm"><SelectValue /></SelectTrigger>
                           <SelectContent className="bg-card border-border">
                             {themes.map((themeOption) => <SelectItem key={themeOption.key} value={themeOption.key}>{t(themeOption.labelKey as TranslationKey)}</SelectItem>)}
