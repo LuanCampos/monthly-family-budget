@@ -855,6 +855,31 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
               {/* Family Tab */}
               <TabsContent value="family" className="mt-0 space-y-5">
+                {/* Pending invitations for current user - Highlighted */}
+                {myPendingInvitations.length > 0 && (
+                  <div className="dashboard-card">
+                    <div className="dashboard-card-content p-3 rounded-lg bg-primary/10 border border-primary/20 space-y-2">
+                      <p className="text-xs font-medium uppercase tracking-wider mb-2">{t('pendingInvitations')}</p>
+                      {myPendingInvitations.map((invitation) => (
+                        <div key={invitation.id} className="flex items-center justify-between p-2 rounded-md bg-background">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm truncate">{invitation.family_name}</p>
+                            <p className="text-xs text-muted-foreground">{t('invitedToFamily')}</p>
+                          </div>
+                          <div className="flex items-center gap-1 ml-2">
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleRejectInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('rejectInvitation')}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" className="h-7 px-2 text-xs" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('acceptInvitation')}>
+                              {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : t('accept')}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Family Selector with inline edit */}
                 <div className="dashboard-card">
                   <div className="dashboard-card-content space-y-3">
@@ -959,31 +984,6 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                     )}
                   </div>
                 </div>
-
-                {/* Pending invitations for current user - Highlighted */}
-                {myPendingInvitations.length > 0 && (
-                  <div className="dashboard-card">
-                    <div className="dashboard-card-content p-3 rounded-lg bg-primary/10 border border-primary/20 space-y-2">
-                      <p className="text-xs font-medium uppercase tracking-wider mb-2">{t('pendingInvitations')}</p>
-                      {myPendingInvitations.map((invitation) => (
-                        <div key={invitation.id} className="flex items-center justify-between p-2 rounded-md bg-background">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm truncate">{invitation.family_name}</p>
-                            <p className="text-xs text-muted-foreground">{t('invitedToFamily')}</p>
-                          </div>
-                          <div className="flex items-center gap-1 ml-2">
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleRejectInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('rejectInvitation')}>
-                              <X className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" className="h-7 px-2 text-xs" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('acceptInvitation')}>
-                              {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : t('accept')}
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {currentFamily ? (
                   <>
