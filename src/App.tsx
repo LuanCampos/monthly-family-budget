@@ -8,6 +8,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { FamilyProvider } from "@/contexts/FamilyContext";
 import { OnlineProvider } from "@/contexts/OnlineContext";
+import { UserPreferencesLoader } from "@/components/UserPreferencesLoader";
 import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
@@ -18,15 +19,17 @@ const App = () => (
       <LanguageProvider>
         <CurrencyProvider>
           <AuthProvider>
-            <OnlineProvider>
-              <FamilyProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <Index />
-                </TooltipProvider>
-              </FamilyProvider>
-            </OnlineProvider>
+            <UserPreferencesLoader>
+              <OnlineProvider>
+                <FamilyProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    <Index />
+                  </TooltipProvider>
+                </FamilyProvider>
+              </OnlineProvider>
+            </UserPreferencesLoader>
           </AuthProvider>
         </CurrencyProvider>
       </LanguageProvider>
