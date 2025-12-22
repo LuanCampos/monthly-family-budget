@@ -327,7 +327,7 @@ export const useBudget = () => {
   ) => {
     if (!currentFamilyId) return;
 
-    await api.insertRecurring({ 
+    const insertRes = await api.insertRecurring({ 
       title, 
       category_key: category, 
       subcategory_id: subcategoryId || null, 
@@ -338,21 +338,30 @@ export const useBudget = () => {
       start_year: startYear, 
       start_month: startMonth 
     });
-    
+
+    // Determine created recurring id (handles offline object or Supabase response)
+    let createdId: string | undefined;
+    if (insertRes && typeof insertRes === 'object') {
+      if ((insertRes as any).id) createdId = (insertRes as any).id; // offline adapter returned object
+      else if ((insertRes as any).data && (insertRes as any).data.id) createdId = (insertRes as any).data.id; // supabase response
+    }
+
     if (currentMonthId && currentMonth) {
-      await api.applyRecurringToMonth({ 
-        id: '', 
-        title, 
-        category, 
-        subcategoryId, 
-        value, 
-        isRecurring: true, 
-        dueDay, 
-        hasInstallments, 
-        totalInstallments, 
-        startYear, 
-        startMonth 
-      } as any, currentMonthId);
+      const recurringObj = {
+        id: createdId || '',
+        title,
+        category,
+        subcategoryId,
+        value,
+        isRecurring: true,
+        dueDay,
+        hasInstallments,
+        totalInstallments,
+        startYear,
+        startMonth,
+      } as any;
+
+      await api.applyRecurringToMonth(recurringObj, currentMonthId);
     }
     
     await api.loadRecurringExpenses();
