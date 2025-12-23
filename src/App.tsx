@@ -8,7 +8,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { FamilyProvider } from "@/contexts/FamilyContext";
 import { OnlineProvider } from "@/contexts/OnlineContext";
-import { UserPreferencesLoader } from "@/components/UserPreferencesLoader";
+import { UserPreferencesLoader } from "@/components/common";
 import Index from "./pages/Index";
 
 const queryClient = new QueryClient();

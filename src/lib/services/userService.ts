@@ -8,7 +8,7 @@
  * All Supabase queries for user-related entities should go through this service.
  */
 
-import { supabase } from './supabase';
+import { supabase } from '../supabase';
 
 // ============================================================================
 // USER PREFERENCE QUERIES

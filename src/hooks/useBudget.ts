@@ -2,46 +2,16 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRef } from 'react';
 import { Month, Expense, CategoryKey, Subcategory, RecurringExpense } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
-import * as storageAdapter from '@/lib/storageAdapter';
+import * as storageAdapter from '@/lib/adapters/storageAdapter';
 import { useFamily } from '@/contexts/FamilyContext';
-import { offlineAdapter } from '@/lib/offlineAdapter';
+import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import { toast } from 'sonner';
 import { useBudgetState } from './useBudgetState';
 import { createBudgetApi } from './useBudgetApi';
+import { getMonthLabel, calculateInstallmentNumber, shouldIncludeRecurringInMonth } from '@/lib/utils/monthUtils';
 
 const generateMonthId = (year: number, month: number): string => {
   return `${year}-${month.toString().padStart(2, '0')}`;
-};
-
-const getMonthLabel = (year: number, month: number): string => {
-  return `${month.toString().padStart(2, '0')}/${year}`;
-};
-
-const calculateInstallmentNumber = (
-  targetYear: number,
-  targetMonth: number,
-  startYear: number,
-  startMonth: number
-): number => {
-  return (targetYear - startYear) * 12 + (targetMonth - startMonth) + 1;
-};
-
-const shouldIncludeRecurringInMonth = (
-  recurring: RecurringExpense,
-  year: number,
-  month: number
-): { include: boolean; installmentNumber?: number } => {
-  if (!recurring.hasInstallments || !recurring.totalInstallments || !recurring.startYear || !recurring.startMonth) {
-    return { include: true };
-  }
-
-  const installmentNumber = calculateInstallmentNumber(year, month, recurring.startYear, recurring.startMonth);
-  
-  if (installmentNumber < 1 || installmentNumber > recurring.totalInstallments) {
-    return { include: false };
-  }
-
-  return { include: true, installmentNumber };
 };
 
 export const useBudget = () => {

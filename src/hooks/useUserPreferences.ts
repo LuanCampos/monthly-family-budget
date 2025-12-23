@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
-import * as userService from '@/lib/userService';
+import * as userService from '@/lib/services/userService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme, ThemeKey } from '@/contexts/ThemeContext';
 import { useCurrency, CurrencyCode } from '@/contexts/CurrencyContext';

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { offlineAdapter } from '@/lib/offlineAdapter';
-import * as familyService from '@/lib/familyService';
+import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
+import * as familyService from '@/lib/services/familyService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 

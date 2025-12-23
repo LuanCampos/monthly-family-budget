@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { getAppBaseUrl } from '@/lib/appBaseUrl';
-import * as userService from '@/lib/userService';
+import { getAppBaseUrl } from '@/lib/utils/appBaseUrl';
+import * as userService from '@/lib/services/userService';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/ui/use-toast';
 
 interface AuthContextType {
   user: User | null;

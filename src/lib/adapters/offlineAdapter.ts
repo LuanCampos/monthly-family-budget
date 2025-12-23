@@ -1,4 +1,4 @@
-import { offlineDB, syncQueue, generateOfflineId, isOfflineId } from './offlineStorage';
+import { offlineDB, syncQueue, generateOfflineId, isOfflineId } from '../storage/offlineStorage';
 
 // Adapter layer to abstract the offline storage implementation. Use this when
 // interacting with local persistence or the sync queue so the rest of the code

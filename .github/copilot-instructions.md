@@ -1,91 +1,215 @@
 # GitHub Copilot / AI Agent Instructions for Monthly Family Budget
 
-Purpose
--------
-Give AI coding agents the immediately actionable, project-specific knowledge
-they need to be productive in this repository.
+## Purpose
+Give AI coding agents the immediately actionable, project-specific knowledge they need to be productive in this repository.
 
-Quick orientation
------------------
-- This is a Vite + React + TypeScript single-page app. Key runtime files:
-  - src/main.tsx, src/App.tsx — app entry and routing
-  - src/components — presentational UI components (use primitives in src/components/ui)
-  - src/lib — service layer: `budgetService.ts`, `storageAdapter.ts`, `offlineAdapter.ts`, `supabase.ts`
-  - src/lib — service layer: `budgetService.ts`, `userService.ts`, `familyService.ts`, `storageAdapter.ts`, `offlineAdapter.ts`, `supabase.ts`
-  - src/hooks — app hooks (notably `useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`)
-  - src/contexts — providers (FamilyContext controls `currentFamilyId` used by hooks)
+## Quick Orientation
 
-Big-picture architecture
-------------------------
-- Cloud-first, offline-capable architecture:
-  - `src/lib/budgetService.ts` is the thin Supabase wrapper (network layer).
-  - `src/lib/offlineAdapter.ts` and `src/lib/offlineStorage.ts` provide IndexedDB persistence and a sync queue.
-  - `src/lib/storageAdapter.ts` centralizes online/offline branching and higher-level operations used by hooks and contexts.
-  - Hooks (e.g., `useBudget`) call the `storageAdapter` or `createBudgetApi` for operations; contexts provide identifying state (family, auth).
-- Realtime: Supabase channels are created via `budgetService.createChannel` and routed through `storageAdapter.createChannel`.
+**Stack**: Vite + React + TypeScript + Supabase + IndexedDB (offline)
 
-Important patterns & conventions
-------------------------------
-- Prefer `storageAdapter` for data operations. It normalizes branching for cloud vs offline families and enqueues sync items when network operations fail.
-- `budgetService` functions should map 1:1 to Supabase table operations (single-purpose, small wrappers).
-- `userService` and `familyService` provide user and family management operations (invitations, membership, role handling) and are the canonical places to look for auth/family-related Supabase calls. Prefer using these small services rather than calling `supabase` directly from UI code.
-- `offlineAdapter` is the canonical local-storage interface; use `offlineAdapter.generateOfflineId()` and `offlineAdapter.isOfflineId()` for offline objects.
-- State initialization and refresh flows live in `useBudget` and `createBudgetApi`; effects call `api.load*()` methods and rely on `setMonths` etc. from `useBudgetState`.
-- UI components should use primitives in `src/components/ui/*` for visual consistency.
+**Key Files & Layers**:
+- **UI**: `src/components/` organized by domain (expense, recurring, family, settings, income, month, subcategory, common) + `ui/` for primitives
+- **State**: `src/hooks/useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`; `src/hooks/ui/` for UI-only hooks
+- **Data Layer**: 
+  - `src/lib/services/` - Supabase API calls (budgetService, userService, familyService)
+  - `src/lib/adapters/` - Online/offline branching logic (monthAdapter, expenseAdapter, recurringAdapter, subcategoryAdapter, storageAdapter, offlineAdapter)
+  - `src/lib/utils/` - monthUtils, appBaseUrl, common helpers
+  - `src/lib/storage/` - offlineStorage for IndexedDB
+  - `src/lib/mappers.ts`, `schemas.ts`, `validators.ts`, `logger.ts`
+- **Context**: `src/contexts/` provides state (FamilyContext, AuthContext, LanguageContext, CurrencyContext, ThemeContext, OnlineContext)
+- **Types**: `src/types/` centralized (budget.ts, database.ts, index.ts barrel)
 
-Developer workflows (commands)
-----------------------------
-- Install dependencies: `npm install`
-- Dev server: `npm run dev` (Vite)
-- Build: `npm run build` or `npm run build:dev` (dev-mode build)
-- Lint: `npm run lint` (runs `eslint .`)
-- Preview production build: `npm run preview`
+## Architecture Pattern
 
-Files & locations you will frequently open
------------------------------------------
-- Data & adapters: src/lib/storageAdapter.ts, src/lib/budgetService.ts, src/lib/offlineAdapter.ts, src/lib/offlineStorage.ts
-- Hooks: src/hooks/useBudget.ts, src/hooks/useBudgetApi.ts, src/hooks/useBudgetState.ts
-- Contexts: src/contexts/FamilyContext.tsx, AuthContext.tsx
-- UI primitives: src/components/ui/* (copy existing patterns for classes and props)
-- Types: src/types/* (centralized type barrel in src/types/index.ts)
+**Cloud-first, offline-capable**:
+1. Services (`src/lib/services/*`) - thin Supabase wrappers, single-purpose functions
+2. Adapters (`src/lib/adapters/*`) - centralize online/offline branching
+   - `storageAdapter.ts` is the main coordinator used by hooks and contexts
+   - `offlineAdapter.ts` handles IndexedDB and sync queue
+   - Domain adapters (month, expense, recurring, subcategory) encapsulate business logic
+3. Hooks - orchestration layer, call adapters and update state
+4. Contexts - provide global state (family, auth, language, currency, theme, online status)
+5. Components - presentational, no direct DB access
 
-Repository-specific tips for AI edits
------------------------------------
-- Small, behavior-preserving PRs: prefer minimal changes that keep the existing public surface identical (the repo emphasizes incremental refactors).
-- When modifying data flows, update `storageAdapter` first and switch callers to it; `useBudget` and contexts should delegate to `storageAdapter` rather than calling `supabase` directly.
-- Use `offlineAdapter.sync.add(...)` to enqueue sync operations for later background sync if an online call fails.
-- Realtime subscriptions: call `storageAdapter.createChannel()` and `storageAdapter.removeChannel()`; do not directly manipulate `supabase` channels in UI code.
-- Tests and CI are not yet present; prefer not to add large test suites in a single PR — split into incremental PRs that add small unit tests for `lib/*` helpers.
-- Read `.github/FIX_NPM.md` for troubleshooting Windows PATH issues with Node.js and npm.
+**Key flows**:
+- Data operations: Component → Hook → `storageAdapter` → (online: Service/Supabase OR offline: `offlineAdapter`/IndexedDB)
+- State: Contexts provide IDs/flags, Hooks manage local state, Components render
+- Realtime: `storageAdapter.createChannel()` creates Supabase channels
 
-Examples (patterns extracted from the codebase)
---------------------------------------------
-- Insert a month that works offline-first (pattern):
+## Important Patterns & Conventions
 
-  const res = await storageAdapter.insertMonth(currentFamilyId, year, month);
-  // res may be an offline object (has id) or a Supabase response ({ data, error })
+### Services
+- One file per domain (budgetService, userService, familyService)
+- Direct Supabase calls only - no branching logic
+- Small, deterministic functions
+- Example: `budgetService.getMonths(familyId)` maps 1:1 to `SELECT * FROM months WHERE family_id = $1`
 
-- Generate an offline id for a new expense:
+### Adapters
+- `storageAdapter.ts` - main entry point for data operations, normalizes online/offline
+- Domain adapters (month, expense, recurring, subcategory) - business logic, can call services and offlineAdapter
+- `offlineAdapter.ts` - canonical IndexedDB interface
+  - `generateOfflineId()` - create offline IDs
+  - `isOfflineId(familyId)` - check if in offline mode
+  - `sync.add()` - enqueue operations for later sync
+- When operation fails online, fallback to offline + enqueue sync
 
-  const offlineExpense = { id: offlineAdapter.generateOfflineId('exp'), ... };
-  await offlineAdapter.put('expenses', offlineExpense);
+### Offline Logic
+- `offlineAdapter.isOfflineId(familyId)` determines online/offline mode for that family
+- Don't use `navigator.onLine` alone - it's unreliable
+- Both code paths (online/offline) must be maintained in adapters
+- Fields like `installment_current`, `installment_total` must be conditionally assigned based on `hasInstallments` boolean
 
-- Enqueue sync after failed cloud write:
+### Hooks
+- Business logic hooks in root: `useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`, `useUserPreferences.ts`, `useGeneralSettings.ts`, `useProfileSettings.ts`, `useAuthSettings.ts`
+- UI-only hooks in `ui/` folder: `use-mobile.tsx`, `use-toast.ts` (kebab-case)
+- Hooks call `storageAdapter` or services for operations
+- State patterns use `useBudgetState.ts` setters: `setMonths()`, `setExpenses()`, etc.
 
-  if (res.error) await offlineAdapter.sync.add({ type: 'expense', action: 'insert', data: offlineExpense, familyId });
+### Components
+- Organized by domain: `src/components/expense/`, `recurring/`, `family/`, `settings/`, `month/`, `income/`, `subcategory/`, `common/`, `ui/`
+- Each folder has index.tsx for re-exports
+- Use primitives from `src/components/ui/*` (shadcn-ui)
+- No direct imports of `src/lib/*` - use hooks
+- Named exports (no default export)
 
-What not to assume
-------------------
-- Do not assume `navigator.onLine` is always reliable — check `offlineAdapter.isOfflineId(familyId)` first for offline families.
-- Do not assume Supabase operations always return `data` — callers in `storageAdapter` check for `error` and fallback to offline storage.
+### Validation
+- Input validation: `src/lib/validators.ts` (Zod input schemas)
+- Database row validation: `src/lib/schemas.ts` (Zod database schemas)
+- Mappers: `src/lib/mappers.ts` transform DB rows (snake_case) → App types (camelCase)
 
-When merging with existing docs
--------------------------------
-- Preserve the small migration guidance already present in .github/FIX_NPM.md; it contains useful step-by-step refactor notes and Windows PATH troubleshooting.
+### Logging
+- `src/lib/logger.ts` - structured logging with 4 levels: debug, info, warn, error
+- Usage: `logger.info('entity.action.status', { context })`
+- Integrated throughout adapters for debugging
 
-Next steps for maintainers (suggested)
--------------------------------------
-- Add a small CI pipeline step to run `npm run lint` (already in package.json) and eventually `npm test`.
-- Add a short ARCHITECTURE.md pointing to `src/lib/storageAdapter.ts` as the canonical place to change sync logic.
+## Developer Commands
 
-If anything here is unclear, tell me which area (adapters, hooks, contexts, build) to expand with file-level examples.
+```bash
+npm install          # Install dependencies
+npm run dev          # Start dev server (Vite)
+npm run build        # Production build
+npm run build:dev    # Dev-mode build (no minification)
+npm run lint         # Run eslint
+npm run preview      # Preview production build
+```
+
+## Files You'll Frequently Edit
+
+**Data operations**: 
+- `src/lib/adapters/monthAdapter.ts`, `expenseAdapter.ts`, `recurringAdapter.ts`, `subcategoryAdapter.ts`
+- `src/lib/adapters/storageAdapter.ts` (wrapper/coordinator)
+- `src/lib/services/budgetService.ts`, `userService.ts`, `familyService.ts`
+
+**State management**:
+- `src/hooks/useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`
+
+**UI Components**:
+- `src/components/{expense,recurring,family,settings,month,income,subcategory,common}/`
+
+**Types**:
+- `src/types/budget.ts` (app types), `database.ts` (DB rows), `index.ts` (barrel)
+
+## Common Tasks & Patterns
+
+### Adding a data operation
+1. Add to service (e.g., `budgetService.newOperation()`)
+2. Create adapter wrapper (e.g., `monthAdapter.operationName()`) handling online/offline
+3. Export from `storageAdapter` or adapter's `index.ts`
+4. Call from hook using `storageAdapter.operationName()`
+
+### Creating offline-safe code
+```typescript
+// In an adapter:
+if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
+  // offline path: use IndexedDB
+  await offlineAdapter.put('table', data);
+} else {
+  // online path: use Supabase
+  const res = await budgetService.operation(data);
+  if (res.error) {
+    // Fallback to offline
+    await offlineAdapter.put('table', data);
+    await offlineAdapter.sync.add({ type: 'entity', action: 'insert', data, familyId });
+  }
+}
+```
+
+### Conditional field assignment (important!)
+```typescript
+// WRONG: doesn't handle false values
+const expense = {
+  installment_current: recurring.hasInstallments ?? undefined  // ❌ false becomes undefined
+};
+
+// RIGHT: preserve false/true
+const expense = {
+  installment_current: recurring.hasInstallments ? result.installmentNumber : null
+};
+```
+
+### Adding a component
+1. Create folder: `src/components/{domain}/MyComponent.tsx`
+2. Add to `src/components/{domain}/index.tsx`: `export { MyComponent } from './MyComponent'`
+3. Import in other files: `import { MyComponent } from '@/components/{domain}'`
+4. Use named export: `export const MyComponent = (...) => {}`
+
+## Windows PATH Troubleshooting (Node.js/npm not found)
+
+**Symptom**: `node : The term 'node' is not recognized` in PowerShell terminal
+
+**Fix**:
+1. Verify Node.js is installed: `C:\Program Files\nodejs` should exist
+2. In PowerShell, check User PATH: `[Environment]::GetEnvironmentVariable('Path','User')`
+3. Ensure `C:\Program Files\nodejs` is in User PATH (or Machine PATH)
+4. If missing, add it: `[Environment]::SetEnvironmentVariable('Path', $env:Path + ';C:\Program Files\nodejs', 'User')`
+5. Restart VS Code / terminal completely
+6. Test: `node --version`
+
+**Note**: Environment changes take effect only in NEW terminal sessions.
+
+## Architecture Decision Records
+
+### Phase 1-3 Completed ✅
+- **Phase 1**: Type safety foundation (database.ts, monthUtils.ts, logger.ts)
+- **Phase 2**: Modularization (adapters/, services/, schemas, validators, mappers)
+- **Phase 3**: Patterns + simplification (standardized nomenclature, custom hooks, logging)
+
+### Recent Reorganization ✅
+- Components: Organized into subfolders by domain (expense/, recurring/, family/, etc.)
+- Lib: Organized by layer (services/, adapters/, utils/, storage/)
+- Hooks: Separated UI hooks (ui/) from business logic hooks
+- All imports updated, build validated
+
+### Bug Fixes ✅
+- Installment fields now conditionally assigned (checks `hasInstallments`)
+- Month limits validated to sum to 100%
+- Mapper fixed for `hasInstallments` (removed nullish coalescing issue)
+- Offline data properly mapped before calling business logic
+
+## What NOT to Do
+
+- ❌ Don't call Supabase directly from components - use hooks
+- ❌ Don't assume `navigator.onLine` - check `offlineAdapter.isOfflineId(familyId)` first
+- ❌ Don't use `??` for boolean fields - use proper null/false checks
+- ❌ Don't mix online/offline logic in components - keep in adapters
+- ❌ Don't use default exports - use named exports
+- ❌ Don't put files in root of `lib/` or `components/` - organize into subfolders
+
+## TypeScript Strict Mode ✅
+
+Project enforces `strict: true` in `tsconfig.json`. This means:
+- All types must be explicit
+- `any` is forbidden
+- `null` and `undefined` must be handled
+- No implicit `any` parameters
+
+## Build & Validation
+
+- **TypeScript**: 0 errors (verified with `npx tsc --noEmit`)
+- **ESLint**: Runs on all files (`npm run lint`)
+- **Build**: Vite 5.4.21, 2634 modules, ~1.2MB gzipped
+- **CI**: Not yet integrated (future work)
+
+---
+
+**Last Updated**: December 23, 2025 | **Status**: Production-ready ✅

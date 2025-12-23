@@ -1,6 +1,6 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+/**
+ * Backward compatibility layer for @/lib/utils imports
+ * Re-exports from src/lib/utils/ for components that import from @/lib/utils
+ */
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+export { cn } from './utils/common';

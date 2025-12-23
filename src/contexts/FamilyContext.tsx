@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import * as familyService from '@/lib/familyService';
-import * as userService from '@/lib/userService';
+import * as familyService from '@/lib/services/familyService';
+import * as userService from '@/lib/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
-import { offlineAdapter } from '@/lib/offlineAdapter';
+import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 
 export type FamilyRole = 'owner' | 'admin' | 'member';
 

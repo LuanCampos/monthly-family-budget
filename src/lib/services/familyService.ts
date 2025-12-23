@@ -9,7 +9,7 @@
  * All Supabase queries for these entities should go through this service.
  */
 
-import { supabase } from './supabase';
+import { supabase } from '../supabase';
 
 // ============================================================================
 // FAMILY QUERIES

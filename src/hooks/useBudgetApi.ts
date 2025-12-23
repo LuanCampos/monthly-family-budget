@@ -1,5 +1,5 @@
 import { CATEGORIES } from '@/constants/categories';
-import * as storageAdapter from '@/lib/storageAdapter';
+import * as storageAdapter from '@/lib/adapters/storageAdapter';
 import { Month, CategoryKey, RecurringExpense, Subcategory } from '@/types';
 
 export const createBudgetApi = (opts: {
@@ -111,11 +111,11 @@ export const createBudgetApi = (opts: {
     },
     
     updateIncomeSource: async (id: string, name: string, value: number) => {
-      return storageAdapter.updateIncomeSource(id, name, value);
+      return storageAdapter.updateIncomeSource(currentFamilyId, id, name, value);
     },
     
     deleteIncomeSource: async (id: string) => {
-      return storageAdapter.deleteIncomeSource(id);
+      return storageAdapter.deleteIncomeSource(currentFamilyId, id);
     },
     
     // Note: updateGoals removed - use updateMonthLimits in useBudget.ts instead

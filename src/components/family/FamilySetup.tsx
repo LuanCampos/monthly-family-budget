@@ -9,9 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Users, Plus, Mail, Check, X, Loader2, WifiOff, Lock, User, ArrowLeft, LogIn, LogOut } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/ui/use-toast';
 import { supabase } from '@/lib/supabase';
-import { getAppBaseUrl } from '@/lib/appBaseUrl';
+import { getAppBaseUrl } from '@/lib/utils/appBaseUrl';
 
 export const FamilySetup = () => {
   const { t } = useLanguage();

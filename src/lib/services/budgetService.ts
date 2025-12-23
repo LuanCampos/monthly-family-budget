@@ -1,4 +1,5 @@
-import { supabase } from './supabase';
+import { supabase } from '../supabase';
+import type { MonthRow, ExpenseRow, RecurringExpenseRow, SubcategoryRow, CategoryLimitRow, IncomeSourceRow, SupabaseChannel } from '@/types/database';
 
 // Thin wrapper around Supabase used by useBudget. Keep functions small and
 // directly mappable to existing supabase calls so this is a safe, behavior-preserving
@@ -60,9 +61,9 @@ export const clearSubcategoryReferences = async (id: string) => {
   return supabase.from('expense').update({ subcategory_id: null }).eq('subcategory_id', id);
 };
 
-export const createChannel = (name: string) => supabase.channel(name);
+export const createChannel = (name: string): SupabaseChannel => supabase.channel(name);
 
-export const removeChannel = (channel: any) => supabase.removeChannel(channel);
+export const removeChannel = (channel: SupabaseChannel): void => { supabase.removeChannel(channel); };
 
 export const insertMonth = async (familyId: string, year: number, month: number) => {
   return supabase
@@ -80,7 +81,7 @@ export const getMonthLimits = async (monthId: string) => {
     .eq('month_id', monthId);
 };
 
-export const insertMonthLimit = async (payload: { month_id: string; category_key: string; percentage: number }) => {
+export const insertMonthLimit = async (payload: Partial<CategoryLimitRow>) => {
   return supabase.from('category_limit').insert(payload);
 };
 
@@ -94,7 +95,7 @@ export const copyLimitsToMonth = async (sourceMonthId: string, targetMonthId: st
   const { data: sourceLimits } = await getMonthLimits(sourceMonthId);
   if (!sourceLimits || sourceLimits.length === 0) return;
   
-  const inserts = sourceLimits.map((l: any) => ({
+  const inserts = sourceLimits.map((l: CategoryLimitRow) => ({
     month_id: targetMonthId,
     category_key: l.category_key,
     percentage: l.percentage
@@ -103,11 +104,11 @@ export const copyLimitsToMonth = async (sourceMonthId: string, targetMonthId: st
   return supabase.from('category_limit').insert(inserts);
 };
 
-export const insertExpense = async (expense: any) => {
+export const insertExpense = async (expense: Partial<ExpenseRow>) => {
   return supabase.from('expense').insert(expense).select().single();
 };
 
-export const updateExpenseById = async (id: string, data: any) => {
+export const updateExpenseById = async (id: string, data: Partial<ExpenseRow>) => {
   return supabase.from('expense').update(data).eq('id', id);
 };
 
@@ -128,22 +129,22 @@ export const clearRecurringSubcategoryReferences = async (id: string) => {
 };
 
 export const updateMonthIncome = async (monthId: string, income: number) => {
-  return supabase.from('month').update({ income }).eq('id', monthId);
+  return supabase.from('month').update({ income }).eq('id', monthId).select().single();
 };
 
-export const updateExpense = async (id: string, data: any) => {
-  return supabase.from('expense').update(data).eq('id', id);
+export const updateExpense = async (id: string, data: Partial<ExpenseRow>) => {
+  return supabase.from('expense').update(data).eq('id', id).select().single();
 };
 
 export const setExpensePending = async (id: string, pending: boolean) => {
-  return supabase.from('expense').update({ is_pending: pending }).eq('id', id);
+  return supabase.from('expense').update({ is_pending: pending }).eq('id', id).select().single();
 };
 
-export const insertRecurring = async (familyId: string, payload: any) => {
+export const insertRecurring = async (familyId: string, payload: Partial<RecurringExpenseRow>) => {
   return supabase.from('recurring_expense').insert({ family_id: familyId, ...payload }).select().single();
 };
 
-export const updateRecurring = async (id: string, data: any) => {
+export const updateRecurring = async (id: string, data: Partial<RecurringExpenseRow>) => {
   return supabase.from('recurring_expense').update(data).eq('id', id);
 };
 
@@ -151,7 +152,7 @@ export const deleteRecurring = async (id: string) => {
   return supabase.from('recurring_expense').delete().eq('id', id);
 };
 
-export const updateExpensesByRecurringId = async (recurringId: string, data: any) => {
+export const updateExpensesByRecurringId = async (recurringId: string, data: Partial<ExpenseRow>) => {
   return supabase.from('expense').update(data).eq('recurring_expense_id', recurringId);
 };
 
@@ -176,7 +177,9 @@ export const updateIncomeSourceById = async (id: string, name: string, value: nu
   return supabase
     .from('income_source')
     .update({ name, value })
-    .eq('id', id);
+    .eq('id', id)
+    .select()
+    .single();
 };
 
 export const deleteIncomeSourceById = async (id: string) => {
