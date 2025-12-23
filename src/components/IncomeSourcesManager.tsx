@@ -1,6 +1,7 @@
 import { useState, useEffect, KeyboardEvent } from 'react';
 import { IncomeSource } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +43,7 @@ export const IncomeSourcesManager = ({
   const [editingSources, setEditingSources] = useState<EditingSource[]>([]);
   const [activeRowId, setActiveRowId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [deleteSourceId, setDeleteSourceId] = useState<string | null>(null);
 
   // Initialize editing sources when dialog opens or sources change
   useEffect(() => {
@@ -133,28 +135,38 @@ export const IncomeSourcesManager = ({
     }
   };
 
-  const deleteLine = async (index: number, sourceId: string, isNew: boolean) => {
-    // For existing items, ask for confirmation
-    if (!isNew) {
-      if (!window.confirm(t('confirmDelete') || 'Tem certeza?')) {
-        return;
-      }
-
-      setLoading(true);
-      try {
-        await onDelete(sourceId);
-        toast.success(t('incomeSourceDeleted') || 'Fonte de renda removida');
-      } catch (error) {
-        toast.error(t('errorDeleting') || 'Erro ao deletar');
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
+  const deleteLine = (index: number, sourceId: string, isNew: boolean) => {
+    // For new items, remove directly
+    if (isNew) {
+      setEditingSources((prev) => prev.filter((_, i) => i !== index));
+      setActiveRowId((prev) => (prev === sourceId ? null : prev));
+      return;
     }
 
-    // Remove from editing sources
-    setEditingSources((prev) => prev.filter((_, i) => i !== index));
-    setActiveRowId((prev) => (prev === sourceId ? null : prev));
+    // For existing items, show confirmation dialog
+    setDeleteSourceId(sourceId);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteSourceId) return;
+
+    // Find the index of the source to delete
+    const index = editingSources.findIndex(s => s.id === deleteSourceId);
+
+    setLoading(true);
+    try {
+      await onDelete(deleteSourceId);
+      toast.success(t('incomeSourceDeleted') || 'Fonte de renda removida');
+      // Remove from editing sources
+      setEditingSources((prev) => prev.filter((_, i) => i !== index));
+      setActiveRowId((prev) => (prev === deleteSourceId ? null : prev));
+    } catch (error) {
+      toast.error(t('errorDeleting') || 'Erro ao deletar');
+      console.error(error);
+    } finally {
+      setLoading(false);
+      setDeleteSourceId(null);
+    }
   };
 
   const cancelEdit = (index: number) => {
@@ -346,6 +358,26 @@ export const IncomeSourcesManager = ({
           </div>
         </div>
       </DialogContent>
+
+      <AlertDialog open={!!deleteSourceId} onOpenChange={(open) => !open && setDeleteSourceId(null)}>
+        <AlertDialogContent className="bg-card border-border max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteIncomeSource')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteIncomeSourceMessage')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

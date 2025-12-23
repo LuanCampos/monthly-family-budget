@@ -51,6 +51,8 @@ export const en: Record<TranslationKey, string> = {
   incomeSourceAdded: 'Income source added',
   incomeSourceUpdated: 'Income source updated',
   incomeSourceDeleted: 'Income source removed',
+  deleteIncomeSource: 'Delete income source',
+  deleteIncomeSourceMessage: 'Are you sure you want to delete this income source? This action cannot be undone.',
   incomeSourcesDescription: 'Update and manage your family income sources.',
   autoUpdatedHint: 'This value is updated automatically when you save sources.',
   incomeSourcesList: 'Registered sources',

@@ -49,6 +49,8 @@ export const pt = {
   incomeSourceAdded: 'Fonte de renda adicionada',
   incomeSourceUpdated: 'Fonte de renda atualizada',
   incomeSourceDeleted: 'Fonte de renda removida',
+  deleteIncomeSource: 'Excluir fonte de renda',
+  deleteIncomeSourceMessage: 'Tem certeza que deseja excluir esta fonte de renda? Esta ação não pode ser desfeita.',
   incomeSourcesDescription: 'Atualize e gerencie as fontes de renda da sua família.',
   autoUpdatedHint: 'Este valor é atualizado automaticamente quando você salva as fontes.',
   incomeSourcesList: 'Fontes cadastradas',
