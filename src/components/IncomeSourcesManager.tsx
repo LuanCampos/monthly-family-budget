@@ -1,6 +1,6 @@
 import { useState, useEffect, KeyboardEvent } from 'react';
 import { IncomeSource } from '@/types/budget';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,7 @@ export const IncomeSourcesManager = ({
   totalIncome,
 }: IncomeSourcesManagerProps) => {
   const { t } = useLanguage();
-  const { currencySymbol } = useCurrency();
+  const { currencySymbol, formatCurrency } = useCurrency();
   const [editingSources, setEditingSources] = useState<EditingSource[]>([]);
   const [activeRowId, setActiveRowId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -200,12 +200,12 @@ export const IncomeSourcesManager = ({
             <DialogTitle>
               {t('manageIncomeSources') || 'Fontes de Renda'}
             </DialogTitle>
-            <p className="text-xs text-muted-foreground">
+            <DialogDescription className="text-sm text-muted-foreground">
               {t('incomeSourcesDescription') || 'Atualize os valores para manter o planejamento familiar preciso.'}
-            </p>
+            </DialogDescription>
           </DialogHeader>
 
-        <div className="space-y-6 px-6 pb-6">
+        <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4">
           {/* Total Income Display */}
           <div className="rounded-lg border border-border/80 bg-muted/10 p-4 shadow-sm">
             <div className="text-xs text-muted-foreground mb-1">{t('totalIncome') || 'Renda Total'}</div>
@@ -213,26 +213,11 @@ export const IncomeSourcesManager = ({
               {currencySymbol}
               {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {t('autoUpdatedHint') || 'Este valor é recalculado automaticamente conforme você salva as fontes.'}
-            </p>
           </div>
 
           {/* Editable Income Sources List */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold">{t('incomeSourcesList') || 'Fontes cadastradas'}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t('incomeSourcesListHelper') || 'Toque em editar para alterar nome ou valor.'}
-                </p>
-              </div>
-              <Badge variant="secondary" className="w-fit uppercase text-[10px]">
-                {editingSources.length} {editingSources.length === 1 ? (t('source') || 'fonte') : (t('sources') || 'fontes')}
-              </Badge>
-            </div>
-
-            <ScrollArea className="max-h-[55vh] pr-4">
+          <div className="flex-1 flex flex-col gap-3">
+            <ScrollArea className="flex-1">
               <div className="space-y-3 pb-2">
                 {editingSources.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-center">
@@ -311,8 +296,7 @@ export const IncomeSourcesManager = ({
                             </div>
                             <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
                               <span className="text-sm text-foreground font-semibold tabular-nums">
-                                {currencySymbol}
-                                {source.value || '0,00'}
+                                {formatCurrency(parseFloat((source.value || '0').replace(',', '.')))}
                               </span>
 
                               <div className="flex items-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
@@ -348,7 +332,7 @@ export const IncomeSourcesManager = ({
             </ScrollArea>
 
             {/* Add New Line Button */}
-            <div className="pt-2 flex justify-center">
+            <div className="flex justify-center pt-2 border-t border-border/50">
               <Button
                 onClick={addNewLine}
                 disabled={loading}
