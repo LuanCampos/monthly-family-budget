@@ -77,6 +77,37 @@ export const insertMonth = async (familyId: string, year: number, month: number)
     .single();
 };
 
+// Month limits (category_limit table)
+export const getMonthLimits = async (monthId: string) => {
+  return supabase
+    .from('category_limit')
+    .select('*')
+    .eq('month_id', monthId);
+};
+
+export const insertMonthLimit = async (payload: { month_id: string; category_key: string; percentage: number }) => {
+  return supabase.from('category_limit').insert(payload);
+};
+
+export const updateMonthLimit = async (monthId: string, categoryKey: string, percentage: number) => {
+  return supabase
+    .from('category_limit')
+    .upsert({ month_id: monthId, category_key: categoryKey, percentage }, { onConflict: 'month_id,category_key' });
+};
+
+export const copyLimitsToMonth = async (sourceMonthId: string, targetMonthId: string) => {
+  const { data: sourceLimits } = await getMonthLimits(sourceMonthId);
+  if (!sourceLimits || sourceLimits.length === 0) return;
+  
+  const inserts = sourceLimits.map((l: any) => ({
+    month_id: targetMonthId,
+    category_key: l.category_key,
+    percentage: l.percentage
+  }));
+  
+  return supabase.from('category_limit').insert(inserts);
+};
+
 export const insertExpense = async (expense: any) => {
   return supabase.from('expense').insert(expense).select().single();
 };

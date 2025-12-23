@@ -1,6 +1,11 @@
 import * as budgetService from './budgetService';
 import { offlineAdapter } from './offlineAdapter';
 import { Month, CategoryKey, RecurringExpense, Subcategory } from '@/types';
+import { CATEGORIES } from '@/constants/categories';
+
+const getDefaultLimits = (): Record<CategoryKey, number> => {
+  return Object.fromEntries(CATEGORIES.map(c => [c.key, c.percentage])) as Record<CategoryKey, number>;
+};
 
 const getMonthLabel = (year: number, month: number) => `${month.toString().padStart(2, '0')}/${year}`;
 
@@ -32,12 +37,16 @@ export const getMonthsWithExpenses = async (familyId: string | null) => {
     const offlineMonths = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
     const monthsWithExpenses: Month[] = await Promise.all(offlineMonths.map(async (m) => {
       const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', m.id);
+      const limits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', m.id);
+      const categoryLimits: Record<CategoryKey, number> = { ...getDefaultLimits() };
+      limits.forEach((l: any) => { categoryLimits[l.category_key as CategoryKey] = l.percentage; });
       return {
         id: m.id,
         label: getMonthLabel(m.year, m.month),
         year: m.year,
         month: m.month,
         income: m.income || 0,
+        categoryLimits,
         expenses: expenses.map((e: any) => ({
           id: e.id,
           title: e.title,
@@ -59,13 +68,19 @@ export const getMonthsWithExpenses = async (familyId: string | null) => {
   if (error || !monthsData) return [] as Month[];
 
   const monthsWithExpenses: Month[] = await Promise.all(monthsData.map(async (m: any) => {
-    const { data: expenses } = await budgetService.getExpensesByMonth(m.id);
+    const [{ data: expenses }, { data: limits }] = await Promise.all([
+      budgetService.getExpensesByMonth(m.id),
+      budgetService.getMonthLimits(m.id)
+    ]);
+    const categoryLimits: Record<CategoryKey, number> = { ...getDefaultLimits() };
+    (limits || []).forEach((l: any) => { categoryLimits[l.category_key as CategoryKey] = l.percentage; });
     return {
       id: m.id,
       label: getMonthLabel(m.year, m.month),
       year: m.year,
       month: m.month,
       income: m.income || 0,
+      categoryLimits,
       expenses: (expenses || []).map((e: any) => ({
         id: e.id,
         title: e.title,
@@ -189,8 +204,37 @@ export const insertMonth = async (familyId: string | null, year: number, month: 
   const offlineMonthId = `${familyId}-${year.toString().padStart(2,'0')}-${month.toString().padStart(2,'0')}`;
   const offlineMonthData = { id: offlineMonthId, family_id: familyId, year, month, income: 0 };
 
+  // Helper to find previous month's limits
+  const findPreviousMonthLimits = async (): Promise<Record<CategoryKey, number>> => {
+    const existingMonths = await getMonthsWithExpenses(familyId);
+    if (existingMonths.length === 0) return getDefaultLimits();
+    
+    // Sort by year and month to find the closest previous month
+    const sorted = [...existingMonths].sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return b.month - a.month;
+    });
+    
+    // Find the most recent month (the new month we're creating doesn't exist yet)
+    const previousMonth = sorted[0];
+    return previousMonth.categoryLimits || getDefaultLimits();
+  };
+
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     await offlineAdapter.put('months', offlineMonthData as any);
+    
+    // Copy limits from previous month
+    const limitsToUse = await findPreviousMonthLimits();
+    for (const [categoryKey, percentage] of Object.entries(limitsToUse)) {
+      const limitData = {
+        id: `${offlineMonthId}-${categoryKey}`,
+        month_id: offlineMonthId,
+        category_key: categoryKey,
+        percentage
+      };
+      await offlineAdapter.put('category_limits', limitData as any);
+    }
+    
     // add recurring expenses locally
     for (const recurring of (await offlineAdapter.getAllByIndex<any>('recurring_expenses','family_id', familyId)) || []) {
       const result = shouldIncludeRecurringInMonth(recurring, year, month);
@@ -221,6 +265,29 @@ export const insertMonth = async (familyId: string | null, year: number, month: 
     await offlineAdapter.put('months', offlineMonthData as any);
     await offlineAdapter.sync.add({ type: 'month', action: 'insert', data: offlineMonthData, familyId });
     return offlineMonthData;
+  }
+
+  // Copy limits from previous month to the new month
+  const existingMonths = await getMonthsWithExpenses(familyId);
+  const otherMonths = existingMonths.filter(m => m.id !== data.id);
+  if (otherMonths.length > 0) {
+    // Sort to get most recent month
+    const sorted = [...otherMonths].sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return b.month - a.month;
+    });
+    const previousMonth = sorted[0];
+    if (previousMonth.categoryLimits) {
+      for (const [categoryKey, percentage] of Object.entries(previousMonth.categoryLimits)) {
+        await budgetService.insertMonthLimit({ month_id: data.id, category_key: categoryKey, percentage });
+      }
+    }
+  } else {
+    // First month - use default limits
+    const defaultLimits = getDefaultLimits();
+    for (const [categoryKey, percentage] of Object.entries(defaultLimits)) {
+      await budgetService.insertMonthLimit({ month_id: data.id, category_key: categoryKey, percentage });
+    }
   }
 
   // Add recurring expenses into the created cloud month
@@ -377,6 +444,7 @@ export const applyRecurringToMonth = async (familyId: string | null, recurring: 
   return true;
 };
 
+// Legacy global goals - kept for backward compatibility
 export const updateGoals = async (familyId: string | null, newGoals: Record<CategoryKey, number>) => {
   if (!familyId) return;
   for (const [categoryKey, percentage] of Object.entries(newGoals)) {
@@ -385,6 +453,25 @@ export const updateGoals = async (familyId: string | null, newGoals: Record<Cate
     const { data: existing, error: selectError } = await budgetService.findCategoryGoal(familyId, categoryKey);
     if (selectError) { console.error('Error checking existing goal:', selectError); continue; }
     if (existing?.id) { await budgetService.updateCategoryGoalById(existing.id, { percentage }); } else { await budgetService.insertCategoryGoal({ family_id: familyId, category_key: categoryKey, percentage }); }
+  }
+};
+
+// Update limits for a specific month
+export const updateMonthLimits = async (familyId: string | null, monthId: string, newLimits: Record<CategoryKey, number>) => {
+  if (!familyId || !monthId) return;
+  
+  for (const [categoryKey, percentage] of Object.entries(newLimits)) {
+    if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
+      const limitData = {
+        id: `${monthId}-${categoryKey}`,
+        month_id: monthId,
+        category_key: categoryKey,
+        percentage
+      };
+      await offlineAdapter.put('category_limits', limitData as any);
+    } else {
+      await budgetService.updateMonthLimit(monthId, categoryKey, percentage);
+    }
   }
 };
 
