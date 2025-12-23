@@ -195,21 +195,21 @@ export const IncomeSourcesManager = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl overflow-hidden p-0">
-        <DialogHeader className="px-6 pt-6 pb-2">
-          <DialogTitle className="text-2xl font-semibold tracking-tight">
-            {t('manageIncomeSources') || 'Fontes de Renda'}
-          </DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            {t('incomeSourcesDescription') || 'Atualize os valores para manter o planejamento familiar preciso.'}
-          </p>
-        </DialogHeader>
+      <DialogContent className="bg-card border-border sm:max-w-2xl flex flex-col gap-0 p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle>
+              {t('manageIncomeSources') || 'Fontes de Renda'}
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              {t('incomeSourcesDescription') || 'Atualize os valores para manter o planejamento familiar preciso.'}
+            </p>
+          </DialogHeader>
 
         <div className="space-y-6 px-6 pb-6">
           {/* Total Income Display */}
-          <div className="rounded-2xl border border-border/80 bg-gradient-to-br from-primary/5 via-background to-background p-5 shadow-sm">
-            <div className="text-sm text-muted-foreground mb-2">{t('totalIncome') || 'Renda Total'}</div>
-            <div className="text-3xl font-semibold text-primary tracking-tight">
+          <div className="rounded-lg border border-border/80 bg-muted/10 p-4 shadow-sm">
+            <div className="text-xs text-muted-foreground mb-1">{t('totalIncome') || 'Renda Total'}</div>
+            <div className="text-xl font-semibold text-primary tracking-tight">
               {currencySymbol}
               {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
@@ -220,14 +220,14 @@ export const IncomeSourcesManager = ({
 
           {/* Editable Income Sources List */}
           <div className="space-y-4">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-base font-semibold">{t('incomeSourcesList') || 'Fontes cadastradas'}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm font-semibold">{t('incomeSourcesList') || 'Fontes cadastradas'}</p>
+                <p className="text-xs text-muted-foreground">
                   {t('incomeSourcesListHelper') || 'Toque em editar para alterar nome ou valor.'}
                 </p>
               </div>
-              <Badge variant="secondary" className="w-fit uppercase tracking-wide text-[10px]">
+              <Badge variant="secondary" className="w-fit uppercase text-[10px]">
                 {editingSources.length} {editingSources.length === 1 ? (t('source') || 'fonte') : (t('sources') || 'fontes')}
               </Badge>
             </div>
@@ -235,11 +235,11 @@ export const IncomeSourcesManager = ({
             <ScrollArea className="max-h-[55vh] pr-4">
               <div className="space-y-3 pb-2">
                 {editingSources.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 p-6 text-center">
+                  <div className="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-center">
                     <p className="font-medium text-foreground">
                       {t('noIncomeSources') || 'Nenhuma fonte de renda adicionada'}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {t('addIncomeSourceHint') || 'Crie sua primeira fonte para distribuir a renda do mês.'}
                     </p>
                   </div>
@@ -249,36 +249,33 @@ export const IncomeSourcesManager = ({
                     return (
                       <div
                         key={source.id}
-                        className={`rounded-xl border bg-card/60 p-4 shadow-sm transition ${
-                          isEditing ? 'ring-1 ring-primary/40 bg-background' : 'hover:shadow-sm'
-                        }`}
+                        className={`group flex items-center justify-between p-3 ${isEditing ? 'ring-1 ring-primary/40 bg-background' : 'bg-secondary/30 hover:bg-secondary/50'} rounded-lg transition-colors`}
                       >
                         {isEditing ? (
-                          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                            <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center">
+                          <div className="flex items-center gap-3 w-full">
+                            <Input
+                              placeholder={t('name') || 'Nome'}
+                              value={source.name}
+                              onChange={(e) => updateSource(index, 'name', e.target.value)}
+                              disabled={loading}
+                              autoFocus
+                              onKeyDown={(event) => handleKeyDown(event, index)}
+                              className="flex-1 h-9 text-sm"
+                            />
+                            <div className="relative w-36">
+                              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                                {currencySymbol}
+                              </span>
                               <Input
-                                placeholder={t('name') || 'Nome'}
-                                value={source.name}
-                                onChange={(e) => updateSource(index, 'name', e.target.value)}
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="0,00"
+                                value={source.value}
+                                onChange={(e) => updateSource(index, 'value', e.target.value)}
                                 disabled={loading}
-                                autoFocus
+                                className="pl-8 h-9 text-sm"
                                 onKeyDown={(event) => handleKeyDown(event, index)}
                               />
-                              <div className="relative md:w-48">
-                                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                                  {currencySymbol}
-                                </span>
-                                <Input
-                                  type="text"
-                                  inputMode="decimal"
-                                  placeholder="0,00"
-                                  value={source.value}
-                                  onChange={(e) => updateSource(index, 'value', e.target.value)}
-                                  disabled={loading}
-                                  className="pl-8"
-                                  onKeyDown={(event) => handleKeyDown(event, index)}
-                                />
-                              </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <Button
@@ -287,8 +284,7 @@ export const IncomeSourcesManager = ({
                                 disabled={loading}
                                 className="gap-1"
                               >
-                                <Check className="h-4 w-4" />
-                                {t('save') || 'Salvar'}
+                                <Check className="h-3.5 w-3.5" />
                               </Button>
                               <Button
                                 size="sm"
@@ -297,62 +293,52 @@ export const IncomeSourcesManager = ({
                                 disabled={loading}
                                 className="gap-1"
                               >
-                                <X className="h-4 w-4" />
-                                {t('cancel') || 'Cancelar'}
+                                <X className="h-3.5 w-3.5" />
                               </Button>
                             </div>
                           </div>
                         ) : (
-                          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div className="flex flex-col gap-1">
-                              <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                                {t('name') || 'Nome'}
-                              </p>
-                              <div className="flex items-center gap-2">
-                                <span className="text-base font-semibold text-foreground truncate">
-                                  {source.name || t('unnamedIncomeSource') || 'Sem nome'}
-                                </span>
-                                {source.isNew && (
-                                  <Badge variant="outline" className="bg-primary/5 text-primary">
-                                    {t('draft') || 'Rascunho'}
-                                  </Badge>
-                                )}
-                              </div>
+                          <>
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <span className="text-sm text-foreground font-medium truncate">
+                                {source.name || t('unnamedIncomeSource') || 'Sem nome'}
+                              </span>
+                              {source.isNew && (
+                                <Badge variant="outline" className="bg-primary/5 text-primary text-xs">
+                                  {t('draft') || 'Rascunho'}
+                                </Badge>
+                              )}
                             </div>
-                            <div className="flex items-center gap-4">
-                              <div className="text-right">
-                                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                                  {t('value') || 'Valor'}
-                                </p>
-                                <p className="text-lg font-semibold tabular-nums">
-                                  {currencySymbol}
-                                  {source.value || '0,00'}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
+                              <span className="text-sm text-foreground font-semibold tabular-nums">
+                                {currencySymbol}
+                                {source.value || '0,00'}
+                              </span>
+
+                              <div className="flex items-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => setActiveRowId(source.id)}
                                   disabled={loading}
-                                  className="h-9 w-9 text-muted-foreground hover:text-primary"
+                                  className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
                                   title={t('edit') || 'Editar'}
                                 >
-                                  <Edit2 className="h-4 w-4" />
+                                  <Edit2 className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => deleteLine(index, source.id, source.isNew)}
                                   disabled={loading}
-                                  className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                                  className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                   title={t('delete') || 'Excluir'}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-3.5 w-3.5" />
                                 </Button>
                               </div>
                             </div>
-                          </div>
+                          </>
                         )}
                       </div>
                     );
@@ -362,15 +348,17 @@ export const IncomeSourcesManager = ({
             </ScrollArea>
 
             {/* Add New Line Button */}
-            <Button
-              onClick={addNewLine}
-              disabled={loading}
-              variant="secondary"
-              className="w-full h-11 text-sm font-semibold"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {t('addIncomeSource') || 'Adicionar Fonte de Renda'}
-            </Button>
+            <div className="pt-2 flex justify-center">
+              <Button
+                onClick={addNewLine}
+                disabled={loading}
+                size="sm"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-8 px-2.5 sm:h-9 sm:px-3 sm:text-sm"
+              >
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                {t('addIncomeSource') || 'Adicionar Fonte'}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
