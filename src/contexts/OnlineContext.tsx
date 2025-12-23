@@ -121,7 +121,6 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const subcategories = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', familyId);
       const recurringExpenses = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
       const months = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
-      // Note: category_goals removed - using category_limit per month
       
       let totalExpenses = 0;
       for (const month of months) {
@@ -260,8 +259,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
 
-      // Note: category_goal sync removed - using category_limit per month instead
-
+      
       // Step 7: Clean up local offline data
       setSyncProgress({ step: 'Limpando dados locais...', current: totalItems, total: totalItems });
       

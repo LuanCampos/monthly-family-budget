@@ -126,7 +126,7 @@ const openDB = (): Promise<IDBDatabase> => {
         }
       });
 
-      // Note: category_goals store is deprecated. Use category_limits instead (per month).
+      
 
       // Sync queue store
       ensureStore('sync_queue', { keyPath: 'id' }, (store) => {

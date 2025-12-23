@@ -574,7 +574,6 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const subs = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', familyId);
       for (const sub of subs) await offlineAdapter.delete('subcategories', sub.id);
       
-      // Note: category_goals removed - using category_limit per month
       
       await offlineAdapter.delete('families', familyId);
 
