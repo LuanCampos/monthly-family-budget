@@ -42,12 +42,8 @@ export const getSubcategories = async (familyId: string) => {
     .eq('family_id', familyId);
 };
 
-export const getCategoryGoals = async (familyId: string) => {
-  return supabase
-    .from('category_goal')
-    .select('*')
-    .eq('family_id', familyId);
-};
+// Note: category_goal table was deprecated. Use category_limit (per month) instead.
+// See getMonthLimits, insertMonthLimit, updateMonthLimit functions below.
 
 export const insertSubcategory = async (familyId: string, name: string, categoryKey: string) => {
   return supabase.from('subcategory').insert({ family_id: familyId, name, category_key: categoryKey });
@@ -160,14 +156,4 @@ export const updateExpensesByRecurringId = async (recurringId: string, data: any
   return supabase.from('expense').update(data).eq('recurring_expense_id', recurringId);
 };
 
-export const insertCategoryGoal = async (payload: any) => {
-  return supabase.from('category_goal').insert(payload);
-};
-
-export const findCategoryGoal = async (familyId: string, categoryKey: string) => {
-  return supabase.from('category_goal').select('id').eq('family_id', familyId).eq('category_key', categoryKey).maybeSingle();
-};
-
-export const updateCategoryGoalById = async (id: string, data: any) => {
-  return supabase.from('category_goal').update(data).eq('id', id);
-};
+// Legacy category_goal functions removed - use category_limit (per month) instead

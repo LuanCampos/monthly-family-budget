@@ -188,9 +188,7 @@ export const insertWithSelect = async (table: string, data: any) => {
   return supabase.from(table).insert(data).select().single();
 };
 
-export const upsertCategoryGoal = async (data: { family_id: string; category_key: string; percentage: number }) => {
-  return supabase.from('category_goal').upsert(data);
-};
+// Note: upsertCategoryGoal was removed. Use category_limit (per month) instead.
 
 export const insertMonthWithId = async (data: { id: string; family_id: string; year: number; month: number; income: number }) => {
   return supabase.from('month').insert(data);

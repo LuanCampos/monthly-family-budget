@@ -98,17 +98,7 @@ export const useBudget = () => {
     setSubcategories(subs);
   }, [currentFamilyId]);
 
-  // Load category goals
-  const loadCategoryGoals = useCallback(async () => {
-    if (!currentFamilyId) return;
-
-    const goals = await storageAdapter.getCategoryGoals(currentFamilyId);
-    if (goals && goals.length > 0) {
-      const gp: Record<CategoryKey, number> = { ...categoryPercentages };
-      goals.forEach((g: any) => { gp[g.category_key as CategoryKey] = g.percentage; });
-      setCategoryPercentages(gp);
-    }
-  }, [currentFamilyId]);
+  // Note: loadCategoryGoals removed - limits are now loaded per-month in getMonthsWithExpenses
 
   // Initial data load - reset state and reload when family changes
   useEffect(() => {
@@ -132,8 +122,7 @@ export const useBudget = () => {
         await Promise.all([
           api.loadMonths(),
           api.loadRecurringExpenses(),
-          api.loadSubcategories(),
-          api.loadCategoryGoals()
+          api.loadSubcategories()
         ]);
       } catch (error) {
         console.error('Erro ao carregar dados do orçamento:', error);
@@ -172,8 +161,8 @@ export const useBudget = () => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'subcategory', filter: `family_id=eq.${currentFamilyId}` }, () => {
         api.loadSubcategories();
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'category_goal', filter: `family_id=eq.${currentFamilyId}` }, () => {
-        api.loadCategoryGoals();
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'category_limit' }, () => {
+        api.loadMonths();
       })
       .subscribe();
 
@@ -418,10 +407,7 @@ export const useBudget = () => {
     await api.loadMonths();
   };
 
-  // Legacy - kept for backward compatibility with global goals (deprecated)
-  const updateGoals = async (newGoals: Record<CategoryKey, number>) => {
-    await api.updateGoals(newGoals as any);
-  };
+  // Note: updateGoals removed - use updateMonthLimits instead
 
   // Get current month's limits (falling back to defaults if not set)
   const currentMonthLimits = useMemo((): Record<CategoryKey, number> => {
@@ -566,14 +552,13 @@ export const useBudget = () => {
               }
             }
 
-        await updateGoals(data.categoryPercentages);
+        // Note: updateGoals removed - limits are now per-month
         toast.success('Dados importados com sucesso!');
 
         await Promise.all([
           loadMonths(),
           loadRecurringExpenses(),
-          loadSubcategories(),
-          loadCategoryGoals()
+          loadSubcategories()
         ]);
       } catch (e) {
         console.error(e);
@@ -608,7 +593,7 @@ export const useBudget = () => {
     addSubcategory,
     updateSubcategory,
     removeSubcategory,
-    updateGoals,
+    
     updateMonthLimits,
     getCategorySummary,
     getTotals,

@@ -147,17 +147,7 @@ export const getSubcategories = async (familyId: string | null) => {
   return (data || []).map(s => ({ id: s.id, name: s.name, categoryKey: s.category_key as CategoryKey }));
 };
 
-export const getCategoryGoals = async (familyId: string | null) => {
-  if (!familyId) return [];
-  if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const data = await offlineAdapter.getAllByIndex<any>('category_goals', 'family_id', familyId);
-    return data || [];
-  }
-
-  const { data, error } = await budgetService.getCategoryGoals(familyId);
-  if (error) { console.error('Error loading category goals:', error); return []; }
-  return data || [];
-};
+// Note: getCategoryGoals was removed. Use getMonthsWithExpenses which includes categoryLimits per month.
 
 export const addSubcategory = async (familyId: string | null, name: string, categoryKey: CategoryKey) => {
   if (!familyId) return;
@@ -444,17 +434,7 @@ export const applyRecurringToMonth = async (familyId: string | null, recurring: 
   return true;
 };
 
-// Legacy global goals - kept for backward compatibility
-export const updateGoals = async (familyId: string | null, newGoals: Record<CategoryKey, number>) => {
-  if (!familyId) return;
-  for (const [categoryKey, percentage] of Object.entries(newGoals)) {
-    const offlineGoalData = { id: `${familyId}-${categoryKey}`, family_id: familyId, category_key: categoryKey, percentage } as any;
-    if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) { await offlineAdapter.put('category_goals', offlineGoalData); continue; }
-    const { data: existing, error: selectError } = await budgetService.findCategoryGoal(familyId, categoryKey);
-    if (selectError) { console.error('Error checking existing goal:', selectError); continue; }
-    if (existing?.id) { await budgetService.updateCategoryGoalById(existing.id, { percentage }); } else { await budgetService.insertCategoryGoal({ family_id: familyId, category_key: categoryKey, percentage }); }
-  }
-};
+// Note: updateGoals (global) was removed. Use updateMonthLimits instead for per-month limits.
 
 // Update limits for a specific month
 export const updateMonthLimits = async (familyId: string | null, monthId: string, newLimits: Record<CategoryKey, number>) => {

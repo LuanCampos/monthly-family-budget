@@ -13,7 +13,7 @@ export interface OfflineFamily {
 
 export interface SyncQueueItem {
   id: string;
-  type: 'family' | 'month' | 'expense' | 'recurring_expense' | 'subcategory' | 'category_goal' | 'family_member';
+  type: 'family' | 'month' | 'expense' | 'recurring_expense' | 'subcategory' | 'category_limit' | 'family_member';
   action: 'insert' | 'update' | 'delete';
   data: any;
   createdAt: string;
@@ -126,16 +126,7 @@ const openDB = (): Promise<IDBDatabase> => {
         }
       });
 
-      // Category goals store
-      ensureStore('category_goals', { keyPath: 'id' }, (store) => {
-        if (!store.indexNames.contains('family_id')) {
-          store.createIndex('family_id', 'family_id', { unique: false });
-        }
-        // Back-compat (older builds)
-        if (!store.indexNames.contains('familyId')) {
-          store.createIndex('familyId', 'familyId', { unique: false });
-        }
-      });
+      // Note: category_goals store is deprecated. Use category_limits instead (per month).
 
       // Sync queue store
       ensureStore('sync_queue', { keyPath: 'id' }, (store) => {
