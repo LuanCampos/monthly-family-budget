@@ -187,6 +187,23 @@ export const useBudget = () => {
     await api.loadMonths();
   };
 
+  // Income sources management
+  const addIncomeSource = async (name: string, value: number) => {
+    if (!currentMonthId) return;
+    await api.insertIncomeSource(currentMonthId, name, value);
+    await api.loadMonths();
+  };
+
+  const updateIncomeSource = async (id: string, name: string, value: number) => {
+    await api.updateIncomeSource(id, name, value);
+    await api.loadMonths();
+  };
+
+  const deleteIncomeSource = async (id: string) => {
+    await api.deleteIncomeSource(id);
+    await api.loadMonths();
+  };
+
   // Month management
   const addMonth = async (year: number, month: number) => {
     if (!currentFamilyId) return false;
@@ -240,7 +257,6 @@ export const useBudget = () => {
   const selectMonth = (monthId: string) => {
     setCurrentMonthId(monthId);
   };
-
   const updateIncome = async (income: number) => {
     if (!currentMonthId) return;
     await api.updateMonthIncome(currentMonthId, income);
@@ -581,7 +597,6 @@ export const useBudget = () => {
     addMonth,
     removeMonth,
     selectMonth,
-    updateIncome,
     addExpense,
     updateExpense,
     removeExpense,
@@ -593,7 +608,9 @@ export const useBudget = () => {
     addSubcategory,
     updateSubcategory,
     removeSubcategory,
-    
+    addIncomeSource,
+    updateIncomeSource,
+    deleteIncomeSource,
     updateMonthLimits,
     getCategorySummary,
     getTotals,

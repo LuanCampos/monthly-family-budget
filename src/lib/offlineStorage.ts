@@ -1,6 +1,6 @@
 // Offline storage using IndexedDB for robust local persistence
 const DB_NAME = 'budget-offline-db';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export interface OfflineFamily {
   id: string;
@@ -13,7 +13,7 @@ export interface OfflineFamily {
 
 export interface SyncQueueItem {
   id: string;
-  type: 'family' | 'month' | 'expense' | 'recurring_expense' | 'subcategory' | 'category_limit' | 'family_member';
+  type: 'family' | 'month' | 'expense' | 'recurring_expense' | 'subcategory' | 'category_limit' | 'family_member' | 'income_source';
   action: 'insert' | 'update' | 'delete';
   data: any;
   createdAt: string;
@@ -123,6 +123,13 @@ const openDB = (): Promise<IDBDatabase> => {
         // Back-compat (older builds)
         if (!store.indexNames.contains('familyId')) {
           store.createIndex('familyId', 'familyId', { unique: false });
+        }
+      });
+
+      // Income sources store
+      ensureStore('income_sources', { keyPath: 'id' }, (store) => {
+        if (!store.indexNames.contains('month_id')) {
+          store.createIndex('month_id', 'month_id', { unique: false });
         }
       });
 

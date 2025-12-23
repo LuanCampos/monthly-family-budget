@@ -155,3 +155,31 @@ export const updateExpensesByRecurringId = async (recurringId: string, data: any
   return supabase.from('expense').update(data).eq('recurring_expense_id', recurringId);
 };
 
+// Income sources
+export const getIncomeSourcesByMonth = async (monthId: string) => {
+  return supabase
+    .from('income_source')
+    .select('*')
+    .eq('month_id', monthId)
+    .order('created_at', { ascending: true });
+};
+
+export const insertIncomeSource = async (monthId: string, name: string, value: number) => {
+  return supabase
+    .from('income_source')
+    .insert({ month_id: monthId, name, value })
+    .select()
+    .single();
+};
+
+export const updateIncomeSourceById = async (id: string, name: string, value: number) => {
+  return supabase
+    .from('income_source')
+    .update({ name, value })
+    .eq('id', id);
+};
+
+export const deleteIncomeSourceById = async (id: string) => {
+  return supabase.from('income_source').delete().eq('id', id);
+};
+

@@ -205,3 +205,6 @@ export const insertSubcategoryForSync = async (data: { family_id: string; name: 
 export const insertRecurringForSync = async (data: any) => {
   return supabase.from('recurring_expense').insert(data).select().single();
 };
+export const insertIncomeSourceForSync = async (data: { month_id: string; name: string; value: number }) => {
+  return supabase.from('income_source').insert(data).select().single();
+};

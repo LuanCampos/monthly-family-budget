@@ -5,6 +5,7 @@ import { useFamily } from '@/contexts/FamilyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { MonthSelector } from '@/components/MonthSelector';
 import { IncomeInput } from '@/components/IncomeInput';
+import { IncomeSourcesManager } from '@/components/IncomeSourcesManager';
 import { ExpenseChart } from '@/components/ExpenseChart';
 import { SubcategoryChart } from '@/components/SubcategoryChart';
 import { CategoryLegend } from '@/components/CategoryLegend';
@@ -43,7 +44,6 @@ const BudgetContent = () => {
     loading: budgetLoading,
     addMonth,
     selectMonth,
-    updateIncome,
     addExpense,
     removeExpense,
     updateExpense,
@@ -60,6 +60,9 @@ const BudgetContent = () => {
     removeMonth,
     currentMonthLimits,
     updateMonthLimits,
+    addIncomeSource,
+    updateIncomeSource,
+    deleteIncomeSource,
   } = useBudget();
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -67,6 +70,7 @@ const BudgetContent = () => {
   const [sortType, setSortType] = useState<SortType>('category');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [showAnnualView, setShowAnnualView] = useState(false);
+  const [showIncomeSourcesModal, setShowIncomeSourcesModal] = useState(false);
 
   const categorySummary = getCategorySummary();
   const { totalSpent, totalBudget, usedPercentage } = getTotals();
@@ -191,7 +195,7 @@ const BudgetContent = () => {
                 </div>
                 <IncomeInput
                   value={currentMonth?.income || 0}
-                  onChange={updateIncome}
+                  onEditClick={() => setShowIncomeSourcesModal(true)}
                   disabled={!currentMonthId}
                 />
               </div>
@@ -399,6 +403,17 @@ const BudgetContent = () => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Income Sources Manager */}
+      <IncomeSourcesManager
+        open={showIncomeSourcesModal}
+        onOpenChange={setShowIncomeSourcesModal}
+        incomeSources={currentMonth?.incomeSources || []}
+        onAdd={addIncomeSource}
+        onUpdate={updateIncomeSource}
+        onDelete={deleteIncomeSource}
+        totalIncome={currentMonth?.income || 0}
+      />
 
       {/* Expense Edit */}
       {editingExpense && (

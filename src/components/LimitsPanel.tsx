@@ -78,7 +78,7 @@ export const LimitsPanel = ({ percentages, onEdit }: LimitsPanelProps) => {
           <Button
             variant="outline"
             size="sm"
-            className="w-full h-9 border-border hover:bg-secondary"
+            className="w-full h-9 border-border text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
           >
             <Edit2 className="h-3.5 w-3.5 mr-2" />
             {t('edit')}

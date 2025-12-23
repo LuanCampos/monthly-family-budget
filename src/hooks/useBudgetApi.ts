@@ -105,6 +105,19 @@ export const createBudgetApi = (opts: {
       return storageAdapter.applyRecurringToMonth(currentFamilyId, recurring, monthId);
     },
     
+    // Income sources operations
+    insertIncomeSource: async (monthId: string, name: string, value: number) => {
+      return storageAdapter.insertIncomeSource(monthId, name, value);
+    },
+    
+    updateIncomeSource: async (id: string, name: string, value: number) => {
+      return storageAdapter.updateIncomeSource(id, name, value);
+    },
+    
+    deleteIncomeSource: async (id: string) => {
+      return storageAdapter.deleteIncomeSource(id);
+    },
+    
     // Note: updateGoals removed - use updateMonthLimits in useBudget.ts instead
   } as const;
 };

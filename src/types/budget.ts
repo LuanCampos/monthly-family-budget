@@ -49,12 +49,20 @@ export interface RecurringExpense {
   startMonth?: number;
 }
 
+export interface IncomeSource {
+  id: string;
+  monthId: string;
+  name: string;
+  value: number;
+}
+
 export interface Month {
   id: string;
   label: string;
   year: number;
   month: number;
   income: number;
+  incomeSources: IncomeSource[];
   expenses: Expense[];
   categoryLimits?: Record<CategoryKey, number>;
 }

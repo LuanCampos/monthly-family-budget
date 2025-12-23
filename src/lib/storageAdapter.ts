@@ -38,14 +38,25 @@ export const getMonthsWithExpenses = async (familyId: string | null) => {
     const monthsWithExpenses: Month[] = await Promise.all(offlineMonths.map(async (m) => {
       const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', m.id);
       const limits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', m.id);
+      const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', m.id);
       const categoryLimits: Record<CategoryKey, number> = { ...getDefaultLimits() };
       limits.forEach((l: any) => { categoryLimits[l.category_key as CategoryKey] = l.percentage; });
+      
+      // Calculate income from sources
+      const calculatedIncome = incomeSources.reduce((sum: number, source: any) => sum + (source.value || 0), 0);
+      
       return {
         id: m.id,
         label: getMonthLabel(m.year, m.month),
         year: m.year,
         month: m.month,
-        income: m.income || 0,
+        income: calculatedIncome || m.income || 0,
+        incomeSources: incomeSources.map((s: any) => ({
+          id: s.id,
+          monthId: s.month_id,
+          name: s.name,
+          value: s.value,
+        })),
         categoryLimits,
         expenses: expenses.map((e: any) => ({
           id: e.id,
@@ -68,18 +79,29 @@ export const getMonthsWithExpenses = async (familyId: string | null) => {
   if (error || !monthsData) return [] as Month[];
 
   const monthsWithExpenses: Month[] = await Promise.all(monthsData.map(async (m: any) => {
-    const [{ data: expenses }, { data: limits }] = await Promise.all([
+    const [{ data: expenses }, { data: limits }, { data: incomeSources }] = await Promise.all([
       budgetService.getExpensesByMonth(m.id),
-      budgetService.getMonthLimits(m.id)
+      budgetService.getMonthLimits(m.id),
+      budgetService.getIncomeSourcesByMonth(m.id)
     ]);
     const categoryLimits: Record<CategoryKey, number> = { ...getDefaultLimits() };
     (limits || []).forEach((l: any) => { categoryLimits[l.category_key as CategoryKey] = l.percentage; });
+    
+    // Calculate income from sources
+    const calculatedIncome = (incomeSources || []).reduce((sum: number, source: any) => sum + (source.value || 0), 0);
+    
     return {
       id: m.id,
       label: getMonthLabel(m.year, m.month),
       year: m.year,
       month: m.month,
-      income: m.income || 0,
+      income: calculatedIncome || m.income || 0,
+      incomeSources: (incomeSources || []).map((s: any) => ({
+        id: s.id,
+        monthId: s.month_id,
+        name: s.name,
+        value: s.value,
+      })),
       categoryLimits,
       expenses: (expenses || []).map((e: any) => ({
         id: e.id,
@@ -98,6 +120,7 @@ export const getMonthsWithExpenses = async (familyId: string | null) => {
 
   return monthsWithExpenses;
 };
+
 
 export const getRecurringExpenses = async (familyId: string | null) => {
   if (!familyId) return [] as RecurringExpense[];
@@ -457,6 +480,64 @@ export const updateMonthLimits = async (familyId: string | null, monthId: string
 
 export const createChannel = (name: string) => budgetService.createChannel(name);
 export const removeChannel = (channel: any) => budgetService.removeChannel(channel);
+
+// Income sources CRUD
+export const getIncomeSourcesByMonth = async (monthId: string) => {
+  if (!navigator.onLine) {
+    const sources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', monthId);
+    return (sources || []).map(s => ({
+      id: s.id,
+      monthId: s.month_id,
+      name: s.name,
+      value: s.value,
+    }));
+  }
+  const { data, error } = await budgetService.getIncomeSourcesByMonth(monthId);
+  if (error) { console.error('Error loading income sources:', error); return []; }
+  return (data || []).map(s => ({
+    id: s.id,
+    monthId: s.month_id,
+    name: s.name,
+    value: s.value,
+  }));
+};
+
+export const insertIncomeSource = async (monthId: string, name: string, value: number) => {
+  const offlineId = offlineAdapter.generateOfflineId('inc');
+  const offlineData = { id: offlineId, month_id: monthId, name, value };
+  
+  if (!navigator.onLine) {
+    await offlineAdapter.put('income_sources', offlineData as any);
+    return offlineData;
+  }
+
+  const { data, error } = await budgetService.insertIncomeSource(monthId, name, value);
+  if (error || !data) {
+    await offlineAdapter.put('income_sources', offlineData as any);
+    await offlineAdapter.sync.add({ type: 'income_source', action: 'insert', data: offlineData, familyId: monthId.split('-')[0] });
+    return offlineData;
+  }
+  return data;
+};
+
+export const updateIncomeSource = async (id: string, name: string, value: number) => {
+  if (!navigator.onLine) {
+    const source = await offlineAdapter.get<any>('income_sources', id);
+    if (source) await offlineAdapter.put('income_sources', { ...source, name, value } as any);
+    return;
+  }
+  const res = await budgetService.updateIncomeSourceById(id, name, value);
+  return res;
+};
+
+export const deleteIncomeSource = async (id: string) => {
+  if (!navigator.onLine) {
+    await offlineAdapter.delete('income_sources', id);
+    return;
+  }
+  const res = await budgetService.deleteIncomeSourceById(id);
+  return res;
+};
 
 export const deleteExpensesByMonth = async (monthId: string) => {
   // If offline, remove from indexedDB; otherwise use budgetService

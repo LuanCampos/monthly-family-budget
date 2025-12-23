@@ -1,47 +1,45 @@
-import { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
+import { useEffect, useState } from 'react';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { formatCurrencyInput } from '@/utils/formatters';
+import { Edit2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface IncomeInputProps {
   value: number;
-  onChange: (value: number) => void;
+  onEditClick?: () => void;
   disabled?: boolean;
 }
 
-export const IncomeInput = ({ value, onChange, disabled }: IncomeInputProps) => {
-  const [inputValue, setInputValue] = useState('');
+export const IncomeInput = ({ value, onEditClick, disabled }: IncomeInputProps) => {
+  const [displayValue, setDisplayValue] = useState('');
   const { currencySymbol } = useCurrency();
 
   useEffect(() => {
-    setInputValue(formatCurrencyInput(value));
+    setDisplayValue(formatCurrencyInput(value));
   }, [value]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(sanitizeCurrencyInput(e.target.value));
-  };
-
-  const handleBlur = () => {
-    onChange(parseCurrencyInput(inputValue));
-  };
-
   return (
-    <div className="flex items-center gap-2 sm:gap-4">
-      <div className="relative w-48 sm:w-56">
+    <div className="flex items-center gap-3">
+      <div className="relative">
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
           {currencySymbol}
         </span>
-        <Input
-          type="text"
-          inputMode="decimal"
-          value={inputValue}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          disabled={disabled}
-          placeholder="0,00"
-          className="pl-12 h-10 py-0 bg-secondary/50 border-border text-primary !text-base font-bold placeholder:text-muted-foreground"
-        />
+        <div className="pl-12 h-10 py-0 bg-secondary/50 border border-border text-primary !text-base font-bold text-muted-foreground rounded-md flex items-center w-48 sm:w-56">
+          {displayValue}
+        </div>
       </div>
+      {onEditClick && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onEditClick}
+          disabled={disabled}
+          className="h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+          title="Editar fontes de renda"
+        >
+          <Edit2 className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 };

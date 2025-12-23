@@ -123,12 +123,15 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const months = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
       
       let totalExpenses = 0;
+      let totalIncomeSources = 0;
       for (const month of months) {
         const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
+        const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', month.id);
         totalExpenses += expenses.length;
+        totalIncomeSources += incomeSources.length;
       }
 
-      const totalItems = 1 + subcategories.length + recurringExpenses.length + months.length + totalExpenses;
+      const totalItems = 1 + subcategories.length + recurringExpenses.length + months.length + totalExpenses + totalIncomeSources;
       let syncedItems = 0;
 
       const updateProgress = (step: string, details?: string) => {
@@ -259,6 +262,28 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
 
+      // Step 6: Sync income sources
+      for (const month of months) {
+        const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', month.id);
+        for (const source of incomeSources) {
+          const { data, error } = await familyService.insertIncomeSourceForSync({
+            month_id: idMap[month.id],
+            name: source.name,
+            value: source.value,
+          });
+          
+          if (error) {
+            throw new Error(`Erro ao sincronizar fonte de renda "${source.name}": ${error.message}`);
+          }
+          
+          if (data) {
+            idMap[source.id] = data.id;
+            createdCloudIds.push({ table: 'income_source', id: data.id });
+          }
+          updateProgress('Sincronizando fontes de renda', source.name);
+        }
+      }
+
       
       // Step 7: Clean up local offline data
       setSyncProgress({ step: 'Limpando dados locais...', current: totalItems, total: totalItems });
@@ -267,7 +292,9 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       for (const rec of recurringExpenses) await offlineAdapter.delete('recurring_expenses', rec.id);
       for (const month of months) {
         const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
+        const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', month.id);
         for (const exp of expenses) await offlineAdapter.delete('expenses', exp.id);
+        for (const source of incomeSources) await offlineAdapter.delete('income_sources', source.id);
         await offlineAdapter.delete('months', month.id);
       }
       await offlineAdapter.delete('families', familyId);
