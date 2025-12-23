@@ -31,15 +31,7 @@ export const createBudgetApi = (opts: {
     setSubcategories(subs);
   };
 
-  const loadCategoryGoals = async () => {
-    if (!currentFamilyId) return;
-    const goals = await storageAdapter.getCategoryGoals(currentFamilyId);
-    if (goals && goals.length > 0) {
-      const gp: Record<CategoryKey, number> = { ...categoryPercentages };
-      goals.forEach((g: any) => { gp[g.category_key as CategoryKey] = g.percentage; });
-      setCategoryPercentages(gp);
-    }
-  };
+  // Note: loadCategoryGoals removed - limits are now per-month and loaded with months
 
   // Subcategory CRUD - delegate to storageAdapter
   const addSubcategory = async (name: string, categoryKey: CategoryKey) => {
@@ -62,7 +54,6 @@ export const createBudgetApi = (opts: {
     loadMonths,
     loadRecurringExpenses,
     loadSubcategories,
-    loadCategoryGoals,
     addSubcategory,
     updateSubcategory,
     removeSubcategory,
@@ -114,10 +105,6 @@ export const createBudgetApi = (opts: {
       return storageAdapter.applyRecurringToMonth(currentFamilyId, recurring, monthId);
     },
     
-    // Goals - delegate to storageAdapter and update local state
-    updateGoals: async (newGoals: Record<CategoryKey, number>) => {
-      await storageAdapter.updateGoals(currentFamilyId, newGoals);
-      setCategoryPercentages(newGoals);
-    }
+    // Note: updateGoals removed - use updateMonthLimits in useBudget.ts instead
   } as const;
 };

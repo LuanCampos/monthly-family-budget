@@ -121,7 +121,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const subcategories = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', familyId);
       const recurringExpenses = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
       const months = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
-      const goals = await offlineAdapter.getAllByIndex<any>('category_goals', 'family_id', familyId);
+      // Note: category_goals removed - using category_limit per month
       
       let totalExpenses = 0;
       for (const month of months) {
@@ -129,7 +129,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         totalExpenses += expenses.length;
       }
 
-      const totalItems = 1 + subcategories.length + recurringExpenses.length + months.length + totalExpenses + goals.length;
+      const totalItems = 1 + subcategories.length + recurringExpenses.length + months.length + totalExpenses;
       let syncedItems = 0;
 
       const updateProgress = (step: string, details?: string) => {
@@ -260,19 +260,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
 
-      // Step 6: Sync category goals
-      for (const goal of goals) {
-        const { error } = await familyService.upsertCategoryGoal({
-          family_id: newFamilyId,
-          category_key: goal.category_key,
-          percentage: goal.percentage,
-        });
-        
-        if (error) {
-          throw new Error(`Erro ao sincronizar meta: ${error.message}`);
-        }
-        updateProgress('Sincronizando metas', goal.category_key);
-      }
+      // Note: category_goal sync removed - using category_limit per month instead
 
       // Step 7: Clean up local offline data
       setSyncProgress({ step: 'Limpando dados locais...', current: totalItems, total: totalItems });
@@ -284,7 +272,6 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         for (const exp of expenses) await offlineAdapter.delete('expenses', exp.id);
         await offlineAdapter.delete('months', month.id);
       }
-      for (const goal of goals) await offlineAdapter.delete('category_goals', goal.id);
       await offlineAdapter.delete('families', familyId);
 
       // Clear sync queue for this family
