@@ -337,12 +337,41 @@ export const deleteRecurring = async (familyId: string | null, id: string) => {
 
 export const applyRecurringToMonth = async (familyId: string | null, recurring: RecurringExpense, monthId: string) => {
   if (!familyId) return false;
-  const result = shouldIncludeRecurringInMonth(recurring as any, recurring.startYear || 0, recurring.startMonth || 0);
+  // Need to determine the target month's year/month to calculate the correct installment number
+  // Fetch month info (offline or online) and then decide whether to include this recurring expense
+  let targetYear: number | undefined;
+  let targetMonth: number | undefined;
+
+  if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
+    const month = await offlineAdapter.get<any>('months', monthId);
+    if (!month) return false;
+    targetYear = month.year;
+    targetMonth = month.month;
+  } else {
+    const m = await budgetService.getMonthById(monthId);
+    if (!m || !m.data || !m.data[0]) {
+      // try fallback to getMonths if single lookup not available
+      const months = await budgetService.getMonths(familyId);
+      const found = (months.data || []).find((mm: any) => mm.id === monthId);
+      if (!found) return false;
+      targetYear = found.year;
+      targetMonth = found.month;
+    } else {
+      targetYear = m.data.year ?? m.data[0].year ?? undefined;
+      targetMonth = m.data.month ?? m.data[0].month ?? undefined;
+    }
+  }
+
+  if (targetYear === undefined || targetMonth === undefined) return false;
+
+  const result = shouldIncludeRecurringInMonth(recurring as any, targetYear, targetMonth);
+
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     const expenseData = { id: offlineAdapter.generateOfflineId('exp'), family_id: familyId, month_id: monthId, title: recurring.title, category_key: recurring.category, subcategory_id: recurring.subcategoryId || null, value: recurring.value, is_recurring: true, is_pending: true, due_day: recurring.dueDay, recurring_expense_id: recurring.id, installment_current: result.installmentNumber, installment_total: recurring.totalInstallments };
     await offlineAdapter.put('expenses', expenseData as any);
     return true;
   }
+
   const res = await budgetService.insertExpense({ family_id: familyId, month_id: monthId, title: recurring.title, category_key: recurring.category, subcategory_id: recurring.subcategoryId || null, value: recurring.value, is_recurring: true, is_pending: true, due_day: recurring.dueDay, recurring_expense_id: recurring.id, installment_current: result.installmentNumber, installment_total: recurring.totalInstallments });
   if (res.error) return false;
   return true;

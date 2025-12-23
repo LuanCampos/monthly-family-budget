@@ -13,6 +13,14 @@ export const getMonths = async (familyId: string) => {
     .order('month', { ascending: true });
 };
 
+export const getMonthById = async (monthId: string) => {
+  return supabase
+    .from('month')
+    .select('*')
+    .eq('id', monthId)
+    .maybeSingle();
+};
+
 export const getExpensesByMonth = async (monthId: string) => {
   return supabase
     .from('expense')
