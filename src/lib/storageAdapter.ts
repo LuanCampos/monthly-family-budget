@@ -502,11 +502,11 @@ export const getIncomeSourcesByMonth = async (monthId: string) => {
   }));
 };
 
-export const insertIncomeSource = async (monthId: string, name: string, value: number) => {
+export const insertIncomeSource = async (familyId: string | null, monthId: string, name: string, value: number) => {
   const offlineId = offlineAdapter.generateOfflineId('inc');
   const offlineData = { id: offlineId, month_id: monthId, name, value };
   
-  if (!navigator.onLine) {
+  if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     await offlineAdapter.put('income_sources', offlineData as any);
     return offlineData;
   }
@@ -514,7 +514,10 @@ export const insertIncomeSource = async (monthId: string, name: string, value: n
   const { data, error } = await budgetService.insertIncomeSource(monthId, name, value);
   if (error || !data) {
     await offlineAdapter.put('income_sources', offlineData as any);
-    await offlineAdapter.sync.add({ type: 'income_source', action: 'insert', data: offlineData, familyId: monthId.split('-')[0] });
+    // Only enqueue sync if it's NOT an offline family (online family that lost connection)
+    if (!offlineAdapter.isOfflineId(familyId)) {
+      await offlineAdapter.sync.add({ type: 'income_source', action: 'insert', data: offlineData, familyId: familyId || monthId.split('-')[0] });
+    }
     return offlineData;
   }
   return data;

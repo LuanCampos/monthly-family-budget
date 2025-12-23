@@ -107,7 +107,7 @@ export const createBudgetApi = (opts: {
     
     // Income sources operations
     insertIncomeSource: async (monthId: string, name: string, value: number) => {
-      return storageAdapter.insertIncomeSource(monthId, name, value);
+      return storageAdapter.insertIncomeSource(currentFamilyId, monthId, name, value);
     },
     
     updateIncomeSource: async (id: string, name: string, value: number) => {
