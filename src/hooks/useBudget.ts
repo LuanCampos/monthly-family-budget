@@ -411,17 +411,32 @@ export const useBudget = () => {
     return result;
   };
 
-  // Goals
+  // Update limits for current month
+  const updateMonthLimits = async (newLimits: Record<CategoryKey, number>) => {
+    if (!currentMonthId || !currentFamilyId) return;
+    await storageAdapter.updateMonthLimits(currentFamilyId, currentMonthId, newLimits);
+    await api.loadMonths();
+  };
+
+  // Legacy - kept for backward compatibility with global goals (deprecated)
   const updateGoals = async (newGoals: Record<CategoryKey, number>) => {
     await api.updateGoals(newGoals as any);
   };
+
+  // Get current month's limits (falling back to defaults if not set)
+  const currentMonthLimits = useMemo((): Record<CategoryKey, number> => {
+    if (currentMonth?.categoryLimits) {
+      return currentMonth.categoryLimits;
+    }
+    return Object.fromEntries(CATEGORIES.map(c => [c.key, c.percentage])) as Record<CategoryKey, number>;
+  }, [currentMonth]);
 
   // Calculations
   const getCategorySummary = () => {
     if (!currentMonth) {
       return CATEGORIES.map(cat => ({
         ...cat,
-        percentage: categoryPercentages[cat.key],
+        percentage: currentMonthLimits[cat.key],
         budget: 0,
         spent: 0,
         remaining: 0,
@@ -430,7 +445,7 @@ export const useBudget = () => {
     }
 
     return CATEGORIES.map(cat => {
-      const percentage = categoryPercentages[cat.key] ?? cat.percentage;
+      const percentage = currentMonthLimits[cat.key] ?? cat.percentage;
       const budget = (currentMonth.income * percentage) / 100;
 
       const spent = currentMonth.expenses
@@ -575,6 +590,7 @@ export const useBudget = () => {
     currentMonthId,
     recurringExpenses,
     categoryPercentages,
+    currentMonthLimits,
     subcategories,
     loading,
     addMonth,
@@ -593,6 +609,7 @@ export const useBudget = () => {
     updateSubcategory,
     removeSubcategory,
     updateGoals,
+    updateMonthLimits,
     getCategorySummary,
     getTotals,
     exportBudget,

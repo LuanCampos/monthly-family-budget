@@ -58,8 +58,8 @@ const BudgetContent = () => {
     getCategorySummary,
     getTotals,
     removeMonth,
-    categoryPercentages,
-    updateGoals,
+    currentMonthLimits,
+    updateMonthLimits,
   } = useBudget();
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -261,8 +261,8 @@ const BudgetContent = () => {
                 </div>
                 <div className="dashboard-card-content">
                   <LimitsPanel
-                    percentages={categoryPercentages}
-                    onEdit={updateGoals}
+                    percentages={currentMonthLimits}
+                    onEdit={updateMonthLimits}
                   />
                 </div>
               </div>

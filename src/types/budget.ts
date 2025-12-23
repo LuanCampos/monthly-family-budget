@@ -56,4 +56,5 @@ export interface Month {
   month: number;
   income: number;
   expenses: Expense[];
+  categoryLimits?: Record<CategoryKey, number>;
 }
