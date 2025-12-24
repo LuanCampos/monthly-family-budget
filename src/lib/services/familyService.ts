@@ -208,3 +208,7 @@ export const insertRecurringForSync = async (data: any) => {
 export const insertIncomeSourceForSync = async (data: { month_id: string; name: string; value: number }) => {
   return supabase.from('income_source').insert(data).select().single();
 };
+
+export const insertCategoryLimitForSync = async (data: { month_id: string; category_key: string; percentage: number }) => {
+  return supabase.from('category_limit').insert(data).select().single();
+};
