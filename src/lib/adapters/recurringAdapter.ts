@@ -53,7 +53,10 @@ export const insertRecurring = async (familyId: string | null, payload: Partial<
   const res = await budgetService.insertRecurring(familyId, payload);
   if (res.error || !res.data) {
     await offlineAdapter.put('recurring_expenses', offlineRecurringData as any);
-    await offlineAdapter.sync.add({ type: 'recurring_expense', action: 'insert', data: offlineRecurringData, familyId });
+    // Only queue sync if it's an online family (not an offline family)
+    if (!offlineAdapter.isOfflineId(familyId)) {
+      await offlineAdapter.sync.add({ type: 'recurring_expense', action: 'insert', data: offlineRecurringData, familyId });
+    }
   }
   return res;
 };

@@ -129,7 +129,10 @@ export const insertMonth = async (
       await offlineAdapter.put('category_limits', limitData as any);
     }
     
-    await offlineAdapter.sync.add({ type: 'month', action: 'insert', data: offlineMonthData, familyId });
+    // Only queue sync if it's an online family (not an offline family)
+    if (!offlineAdapter.isOfflineId(familyId)) {
+      await offlineAdapter.sync.add({ type: 'month', action: 'insert', data: offlineMonthData, familyId });
+    }
     return offlineMonthData;
   }
 
@@ -285,7 +288,10 @@ export const insertIncomeSource = async (familyId: string | null, monthId: strin
   const { data, error } = await budgetService.insertIncomeSource(monthId, name, value);
   if (error || !data) {
     await offlineAdapter.put('income_sources', offlineData as any);
-    await offlineAdapter.sync.add({ type: 'income_source', action: 'insert', data: offlineData, familyId });
+    // Only queue sync if it's an online family (not an offline family)
+    if (!offlineAdapter.isOfflineId(familyId)) {
+      await offlineAdapter.sync.add({ type: 'income_source', action: 'insert', data: offlineData, familyId });
+    }
     return offlineData;
   }
   return data;
