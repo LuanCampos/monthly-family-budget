@@ -124,14 +124,17 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       let totalExpenses = 0;
       let totalIncomeSources = 0;
+      let totalCategoryLimits = 0;
       for (const month of months) {
         const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
         const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', month.id);
+        const categoryLimits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', month.id);
         totalExpenses += expenses.length;
         totalIncomeSources += incomeSources.length;
+        totalCategoryLimits += categoryLimits.length;
       }
 
-      const totalItems = 1 + subcategories.length + recurringExpenses.length + months.length + totalExpenses + totalIncomeSources;
+      const totalItems = 1 + subcategories.length + recurringExpenses.length + months.length + totalExpenses + totalIncomeSources + totalCategoryLimits;
       let syncedItems = 0;
 
       const updateProgress = (step: string, details?: string) => {
@@ -284,8 +287,29 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
 
+      // Step 7: Sync category limits (per month)
+      for (const month of months) {
+        const categoryLimits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', month.id);
+        for (const limit of categoryLimits) {
+          const { data, error } = await familyService.insertCategoryLimitForSync({
+            month_id: idMap[month.id],
+            category_key: limit.category_key,
+            percentage: limit.percentage,
+          });
+          
+          if (error) {
+            throw new Error(`Erro ao sincronizar limite de categoria "${limit.category_key}": ${error.message}`);
+          }
+          
+          if (data) {
+            createdCloudIds.push({ table: 'category_limit', id: data.id });
+          }
+          updateProgress('Sincronizando limites de categoria', limit.category_key);
+        }
+      }
+
       
-      // Step 7: Clean up local offline data
+      // Step 8: Clean up local offline data
       setSyncProgress({ step: 'Limpando dados locais...', current: totalItems, total: totalItems });
       
       for (const sub of subcategories) await offlineAdapter.delete('subcategories', sub.id);
@@ -293,8 +317,10 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       for (const month of months) {
         const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
         const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', month.id);
+        const categoryLimits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', month.id);
         for (const exp of expenses) await offlineAdapter.delete('expenses', exp.id);
         for (const source of incomeSources) await offlineAdapter.delete('income_sources', source.id);
+        for (const limit of categoryLimits) await offlineAdapter.delete('category_limits', limit.id);
         await offlineAdapter.delete('months', month.id);
       }
       await offlineAdapter.delete('families', familyId);
