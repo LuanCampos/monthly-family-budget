@@ -50,7 +50,10 @@ export const insertSubcategory = async (familyId: string | null, name: string, c
   if (error) {
     logger.warn('subcategory.insert.fallback', { error: error.message });
     await offlineAdapter.put('subcategories', offlineData as any);
-    await offlineAdapter.sync.add({ type: 'subcategory', action: 'insert', data: offlineData, familyId });
+    // Only queue sync if it's an online family (not an offline family)
+    if (!offlineAdapter.isOfflineId(familyId)) {
+      await offlineAdapter.sync.add({ type: 'subcategory', action: 'insert', data: offlineData, familyId });
+    }
     return offlineData;
   }
   

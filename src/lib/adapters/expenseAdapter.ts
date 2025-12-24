@@ -50,7 +50,10 @@ export const insertExpense = async (familyId: string | null, payload: Partial<Ex
   if (res.error) {
     logger.warn('expense.insert.fallback', { title: payload.title, error: res.error.message });
     await offlineAdapter.put('expenses', offlineExpenseData as any);
-    await offlineAdapter.sync.add({ type: 'expense', action: 'insert', data: offlineExpenseData, familyId });
+    // Only queue sync if it's an online family (not an offline family)
+    if (!offlineAdapter.isOfflineId(familyId)) {
+      await offlineAdapter.sync.add({ type: 'expense', action: 'insert', data: offlineExpenseData, familyId });
+    }
   } else {
     return res;
   }
