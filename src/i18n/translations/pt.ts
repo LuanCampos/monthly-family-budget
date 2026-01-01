@@ -193,6 +193,7 @@ export const pt = {
   themeSolarized: 'Solarized',
   themeGruvbox: 'Gruvbox',
   themeCatppuccin: 'Catppuccin',
+  themeSolarizedLight: 'Solarized Claro',
   
   // Currency
   currency: 'Moeda',

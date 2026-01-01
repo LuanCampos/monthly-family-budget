@@ -195,6 +195,7 @@ export const en: Record<TranslationKey, string> = {
   themeSolarized: 'Solarized',
   themeGruvbox: 'Gruvbox',
   themeCatppuccin: 'Catppuccin',
+  themeSolarizedLight: 'Solarized Light',
   
   // Currency
   currency: 'Currency',
