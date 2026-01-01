@@ -221,7 +221,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
 
       // If there's a logged-in user, try to persist preference server-side
       if (user) {
-        const payload = { user_id: user.id, theme: newTheme };
+        const payload = { user_id: user.id, application_key: 'finance', theme: newTheme };
         try {
           const res = await userService.upsertUserPreference(payload);
           // Supabase response has error field
@@ -231,8 +231,8 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
         } catch (err) {
           // Fallback: save to offline store and enqueue sync
           try {
-            await offlineAdapter.put('user_preferences', { user_id: user.id, theme: newTheme, updated_at: new Date().toISOString() });
-            await offlineAdapter.sync.add({ type: 'user_preference', action: 'upsert', data: { user_id: user.id, theme: newTheme }, familyId: '' });
+            await offlineAdapter.put('user_preferences', { user_id: user.id, application_key: 'finance', theme: newTheme, updated_at: new Date().toISOString() });
+            await offlineAdapter.sync.add({ type: 'user_preference', action: 'upsert', data: { user_id: user.id, application_key: 'finance', theme: newTheme }, familyId: '' });
           } catch (offlineErr) {
             console.error('Failed to persist theme preference offline:', offlineErr);
           }

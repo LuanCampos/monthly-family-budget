@@ -17,6 +17,7 @@ import { supabase } from '../supabase';
 export interface UserPreference {
   id: string;
   user_id: string;
+  application_key: string;
   language: string | null;
   currency: string | null;
   theme: string | null;
@@ -29,6 +30,7 @@ export const getUserPreferences = async (userId: string) => {
     .from('user_preference')
     .select('*')
     .eq('user_id', userId)
+    .eq('application_key', 'finance')
     .maybeSingle();
 };
 
@@ -37,6 +39,7 @@ export const getCurrentFamilyPreference = async (userId: string) => {
     .from('user_preference')
     .select('current_family_id')
     .eq('user_id', userId)
+    .eq('application_key', 'finance')
     .maybeSingle();
 };
 
@@ -52,8 +55,9 @@ export const upsertUserPreference = async (data: {
     .from('user_preference')
     .upsert({
       ...data,
+      application_key: 'finance',
       updated_at: data.updated_at || new Date().toISOString()
-    }, { onConflict: 'user_id' });
+    }, { onConflict: 'user_id,application_key' });
 };
 
 export const updateCurrentFamily = async (userId: string, familyId: string | null) => {
@@ -61,9 +65,10 @@ export const updateCurrentFamily = async (userId: string, familyId: string | nul
     .from('user_preference')
     .upsert({
       user_id: userId,
+      application_key: 'finance',
       current_family_id: familyId,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' });
+    }, { onConflict: 'user_id,application_key' });
 };
 
 // ============================================================================

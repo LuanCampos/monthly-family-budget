@@ -100,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const localLanguage = typeof window !== 'undefined' ? localStorage.getItem('budget-app-language') : null;
         const localCurrency = typeof window !== 'undefined' ? localStorage.getItem('budget-app-currency') : null;
 
-        const payload: any = { user_id: user.id };
+        const payload: any = { user_id: user.id, application_key: 'finance' };
         let shouldUpsert = false;
 
         if (!data) {
