@@ -1,6 +1,6 @@
 // Offline storage using IndexedDB for robust local persistence
 const DB_NAME = 'budget-offline-db';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 export interface OfflineFamily {
   id: string;
@@ -28,37 +28,14 @@ const openDB = (): Promise<IDBDatabase> => {
   if (dbPromise) return dbPromise;
 
   dbPromise = new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    let request: IDBOpenDBRequest;
 
     const fail = (error: unknown) => {
       dbPromise = null;
       reject(error);
     };
 
-    request.onerror = () => fail(request.error);
-
-    // If an upgrade is blocked by another open tab, avoid hanging forever.
-    request.onblocked = () => {
-      fail(new Error('Banco local bloqueado por outra aba/janela. Feche outras abas e recarregue.'));
-    };
-
-    request.onsuccess = () => {
-      db = request.result;
-
-      // If another tab triggers an upgrade, close this connection cleanly.
-      db.onversionchange = () => {
-        try {
-          db?.close();
-        } finally {
-          db = null;
-          dbPromise = null;
-        }
-      };
-
-      resolve(db);
-    };
-
-    request.onupgradeneeded = (event) => {
+    const onUpgradeNeeded = (event: IDBVersionChangeEvent) => {
       const database = (event.target as IDBOpenDBRequest).result;
       const tx = (event.target as IDBOpenDBRequest).transaction;
 
@@ -156,6 +133,49 @@ const openDB = (): Promise<IDBDatabase> => {
         }
       });
     };
+
+    const attachHandlers = (req: IDBOpenDBRequest, allowVersionFallback: boolean) => {
+      request = req;
+
+      request.onerror = () => {
+        const error = request.error;
+
+        // If the browser already has a newer DB version (e.g. user used a newer build before),
+        // opening with a lower requested version throws VersionError. Retrying without a version
+        // opens the existing DB version and avoids blocking the app.
+        if (allowVersionFallback && error?.name === 'VersionError') {
+          attachHandlers(indexedDB.open(DB_NAME), false);
+          return;
+        }
+
+        fail(error);
+      };
+
+      // If an upgrade is blocked by another open tab, avoid hanging forever.
+      request.onblocked = () => {
+        fail(new Error('Banco local bloqueado por outra aba/janela. Feche outras abas e recarregue.'));
+      };
+
+      request.onsuccess = () => {
+        db = request.result;
+
+        // If another tab triggers an upgrade, close this connection cleanly.
+        db.onversionchange = () => {
+          try {
+            db?.close();
+          } finally {
+            db = null;
+            dbPromise = null;
+          }
+        };
+
+        resolve(db);
+      };
+
+      request.onupgradeneeded = onUpgradeNeeded;
+    };
+
+    attachHandlers(indexedDB.open(DB_NAME, DB_VERSION), true);
   });
 
   return dbPromise;
