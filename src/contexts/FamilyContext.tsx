@@ -338,48 +338,56 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       // Load user preferences
       let selectedFamilyId: string | null = null;
-      
+
+      const savedFamilyId = localStorage.getItem('current-family-id');
+
       if (!user) {
-        const savedFamilyId = localStorage.getItem('current-family-id');
+        // When logged out, only restore offline families from localStorage
         if (savedFamilyId && offlineAdapter.isOfflineId(savedFamilyId)) {
-          selectedFamilyId = savedFamilyId;
+          const offlineExists = allFamilies.some(f => f.id === savedFamilyId);
+          if (offlineExists) {
+            selectedFamilyId = savedFamilyId;
+          } else {
+            localStorage.removeItem('current-family-id');
+          }
         }
       } else {
-        try {
-          const { data } = await userService.getCurrentFamilyPreference(user.id);
-
-          if (data?.current_family_id) {
-            // Verify this family exists in the loaded families
-            const familyExists = allFamilies.some(f => f.id === data.current_family_id);
-            if (familyExists) {
-              selectedFamilyId = data.current_family_id;
-            }
+        // Priority 1: browser memory (localStorage) if still available
+        if (savedFamilyId) {
+          const savedExists = allFamilies.some(f => f.id === savedFamilyId);
+          if (savedExists) {
+            selectedFamilyId = savedFamilyId;
+          } else {
+            // Stale family id (user removed / deleted / not loaded)
+            localStorage.removeItem('current-family-id');
           }
-          
-          // If no valid preference found, check localStorage for offline family
-          if (!selectedFamilyId) {
-            const savedFamilyId = localStorage.getItem('current-family-id');
-            if (savedFamilyId && offlineAdapter.isOfflineId(savedFamilyId)) {
-              const offlineExists = allFamilies.some(f => f.id === savedFamilyId);
-              if (offlineExists) {
-                selectedFamilyId = savedFamilyId;
+        }
+
+        // Priority 2: user_preferences (server)
+        if (!selectedFamilyId) {
+          try {
+            const { data } = await userService.getCurrentFamilyPreference(user.id);
+            if (data?.current_family_id) {
+              const familyExists = allFamilies.some(f => f.id === data.current_family_id);
+              if (familyExists) {
+                selectedFamilyId = data.current_family_id;
               }
             }
+          } catch (e) {
+            console.log('User preferences table not yet created');
           }
-        } catch (e) {
-          console.log('User preferences table not yet created');
         }
-        
-        // Auto-select first family if user has families but no selection
+
+        // Priority 3: auto-select first available family
         if (!selectedFamilyId && allFamilies.length > 0) {
           selectedFamilyId = allFamilies[0].id;
-          // Save this auto-selection
-          localStorage.setItem('current-family-id', selectedFamilyId);
-          if (!offlineAdapter.isOfflineId(selectedFamilyId || '')) {
-            userService.updateCurrentFamily(user.id, selectedFamilyId).then(() => {});
-          }
         }
-        
+
+        // Keep server preference in sync for online families
+        if (selectedFamilyId && !offlineAdapter.isOfflineId(selectedFamilyId)) {
+          userService.updateCurrentFamily(user.id, selectedFamilyId).then(() => {});
+        }
+
         await refreshMyInvitations();
       }
       

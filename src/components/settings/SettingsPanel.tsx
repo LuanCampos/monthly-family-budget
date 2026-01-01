@@ -214,32 +214,65 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
     setOpen(false);
   };
 
+  const persistUserPreference = async (partial: { theme?: ThemeKey; language?: Language; currency?: CurrencyCode }) => {
+    if (!user) return;
+
+    const payload = {
+      user_id: user.id,
+      application_key: 'finance',
+      ...(partial.theme ? { theme: partial.theme } : {}),
+      ...(partial.language ? { language: partial.language } : {}),
+      ...(partial.currency ? { currency: partial.currency } : {}),
+    };
+
+    try {
+      const res = await userService.upsertUserPreference(payload);
+      if ((res as any).error) {
+        throw (res as any).error;
+      }
+    } catch (err) {
+      // Fallback: save to offline store and enqueue sync
+      try {
+        await offlineAdapter.put('user_preferences', {
+          ...payload,
+          updated_at: new Date().toISOString(),
+        });
+        await offlineAdapter.sync.add({
+          type: 'user_preference',
+          action: 'upsert',
+          data: payload,
+          familyId: '',
+        });
+      } catch (offlineErr) {
+        console.error('Failed to persist user preference offline:', offlineErr);
+      }
+    }
+  };
+
+  const handleLanguageChange = async (newLanguage: Language) => {
+    try {
+      setLanguage(newLanguage);
+      await persistUserPreference({ language: newLanguage });
+    } catch (err) {
+      console.error('Error handling language change:', err);
+    }
+  };
+
+  const handleCurrencyChange = async (newCurrency: CurrencyCode) => {
+    try {
+      setCurrency(newCurrency);
+      await persistUserPreference({ currency: newCurrency });
+    } catch (err) {
+      console.error('Error handling currency change:', err);
+    }
+  };
+
   const handleThemeChange = async (newTheme: ThemeKey) => {
     try {
       // Apply immediately in UI
       setTheme(newTheme);
 
-      // If there's a logged-in user, try to persist preference server-side
-      if (user) {
-        const payload = { user_id: user.id, application_key: 'finance', theme: newTheme };
-        try {
-          const res = await userService.upsertUserPreference(payload);
-          // Supabase response has error field
-          if ((res as any).error) {
-            throw (res as any).error;
-          }
-        } catch (err) {
-          // Fallback: save to offline store and enqueue sync
-          try {
-            await offlineAdapter.put('user_preferences', { user_id: user.id, application_key: 'finance', theme: newTheme, updated_at: new Date().toISOString() });
-            await offlineAdapter.sync.add({ type: 'user_preference', action: 'upsert', data: { user_id: user.id, application_key: 'finance', theme: newTheme }, familyId: '' });
-          } catch (offlineErr) {
-            console.error('Failed to persist theme preference offline:', offlineErr);
-          }
-        }
-      } else {
-        // Not logged in: nothing more to persist (localStorage already handled by ThemeProvider)
-      }
+      await persistUserPreference({ theme: newTheme });
     } catch (err) {
       // Error here is non-fatal because we already applied the theme and
       // attempted server/offline persistence. Log for diagnostics only.
@@ -756,7 +789,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                           <Globe className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">{t('language')}</span>
                         </div>
-                        <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+                        <Select value={language} onValueChange={(v) => handleLanguageChange(v as Language)}>
                           <SelectTrigger className="w-36 h-9 text-sm"><SelectValue /></SelectTrigger>
                           <SelectContent className="bg-card border-border">
                             {languages.map((lang) => <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>)}
@@ -768,7 +801,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                           <Coins className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">{t('currency')}</span>
                         </div>
-                        <Select value={currency} onValueChange={(v) => setCurrency(v as CurrencyCode)}>
+                        <Select value={currency} onValueChange={(v) => handleCurrencyChange(v as CurrencyCode)}>
                           <SelectTrigger className="w-36 h-9 text-sm"><SelectValue /></SelectTrigger>
                           <SelectContent className="bg-card border-border">
                             {currencies.map((curr) => <SelectItem key={curr.code} value={curr.code}>{curr.name}</SelectItem>)}
