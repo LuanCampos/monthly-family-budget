@@ -108,7 +108,7 @@ export const SummaryTable = ({
             {t('totalSpent')}
           </p>
           <p
-            className={`text-lg font-bold tabular-nums ${
+            className={`text-sm sm:text-lg font-bold tabular-nums ${
               totalSpent > totalBudget
                 ? 'text-destructive'
                 : 'text-foreground'
@@ -123,7 +123,7 @@ export const SummaryTable = ({
             {t('totalRemaining')}
           </p>
           <p
-            className={`text-lg font-bold tabular-nums ${
+            className={`text-sm sm:text-lg font-bold tabular-nums ${
               totalBudget - totalSpent < 0
                 ? 'text-destructive'
                 : 'text-success'
@@ -138,7 +138,7 @@ export const SummaryTable = ({
             {t('used')}
           </p>
           <p
-            className={`text-lg font-bold tabular-nums ${
+            className={`text-sm sm:text-lg font-bold tabular-nums ${
               usedPercentage > 100
                 ? 'text-destructive'
                 : 'text-foreground'
