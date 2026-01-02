@@ -184,7 +184,7 @@ const BudgetContent = () => {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between min-h-[3.5rem] sm:min-h-[4rem] py-2 gap-2">
             {/* Logo + Title */}
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-shrink">
               <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0 self-center" />
               <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight">
                 {t('appTitle')}
