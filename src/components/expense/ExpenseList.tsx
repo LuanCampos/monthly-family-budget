@@ -36,7 +36,7 @@ type FilterType =
   | { type: 'installments' }
   | null;
 
-export type SortType = 'category' | 'value' | 'dueDate';
+export type SortType = 'createdAt' | 'category' | 'value' | 'dueDate';
 export type SortDirection = 'asc' | 'desc';
 
 const generateSubcategoryColor = (
@@ -109,7 +109,13 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
   const sortedExpenses = [...filteredExpenses].sort((a, b) => {
     let result = 0;
     
-    if (sortType === 'category') {
+    if (sortType === 'createdAt') {
+      const timeA = a.createdAt ? Date.parse(a.createdAt) : NaN;
+      const timeB = b.createdAt ? Date.parse(b.createdAt) : NaN;
+      const safeA = Number.isFinite(timeA) ? timeA : 0;
+      const safeB = Number.isFinite(timeB) ? timeB : 0;
+      result = safeA - safeB;
+    } else if (sortType === 'category') {
       const catIndexA = CATEGORIES.findIndex(c => c.key === a.category);
       const catIndexB = CATEGORIES.findIndex(c => c.key === b.category);
       result = catIndexA - catIndexB;

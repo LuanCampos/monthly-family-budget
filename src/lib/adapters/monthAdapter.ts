@@ -90,6 +90,7 @@ export const insertMonth = async (
       const mappedRecurring = mapRecurringExpense(recurring);
       const result = shouldIncludeRecurringInMonth(mappedRecurring, year, month);
       if (result.include) {
+        const now = new Date().toISOString();
         const expenseData = {
           id: offlineAdapter.generateOfflineId('exp'),
           family_id: familyId,
@@ -104,6 +105,8 @@ export const insertMonth = async (
           recurring_expense_id: recurring.id,
           installment_current: mappedRecurring.hasInstallments ? result.installmentNumber : null,
           installment_total: mappedRecurring.hasInstallments ? mappedRecurring.totalInstallments : null,
+          created_at: now,
+          updated_at: now,
         };
         await offlineAdapter.put('expenses', expenseData as any);
       }

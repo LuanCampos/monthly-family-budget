@@ -165,6 +165,7 @@ export const applyRecurringToMonth = async (familyId: string | null, recurring: 
   const result = shouldIncludeRecurringInMonth(recurring as any, targetYear, targetMonth);
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
+    const now = new Date().toISOString();
     const expenseData = {
       id: offlineAdapter.generateOfflineId('exp'),
       family_id: familyId,
@@ -178,7 +179,9 @@ export const applyRecurringToMonth = async (familyId: string | null, recurring: 
       due_day: recurring.dueDay,
       recurring_expense_id: recurring.id,
       installment_current: recurring.hasInstallments ? result.installmentNumber : null,
-      installment_total: recurring.hasInstallments ? recurring.totalInstallments : null
+      installment_total: recurring.hasInstallments ? recurring.totalInstallments : null,
+      created_at: now,
+      updated_at: now,
     };
     await offlineAdapter.put('expenses', expenseData as any);
     return true;

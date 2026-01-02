@@ -37,6 +37,7 @@ export const mapExpense = (expense: ExpenseRow): Expense => ({
   isPending: expense.is_pending ?? undefined,
   dueDay: expense.due_day ?? undefined,
   recurringExpenseId: expense.recurring_expense_id ?? undefined,
+  createdAt: expense.created_at,
   installmentInfo:
     expense.installment_current && expense.installment_total
       ? { current: expense.installment_current, total: expense.installment_total }

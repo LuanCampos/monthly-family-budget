@@ -21,6 +21,8 @@ import type { ExpenseRow } from '@/types/database';
  */
 export const insertExpense = async (familyId: string | null, payload: Partial<ExpenseRow>) => {
   if (!familyId) return null;
+
+  const now = new Date().toISOString();
   
   const offlineExpenseData = {
     id: offlineAdapter.generateOfflineId('exp'),
@@ -36,6 +38,8 @@ export const insertExpense = async (familyId: string | null, payload: Partial<Ex
     recurring_expense_id: payload.recurring_expense_id || null,
     installment_current: payload.installment_current || null,
     installment_total: payload.installment_total || null,
+    created_at: now,
+    updated_at: now,
   };
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {

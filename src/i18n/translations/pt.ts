@@ -152,6 +152,7 @@ export const pt = {
   
   // Sorting
   sortBy: 'Ordenar por',
+  sortCreatedAt: 'Data de Criação',
   sortCategory: 'Categoria',
   sortValue: 'Valor',
   sortDueDate: 'Data de Vencimento',

@@ -154,6 +154,7 @@ export const en: Record<TranslationKey, string> = {
   
   // Sorting
   sortBy: 'Sort by',
+  sortCreatedAt: 'Creation Date',
   sortCategory: 'Category',
   sortValue: 'Value',
   sortDueDate: 'Due Date',

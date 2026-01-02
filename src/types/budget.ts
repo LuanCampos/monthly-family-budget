@@ -29,6 +29,7 @@ export interface Expense {
   isPending?: boolean;
   dueDay?: number;
   recurringExpenseId?: string;
+  createdAt?: string;
   installmentInfo?: {
     current: number;
     total: number;

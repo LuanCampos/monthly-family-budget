@@ -95,6 +95,10 @@ export const getMonthsWithExpenses = async (familyId: string | null) => {
           isPending: e.is_pending,
           dueDay: e.due_day,
           recurringExpenseId: e.recurring_expense_id,
+          createdAt:
+            typeof e.created_at === 'string'
+              ? e.created_at
+              : (typeof e.createdAt === 'string' ? e.createdAt : undefined),
           installmentInfo: e.installment_current && e.installment_total ? { current: e.installment_current, total: e.installment_total } : undefined,
         }))
       };

@@ -521,6 +521,7 @@ export const useBudget = () => {
               } as any);
 
               for (const exp of m.expenses) {
+                const now = new Date().toISOString();
                 await offlineAdapter.put('expenses', {
                   id: offlineAdapter.generateOfflineId('exp'),
                   month_id: monthId,
@@ -533,7 +534,9 @@ export const useBudget = () => {
                   due_day: exp.dueDay,
                   recurring_expense_id: exp.recurringExpenseId || null,
                   installment_current: exp.installmentInfo?.current,
-                  installment_total: exp.installmentInfo?.total
+                  installment_total: exp.installmentInfo?.total,
+                  created_at: exp.createdAt || now,
+                  updated_at: now,
                 } as any);
               }
             }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useBudget } from '@/hooks/useBudget';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFamily } from '@/contexts/FamilyContext';
@@ -26,6 +26,7 @@ import {
 // Inner component that uses useBudget - will be remounted when family changes via key
 const BudgetContent = () => {
   const { t } = useLanguage();
+  const { currentFamilyId } = useFamily();
   
   const {
     months,
@@ -59,10 +60,48 @@ const BudgetContent = () => {
 
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [activeCategory, setActiveCategory] = useState<CategoryKey | null>(null);
-  const [sortType, setSortType] = useState<SortType>('category');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortType, setSortType] = useState<SortType>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showAnnualView, setShowAnnualView] = useState(false);
   const [showIncomeSourcesModal, setShowIncomeSourcesModal] = useState(false);
+
+  const sortStorageKey = useMemo(() => {
+    const familyKey = currentFamilyId || 'no-family';
+    return `month-expenses-sort:${familyKey}`;
+  }, [currentFamilyId]);
+
+  // Restore persisted sort preference (don't lose it on reload or remount)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(sortStorageKey);
+      if (!raw) return;
+      const parsed: unknown = JSON.parse(raw);
+
+      if (!parsed || typeof parsed !== 'object') return;
+      const obj = parsed as { sortType?: unknown; sortDirection?: unknown };
+
+      const nextType = obj.sortType;
+      const nextDir = obj.sortDirection;
+
+      const isValidType =
+        nextType === 'createdAt' || nextType === 'category' || nextType === 'value' || nextType === 'dueDate';
+      const isValidDir = nextDir === 'asc' || nextDir === 'desc';
+
+      if (isValidType) setSortType(nextType);
+      if (isValidDir) setSortDirection(nextDir);
+    } catch {
+      // ignore malformed localStorage
+    }
+  }, [sortStorageKey]);
+
+  // Persist current choice
+  useEffect(() => {
+    try {
+      localStorage.setItem(sortStorageKey, JSON.stringify({ sortType, sortDirection }));
+    } catch {
+      // ignore quota / privacy modes
+    }
+  }, [sortStorageKey, sortType, sortDirection]);
 
   const categorySummary = getCategorySummary();
   const { totalSpent, totalBudget, usedPercentage } = getTotals();
@@ -73,7 +112,9 @@ const BudgetContent = () => {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
       setSortType(type);
-      if (type === 'category') {
+      if (type === 'createdAt') {
+        setSortDirection('desc');
+      } else if (type === 'category') {
         setSortDirection('asc');
       } else if (type === 'value') {
         setSortDirection('desc');
@@ -280,6 +321,12 @@ const BudgetContent = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40 bg-popover">
+                      <DropdownMenuItem onClick={() => handleSortClick('createdAt')} className="flex items-center justify-between">
+                        {t('sortCreatedAt')}
+                        {sortType === 'createdAt' && (
+                          sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                        )}
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleSortClick('category')} className="flex items-center justify-between">
                         {t('sortCategory')}
                         {sortType === 'category' && (
