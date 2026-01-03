@@ -222,7 +222,7 @@ const BudgetContent = () => {
             {/* Income Section */}
             <div className="dashboard-card">
               <div className="dashboard-card-header flex items-center gap-2 sm:gap-4 justify-start">
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <DollarSign className="h-4 w-4 text-primary" />
                   <span className="dashboard-card-title">{t('monthlyIncome')}</span>
                 </div>
