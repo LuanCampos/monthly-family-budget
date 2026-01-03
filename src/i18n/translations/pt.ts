@@ -40,7 +40,7 @@ export const pt = {
   deleteCurrentMonthDescription: 'Exclua o mês atual e todos os seus gastos. Esta ação não pode ser desfeita.',
   
   // Income
-  monthlyIncome: 'Renda do mês',
+  monthlyIncome: 'Renda do\u00A0mês',
   manageIncomeSources: 'Fontes de Renda',
   totalIncome: 'Renda Total',
   noIncomeSources: 'Nenhuma fonte de renda adicionada',
