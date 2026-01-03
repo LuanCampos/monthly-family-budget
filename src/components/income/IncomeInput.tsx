@@ -24,7 +24,7 @@ export const IncomeInput = ({ value, onEditClick, disabled }: IncomeInputProps) 
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
           {currencySymbol}
         </span>
-        <div className="pl-12 h-10 py-0 bg-secondary/50 border border-border text-primary !text-base font-bold text-muted-foreground rounded-md flex items-center w-48 sm:w-56">
+        <div className="pl-12 h-10 py-0 bg-secondary/50 border border-border text-primary !text-base font-bold text-muted-foreground rounded-md flex items-center w-36 sm:w-48">
           {displayValue}
         </div>
       </div>
