@@ -19,7 +19,7 @@ export const IncomeInput = ({ value, onEditClick, disabled }: IncomeInputProps) 
   }, [value]);
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       <div className="relative">
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
           {currencySymbol}
