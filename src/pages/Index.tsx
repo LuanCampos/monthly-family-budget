@@ -221,10 +221,10 @@ const BudgetContent = () => {
           <div className="space-y-4 sm:space-y-6">
             {/* Income Section */}
             <div className="dashboard-card">
-              <div className="dashboard-card-header flex items-center gap-4 justify-start">
-                <div className="flex items-center gap-2">
+              <div className="dashboard-card-header flex items-center gap-2 sm:gap-4 justify-start">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                   <DollarSign className="h-4 w-4 text-primary" />
-                  <span className="dashboard-card-title">{t('monthlyIncome')}</span>
+                  <span className="dashboard-card-title whitespace-nowrap">{t('monthlyIncome')}</span>
                 </div>
                 <IncomeInput
                   value={currentMonth?.income || 0}
