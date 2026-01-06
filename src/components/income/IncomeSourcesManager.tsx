@@ -249,7 +249,7 @@ export const IncomeSourcesManager = ({
                         className={`group flex items-center justify-between p-3 ${isEditing ? 'ring-1 ring-primary/40 bg-background' : 'bg-secondary/30 hover:bg-secondary/50'} rounded-lg transition-colors`}
                       >
                         {isEditing ? (
-                          <div className="flex items-center gap-3 w-full">
+                          <div className="flex items-center gap-2 w-full">
                             <Input
                               placeholder={t('name') || 'Nome'}
                               value={source.name}
@@ -257,9 +257,9 @@ export const IncomeSourcesManager = ({
                               disabled={loading}
                               autoFocus
                               onKeyDown={(event) => handleKeyDown(event, index)}
-                              className="flex-1 h-9 text-sm"
+                              className="min-w-0 flex-1 h-9 text-sm"
                             />
-                            <div className="relative w-36">
+                            <div className="relative w-28 sm:w-36 flex-shrink-0">
                               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
                                 {currencySymbol}
                               </span>
@@ -274,21 +274,21 @@ export const IncomeSourcesManager = ({
                                 onKeyDown={(event) => handleKeyDown(event, index)}
                               />
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 flex-shrink-0">
                               <Button
-                                size="sm"
+                                size="icon"
                                 onClick={() => saveSource(index)}
                                 disabled={loading}
-                                className="gap-1"
+                                className="h-8 w-8"
                               >
                                 <Check className="h-3.5 w-3.5" />
                               </Button>
                               <Button
-                                size="sm"
+                                size="icon"
                                 variant="ghost"
                                 onClick={() => cancelEdit(index)}
                                 disabled={loading}
-                                className="gap-1"
+                                className="h-8 w-8"
                               >
                                 <X className="h-3.5 w-3.5" />
                               </Button>
