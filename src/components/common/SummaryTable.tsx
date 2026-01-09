@@ -139,7 +139,7 @@ export const SummaryTable = ({
           </p>
           <p
             className={`text-sm sm:text-lg font-bold tabular-nums ${
-              usedPercentage > 100
+              Math.round(usedPercentage * 100) / 100 > 100
                 ? 'text-destructive'
                 : 'text-foreground'
             }`}
