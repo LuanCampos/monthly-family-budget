@@ -35,7 +35,7 @@ export const SummaryTable = ({
     <div className="space-y-4">
       {categories.map((cat) => {
         const category = getCategoryByKey(cat.key);
-        const exceeded = cat.spent > cat.budget;
+        const exceeded = Math.round(cat.usedPercentage * 100) / 100 > 100;
         const progressWidth = Math.min(cat.usedPercentage, 100);
 
         return (
