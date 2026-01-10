@@ -338,7 +338,7 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
               disabled={isConfirming}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {isConfirming ? t('saving') : t('confirm')}
+              {t('confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -359,7 +359,7 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? t('saving') : t('delete')}
+              {t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
