@@ -74,6 +74,9 @@ export const RecurringExpenses = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [applyingId, setApplyingId] = useState<string | null>(null);
   
   const [sortType, setSortType] = useState<SortType>('category');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -127,6 +130,8 @@ export const RecurringExpenses = ({
   };
 
   const handleSubmit = async () => {
+    if (isSaving) return;
+    
     const numericValue = parseCurrencyInput(value);
     if (!title.trim() || numericValue <= 0) return;
 
@@ -137,19 +142,24 @@ export const RecurringExpenses = ({
     const finalStartMonth = hasInstallments && startMonth ? parseInt(startMonth) : undefined;
 
     if (view === 'add') {
-      await onAdd(
-        title.trim(), 
-        category, 
-        finalSubcategoryId, 
-        numericValue,
-        finalDueDay,
-        hasInstallments,
-        finalTotalInstallments,
-        finalStartYear,
-        finalStartMonth
-      );
-      setView('list');
-      resetForm();
+      setIsSaving(true);
+      try {
+        await onAdd(
+          title.trim(), 
+          category, 
+          finalSubcategoryId, 
+          numericValue,
+          finalDueDay,
+          hasInstallments,
+          finalTotalInstallments,
+          finalStartYear,
+          finalStartMonth
+        );
+        setView('list');
+        resetForm();
+      } finally {
+        setIsSaving(false);
+      }
     }
 
     if (view === 'edit' && editingId !== null) {
@@ -158,7 +168,7 @@ export const RecurringExpenses = ({
   };
 
   const confirmUpdate = async (updatePast: boolean) => {
-    if (!editingId) return;
+    if (!editingId || isSaving) return;
 
     const numericValue = parseCurrencyInput(value);
     const finalSubcategoryId = subcategoryId || undefined;
@@ -167,23 +177,28 @@ export const RecurringExpenses = ({
     const finalStartYear = hasInstallments && startYear ? parseInt(startYear) : undefined;
     const finalStartMonth = hasInstallments && startMonth ? parseInt(startMonth) : undefined;
 
-    await onUpdate(
-      editingId,
-      title.trim(),
-      category,
-      finalSubcategoryId,
-      numericValue,
-      finalDueDay,
-      hasInstallments,
-      finalTotalInstallments,
-      finalStartYear,
-      finalStartMonth,
-      updatePast
-    );
+    setIsSaving(true);
+    try {
+      await onUpdate(
+        editingId,
+        title.trim(),
+        category,
+        finalSubcategoryId,
+        numericValue,
+        finalDueDay,
+        hasInstallments,
+        finalTotalInstallments,
+        finalStartYear,
+        finalStartMonth,
+        updatePast
+      );
 
-    setShowUpdateDialog(false);
-    setView('list');
-    resetForm();
+      setShowUpdateDialog(false);
+      setView('list');
+      resetForm();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getSubcategoryName = (subId?: string) => {
@@ -234,10 +249,15 @@ export const RecurringExpenses = ({
     return sortDirection === 'asc' ? result : -result;
   });
 
-  const handleDeleteConfirm = () => {
-    if (deleteId) {
-      onRemove(deleteId);
-      setDeleteId(null);
+  const handleDeleteConfirm = async () => {
+    if (deleteId && !isDeleting) {
+      setIsDeleting(true);
+      try {
+        await onRemove(deleteId);
+        setDeleteId(null);
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -327,11 +347,17 @@ export const RecurringExpenses = ({
                     );
 
                     const handleApply = async () => {
-                      const success = await onApply(exp.id);
-                      if (success) {
-                        toast.success(t('applyToCurrentMonth'));
-                      } else {
-                        toast.info(t('alreadyInCurrentMonth'));
+                      if (applyingId === exp.id) return;
+                      setApplyingId(exp.id);
+                      try {
+                        const success = await onApply(exp.id);
+                        if (success) {
+                          toast.success(t('applyToCurrentMonth'));
+                        } else {
+                          toast.info(t('alreadyInCurrentMonth'));
+                        }
+                      } finally {
+                        setApplyingId(null);
                       }
                     };
 
@@ -379,10 +405,10 @@ export const RecurringExpenses = ({
                             size="icon"
                             onClick={handleApply}
                             aria-label={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
-                            disabled={isInCurrentMonth}
+                            disabled={isInCurrentMonth || applyingId === exp.id}
                             title={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
                             className={`h-8 w-8 ${
-                              isInCurrentMonth 
+                              isInCurrentMonth || applyingId === exp.id
                                 ? 'text-muted-foreground/40 cursor-not-allowed' 
                                 : 'text-muted-foreground hover:text-success hover:bg-success/10'
                             }`}
@@ -456,9 +482,10 @@ export const RecurringExpenses = ({
             ) : (
               <Button
                 onClick={handleSubmit}
+                disabled={isSaving}
                 className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                {view === 'add' ? t('add') : t('save')}
+                {isSaving ? t('saving') : (view === 'add' ? t('add') : t('save'))}
               </Button>
             )}
           </div>
@@ -474,20 +501,22 @@ export const RecurringExpenses = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowUpdateDialog(false)}>
+            <AlertDialogCancel onClick={() => setShowUpdateDialog(false)} disabled={isSaving}>
               {t('cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => confirmUpdate(true)}
+              disabled={isSaving}
               className="bg-secondary text-foreground hover:bg-secondary/80"
             >
-              {t('updateAll')}
+              {isSaving ? t('saving') : t('updateAll')}
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => confirmUpdate(false)}
+              disabled={isSaving}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {t('updateFutureOnly')}
+              {isSaving ? t('saving') : t('updateFutureOnly')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -505,9 +534,10 @@ export const RecurringExpenses = ({
             <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
+              disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t('delete')}
+              {isDeleting ? t('saving') : t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
