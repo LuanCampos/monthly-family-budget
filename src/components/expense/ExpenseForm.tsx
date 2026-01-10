@@ -54,6 +54,7 @@ export const ExpenseForm = ({
   const [value, setValue] = useState('');
   const [isPending, setIsPending] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const resetForm = () => {
     setTitle('');
@@ -78,6 +79,8 @@ export const ExpenseForm = ({
   }, [mode, initialData]);
 
   const handleSubmit = async () => {
+    if (isSaving) return;
+    
     // Apply any pending sum before submitting
     const summedValue = formFieldsRef.current?.applyPendingSum();
     const valueToUse = summedValue ?? value;
@@ -87,15 +90,20 @@ export const ExpenseForm = ({
 
     const finalSubcategoryId = subcategoryId || undefined;
 
-    if (mode === 'create' && onAdd) {
-      await onAdd(title.trim(), category, finalSubcategoryId, numericValue);
-    }
+    setIsSaving(true);
+    try {
+      if (mode === 'create' && onAdd) {
+        await onAdd(title.trim(), category, finalSubcategoryId, numericValue);
+      }
 
-    if (mode === 'edit' && onUpdate && initialData) {
-      await onUpdate(initialData.id, title.trim(), category, finalSubcategoryId, numericValue, isPending);
-    }
+      if (mode === 'edit' && onUpdate && initialData) {
+        await onUpdate(initialData.id, title.trim(), category, finalSubcategoryId, numericValue, isPending);
+      }
 
-    resetForm();
+      resetForm();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -169,9 +177,10 @@ export const ExpenseForm = ({
         <div className="px-6 py-4 border-t border-border bg-secondary/30">
           <Button
             onClick={handleSubmit}
+            disabled={isSaving}
             className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {mode === 'create' ? t('add') : t('saveChanges')}
+            {isSaving ? t('saving') : (mode === 'create' ? t('add') : t('saveChanges'))}
           </Button>
         </div>
       </DialogContent>

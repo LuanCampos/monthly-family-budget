@@ -63,6 +63,8 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
   const [filter, setFilter] = useState<FilterType>(null);
   const [confirmPaymentId, setConfirmPaymentId] = useState<string | null>(null);
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   if (expenses.length === 0) {
     return (
@@ -166,16 +168,26 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
   };
 
   const handleConfirmPayment = async () => {
-    if (confirmPaymentId) {
-      await onConfirmPayment(confirmPaymentId);
-      setConfirmPaymentId(null);
+    if (confirmPaymentId && !isConfirming) {
+      setIsConfirming(true);
+      try {
+        await onConfirmPayment(confirmPaymentId);
+        setConfirmPaymentId(null);
+      } finally {
+        setIsConfirming(false);
+      }
     }
   };
 
   const handleDeleteExpense = async () => {
-    if (deleteExpenseId) {
-      await onRemove(deleteExpenseId);
-      setDeleteExpenseId(null);
+    if (deleteExpenseId && !isDeleting) {
+      setIsDeleting(true);
+      try {
+        await onRemove(deleteExpenseId);
+        setDeleteExpenseId(null);
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -323,9 +335,10 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
             <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmPayment}
+              disabled={isConfirming}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {t('confirm')}
+              {isConfirming ? t('saving') : t('confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -343,9 +356,10 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
             <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteExpense}
+              disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t('delete')}
+              {isDeleting ? t('saving') : t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

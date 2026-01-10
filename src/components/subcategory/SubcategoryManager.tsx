@@ -40,11 +40,19 @@ export const SubcategoryManager = ({
   const [newCategory, setNewCategory] = useState<CategoryKey>('essenciais');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleAdd = async () => {
-    if (!newName.trim()) return;
-    await onAdd(newName.trim(), newCategory);
-    setNewName('');
+    if (!newName.trim() || isAdding) return;
+    setIsAdding(true);
+    try {
+      await onAdd(newName.trim(), newCategory);
+      setNewName('');
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const startEdit = (sub: Subcategory) => {
@@ -53,16 +61,31 @@ export const SubcategoryManager = ({
   };
 
   const saveEdit = async () => {
-    if (editingId && editingName.trim()) {
-      await onUpdate(editingId, editingName.trim());
+    if (editingId && editingName.trim() && !isSavingEdit) {
+      setIsSavingEdit(true);
+      try {
+        await onUpdate(editingId, editingName.trim());
+        setEditingId(null);
+        setEditingName('');
+      } finally {
+        setIsSavingEdit(false);
+      }
     }
-    setEditingId(null);
-    setEditingName('');
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditingName('');
+  };
+
+  const handleRemove = async (id: string) => {
+    if (deletingId === id) return;
+    setDeletingId(id);
+    try {
+      await onRemove(id);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const groupedSubcategories = CATEGORIES.map((cat) => ({
@@ -127,6 +150,7 @@ export const SubcategoryManager = ({
               <Button
                 onClick={handleAdd}
                 size="icon"
+                disabled={isAdding}
                 className="h-10 w-10 bg-primary text-primary-foreground hover:bg-primary/90 flex-shrink-0"
                 aria-label={t('addSubcategory')}
               >
@@ -180,6 +204,7 @@ export const SubcategoryManager = ({
                                 variant="ghost"
                                 size="icon"
                                 onClick={saveEdit}
+                                disabled={isSavingEdit}
                                 className="h-8 w-8 text-primary hover:bg-primary/10"
                                 aria-label={t('save')}
                               >
@@ -189,6 +214,7 @@ export const SubcategoryManager = ({
                                 variant="ghost"
                                 size="icon"
                                 onClick={cancelEdit}
+                                disabled={isSavingEdit}
                                 className="h-8 w-8 text-muted-foreground hover:bg-muted"
                                 aria-label={t('cancel')}
                               >
@@ -213,7 +239,8 @@ export const SubcategoryManager = ({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => onRemove(sub.id)}
+                                  onClick={() => handleRemove(sub.id)}
+                                  disabled={deletingId === sub.id}
                                   className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                   aria-label={t('delete')}
                                 >
