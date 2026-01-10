@@ -180,7 +180,7 @@ export const ExpenseForm = ({
             disabled={isSaving}
             className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {isSaving ? t('saving') : (mode === 'create' ? t('add') : t('saveChanges'))}
+            {mode === 'create' ? t('add') : t('saveChanges')}
           </Button>
         </div>
       </DialogContent>

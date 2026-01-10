@@ -485,7 +485,7 @@ export const RecurringExpenses = ({
                 disabled={isSaving}
                 className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                {isSaving ? t('saving') : (view === 'add' ? t('add') : t('save'))}
+                {view === 'add' ? t('add') : t('save')}
               </Button>
             )}
           </div>
@@ -509,14 +509,14 @@ export const RecurringExpenses = ({
               disabled={isSaving}
               className="bg-secondary text-foreground hover:bg-secondary/80"
             >
-              {isSaving ? t('saving') : t('updateAll')}
+              {t('updateAll')}
             </AlertDialogAction>
             <AlertDialogAction
               onClick={() => confirmUpdate(false)}
               disabled={isSaving}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {isSaving ? t('saving') : t('updateFutureOnly')}
+              {t('updateFutureOnly')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -537,7 +537,7 @@ export const RecurringExpenses = ({
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? t('saving') : t('delete')}
+              {t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
