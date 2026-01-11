@@ -73,6 +73,9 @@ export const FamilyManager = () => {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showLeaveAlert, setShowLeaveAlert] = useState(false);
   const [processingAction, setProcessingAction] = useState<string | null>(null);
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [isDeletingFamily, setIsDeletingFamily] = useState(false);
+  const [isLeavingFamily, setIsLeavingFamily] = useState(false);
 
   const isAdmin = userRole === 'owner' || userRole === 'admin';
   const isOnlyMember = members.length === 1;
@@ -102,65 +105,80 @@ export const FamilyManager = () => {
   };
 
   const handleUpdateName = async () => {
-    if (!currentFamily || !newFamilyName.trim()) return;
+    if (!currentFamily || !newFamilyName.trim() || isUpdatingName) return;
     
-    const { error } = await updateFamilyName(currentFamily.id, newFamilyName.trim());
-    
-    if (error) {
-      toast({
-        title: t('error'),
-        description: error.message,
-        variant: 'destructive'
-      });
-    } else {
-      toast({
-        title: t('success'),
-        description: t('familyNameUpdated')
-      });
-      setEditingName(false);
+    setIsUpdatingName(true);
+    try {
+      const { error } = await updateFamilyName(currentFamily.id, newFamilyName.trim());
+      
+      if (error) {
+        toast({
+          title: t('error'),
+          description: error.message,
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: t('success'),
+          description: t('familyNameUpdated')
+        });
+        setEditingName(false);
+      }
+    } finally {
+      setIsUpdatingName(false);
     }
   };
 
   const handleDeleteFamily = async () => {
-    if (!currentFamily) return;
+    if (!currentFamily || isDeletingFamily) return;
     
-    const { error } = await deleteFamily(currentFamily.id);
-    
-    if (error) {
-      toast({
-        title: t('error'),
-        description: error.message,
-        variant: 'destructive'
-      });
-    } else {
-      toast({
-        title: t('success'),
-        description: t('familyDeleted')
-      });
-      setOpen(false);
+    setIsDeletingFamily(true);
+    try {
+      const { error } = await deleteFamily(currentFamily.id);
+      
+      if (error) {
+        toast({
+          title: t('error'),
+          description: error.message,
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: t('success'),
+          description: t('familyDeleted')
+        });
+        setOpen(false);
+      }
+    } finally {
+      setShowDeleteAlert(false);
+      setIsDeletingFamily(false);
     }
-    setShowDeleteAlert(false);
   };
 
   const handleLeaveFamily = async () => {
-    if (!currentFamily) return;
+    if (!currentFamily || isLeavingFamily) return;
     
-    const { error } = await leaveFamily(currentFamily.id);
-    
-    if (error) {
-      toast({
-        title: t('error'),
-        description: error.message,
-        variant: 'destructive'
-      });
-    } else {
-      toast({
-        title: t('success'),
-        description: t('leftFamily')
-      });
-      setOpen(false);
+    setIsLeavingFamily(true);
+    try {
+      const { error } = await leaveFamily(currentFamily.id);
+      
+      if (error) {
+        toast({
+          title: t('error'),
+          description: error.message,
+          variant: 'destructive'
+        });
+      } else {
+        toast({
+          title: t('success'),
+          description: t('leftFamily')
+        });
+        setOpen(false);
+      }
+    } finally {
+      setShowLeaveAlert(false);
+      setIsLeavingFamily(false);
     }
-    setShowLeaveAlert(false);
   };
 
   const handleRemoveMember = async (memberId: string) => {
@@ -535,8 +553,8 @@ export const FamilyManager = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogCancel disabled={isDeletingFamily}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteFamily} disabled={isDeletingFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -553,8 +571,8 @@ export const FamilyManager = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLeaveFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogCancel disabled={isLeavingFamily}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLeaveFamily} disabled={isLeavingFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t('leave')}
             </AlertDialogAction>
           </AlertDialogFooter>

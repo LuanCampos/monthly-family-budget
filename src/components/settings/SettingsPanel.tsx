@@ -397,38 +397,53 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   };
 
   const handleUpdateFamilyName = async () => {
-    if (!currentFamily || !newFamilyName.trim()) return;
-    const { error } = await updateFamilyName(currentFamily.id, newFamilyName.trim());
-    if (error) {
-      toast({ title: t('error'), description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: t('success'), description: t('familyNameUpdated') });
-      setEditingName(false);
+    if (!currentFamily || !newFamilyName.trim() || isUpdatingName) return;
+    setIsUpdatingName(true);
+    try {
+      const { error } = await updateFamilyName(currentFamily.id, newFamilyName.trim());
+      if (error) {
+        toast({ title: t('error'), description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: t('success'), description: t('familyNameUpdated') });
+        setEditingName(false);
+      }
+    } finally {
+      setIsUpdatingName(false);
     }
   };
 
   const handleDeleteFamily = async () => {
-    if (!currentFamily) return;
-    const { error } = await deleteFamily(currentFamily.id);
-    if (error) {
-      toast({ title: t('error'), description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: t('success'), description: t('familyDeleted') });
-      setOpen(false);
+    if (!currentFamily || isDeletingFamily) return;
+    setIsDeletingFamily(true);
+    try {
+      const { error } = await deleteFamily(currentFamily.id);
+      if (error) {
+        toast({ title: t('error'), description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: t('success'), description: t('familyDeleted') });
+        setOpen(false);
+      }
+    } finally {
+      setShowDeleteAlert(false);
+      setIsDeletingFamily(false);
     }
-    setShowDeleteAlert(false);
   };
 
   const handleLeaveFamily = async () => {
-    if (!currentFamily) return;
-    const { error } = await leaveFamily(currentFamily.id);
-    if (error) {
-      toast({ title: t('error'), description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: t('success'), description: t('leftFamily') });
-      setOpen(false);
+    if (!currentFamily || isLeavingFamily) return;
+    setIsLeavingFamily(true);
+    try {
+      const { error } = await leaveFamily(currentFamily.id);
+      if (error) {
+        toast({ title: t('error'), description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: t('success'), description: t('leftFamily') });
+        setOpen(false);
+      }
+    } finally {
+      setShowLeaveAlert(false);
+      setIsLeavingFamily(false);
     }
-    setShowLeaveAlert(false);
   };
 
   const handleRemoveMember = async (memberId: string) => {
@@ -930,10 +945,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
                           }}
                           autoFocus
                         />
-                        <Button size="sm" className="h-10 px-3" onClick={handleUpdateFamilyName}>
+                        <Button size="sm" className="h-10 px-3" onClick={handleUpdateFamilyName} disabled={isUpdatingName}>
                           <Check className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" className="h-10 px-3" onClick={() => setEditingName(false)}>
+                        <Button size="sm" variant="ghost" className="h-10 px-3" onClick={() => setEditingName(false)} disabled={isUpdatingName}>
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
@@ -1147,8 +1162,8 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('delete')}</AlertDialogAction>
+            <AlertDialogCancel disabled={isDeletingFamily}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteFamily} disabled={isDeletingFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1163,8 +1178,8 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLeaveFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('leave')}</AlertDialogAction>
+            <AlertDialogCancel disabled={isLeavingFamily}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLeaveFamily} disabled={isLeavingFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('leave')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

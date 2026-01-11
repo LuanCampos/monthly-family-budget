@@ -49,6 +49,7 @@ export const MonthSelector = ({
 }: MonthSelectorProps) => {
   const { t } = useLanguage();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [selectedYear, setSelectedYear] = useState(
     new Date().getFullYear().toString()
   );
@@ -57,12 +58,19 @@ export const MonthSelector = ({
   );
 
   const handleAddMonth = async () => {
-    const success = await onAddMonth(
-      parseInt(selectedYear),
-      parseInt(selectedMonth)
-    );
-    if (success) {
-      setIsDialogOpen(false);
+    if (isAdding) return;
+    
+    setIsAdding(true);
+    try {
+      const success = await onAddMonth(
+        parseInt(selectedYear),
+        parseInt(selectedMonth)
+      );
+      if (success) {
+        setIsDialogOpen(false);
+      }
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -119,6 +127,7 @@ export const MonthSelector = ({
 
             <Button
               onClick={handleAddMonth}
+              disabled={isAdding}
               className="mt-4 w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {t('add')}
