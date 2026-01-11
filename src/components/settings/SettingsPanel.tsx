@@ -115,6 +115,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   const [showCreateFamilyDialog, setShowCreateFamilyDialog] = useState(false);
   const [isCreatingFamily, setIsCreatingFamily] = useState(false);
   const [createFamilyName, setCreateFamilyName] = useState('');
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+  const [isDeletingFamily, setIsDeletingFamily] = useState(false);
+  const [isLeavingFamily, setIsLeavingFamily] = useState(false);
 
   const isAdmin = userRole === 'owner' || userRole === 'admin';
   const isCurrentOffline = currentFamily?.isOffline || offlineAdapter.isOfflineId(currentFamily?.id || '');
