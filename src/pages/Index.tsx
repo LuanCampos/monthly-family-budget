@@ -65,6 +65,11 @@ const BudgetContent = () => {
   const [showAnnualView, setShowAnnualView] = useState(false);
   const [showIncomeSourcesModal, setShowIncomeSourcesModal] = useState(false);
 
+  // Update page title based on language
+  useEffect(() => {
+    document.title = t('appTitle');
+  }, [t]);
+
   const sortStorageKey = useMemo(() => {
     const familyKey = currentFamilyId || 'no-family';
     return `month-expenses-sort:${familyKey}`;
