@@ -113,6 +113,69 @@ export const MonthLimitsSchema = z.record(
 export type MonthLimits = z.infer<typeof MonthLimitsSchema>;
 
 /**
+ * Validate goal creation input
+ */
+export const CreateGoalInputSchema = z.object({
+  family_id: z.string(),
+  name: z.string(),
+  current_value: z.number(),
+  target_value: z.number(),
+  target_month: z.number().int().optional().nullable(),
+  target_year: z.number().int().optional().nullable(),
+  account: z.string().optional().nullable(),
+  linked_subcategory_id: z.string().optional().nullable(),
+  linked_category_key: z.string().optional().nullable(),
+});
+
+export type CreateGoalInput = z.infer<typeof CreateGoalInputSchema>;
+
+/**
+ * Validate goal update input
+ */
+export const UpdateGoalInputSchema = CreateGoalInputSchema.partial();
+
+export type UpdateGoalInput = z.infer<typeof UpdateGoalInputSchema>;
+
+/**
+ * Validate automatic goal entry creation (linked to expense)
+ */
+export const CreateGoalEntryInputSchema = z.object({
+  goal_id: z.string(),
+  expense_id: z.string(),
+  value: z.number(),
+  description: z.string().optional().nullable(),
+  month: z.number().int(),
+  year: z.number().int(),
+});
+
+export type CreateGoalEntryInput = z.infer<typeof CreateGoalEntryInputSchema>;
+
+/**
+ * Validate manual goal entry creation
+ */
+export const CreateManualGoalEntryInputSchema = z.object({
+  goal_id: z.string(),
+  value: z.number(),
+  description: z.string(),
+  month: z.number().int(),
+  year: z.number().int(),
+  expense_id: z.undefined().optional(),
+});
+
+export type CreateManualGoalEntryInput = z.infer<typeof CreateManualGoalEntryInputSchema>;
+
+/**
+ * Validate goal entry update (manual entries only)
+ */
+export const UpdateGoalEntryInputSchema = z.object({
+  description: z.string().optional(),
+  month: z.number().int().optional(),
+  year: z.number().int().optional(),
+});
+
+export type UpdateGoalEntryInput = z.infer<typeof UpdateGoalEntryInputSchema>;
+
+/**
  * Safe validation helper
  * Returns {success: true, data} or {success: false, error}
  */

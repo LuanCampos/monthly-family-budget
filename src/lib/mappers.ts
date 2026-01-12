@@ -10,9 +10,11 @@ import type {
   ExpenseRow, 
   RecurringExpenseRow, 
   SubcategoryRow, 
-  IncomeSourceRow 
+  IncomeSourceRow, 
+  GoalRow, 
+  GoalEntryRow 
 } from '@/types/database';
-import type { Month, Expense, RecurringExpense, Subcategory, IncomeSource, CategoryKey } from '@/types';
+import type { Month, Expense, RecurringExpense, Subcategory, IncomeSource, CategoryKey, Goal, GoalEntry } from '@/types';
 
 /**
  * Map database IncomeSource to application IncomeSource
@@ -106,3 +108,46 @@ export const mapSubcategories = (subcategories: SubcategoryRow[]): Subcategory[]
  */
 export const mapIncomeSources = (sources: IncomeSourceRow[]): IncomeSource[] =>
   sources.map(mapIncomeSource);
+
+/**
+ * Map database Goal to application Goal
+ */
+export const mapGoal = (goal: GoalRow): Goal => ({
+  id: goal.id,
+  familyId: goal.family_id,
+  name: goal.name,
+  currentValue: Number(goal.current_value),
+  targetValue: Number(goal.target_value),
+  targetMonth: goal.target_month ?? undefined,
+  targetYear: goal.target_year ?? undefined,
+  account: goal.account ?? '',
+  linkedSubcategoryId: goal.linked_subcategory_id ?? undefined,
+  linkedCategoryKey: goal.linked_category_key ?? undefined,
+  createdAt: goal.created_at,
+  updatedAt: goal.updated_at,
+});
+
+/**
+ * Map database GoalEntry to application GoalEntry
+ */
+export const mapGoalEntry = (entry: GoalEntryRow): GoalEntry => ({
+  id: entry.id,
+  goalId: entry.goal_id,
+  expenseId: entry.expense_id ?? undefined,
+  value: Number(entry.value),
+  description: entry.description ?? undefined,
+  month: entry.month,
+  year: entry.year,
+  createdAt: entry.created_at,
+  updatedAt: entry.updated_at,
+});
+
+/**
+ * Batch map goals
+ */
+export const mapGoals = (goals: GoalRow[]): Goal[] => goals.map(mapGoal);
+
+/**
+ * Batch map goal entries
+ */
+export const mapGoalEntries = (entries: GoalEntryRow[]): GoalEntry[] => entries.map(mapGoalEntry);

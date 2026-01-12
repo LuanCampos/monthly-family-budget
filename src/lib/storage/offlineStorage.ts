@@ -1,6 +1,6 @@
 // Offline storage using IndexedDB for robust local persistence
 const DB_NAME = 'budget-offline-db';
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 
 export interface OfflineFamily {
   id: string;
@@ -13,7 +13,7 @@ export interface OfflineFamily {
 
 export interface SyncQueueItem {
   id: string;
-  type: 'family' | 'month' | 'expense' | 'recurring_expense' | 'subcategory' | 'category_limit' | 'family_member' | 'income_source';
+  type: 'family' | 'month' | 'expense' | 'recurring_expense' | 'subcategory' | 'category_limit' | 'family_member' | 'income_source' | 'goal' | 'goal_entry';
   action: 'insert' | 'update' | 'delete';
   data: any;
   createdAt: string;
@@ -107,6 +107,26 @@ const openDB = (): Promise<IDBDatabase> => {
       ensureStore('income_sources', { keyPath: 'id' }, (store) => {
         if (!store.indexNames.contains('month_id')) {
           store.createIndex('month_id', 'month_id', { unique: false });
+        }
+      });
+
+      // Goals store
+      ensureStore('goals', { keyPath: 'id' }, (store) => {
+        if (!store.indexNames.contains('family_id')) {
+          store.createIndex('family_id', 'family_id', { unique: false });
+        }
+        if (!store.indexNames.contains('linked_subcategory_id')) {
+          store.createIndex('linked_subcategory_id', 'linked_subcategory_id', { unique: false });
+        }
+      });
+
+      // Goal entries store
+      ensureStore('goal_entries', { keyPath: 'id' }, (store) => {
+        if (!store.indexNames.contains('goal_id')) {
+          store.createIndex('goal_id', 'goal_id', { unique: false });
+        }
+        if (!store.indexNames.contains('expense_id')) {
+          store.createIndex('expense_id', 'expense_id', { unique: false });
         }
       });
 
@@ -307,6 +327,6 @@ export const generateOfflineId = (prefix: string = 'offline'): string => {
 export const isOfflineId = (id: string): boolean => {
   // Offline IDs are generated with prefixes like 'offline-', 'family-', 'exp-', 'rec-', 'sub-'
   // followed by timestamp and random string. UUIDs have a different format.
-  const offlinePrefixes = ['offline-', 'family-', 'exp-', 'rec-', 'sub-'];
+  const offlinePrefixes = ['offline-', 'family-', 'exp-', 'rec-', 'sub-', 'goal-', 'gentry-'];
   return offlinePrefixes.some(prefix => id.startsWith(prefix));
 };

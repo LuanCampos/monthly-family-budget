@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useBudget } from '@/hooks/useBudget';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFamily } from '@/contexts/FamilyContext';
@@ -14,7 +15,7 @@ import { FamilySetup } from '@/components/family';
 import type { SortType, SortDirection } from '@/components/expense';
 import type { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, Loader2 } from 'lucide-react';
+import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, Loader2, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -26,7 +27,8 @@ import {
 // Inner component that uses useBudget - will be remounted when family changes via key
 const BudgetContent = () => {
   const { t } = useLanguage();
-  const { currentFamilyId } = useFamily();
+  const { currentFamilyId, myPendingInvitations } = useFamily();
+  const { user } = useAuth();
   
   const {
     months,
@@ -64,6 +66,18 @@ const BudgetContent = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showAnnualView, setShowAnnualView] = useState(false);
   const [showIncomeSourcesModal, setShowIncomeSourcesModal] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return '?';
+    const email = user.email || '';
+    const name = user.user_metadata?.display_name || user.user_metadata?.full_name;
+    if (name) {
+      return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    return email.slice(0, 2).toUpperCase();
+  };
 
   // Update page title based on language
   useEffect(() => {
@@ -209,12 +223,43 @@ const BudgetContent = () => {
               />
             </div>
 
-            {/* Settings (single menu) */}
+            {/* Settings Dropdown Menu */}
             <div className="flex-shrink-0">
-              <SettingsPanel 
-                currentMonthLabel={currentMonth ? `${t(`month-${currentMonth.month - 1}` as any)} ${currentMonth.year}` : undefined}
-                onDeleteMonth={currentMonth ? () => removeMonth(currentMonth.id) : undefined}
-              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 sm:h-10 sm:w-10 rounded-full p-0 relative"
+                    aria-label="Settings menu"
+                  >
+                    {user ? (
+                      <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-medium">
+                        {getUserInitials()}
+                      </div>
+                    ) : (
+                      <SettingsIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    )}
+                    {myPendingInvitations && myPendingInvitations.length > 0 && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 text-xs bg-destructive text-destructive-foreground rounded-full flex items-center justify-center">
+                        {myPendingInvitations.length}
+                      </span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/goals" className="cursor-pointer flex items-center gap-2">
+                      <Target className="h-4 w-4 text-primary" />
+                      {t('goals') ?? 'Metas'}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="flex items-center gap-2 cursor-pointer">
+                    <SettingsIcon className="h-4 w-4 text-primary" />
+                    {t('settings') ?? 'Configurações'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -472,6 +517,14 @@ const BudgetContent = () => {
 
       {/* Online Status Indicator */}
       <OnlineStatusBar />
+
+      {/* Settings Panel (controlled) */}
+      <SettingsPanel
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        currentMonthLabel={currentMonth ? `${t(`month-${currentMonth.month - 1}` as any)} ${currentMonth.year}` : undefined}
+        onDeleteMonth={currentMonth ? () => removeMonth(currentMonth.id) : undefined}
+      />
     </div>
   );
 };

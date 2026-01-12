@@ -60,9 +60,11 @@ import {
 interface SettingsPanelProps {
   currentMonthLabel?: string;
   onDeleteMonth?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPanelProps) => {
+export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controlledOpen, onOpenChange: controlledOnOpenChange }: SettingsPanelProps) => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { currency, setCurrency } = useCurrency();
@@ -95,7 +97,11 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
   
   // Auth form state
   const [authEmail, setAuthEmail] = useState('');
@@ -514,9 +520,11 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   if (activeSection === 'profile') {
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>
-          <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
-        </DialogTrigger>
+        {controlledOpen === undefined && (
+          <DialogTrigger asChild>
+            <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
+          </DialogTrigger>
+        )}
         <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
@@ -553,9 +561,11 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   if (activeSection === 'password') {
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>
-          <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
-        </DialogTrigger>
+        {controlledOpen === undefined && (
+          <DialogTrigger asChild>
+            <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
+          </DialogTrigger>
+        )}
         <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
@@ -595,9 +605,11 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   if (activeSection === 'auth') {
     return (
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>
-          <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
-        </DialogTrigger>
+        {controlledOpen === undefined && (
+          <DialogTrigger asChild>
+            <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
+          </DialogTrigger>
+        )}
         <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
             <DialogTitle className="flex items-center gap-2 text-base font-semibold">
@@ -729,9 +741,12 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth }: SettingsPane
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>
-          <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
-        </DialogTrigger>
+        {/* Only show trigger if not controlled externally */}
+        {controlledOpen === undefined && (
+          <DialogTrigger asChild>
+            <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
+          </DialogTrigger>
+        )}
         <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0">
           <DialogHeader className="dashboard-card-header px-5 pt-5 pb-3 flex-shrink-0">
             <DialogTitle className="text-lg font-semibold">{t('settings')}</DialogTitle>

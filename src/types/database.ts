@@ -79,6 +79,33 @@ export interface IncomeSourceRow {
   updated_at: string;
 }
 
+export interface GoalRow {
+  id: string;
+  family_id: string;
+  name: string;
+  current_value: number;
+  target_value: number;
+  target_month: number | null;
+  target_year: number | null;
+  account: string;
+  linked_subcategory_id: string | null;
+  linked_category_key: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GoalEntryRow {
+  id: string;
+  goal_id: string;
+  expense_id: string | null;
+  value: number;
+  description: string | null;
+  month: number;
+  year: number;
+  created_at: string;
+  updated_at: string;
+}
+
 /**
  * Supabase Channel types
  */

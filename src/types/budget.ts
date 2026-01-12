@@ -67,3 +67,30 @@ export interface Month {
   expenses: Expense[];
   categoryLimits?: Record<CategoryKey, number>;
 }
+
+export interface Goal {
+  id: string;
+  familyId: string;
+  name: string;
+  currentValue: number;
+  targetValue: number;
+  targetMonth?: number;
+  targetYear?: number;
+  account: string;
+  linkedSubcategoryId?: string;
+  linkedCategoryKey?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GoalEntry {
+  id: string;
+  goalId: string;
+  expenseId?: string;
+  value: number;
+  description?: string;
+  month: number;
+  year: number;
+  createdAt?: string;
+  updatedAt?: string;
+}

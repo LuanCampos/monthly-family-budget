@@ -53,6 +53,26 @@ export {
   removeSubcategory
 } from './subcategoryAdapter';
 
+export {
+  getGoals,
+  createGoal,
+  updateGoal,
+  deleteGoal,
+  getEntries as getGoalEntries,
+  createEntry as createGoalEntry,
+  createManualEntry as createManualGoalEntry,
+  updateEntry as updateGoalEntry,
+  deleteEntry as deleteGoalEntry,
+  getGoalBySubcategoryId,
+  getGoalByCategoryKey,
+  getEntryByExpense,
+  incrementValue as incrementGoalValue,
+  decrementValue as decrementGoalValue,
+  getHistoricalExpenses as getGoalHistoricalExpenses,
+  importExpense as importGoalExpense,
+  calculateMonthlySuggestion as calculateGoalMonthlySuggestion,
+} from './goalAdapter';
+
 const getDefaultLimits = (): Record<CategoryKey, number> => {
   return Object.fromEntries(CATEGORIES.map(c => [c.key, c.percentage])) as Record<CategoryKey, number>;
 };
