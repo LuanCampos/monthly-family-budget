@@ -122,11 +122,38 @@ export const decrementGoalValue = async (goalId: string, value: number) => {
 };
 
 export const getHistoricalExpenses = async (subcategoryId: string) => {
-  return supabase
+  // Get all expenses for this subcategory
+  const { data: expenses, error: expensesError } = await supabase
     .from('expense')
     .select('*')
     .eq('subcategory_id', subcategoryId)
     .order('created_at', { ascending: false });
+
+  if (expensesError) {
+    return { data: null, error: expensesError };
+  }
+
+  if (!expenses || expenses.length === 0) {
+    return { data: [], error: null };
+  }
+
+  // Get all expense IDs that have been imported
+  const { data: entries, error: entriesError } = await supabase
+    .from('goal_entry')
+    .select('expense_id')
+    .not('expense_id', 'is', null);
+
+  if (entriesError) {
+    return { data: null, error: entriesError };
+  }
+
+  // Create a set of imported expense IDs for efficient lookup
+  const importedExpenseIds = new Set((entries || []).map(e => e.expense_id).filter(Boolean));
+
+  // Filter out already imported expenses
+  const availableExpenses = expenses.filter(expense => !importedExpenseIds.has(expense.id));
+
+  return { data: availableExpenses, error: null };
 };
 
 export const importExpenseAsEntry = async (goalId: string, expenseId: string) => {

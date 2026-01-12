@@ -400,7 +400,20 @@ export const getHistoricalExpenses = async (familyId: string | null, subcategory
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     const allExpenses = await offlineAdapter.getAll<any>('expenses');
-    const filtered = (allExpenses || []).filter((e: any) => e.subcategory_id === subcategoryId);
+    const allEntries = await offlineAdapter.getAll<any>('goal_entries');
+    
+    // Create set of imported expense IDs
+    const importedExpenseIds = new Set(
+      (allEntries || [])
+        .map((e: any) => e.expense_id)
+        .filter(Boolean)
+    );
+    
+    // Filter by subcategory and exclude already imported
+    const filtered = (allExpenses || []).filter((e: any) => 
+      e.subcategory_id === subcategoryId && !importedExpenseIds.has(e.id)
+    );
+    
     return filtered.map(mapExpense);
   }
 
