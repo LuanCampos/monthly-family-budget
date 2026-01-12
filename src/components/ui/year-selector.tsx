@@ -77,7 +77,7 @@ export const YearSelector = ({ value, onValueChange, className, allowEmpty, empt
           </Button>
         </div>
         {allowEmpty && (
-          <SelectItem value="" className="text-muted-foreground">
+          <SelectItem value="__EMPTY__" className="text-muted-foreground">
             {emptyLabel || '-'}
           </SelectItem>
         )}

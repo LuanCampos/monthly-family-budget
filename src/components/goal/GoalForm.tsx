@@ -191,8 +191,8 @@ export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submittin
             {t('targetYearOptional')}
           </Label>
           <YearSelector
-            value={targetYear ? targetYear.toString() : ''}
-            onValueChange={(v) => setTargetYear(v ? Number(v) : undefined)}
+            value={targetYear ? targetYear.toString() : '__EMPTY__'}
+            onValueChange={(v) => setTargetYear(v && v !== '__EMPTY__' ? Number(v) : undefined)}
             allowEmpty
             emptyLabel="-"
             placeholder="-"
