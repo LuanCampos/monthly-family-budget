@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { YearSelector } from '@/components/ui/year-selector';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
@@ -33,24 +34,6 @@ interface GoalFormProps {
 // ID especial apenas para UI (não é enviado ao backend)
 const LIBERDADE_UI_ID = '__category_liberdade__';
 
-const MONTHS = [
-  { value: 1, label: 'Janeiro' },
-  { value: 2, label: 'Fevereiro' },
-  { value: 3, label: 'Março' },
-  { value: 4, label: 'Abril' },
-  { value: 5, label: 'Maio' },
-  { value: 6, label: 'Junho' },
-  { value: 7, label: 'Julho' },
-  { value: 8, label: 'Agosto' },
-  { value: 9, label: 'Setembro' },
-  { value: 10, label: 'Outubro' },
-  { value: 11, label: 'Novembro' },
-  { value: 12, label: 'Dezembro' },
-];
-
-const currentYear = new Date().getFullYear();
-const YEARS = Array.from({ length: 20 }, (_, i) => currentYear + i);
-
 export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submitting }: GoalFormProps) => {
   const { t } = useLanguage();
   const { currencySymbol } = useCurrency();
@@ -63,6 +46,24 @@ export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submittin
   const [account, setAccount] = useState(initial?.account ?? '');
   const [linkedSubcategoryId, setLinkedSubcategoryId] = useState<string | undefined>(
     initial?.linkedCategoryKey === 'liberdade' ? LIBERDADE_UI_ID : initial?.linkedSubcategoryId
+  );
+
+  const monthOptions = useMemo(
+    () => [
+      { value: 1, label: t('month-0') },
+      { value: 2, label: t('month-1') },
+      { value: 3, label: t('month-2') },
+      { value: 4, label: t('month-3') },
+      { value: 5, label: t('month-4') },
+      { value: 6, label: t('month-5') },
+      { value: 7, label: t('month-6') },
+      { value: 8, label: t('month-7') },
+      { value: 9, label: t('month-8') },
+      { value: 10, label: t('month-9') },
+      { value: 11, label: t('month-10') },
+      { value: 12, label: t('month-11') },
+    ],
+    [t]
   );
 
   // Filtrar subcategorias de 'metas' e adicionar pseudo-subcategoria 'Liberdade Financeira'
@@ -176,7 +177,7 @@ export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submittin
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
               <SelectItem value="none">-</SelectItem>
-              {MONTHS.map((month) => (
+              {monthOptions.map((month) => (
                 <SelectItem key={month.value} value={month.value.toString()}>
                   {month.label}
                 </SelectItem>
@@ -189,22 +190,14 @@ export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submittin
           <Label className="text-sm font-medium">
             {t('targetYearOptional')}
           </Label>
-          <Select
-            value={targetYear?.toString() || 'none'}
-            onValueChange={(v) => setTargetYear(v === 'none' ? undefined : Number(v))}
-          >
-            <SelectTrigger className="h-10 bg-secondary/50 border-border">
-              <SelectValue placeholder="-" />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              <SelectItem value="none">-</SelectItem>
-              {YEARS.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <YearSelector
+            value={targetYear ? targetYear.toString() : ''}
+            onValueChange={(v) => setTargetYear(v ? Number(v) : undefined)}
+            allowEmpty
+            emptyLabel="-"
+            placeholder="-"
+            className="h-10 bg-secondary/50 border-border"
+          />
         </div>
       </div>
 

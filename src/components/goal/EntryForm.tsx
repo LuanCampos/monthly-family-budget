@@ -1,7 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { YearSelector } from '@/components/ui/year-selector';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { parseCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
+import { DollarSign, Calendar } from 'lucide-react';
 
 interface EntryFormProps {
   onSubmit: (data: { value: number; description: string; month: number; year: number }) => Promise<void> | void;
@@ -11,47 +17,121 @@ interface EntryFormProps {
 
 export const EntryForm = ({ onSubmit, onCancel, submitting }: EntryFormProps) => {
   const { t } = useLanguage();
+  const { currencySymbol } = useCurrency();
   const now = new Date();
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState('');
   const [description, setDescription] = useState('');
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState((now.getMonth() + 1).toString());
+  const [year, setYear] = useState(now.getFullYear().toString());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!value) return;
-    await onSubmit({ value, description, month, year });
+    const numericValue = parseCurrencyInput(value);
+    if (numericValue <= 0 || !description.trim()) return;
+    await onSubmit({ 
+      value: numericValue, 
+      description: description.trim(), 
+      month: parseInt(month), 
+      year: parseInt(year) 
+    });
   };
 
+  const MONTHS = useMemo(
+    () => [
+      { value: '1', label: t('month-0') },
+      { value: '2', label: t('month-1') },
+      { value: '3', label: t('month-2') },
+      { value: '4', label: t('month-3') },
+      { value: '5', label: t('month-4') },
+      { value: '6', label: t('month-5') },
+      { value: '7', label: t('month-6') },
+      { value: '8', label: t('month-7') },
+      { value: '9', label: t('month-8') },
+      { value: '10', label: t('month-9') },
+      { value: '11', label: t('month-10') },
+      { value: '12', label: t('month-11') },
+    ],
+    [t]
+  );
+
   return (
-    <form className="space-y-3" onSubmit={handleSubmit}>
-      <div className="space-y-1">
-        <label className="text-sm font-medium">{t('entryValue')}</label>
-        <Input type="number" value={value} onChange={(e) => setValue(Number(e.target.value))} required step="0.01" />
-        <p className="text-xs text-muted-foreground">{t('entryValueHelp')}</p>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-medium">{t('entryDescription')}</label>
-        <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t('entryDescriptionPlaceholder')} required />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="space-y-1">
-          <label className="text-sm font-medium">{t('entryMonth')}</label>
-          <Input type="number" value={month} onChange={(e) => setMonth(Number(e.target.value))} min={1} max={12} required />
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <div className="space-y-2">
+        <Label htmlFor="entryValue" className="text-sm font-medium flex items-center gap-1.5">
+          <DollarSign className="h-4 w-4" />
+          {t('entryValue') || 'Valor'}
+        </Label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+            {currencySymbol}
+          </span>
+          <Input 
+            id="entryValue"
+            type="text"
+            inputMode="decimal"
+            value={value} 
+            onChange={(e) => setValue(sanitizeCurrencyInput(e.target.value))} 
+            placeholder="0,00"
+            required
+            className="h-10 pl-10 bg-secondary/50 border-border"
+          />
         </div>
-        <div className="space-y-1">
-          <label className="text-sm font-medium">{t('entryYear')}</label>
-          <Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} min={2000} max={2100} required />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="entryDescription" className="text-sm font-medium">
+          {t('entryDescription') || 'Descrição'}
+        </Label>
+        <Input 
+          id="entryDescription"
+          value={description} 
+          onChange={(e) => setDescription(e.target.value)} 
+          placeholder={t('entryDescriptionPlaceholder') || 'Descreva o lançamento'} 
+          required
+          className="h-10 bg-secondary/50 border-border"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium flex items-center gap-1.5">
+            <Calendar className="h-4 w-4" />
+            {t('entryMonth') || 'Mês'}
+          </Label>
+          <Select value={month} onValueChange={setMonth}>
+            <SelectTrigger className="h-10 bg-secondary/50 border-border">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border">
+              {MONTHS.map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">
+            {t('entryYear') || 'Ano'}
+          </Label>
+          <YearSelector
+            value={year}
+            onValueChange={setYear}
+            className="h-10 bg-secondary/50 border-border"
+          />
         </div>
       </div>
+
       <div className="flex justify-end gap-2 pt-2">
         {onCancel && (
           <Button variant="outline" type="button" onClick={onCancel} disabled={submitting}>
-            {t('cancel')}
+            {t('cancel') || 'Cancelar'}
           </Button>
         )}
         <Button type="submit" disabled={submitting}>
-          {submitting ? t('saving') : t('save')}
+          {submitting ? (t('saving') || 'Salvando...') : (t('save') || 'Salvar')}
         </Button>
       </div>
     </form>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { GoalForm, GoalList, EntryForm, EntryHistory, ImportExpenseDialog } from '@/components/goal';
 import { useGoals } from '@/hooks/useGoals';
@@ -11,7 +11,17 @@ import { useFamily } from '@/contexts/FamilyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Goal, GoalEntry } from '@/types';
 import { SettingsPanel } from '@/components/settings';
-import { Loader2, Target, Settings as SettingsIcon, Wallet } from 'lucide-react';
+import { Loader2, Target, Settings as SettingsIcon, Wallet, Plus, History, Import } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const GoalsPage = () => {
   const { t } = useLanguage();
@@ -26,6 +36,7 @@ const GoalsPage = () => {
     updateGoal,
     deleteGoal,
     getEntries,
+    refreshEntries,
     addManualEntry,
     updateEntry,
     deleteEntry,
@@ -41,6 +52,12 @@ const GoalsPage = () => {
   const [historyEntries, setHistoryEntries] = useState<GoalEntry[]>([]);
   const [entryGoal, setEntryGoal] = useState<Goal | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [savingGoal, setSavingGoal] = useState(false);
+  const [savingEntry, setSavingEntry] = useState(false);
+  const [goalToDelete, setGoalToDelete] = useState<Goal | null>(null);
+  const [deletingGoal, setDeletingGoal] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<GoalEntry | null>(null);
+  const [deletingEntry, setDeletingEntry] = useState(false);
 
   // Get user initials for avatar
   const getUserInitials = () => {
@@ -71,13 +88,18 @@ const GoalsPage = () => {
   const pageTitle = useMemo(() => t('goals') || 'Metas', [t]);
 
   const handleSaveGoal = async (data: { name: string; targetValue: number; currentValue?: number; targetDate?: string; account?: string; linkedSubcategoryId?: string }) => {
-    if (editingGoal) {
-      await updateGoal(editingGoal.id, data);
-    } else {
-      await addGoal(data);
+    setSavingGoal(true);
+    try {
+      if (editingGoal) {
+        await updateGoal(editingGoal.id, data);
+      } else {
+        await addGoal(data);
+      }
+      setOpenGoalDialog(false);
+      setEditingGoal(null);
+    } finally {
+      setSavingGoal(false);
     }
-    setOpenGoalDialog(false);
-    setEditingGoal(null);
   };
 
   const handleAddEntry = (goal: Goal) => {
@@ -92,17 +114,28 @@ const GoalsPage = () => {
 
   const handleSaveEntry = async (payload: { value: number; description: string; month: number; year: number }) => {
     if (!entryGoal) return;
-    await addManualEntry({ goalId: entryGoal.id, ...payload });
-    const entries = await getEntries(entryGoal.id);
-    setHistoryEntries(entries);
-    setEntryGoal(null);
+    setSavingEntry(true);
+    try {
+      await addManualEntry({ goalId: entryGoal.id, ...payload });
+      const entries = await getEntries(entryGoal.id);
+      setHistoryEntries(entries);
+      setEntryGoal(null);
+    } finally {
+      setSavingEntry(false);
+    }
   };
 
   const handleDeleteEntry = async (entry: GoalEntry) => {
     if (!historyGoal) return;
-    await deleteEntry(entry.id, historyGoal.id);
-    const entries = await getEntries(historyGoal.id);
-    setHistoryEntries(entries);
+    setDeletingEntry(true);
+    try {
+      await deleteEntry(entry.id, historyGoal.id);
+      const entries = await getEntries(historyGoal.id);
+      setHistoryEntries(entries);
+    } finally {
+      setDeletingEntry(false);
+      setEntryToDelete(null);
+    }
   };
 
   return (
@@ -164,23 +197,38 @@ const GoalsPage = () => {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
+      <main className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
         {loading ? (
-          <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>
+          <div className="flex items-center justify-center py-20">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">{t('loading') || 'Carregando...'}</p>
+            </div>
+          </div>
         ) : (
           <>
-            <div className="flex justify-between items-center mb-4">
-              <Button onClick={() => { setOpenGoalDialog(true); setEditingGoal(null); }}>
-                {t('addGoal') ?? 'Nova Meta'}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-semibold">{t('goals') || 'Metas'}</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('goalsSubtitle') || 'Gerencie suas metas financeiras conectadas a subcategorias.'}
+                </p>
+              </div>
+              <Button 
+                onClick={() => { setOpenGoalDialog(true); setEditingGoal(null); }}
+                className="gap-2 w-full sm:w-auto"
+              >
+                <Plus className="h-4 w-4" />
+                {t('addGoal') || 'Nova Meta'}
               </Button>
             </div>
+            
             <GoalList
               goals={goals}
               entriesByGoal={entriesByGoal}
-              onAddEntry={handleAddEntry}
               onViewHistory={handleViewHistory}
               onEdit={(goal) => { setEditingGoal(goal); setOpenGoalDialog(true); }}
-              onDelete={(goal) => deleteGoal(goal.id)}
+              onDelete={(goal) => setGoalToDelete(goal)}
               onFetchEntries={getEntries}
               calculateSuggestion={getMonthlySuggestion}
             />
@@ -189,55 +237,147 @@ const GoalsPage = () => {
       </main>
 
       <Dialog open={openGoalDialog} onOpenChange={(open) => { setOpenGoalDialog(open); if (!open) setEditingGoal(null); }}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingGoal ? 'Editar Meta' : 'Nova Meta'}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-primary" />
+              {editingGoal ? (t('editGoal') || 'Editar Meta') : (t('addGoal') || 'Nova Meta')}
+            </DialogTitle>
+            <DialogDescription>
+              {editingGoal 
+                ? (t('editGoalDescription') || 'Atualize as informações da sua meta')
+                : (t('addGoalDescription') || 'Defina uma meta financeira e acompanhe seu progresso')
+              }
+            </DialogDescription>
           </DialogHeader>
           <GoalForm 
             initial={editingGoal || undefined} 
             subcategories={subcategories}
             onSubmit={handleSaveGoal} 
             onCancel={() => setOpenGoalDialog(false)} 
+            submitting={savingGoal}
           />
         </DialogContent>
       </Dialog>
 
       <Dialog open={Boolean(entryGoal)} onOpenChange={(open) => { if (!open) setEntryGoal(null); }}>
-        <DialogContent>
+        <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Adicionar Lançamento</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" />
+              {t('addEntry') || 'Adicionar Lançamento'}
+            </DialogTitle>
+            <DialogDescription>
+              {entryGoal && ((t('addEntryForGoal') && t('addEntryForGoal').replace('{{goal}}', entryGoal.name)) || `Adicionando lançamento para ${entryGoal.name}`)}
+            </DialogDescription>
           </DialogHeader>
           {entryGoal && (
             <EntryForm
               onSubmit={handleSaveEntry}
               onCancel={() => setEntryGoal(null)}
+              submitting={savingEntry}
             />
           )}
         </DialogContent>
       </Dialog>
 
       <Dialog open={Boolean(historyGoal)} onOpenChange={(open) => { if (!open) { setHistoryGoal(null); setHistoryEntries([]); } }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Histórico de Lançamentos</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5 text-primary" />
+              {t('entryHistory') || 'Histórico de Lançamentos'}
+            </DialogTitle>
+            <DialogDescription>
+              {historyGoal && ((t('entriesForGoal') && t('entriesForGoal').replace('{{goal}}', historyGoal.name)) || `Lançamentos de ${historyGoal.name}`)}
+            </DialogDescription>
           </DialogHeader>
-          <EntryHistory entries={historyEntries} onDelete={handleDeleteEntry} />
-          {historyGoal?.linkedSubcategoryId && (
-            <div className="pt-3 border-t">
-              <ImportExpenseDialog
-                trigger={<Button variant="outline" size="sm">Importar gastos anteriores</Button>}
-                subcategoryId={historyGoal.linkedSubcategoryId}
-                fetchExpenses={getHistoricalExpenses}
-                onImport={async (expenseId) => {
-                  await importExpense(historyGoal.id, expenseId);
-                  const entries = await getEntries(historyGoal.id);
-                  setHistoryEntries(entries);
-                }}
-              />
+          
+          <div className="flex-1 overflow-y-auto">
+            <EntryHistory entries={historyEntries} onDelete={(entry) => setEntryToDelete(entry)} />
+          </div>
+
+          {historyGoal && (
+            <div className="pt-4 border-t mt-4 space-y-2 flex flex-col items-stretch sm:items-center">
+              <Button size="sm" className="w-full sm:w-auto gap-1.5" onClick={() => handleAddEntry(historyGoal)}>
+                <Plus className="h-4 w-4" />
+                <span>{t('addEntry') || 'Lançamento'}</span>
+              </Button>
+
+              {historyGoal.linkedSubcategoryId && (
+                <ImportExpenseDialog
+                  trigger={
+                    <Button variant="outline" className="w-full sm:w-auto gap-2">
+                      <Import className="h-4 w-4" />
+                      {t('importExpenses') || 'Importar gastos anteriores'}
+                    </Button>
+                  }
+                  subcategoryId={historyGoal.linkedSubcategoryId}
+                  fetchExpenses={getHistoricalExpenses}
+                  onImport={async (expenseId) => {
+                    await importExpense(historyGoal.id, expenseId);
+                    const entries = await refreshEntries(historyGoal.id);
+                    setHistoryEntries(entries);
+                  }}
+                />
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Goal Confirmation */}
+      <AlertDialog open={Boolean(goalToDelete)} onOpenChange={(open) => { if (!open) setGoalToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteGoalConfirm') || 'Excluir meta?'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteGoalWarning') || 'Os lançamentos vinculados serão removidos. Os gastos continuarão existindo.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingGoal}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deletingGoal}
+              onClick={async () => {
+                if (!goalToDelete) return;
+                setDeletingGoal(true);
+                try {
+                  await deleteGoal(goalToDelete.id);
+                } finally {
+                  setDeletingGoal(false);
+                  setGoalToDelete(null);
+                }
+              }}
+            >
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Entry Confirmation */}
+      <AlertDialog open={Boolean(entryToDelete)} onOpenChange={(open) => { if (!open) setEntryToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteEntryConfirm') || 'Excluir lançamento?'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteEntryWarning') || 'O valor será descontado da meta.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingEntry}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deletingEntry}
+              onClick={() => entryToDelete && handleDeleteEntry(entryToDelete)}
+            >
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <SettingsPanel open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>

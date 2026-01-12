@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,9 +13,12 @@ interface YearSelectorProps {
   value: string;
   onValueChange: (value: string) => void;
   className?: string;
+  allowEmpty?: boolean;
+  emptyLabel?: string;
+  placeholder?: string;
 }
 
-export const YearSelector = ({ value, onValueChange, className }: YearSelectorProps) => {
+export const YearSelector = ({ value, onValueChange, className, allowEmpty, emptyLabel, placeholder }: YearSelectorProps) => {
   const currentYear = new Date().getFullYear();
   const [centerYear, setCenterYear] = useState(currentYear);
 
@@ -30,10 +33,18 @@ export const YearSelector = ({ value, onValueChange, className }: YearSelectorPr
     setCenterYear(prev => prev + 5);
   };
 
+  // Keep the displayed range centered around the selected year when it changes
+  useEffect(() => {
+    const parsedYear = Number.parseInt(value, 10);
+    if (!Number.isNaN(parsedYear)) {
+      setCenterYear(parsedYear);
+    }
+  }, [value]);
+
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select value={value || undefined} onValueChange={onValueChange}>
       <SelectTrigger className={className || "bg-secondary border-border"}>
-        <SelectValue placeholder="Selecione..." />
+        <SelectValue placeholder={placeholder || "Selecione..."} />
       </SelectTrigger>
       <SelectContent className="bg-card border-border">
         <div className="flex items-center justify-between px-2 py-1 border-b border-border mb-1">
@@ -65,6 +76,11 @@ export const YearSelector = ({ value, onValueChange, className }: YearSelectorPr
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
+        {allowEmpty && (
+          <SelectItem value="" className="text-muted-foreground">
+            {emptyLabel || '-'}
+          </SelectItem>
+        )}
         {years.map((year) => (
           <SelectItem key={year} value={String(year)}>
             {year}

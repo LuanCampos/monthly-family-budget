@@ -29,6 +29,8 @@ export const en: Record<TranslationKey, string> = {
   back: 'Back',
   close: 'Close',
   delete: 'Delete',
+  details: 'Details',
+  history: 'History',
   
   // Month Selector
   selectMonth: 'Select a month',
@@ -78,6 +80,7 @@ export const en: Record<TranslationKey, string> = {
   limits: 'Limits',
   goals: 'Goals',
   addGoal: 'New Goal',
+  goalsSubtitle: 'Manage your financial goals linked to subcategories.',
   
   // Goal Management
   goalName: 'Goal Name',
@@ -109,10 +112,24 @@ export const en: Record<TranslationKey, string> = {
   goalRemaining: 'Remaining',
   goalCompleted: 'Goal completed!',
   goalPercentage: '{{percentage}}% completed',
+  goalDetails: 'Goal Details',
+  goalDetailsDescription: 'Track evolution and receive monthly suggestions',
+  viewDetails: 'View details',
+  goalTimeline: 'Timeline',
+  suggestion: 'Suggestion',
+  monthlyContributionSuggestion: 'Suggested contribution',
+  suggestedMonthlyContribution: 'Suggested monthly contribution',
+  setTargetDateForSuggestion: 'Set a target date to see the suggested monthly contribution',
+  perMonth: 'mo',
+  deadline: 'Deadline',
+  month: 'month',
+  months: 'months',
+  addGoalDescription: 'Create a financial goal and track its progress',
+  editGoalDescription: 'Update your goal details',
   
   // Goal Entries
   entries: 'Entries',
-  addEntry: '+ Entry',
+  addEntry: 'Add Entry',
   manualEntry: 'Manual Entry',
   automaticEntry: 'Automatic Entry',
   entryValue: 'Value',
@@ -135,6 +152,8 @@ export const en: Record<TranslationKey, string> = {
   entryDeleted: 'Entry deleted successfully!',
   linkedExpense: 'Linked expense',
   noDescription: 'No description',
+  addEntryForGoal: 'Adding entry for {{goal}}',
+  entriesForGoal: 'Entries for {{goal}}',
   
   // Import Historical Expenses
   importExpenses: 'Import Previous Expenses',
@@ -146,6 +165,8 @@ export const en: Record<TranslationKey, string> = {
   viewHistoricalExpenses: 'View Previous Expenses',
   importedExpensesCount_one: '{{count}} expense already imported',
   importedExpensesCount_other: '{{count}} expenses already imported',
+  importExpensesDescription: 'Import previous expenses to link to this goal',
+  importing: 'Importing...',
   
   // Validations
   goalNameRequired: 'Goal name is required',

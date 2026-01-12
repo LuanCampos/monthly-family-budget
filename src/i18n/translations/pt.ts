@@ -27,6 +27,8 @@ export const pt = {
   back: 'Voltar',
   close: 'Fechar',
   delete: 'Excluir',
+  details: 'Detalhes',
+  history: 'Histórico',
   
   // Month Selector
   selectMonth: 'Selecione um mês',
@@ -76,6 +78,7 @@ export const pt = {
   limits: 'Limites',
   goals: 'Metas',
   addGoal: 'Nova Meta',
+  goalsSubtitle: 'Gerencie suas metas financeiras conectadas a subcategorias.',
   
   // Goal Management
   goalName: 'Nome da Meta',
@@ -107,10 +110,24 @@ export const pt = {
   goalRemaining: 'Faltam',
   goalCompleted: 'Meta concluída!',
   goalPercentage: '{{percentage}}% concluído',
+  goalDetails: 'Detalhes da Meta',
+  goalDetailsDescription: 'Acompanhe a evolução e receba sugestões mensais',
+  viewDetails: 'Ver detalhes',
+  goalTimeline: 'Evolução temporal',
+  suggestion: 'Sugestão',
+  monthlyContributionSuggestion: 'Sugestão de aporte',
+  suggestedMonthlyContribution: 'Aporte mensal sugerido',
+  setTargetDateForSuggestion: 'Defina uma data objetivo para ver a sugestão de aporte mensal',
+  perMonth: 'mês',
+  deadline: 'Prazo',
+  month: 'mês',
+  months: 'meses',
+  addGoalDescription: 'Defina uma meta financeira e acompanhe seu progresso',
+  editGoalDescription: 'Atualize as informações da sua meta',
   
   // Goal Entries
   entries: 'Lançamentos',
-  addEntry: '+ Lançamento',
+  addEntry: 'Lançamento',
   manualEntry: 'Lançamento Manual',
   automaticEntry: 'Lançamento Automático',
   entryValue: 'Valor',
@@ -133,6 +150,8 @@ export const pt = {
   entryDeleted: 'Lançamento excluído com sucesso!',
   linkedExpense: 'Gasto vinculado',
   noDescription: 'Sem descrição',
+  addEntryForGoal: 'Adicionando lançamento para {{goal}}',
+  entriesForGoal: 'Lançamentos de {{goal}}',
   
   // Import Historical Expenses
   importExpenses: 'Importar Gastos Anteriores',
@@ -144,6 +163,8 @@ export const pt = {
   viewHistoricalExpenses: 'Ver Gastos Anteriores',
   importedExpensesCount_one: '{{count}} gasto já importado',
   importedExpensesCount_other: '{{count}} gastos já importados',
+  importExpensesDescription: 'Importe despesas anteriores para vincular à meta',
+  importing: 'Importando...',
   
   // Validations
   goalNameRequired: 'Nome da meta é obrigatório',

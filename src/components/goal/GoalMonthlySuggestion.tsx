@@ -47,44 +47,50 @@ export const GoalMonthlySuggestion = ({ goal, calculateSuggestion }: GoalMonthly
   }
 
   if (!suggestion || suggestion.remainingValue <= 0) {
-    return null;
+    return (
+      <div className="rounded-lg border bg-card p-4 text-card-foreground">
+        <p className="text-sm text-muted-foreground">
+          {t('goalCompleted') || 'Meta concluída!'}
+        </p>
+      </div>
+    );
   }
 
   const hasDeadline = suggestion.monthsRemaining !== null;
 
   return (
-    <div className="rounded-lg border bg-card p-4 text-card-foreground space-y-3">
+    <div className="rounded-lg border bg-card p-4 sm:p-5 text-card-foreground space-y-4">
       <div className="flex items-center gap-2">
-        <Target className="h-4 w-4 text-primary" />
-        <h4 className="text-sm font-semibold">Sugestão de Aporte</h4>
+        <Target className="h-5 w-5 text-primary" />
+        <h4 className="text-base font-semibold">{t('monthlyContributionSuggestion') || 'Sugestão de aporte'}</h4>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <p className="text-muted-foreground">Faltam</p>
-          <p className="font-semibold">{formatCurrency(suggestion.remainingValue)}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div className="p-3 rounded-lg bg-secondary/50">
+          <p className="text-muted-foreground mb-1">{t('goalRemaining') || 'Faltam'}</p>
+          <p className="text-lg font-semibold">{formatCurrency(suggestion.remainingValue)}</p>
         </div>
 
         {hasDeadline && suggestion.monthsRemaining !== null && (
-          <div>
-            <p className="text-muted-foreground flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              Prazo
+          <div className="p-3 rounded-lg bg-secondary/50">
+            <p className="text-muted-foreground mb-1 flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" />
+              {t('deadline') || 'Prazo'}
             </p>
-            <p className="font-semibold">
-              {suggestion.monthsRemaining} {suggestion.monthsRemaining === 1 ? 'mês' : 'meses'}
+            <p className="text-lg font-semibold">
+              {suggestion.monthsRemaining} {suggestion.monthsRemaining === 1 ? (t('month') || 'mês') : (t('months') || 'meses')}
             </p>
           </div>
         )}
       </div>
 
       {hasDeadline && suggestion.suggestedMonthly !== null && suggestion.suggestedMonthly > 0 ? (
-        <div className="pt-2 border-t">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <div>
-              <p className="text-xs text-muted-foreground">Aporte mensal sugerido</p>
-              <p className="text-lg font-bold text-green-600 dark:text-green-400">
+        <div className="pt-3 border-t">
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
+            <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-muted-foreground mb-1">{t('suggestedMonthlyContribution') || 'Aporte mensal sugerido'}</p>
+              <p className="text-xl font-bold text-green-600 dark:text-green-400">
                 {formatCurrency(suggestion.suggestedMonthly)}
               </p>
             </div>
@@ -92,8 +98,8 @@ export const GoalMonthlySuggestion = ({ goal, calculateSuggestion }: GoalMonthly
         </div>
       ) : (
         !hasDeadline && (
-          <p className="text-xs text-muted-foreground pt-2 border-t">
-            Defina uma data objetivo para ver a sugestão de aporte mensal
+          <p className="text-xs text-muted-foreground pt-3 border-t text-center">
+            {t('setTargetDateForSuggestion') || 'Defina uma data objetivo para ver a sugestão de aporte mensal'}
           </p>
         )
       )}

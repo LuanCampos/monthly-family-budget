@@ -8,11 +8,11 @@ Give AI coding agents the immediately actionable, project-specific knowledge the
 **Stack**: Vite + React + TypeScript + Supabase + IndexedDB (offline)
 
 **Key Files & Layers**:
-- **UI**: `src/components/` organized by domain (expense, recurring, family, settings, income, month, subcategory, common) + `ui/` for primitives
-- **State**: `src/hooks/useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`; `src/hooks/ui/` for UI-only hooks
+- **UI**: `src/components/` organized by domain (expense, recurring, family, settings, income, month, subcategory, goal, common) + `ui/` for primitives
+- **State**: `src/hooks/useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`, `useGoals.ts`; `src/hooks/ui/` for UI-only hooks
 - **Data Layer**: 
-  - `src/lib/services/` - Supabase API calls (budgetService, userService, familyService)
-  - `src/lib/adapters/` - Online/offline branching logic (monthAdapter, expenseAdapter, recurringAdapter, subcategoryAdapter, storageAdapter, offlineAdapter)
+  - `src/lib/services/` - Supabase API calls (budgetService, userService, familyService, goalService)
+  - `src/lib/adapters/` - Online/offline branching logic (monthAdapter, expenseAdapter, recurringAdapter, subcategoryAdapter, goalAdapter, storageAdapter, offlineAdapter)
   - `src/lib/utils/` - monthUtils, appBaseUrl, common helpers
   - `src/lib/storage/` - offlineStorage for IndexedDB
   - `src/lib/mappers.ts`, `schemas.ts`, `validators.ts`, `logger.ts`
@@ -46,7 +46,7 @@ Give AI coding agents the immediately actionable, project-specific knowledge the
 
 ### Adapters
 - `storageAdapter.ts` - main entry point for data operations, normalizes online/offline
-- Domain adapters (month, expense, recurring, subcategory) - business logic, can call services and offlineAdapter
+- Domain adapters (month, expense, recurring, subcategory, goal) - business logic, can call services and offlineAdapter
 - `offlineAdapter.ts` - canonical IndexedDB interface
   - `generateOfflineId()` - create offline IDs
   - `isOfflineId(familyId)` - check if in offline mode
@@ -60,16 +60,18 @@ Give AI coding agents the immediately actionable, project-specific knowledge the
 - Fields like `installment_current`, `installment_total` must be conditionally assigned based on `hasInstallments` boolean
 
 ### Hooks
-- Business logic hooks in root: `useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`, `useUserPreferences.ts`, `useGeneralSettings.ts`, `useProfileSettings.ts`, `useAuthSettings.ts`
+- Business logic hooks in root: `useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`, `useGoals.ts`, `useUserPreferences.ts`, `useGeneralSettings.ts`, `useProfileSettings.ts`, `useAuthSettings.ts`
 - UI-only hooks in `ui/` folder: `use-mobile.tsx`, `use-toast.ts` (kebab-case)
 - Hooks call `storageAdapter` or services for operations
 - State patterns use `useBudgetState.ts` setters: `setMonths()`, `setExpenses()`, etc.
+- Goals have their own self-contained state in `useGoals.ts` (not part of useBudgetState)
 
-### Components
-- Organized by domain: `src/components/expense/`, `recurring/`, `family/`, `settings/`, `month/`, `income/`, `subcategory/`, `common/`, `ui/`
+### Componentsgoal/`, `common/`, `ui/`
 - Each folder has index.tsx for re-exports
 - Use primitives from `src/components/ui/*` (shadcn-ui)
 - No direct imports of `src/lib/*` - use hooks
+- Named exports (no default export)
+- Goal components: GoalCard, GoalForm, GoalList, GoalProgress, GoalTimelineChart, GoalMonthlySuggestion, GoalDetailsDialog, EntryForm, EntryHistory, ImportExpenseDialog- use hooks
 - Named exports (no default export)
 
 ### Validation
@@ -94,15 +96,15 @@ npm run preview      # Preview production build
 ```
 
 ## Files You'll Frequently Edit
-
-**Data operations**: 
-- `src/lib/adapters/monthAdapter.ts`, `expenseAdapter.ts`, `recurringAdapter.ts`, `subcategoryAdapter.ts`
+, `goalAdapter.ts`
 - `src/lib/adapters/storageAdapter.ts` (wrapper/coordinator)
-- `src/lib/services/budgetService.ts`, `userService.ts`, `familyService.ts`
+- `src/lib/services/budgetService.ts`, `userService.ts`, `familyService.ts`, `goalService.ts`
 
 **State management**:
-- `src/hooks/useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`
+- `src/hooks/useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`, `useGoals.ts`
 
+**UI Components**:
+- `src/components/{expense,recurring,family,settings,month,income,subcategory,goal
 **UI Components**:
 - `src/components/{expense,recurring,family,settings,month,income,subcategory,common}/`
 
@@ -150,7 +152,16 @@ const expense = {
 ### Adding a component
 1. Create folder: `src/components/{domain}/MyComponent.tsx`
 2. Add to `src/components/{domain}/index.tsx`: `export { MyComponent } from './MyComponent'`
-3. Import in other files: `import { MyComponent } from '@/components/{domain}'`
+3. Import in other files: `import { MyComponent } from '@/com
+
+### Goals Feature Pattern
+Goals track savings/financial targets with entries. Key patterns:
+- Goals can link to subcategories/categories to auto-track expenses
+- Goal entries can be manual (user-added) or imported (from expenses)
+- `useGoals` hook manages state separately from `useBudget` (self-contained)
+- Components in `src/components/goal/` follow same structure as other domains
+- Historical expense import allows linking past expenses to new goals
+- Monthly suggestions calculate recommended contributions based on target dateponents/{domain}'`
 4. Use named export: `export const MyComponent = (...) => {}`
 
 ## Windows PATH Troubleshooting (Node.js/npm not found)
@@ -165,10 +176,16 @@ const expense = {
 5. Restart VS Code / terminal completely
 6. Test: `node --version`
 
-**Note**: Environment changes take effect only in NEW terminal sessions.
+**Note**: Environment changes take effect only in NEW terminal sessions.goal/, etc.)
+- Lib: Organized by layer (services/, adapters/, utils/, storage/)
+- Hooks: Separated UI hooks (ui/) from business logic hooks
+- All imports updated, build validated
 
-## Architecture Decision Records
-
+### New Features ✅
+- **Goals Feature**: Track savings targets with manual/imported entries, linked subcategories, timeline charts, monthly suggestions
+  - New domain: `goalAdapter.ts`, `goalService.ts`, `useGoals.ts`, `src/components/goal/`
+  - Dedicated page: `src/pages/Goals.tsx`
+  - Types: `Goal`, `GoalEntry` in `src/types/budget.ts` and `database.ts`
 ### Phase 1-3 Completed ✅
 - **Phase 1**: Type safety foundation (database.ts, monthUtils.ts, logger.ts)
 - **Phase 2**: Modularization (adapters/, services/, schemas, validators, mappers)
@@ -197,7 +214,7 @@ const expense = {
 
 ## TypeScript Strict Mode ✅
 
-Project enforces `strict: true` in `tsconfig.json`. This means:
+Project enforces `January 12, 2026`tsconfig.json`. This means:
 - All types must be explicit
 - `any` is forbidden
 - `null` and `undefined` must be handled
