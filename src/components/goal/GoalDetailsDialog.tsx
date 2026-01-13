@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GoalTimelineChart } from './GoalTimelineChart';
-import { GoalMonthlySuggestion } from './GoalMonthlySuggestion';
-import { BarChart3, TrendingUp, Lightbulb, Loader2, Wallet } from 'lucide-react';
+import { BarChart3, TrendingUp, Loader2, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { Goal, GoalEntry } from '@/types';
@@ -20,7 +18,7 @@ interface GoalDetailsDialogProps {
   } | null>;
 }
 
-export const GoalDetailsDialog = ({ goal, entries, onFetchEntries, calculateSuggestion }: GoalDetailsDialogProps) => {
+export const GoalDetailsDialog = ({ goal, entries, onFetchEntries }: GoalDetailsDialogProps) => {
   const { t } = useLanguage();
   const { formatCurrency } = useCurrency();
   const [open, setOpen] = useState(false);
@@ -65,7 +63,7 @@ export const GoalDetailsDialog = ({ goal, entries, onFetchEntries, calculateSugg
               {goal.name}
             </DialogTitle>
             <DialogDescription>
-              {t('goalDetailsDescription') || 'Acompanhe a evolução e receba sugestões mensais'}
+              {t('goalDetailsDescription') || 'Acompanhe a evolução da sua meta'}
             </DialogDescription>
           </DialogHeader>
 
@@ -87,38 +85,19 @@ export const GoalDetailsDialog = ({ goal, entries, onFetchEntries, calculateSugg
             </div>
           </div>
 
-          <Tabs defaultValue="chart" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="chart" className="gap-1.5">
-                <TrendingUp className="h-4 w-4" />
-                <span>{t('goalTimeline') || 'Evolução'}</span>
-              </TabsTrigger>
-              <TabsTrigger value="suggestion" className="gap-1.5">
-                <Lightbulb className="h-4 w-4" />
-                <span>{t('suggestion') || 'Sugestão'}</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="chart" className="space-y-3 mt-3 min-h-[290px] pb-0.5">
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  {t('goalTimeline') || 'Evolução Temporal'}
-                </h3>
-                {loadingEntries ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  </div>
-                ) : (
-                  <GoalTimelineChart entries={currentEntries} targetValue={goal.targetValue} />
-                )}
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              {t('goalTimeline') || 'Evolução Temporal'}
+            </h3>
+            {loadingEntries ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-            </TabsContent>
-
-            <TabsContent value="suggestion" className="space-y-3 mt-3 min-h-[290px] pb-0.5">
-              <GoalMonthlySuggestion goal={goal} calculateSuggestion={calculateSuggestion} />
-            </TabsContent>
-          </Tabs>
+            ) : (
+              <GoalTimelineChart entries={currentEntries} targetValue={goal.targetValue} />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>

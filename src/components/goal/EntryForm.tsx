@@ -131,7 +131,7 @@ export const EntryForm = ({ onSubmit, onCancel, submitting }: EntryFormProps) =>
           </Button>
         )}
         <Button type="submit" disabled={submitting}>
-          {submitting ? (t('saving') || 'Salvando...') : (t('save') || 'Salvar')}
+          {t('save') || 'Salvar'}
         </Button>
       </div>
     </form>
