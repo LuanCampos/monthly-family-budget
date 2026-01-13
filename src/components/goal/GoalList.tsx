@@ -17,7 +17,7 @@ interface GoalListProps {
   } | null>;
 }
 
-export const GoalList = ({ goals, entriesByGoal, onAddEntry, onViewHistory, onEdit, onDelete, onFetchEntries, calculateSuggestion }: GoalListProps) => {
+export const GoalList = ({ goals, entriesByGoal, onViewHistory, onEdit, onDelete, onFetchEntries, calculateSuggestion }: GoalListProps) => {
   const { t } = useLanguage();
 
   if (!goals.length) {

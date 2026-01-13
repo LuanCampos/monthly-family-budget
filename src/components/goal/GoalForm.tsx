@@ -221,7 +221,7 @@ export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submittin
           </Button>
         )}
         <Button type="submit" disabled={submitting}>
-          {submitting ? t('saving') : t('save')}
+          {t('save')}
         </Button>
       </div>
     </form>
