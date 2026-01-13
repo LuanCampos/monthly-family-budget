@@ -63,7 +63,7 @@ export const GoalCard = ({ goal, entries, onViewHistory, onEdit, onDelete, onFet
           <Button size="icon" variant="ghost" onClick={onEdit} aria-label={t('edit') || 'Editar'} className="justify-center hover:text-primary !h-8 !w-8">
             <Pencil className="h-3.5 w-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" onClick={onDelete} aria-label={t('delete') || 'Excluir'} className="justify-center text-destructive hover:bg-destructive/10 hover:text-destructive !h-8 !w-8">
+          <Button size="icon" variant="ghost" onClick={onDelete} aria-label={t('delete') || 'Excluir'} className="justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 !h-8 !w-8">
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
