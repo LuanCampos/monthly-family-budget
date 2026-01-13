@@ -66,8 +66,6 @@ export {
   getGoalBySubcategoryId,
   getGoalByCategoryKey,
   getEntryByExpense,
-  incrementValue as incrementGoalValue,
-  decrementValue as decrementGoalValue,
   getHistoricalExpenses as getGoalHistoricalExpenses,
   importExpense as importGoalExpense,
   calculateMonthlySuggestion as calculateGoalMonthlySuggestion,

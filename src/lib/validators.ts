@@ -118,7 +118,6 @@ export type MonthLimits = z.infer<typeof MonthLimitsSchema>;
 export const CreateGoalInputSchema = z.object({
   family_id: z.string(),
   name: z.string(),
-  current_value: z.number(),
   target_value: z.number(),
   target_month: z.number().int().optional().nullable(),
   target_year: z.number().int().optional().nullable(),
@@ -166,9 +165,10 @@ export const CreateManualGoalEntryInputSchema = z.object({
 export type CreateManualGoalEntryInput = z.infer<typeof CreateManualGoalEntryInputSchema>;
 
 /**
- * Validate goal entry update (manual entries only)
+ * Validate goal entry update (manual entries only, but value can be updated for automatic entries when expense changes)
  */
 export const UpdateGoalEntryInputSchema = z.object({
+  value: z.number().optional(),
   description: z.string().optional(),
   month: z.number().int().optional(),
   year: z.number().int().optional(),

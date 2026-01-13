@@ -83,7 +83,6 @@ export interface GoalRow {
   id: string;
   family_id: string;
   name: string;
-  current_value: number;
   target_value: number;
   target_month: number | null;
   target_year: number | null;

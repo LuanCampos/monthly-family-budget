@@ -15,7 +15,6 @@ import type { Goal, GoalEntry, Expense } from '@/types';
 interface GoalPayload {
   name: string;
   targetValue: number;
-  currentValue?: number;
   targetMonth?: number;
   targetYear?: number;
   account?: string;
@@ -31,6 +30,39 @@ interface GoalEntryPayload {
   month: number;
   year: number;
 }
+
+/**
+ * Calculate current value by summing all goal entries
+ */
+const calculateCurrentValue = async (familyId: string, goalId: string): Promise<number> => {
+  let entries: any[] = [];
+  
+  if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
+    entries = await offlineAdapter.getAllByIndex<any>('goal_entries', 'goal_id', goalId) || [];
+  } else {
+    const { data, error } = await goalService.getEntries(goalId);
+    if (!error && data) {
+      entries = data;
+    }
+  }
+  
+  return entries.reduce((sum, entry) => sum + Number(entry.value || 0), 0);
+};
+
+/**
+ * Enrich a single goal with calculated currentValue
+ */
+const enrichGoalWithCurrentValue = async (familyId: string, goal: Goal): Promise<Goal> => {
+  const currentValue = await calculateCurrentValue(familyId, goal.id);
+  return { ...goal, currentValue };
+};
+
+/**
+ * Enrich multiple goals with calculated currentValue
+ */
+const enrichGoalsWithCurrentValue = async (familyId: string, goals: Goal[]): Promise<Goal[]> => {
+  return Promise.all(goals.map(goal => enrichGoalWithCurrentValue(familyId, goal)));
+};
 
 const ensureSubcategoryIsValid = async (familyId: string, subcategoryId: string | undefined, categoryKey: string | undefined, currentGoalId?: string) => {
   // Simplified - let database handle constraints if any
@@ -57,7 +89,6 @@ const toGoalRow = (familyId: string, payload: GoalPayload) => {
   const data: any = {
     family_id: familyId,
     name: payload.name,
-    current_value: payload.currentValue ?? 0,
     target_value: payload.targetValue,
     target_month: payload.targetMonth ?? null,
     target_year: payload.targetYear ?? null,
@@ -87,23 +118,13 @@ const toGoalEntryRow = (payload: GoalEntryPayload) => {
   return base;
 };
 
-const updateOfflineGoalValue = async (goalId: string, delta: number) => {
-  const goal = await offlineAdapter.get<any>('goals', goalId);
-  if (!goal) return;
-  const updatedValue = Number(goal.current_value || 0) + delta;
-  await offlineAdapter.put('goals', {
-    ...goal,
-    current_value: updatedValue,
-    updated_at: new Date().toISOString(),
-  } as any);
-};
-
 export const getGoals = async (familyId: string | null): Promise<Goal[]> => {
   if (!familyId) return [];
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     const data = await offlineAdapter.getAllByIndex<any>('goals', 'family_id', familyId);
-    return mapGoals(data || []);
+    const goals = mapGoals(data || []);
+    return enrichGoalsWithCurrentValue(familyId, goals);
   }
 
   const { data, error } = await goalService.getGoals(familyId);
@@ -111,7 +132,8 @@ export const getGoals = async (familyId: string | null): Promise<Goal[]> => {
     logger.error('goal.list.failed', { familyId, error: error.message });
     return [];
   }
-  return mapGoals(data || []);
+  const goals = mapGoals(data || []);
+  return enrichGoalsWithCurrentValue(familyId, goals);
 };
 
 export const createGoal = async (familyId: string | null, payload: GoalPayload): Promise<Goal | null> => {
@@ -132,7 +154,8 @@ export const createGoal = async (familyId: string | null, payload: GoalPayload):
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     await offlineAdapter.put('goals', offlineGoal as any);
-    return mapGoal(offlineGoal as any);
+    const goal = mapGoal(offlineGoal as any);
+    return enrichGoalWithCurrentValue(familyId, goal);
   }
 
   const { data, error } = await goalService.createGoal(goalRow);
@@ -142,10 +165,12 @@ export const createGoal = async (familyId: string | null, payload: GoalPayload):
     if (!offlineAdapter.isOfflineId(familyId)) {
       await offlineAdapter.sync.add({ type: 'goal', action: 'insert', data: offlineGoal, familyId });
     }
-    return mapGoal(offlineGoal as any);
+    const goal = mapGoal(offlineGoal as any);
+    return enrichGoalWithCurrentValue(familyId, goal);
   }
 
-  return mapGoal(data);
+  const goal = mapGoal(data);
+  return enrichGoalWithCurrentValue(familyId, goal);
 };
 
 export const updateGoal = async (familyId: string | null, goalId: string, payload: Partial<GoalPayload>): Promise<void> => {
@@ -157,7 +182,6 @@ export const updateGoal = async (familyId: string | null, goalId: string, payloa
 
   const updateData: any = {
     name: payload.name,
-    current_value: payload.currentValue,
     target_value: payload.targetValue,
     target_month: payload.targetMonth,
     target_year: payload.targetYear,
@@ -243,7 +267,6 @@ export const createEntry = async (familyId: string | null, payload: GoalEntryPay
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     await offlineAdapter.put('goal_entries', offlineEntry as any);
-    await updateOfflineGoalValue(payload.goalId, payload.value);
     return mapGoalEntry(offlineEntry as any);
   }
 
@@ -251,7 +274,6 @@ export const createEntry = async (familyId: string | null, payload: GoalEntryPay
   if (error || !data) {
     logger.warn('goal.entry.create.fallback', { goalId: payload.goalId, error: error?.message });
     await offlineAdapter.put('goal_entries', offlineEntry as any);
-    await updateOfflineGoalValue(payload.goalId, payload.value);
     if (!offlineAdapter.isOfflineId(familyId)) {
       await offlineAdapter.sync.add({ type: 'goal_entry', action: 'insert', data: offlineEntry, familyId });
     }
@@ -268,12 +290,13 @@ export const createManualEntry = async (familyId: string | null, payload: GoalEn
 export const updateEntry = async (
   familyId: string | null,
   entryId: string,
-  payload: Partial<Pick<GoalEntryPayload, 'description' | 'month' | 'year'>>,
+  payload: Partial<Pick<GoalEntryPayload, 'value' | 'description' | 'month' | 'year'>>,
   allowAutomaticUpdate = false
 ): Promise<void> => {
   if (!familyId) return;
 
   const updateData = {
+    value: payload.value,
     description: payload.description,
     month: payload.month,
     year: payload.year,
@@ -316,7 +339,6 @@ export const deleteEntry = async (familyId: string | null, entryId: string): Pro
     if (!entry) return;
     if (entry.expense_id) throw new Error('Automatic entries cannot be deleted');
     await offlineAdapter.delete('goal_entries', entryId);
-    await updateOfflineGoalValue(entry.goal_id, -Number(entry.value || 0));
     return;
   }
 
@@ -331,8 +353,6 @@ export const deleteEntry = async (familyId: string | null, entryId: string): Pro
     if (!offlineAdapter.isOfflineId(familyId)) {
       await offlineAdapter.sync.add({ type: 'goal_entry', action: 'delete', data: { id: entryId }, familyId });
     }
-  } else if (existing) {
-    await goalService.decrementGoalValue(existing.goal_id, existing.value);
   }
 };
 
@@ -371,28 +391,6 @@ export const getEntryByExpense = async (expenseId: string): Promise<GoalEntry | 
 
   const { data } = await goalService.getEntryByExpense(expenseId);
   return data ? mapGoalEntry(data) : null;
-};
-
-export const incrementValue = async (familyId: string | null, goalId: string, value: number): Promise<void> => {
-  if (!familyId) return;
-
-  if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    await updateOfflineGoalValue(goalId, value);
-    return;
-  }
-
-  const { error } = await goalService.incrementGoalValue(goalId, value);
-  if (error) {
-    logger.warn('goal.value.increment.fallback', { goalId, error: error.message });
-    await updateOfflineGoalValue(goalId, value);
-    if (!offlineAdapter.isOfflineId(familyId)) {
-      await offlineAdapter.sync.add({ type: 'goal', action: 'update', data: { id: goalId, delta: value }, familyId });
-    }
-  }
-};
-
-export const decrementValue = async (familyId: string | null, goalId: string, value: number): Promise<void> => {
-  return incrementValue(familyId, goalId, -value);
 };
 
 export const getHistoricalExpenses = async (familyId: string | null, subcategoryId: string): Promise<Expense[]> => {
@@ -502,7 +500,11 @@ export const calculateMonthlySuggestion = async (goalId: string): Promise<{
     const goal = await offlineAdapter.get<any>('goals', goalId);
     if (!goal) return null;
 
-    const remaining = Number(goal.target_value || 0) - Number(goal.current_value || 0);
+    // Calculate current value dynamically from entries
+    const entries = await offlineAdapter.getAllByIndex<any>('goal_entries', 'goal_id', goalId) || [];
+    const currentValue = entries.reduce((sum: number, entry: any) => sum + Number(entry.value || 0), 0);
+    
+    const remaining = Number(goal.target_value || 0) - currentValue;
     
     if (!goal.target_month || !goal.target_year) {
       return {

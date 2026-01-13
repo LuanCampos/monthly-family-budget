@@ -113,14 +113,6 @@ export const deleteEntry = async (id: string) => {
     .eq('id', id);
 };
 
-export const incrementGoalValue = async (goalId: string, value: number) => {
-  return supabase.rpc('increment_goal_value', { goal_id: goalId, value });
-};
-
-export const decrementGoalValue = async (goalId: string, value: number) => {
-  return supabase.rpc('decrement_goal_value', { goal_id: goalId, value });
-};
-
 export const getHistoricalExpenses = async (subcategoryId: string) => {
   // Get all expenses for this subcategory
   const { data: expenses, error: expensesError } = await supabase

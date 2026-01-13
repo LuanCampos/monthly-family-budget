@@ -72,7 +72,7 @@ export interface Goal {
   id: string;
   familyId: string;
   name: string;
-  currentValue: number;
+  currentValue?: number; // Calculated field - sum of goal_entries
   targetValue: number;
   targetMonth?: number;
   targetYear?: number;

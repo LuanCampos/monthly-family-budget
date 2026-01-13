@@ -28,8 +28,8 @@ export const GoalProgress = ({ goal }: GoalProgressProps) => {
     loadSuggestion();
   }, [goal.id, hasTargetDate, getMonthlySuggestion]);
 
-  const pct = goal.targetValue > 0 ? Math.min(100, Math.max(0, (goal.currentValue / goal.targetValue) * 100)) : 0;
-  const remaining = goal.targetValue - goal.currentValue;
+  const pct = goal.targetValue > 0 ? Math.min(100, Math.max(0, ((goal.currentValue || 0) / goal.targetValue) * 100)) : 0;
+  const remaining = goal.targetValue - (goal.currentValue || 0);
 
   const MONTH_NAMES = [
     'Janeiro', 'Fevereiro', 'Março', 
@@ -48,7 +48,7 @@ export const GoalProgress = ({ goal }: GoalProgressProps) => {
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>{pct.toFixed(1)}%</span>
         <span>
-          {formatCurrency(goal.currentValue)}
+          {formatCurrency(goal.currentValue || 0)}
           {' / '}
           {formatCurrency(goal.targetValue)}
         </span>

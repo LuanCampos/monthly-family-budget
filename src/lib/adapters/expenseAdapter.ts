@@ -226,8 +226,6 @@ const handleGoalEntryCreation = async (familyId: string, expense: any) => {
       year,
     });
     
-    await goalAdapter.incrementValue(familyId, linkedGoal.id, expense.value || 0);
-    
     logger.info('expense.goal.entry.created', { expenseId: expense.id, goalId: linkedGoal.id });
   } catch (error) {
     logger.error('expense.goal.entry.create.failed', { expenseId: expense.id, error: (error as Error).message });
@@ -254,22 +252,19 @@ const handleGoalEntryUpdate = async (familyId: string, expenseId: string, oldExp
     
     const oldValue = oldExpense.value || 0;
     const newValue = newExpense.value || 0;
-    const valueDifference = newValue - oldValue;
     
     const { month, year } = extractMonthYear(newExpense);
     
-    // Update entry (only month, year - allowed for automatic entries when expense changes)
+    // Update entry (month, year, and value - allowed for automatic entries when expense changes)
     await goalAdapter.updateEntry(familyId, entry.id, {
+      value: newValue,
       month,
       year,
     }, true); // allowAutomaticUpdate = true
     
-    // Update goal value if value changed
-    if (valueDifference !== 0) {
-      await goalAdapter.incrementValue(familyId, linkedGoal.id, valueDifference);
-    }
+    // Note: currentValue is now calculated dynamically from entries
     
-    logger.info('expense.goal.entry.updated', { expenseId, entryId: entry.id, valueDifference });
+    logger.info('expense.goal.entry.updated', { expenseId, entryId: entry.id, oldValue, newValue });
   } catch (error) {
     logger.error('expense.goal.entry.update.failed', { expenseId, error: (error as Error).message });
   }
@@ -293,8 +288,8 @@ const handleGoalEntryDeletion = async (familyId: string, expenseId: string, expe
     }
     if (!linkedGoal) return;
     
-    // Decrement goal value
-    await goalAdapter.decrementValue(familyId, linkedGoal.id, expense.value || 0);
+    // Note: No need to decrement goal value - currentValue is now calculated dynamically
+    // The entry will be deleted via cascade in database or explicitly in offline mode
     
     // Delete the entry (this will cascade from expense deletion in DB, but we do it explicitly for offline)
     if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {

@@ -111,12 +111,13 @@ export const mapIncomeSources = (sources: IncomeSourceRow[]): IncomeSource[] =>
 
 /**
  * Map database Goal to application Goal
+ * Note: currentValue is NOT persisted in database - it's calculated from goal_entries
  */
 export const mapGoal = (goal: GoalRow): Goal => ({
   id: goal.id,
   familyId: goal.family_id,
   name: goal.name,
-  currentValue: Number(goal.current_value),
+  // currentValue removed - will be calculated dynamically
   targetValue: Number(goal.target_value),
   targetMonth: goal.target_month ?? undefined,
   targetYear: goal.target_year ?? undefined,
