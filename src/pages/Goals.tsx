@@ -51,6 +51,7 @@ const GoalsPage = () => {
   const [historyGoal, setHistoryGoal] = useState<Goal | null>(null);
   const [historyEntries, setHistoryEntries] = useState<GoalEntry[]>([]);
   const [entryGoal, setEntryGoal] = useState<Goal | null>(null);
+  const [editingEntry, setEditingEntry] = useState<GoalEntry | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [savingGoal, setSavingGoal] = useState(false);
   const [savingEntry, setSavingEntry] = useState(false);
@@ -100,6 +101,7 @@ const GoalsPage = () => {
 
   const handleAddEntry = (goal: Goal) => {
     setEntryGoal(goal);
+    setEditingEntry(null);
   };
 
   const handleViewHistory = (goal: Goal) => {
@@ -110,8 +112,19 @@ const GoalsPage = () => {
     if (!entryGoal) return;
     setSavingEntry(true);
     try {
-      await addManualEntry({ goalId: entryGoal.id, ...payload });
+      if (editingEntry) {
+        await updateEntry(editingEntry.id, entryGoal.id, payload);
+      } else {
+        await addManualEntry({ goalId: entryGoal.id, ...payload });
+      }
+
+      const refreshedEntries = await refreshEntries(entryGoal.id);
+      if (historyGoal && historyGoal.id === entryGoal.id) {
+        setHistoryEntries(refreshedEntries);
+      }
+
       setEntryGoal(null);
+      setEditingEntry(null);
     } finally {
       setSavingEntry(false);
     }
@@ -126,6 +139,12 @@ const GoalsPage = () => {
       setDeletingEntry(false);
       setEntryToDelete(null);
     }
+  };
+
+  const handleEditEntry = (entry: GoalEntry) => {
+    if (!historyGoal) return;
+    setEntryGoal(historyGoal);
+    setEditingEntry(entry);
   };
 
   return (
@@ -246,22 +265,32 @@ const GoalsPage = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(entryGoal)} onOpenChange={(open) => { if (!open) setEntryGoal(null); }}>
+      <Dialog open={Boolean(entryGoal)} onOpenChange={(open) => { if (!open) { setEntryGoal(null); setEditingEntry(null); } }}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5 text-primary" />
-              {t('addEntry') || 'Adicionar Lançamento'}
+              {editingEntry ? (t('editEntry') || 'Editar lançamento') : (t('addEntry') || 'Adicionar Lançamento')}
             </DialogTitle>
             <DialogDescription>
-              {entryGoal && ((t('addEntryForGoal') && t('addEntryForGoal').replace('{{goal}}', entryGoal.name)) || `Adicionando lançamento para ${entryGoal.name}`)}
+              {entryGoal && (
+                editingEntry
+                  ? ((t('editEntryForGoal') && t('editEntryForGoal').replace('{{goal}}', entryGoal.name)) || `Editando lançamento de ${entryGoal.name}`)
+                  : ((t('addEntryForGoal') && t('addEntryForGoal').replace('{{goal}}', entryGoal.name)) || `Adicionando lançamento para ${entryGoal.name}`)
+              )}
             </DialogDescription>
           </DialogHeader>
           {entryGoal && (
             <EntryForm
               onSubmit={handleSaveEntry}
-              onCancel={() => setEntryGoal(null)}
+              onCancel={() => { setEntryGoal(null); setEditingEntry(null); }}
               submitting={savingEntry}
+              initial={editingEntry ? {
+                value: editingEntry.value,
+                description: editingEntry.description || '',
+                month: editingEntry.month,
+                year: editingEntry.year,
+              } : null}
             />
           )}
         </DialogContent>
@@ -280,7 +309,11 @@ const GoalsPage = () => {
           </DialogHeader>
           
           <div className="flex-1 overflow-y-auto">
-            <EntryHistory entries={historyEntries} onDelete={(entry) => setEntryToDelete(entry)} />
+            <EntryHistory 
+              entries={historyEntries} 
+              onDelete={(entry) => setEntryToDelete(entry)}
+              onEdit={handleEditEntry}
+            />
           </div>
 
           {historyGoal && (

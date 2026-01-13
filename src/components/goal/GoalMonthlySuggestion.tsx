@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { TrendingUp, Calendar, Target } from 'lucide-react';
+import { TrendingUp, Calendar, Target, AlertCircle } from 'lucide-react';
 import type { Goal } from '@/types';
 
 interface GoalMonthlySuggestionProps {
@@ -10,6 +10,8 @@ interface GoalMonthlySuggestionProps {
     remainingValue: number;
     monthsRemaining: number | null;
     suggestedMonthly: number | null;
+    monthlyContributed: number | null;
+    monthlyRemaining: number | null;
   } | null>;
 }
 
@@ -20,6 +22,8 @@ export const GoalMonthlySuggestion = ({ goal, calculateSuggestion }: GoalMonthly
     remainingValue: number;
     monthsRemaining: number | null;
     suggestedMonthly: number | null;
+    monthlyContributed: number | null;
+    monthlyRemaining: number | null;
   } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -85,7 +89,7 @@ export const GoalMonthlySuggestion = ({ goal, calculateSuggestion }: GoalMonthly
       </div>
 
       {hasDeadline && suggestion.suggestedMonthly !== null && suggestion.suggestedMonthly > 0 ? (
-        <div className="pt-3 border-t">
+        <div className="pt-3 border-t space-y-3">
           <div className="flex items-start gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
             <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
             <div className="min-w-0 flex-1">
@@ -95,6 +99,36 @@ export const GoalMonthlySuggestion = ({ goal, calculateSuggestion }: GoalMonthly
               </p>
             </div>
           </div>
+
+          {suggestion.monthlyRemaining !== null && suggestion.monthlyRemaining > 0 && (
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground mb-1">{t('thisMonthRemaining') || 'Ainda falta aportar este mês'}</p>
+                <p className="text-lg font-semibold text-amber-600 dark:text-amber-400">
+                  {formatCurrency(suggestion.monthlyRemaining)}
+                </p>
+                {suggestion.monthlyContributed && suggestion.monthlyContributed > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ({formatCurrency(suggestion.monthlyContributed)} {t('contributed') || 'Logged this month'} · 
+                    {formatCurrency(suggestion.suggestedMonthly)} {t('goal') || 'meta'})
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {suggestion.monthlyRemaining !== null && suggestion.monthlyRemaining <= 0 && suggestion.monthlyContributed && suggestion.monthlyContributed > 0 && (
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+              <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground mb-1">{t('thisMonthComplete') || 'Meta deste mês atingida!'}</p>
+                <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                  {formatCurrency(suggestion.monthlyContributed)} {t('contributed') || 'Logged this month'}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         !hasDeadline && (

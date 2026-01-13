@@ -15,7 +15,13 @@ export const GoalProgress = ({ goal }: GoalProgressProps) => {
   const { getMonthlySuggestion } = useGoals();
   const { t } = useLanguage();
   const { formatCurrency } = useCurrency();
-  const [suggestion, setSuggestion] = useState<{ remainingValue: number; monthsRemaining: number | null; suggestedMonthly: number | null } | null>(null);
+  const [suggestion, setSuggestion] = useState<{ 
+    remainingValue: number
+    monthsRemaining: number | null
+    suggestedMonthly: number | null
+    monthlyContributed: number | null
+    monthlyRemaining: number | null
+  } | null>(null);
   const hasTargetDate = goal.targetMonth && goal.targetYear;
 
   useEffect(() => {
@@ -73,6 +79,20 @@ export const GoalProgress = ({ goal }: GoalProgressProps) => {
             <Badge variant="secondary" className="gap-1.5 text-xs">
               <TrendingUp className="h-3 w-3" />
                     {formatCurrency(suggestion.suggestedMonthly)}/{t('perMonth') || 'mês'}
+            </Badge>
+          )}
+
+          {suggestion && suggestion.monthlyRemaining !== null && suggestion.monthlyRemaining > 0 && (
+            <Badge variant="outline" className="gap-1.5 text-xs bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300">
+              {t('thisMonthRemaining') || 'Faltam este mês'}:{' '}
+              <span className="font-semibold">{formatCurrency(suggestion.monthlyRemaining)}</span>
+            </Badge>
+          )}
+
+          {suggestion && suggestion.monthlyContributed !== null && suggestion.monthlyContributed > 0 && (
+            <Badge variant="outline" className="gap-1.5 text-xs">
+              {t('contributed') || 'Logged this month'}:{' '}
+              <span className="font-semibold">{formatCurrency(suggestion.monthlyContributed)}</span>
             </Badge>
           )}
         </div>

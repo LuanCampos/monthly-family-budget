@@ -488,15 +488,71 @@ export const importExpense = async (familyId: string | null, goalId: string, exp
 };
 
 /**
+ * Calculate how much was contributed this month and how much is still needed
+ */
+const calculateCurrentMonthProgress = (entries: any[]): { contributed: number; remaining: number } => {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+
+  const currentMonthEntries = entries.filter(
+    (entry: any) => entry.month === currentMonth && entry.year === currentYear
+  );
+  const contributed = currentMonthEntries.reduce((sum: number, entry: any) => sum + Number(entry.value || 0), 0);
+
+  return { contributed, remaining: 0 }; // remaining will be calculated based on suggested monthly
+};
+
+/**
+ * Calculate monthly contribution suggestion with intelligent logic
+ * Takes into account how much was already contributed this month
+ */
+const calculateIntelligentMonthlySuggestion = (
+  totalRemaining: number,
+  diffMonths: number,
+  monthlyContributed: number
+): number => {
+  if (diffMonths <= 0) return totalRemaining;
+
+  if (diffMonths === 1) {
+    // Last month - need to contribute the entire remaining amount
+    return totalRemaining;
+  }
+
+  // Calculate how much needs to be contributed in remaining months (excluding current month if already contributed)
+  // If already contributed >= suggested amount for this month, don't reduce the monthly suggestion
+  // Otherwise, calculate how much is needed for remaining months
+
+  // For months after this one
+  const remainingMonthsAfterThis = diffMonths - 1;
+
+  // If we haven't contributed enough this month yet, we need to account for it
+  // But if we've already met/exceeded the initial suggestion, don't reduce the monthly amount
+  const simpleAverage = totalRemaining / diffMonths;
+
+  // If current month contribution already meets or exceeds the simple average, 
+  // spread the remaining value over remaining months
+  if (monthlyContributed >= simpleAverage) {
+    const stillNeeded = totalRemaining - monthlyContributed;
+    return remainingMonthsAfterThis > 0 ? stillNeeded / remainingMonthsAfterThis : 0;
+  }
+
+  // Otherwise use the simple average (or adjust slightly if we've contributed something)
+  return simpleAverage;
+};
+
+/**
  * Calculate monthly contribution suggestion based on target date (Fase 6)
  */
 export const calculateMonthlySuggestion = async (goalId: string): Promise<{
   remainingValue: number;
   monthsRemaining: number | null;
   suggestedMonthly: number | null;
+  monthlyContributed: number | null;
+  monthlyRemaining: number | null;
 } | null> => {
   if (!navigator.onLine) {
-    // Offline calculation (simplified)
+    // Offline calculation (intelligent)
     const goal = await offlineAdapter.get<any>('goals', goalId);
     if (!goal) return null;
 
@@ -511,6 +567,8 @@ export const calculateMonthlySuggestion = async (goalId: string): Promise<{
         remainingValue: remaining,
         monthsRemaining: null,
         suggestedMonthly: null,
+        monthlyContributed: null,
+        monthlyRemaining: null,
       };
     }
 
@@ -521,10 +579,21 @@ export const calculateMonthlySuggestion = async (goalId: string): Promise<{
     // Calculate months difference
     const diffMonths = Math.max(0, (goal.target_year - currentYear) * 12 + (goal.target_month - currentMonth));
 
+    // Calculate current month progress
+    const { contributed: monthlyContributed } = calculateCurrentMonthProgress(entries);
+
+    // Calculate intelligent suggested monthly amount
+    const suggestedMonthly = calculateIntelligentMonthlySuggestion(remaining, diffMonths, monthlyContributed);
+
+    // Calculate how much still needs to be contributed this month
+    const monthlyRemaining = Math.max(0, suggestedMonthly - monthlyContributed);
+
     return {
       remainingValue: remaining,
       monthsRemaining: diffMonths,
-      suggestedMonthly: diffMonths > 0 ? remaining / diffMonths : remaining,
+      suggestedMonthly: diffMonths > 0 ? suggestedMonthly : (remaining > 0 ? remaining : 0),
+      monthlyContributed: monthlyContributed > 0 ? monthlyContributed : 0,
+      monthlyRemaining: monthlyRemaining > 0 ? monthlyRemaining : 0,
     };
   }
 
@@ -535,9 +604,43 @@ export const calculateMonthlySuggestion = async (goalId: string): Promise<{
   }
 
   const result = data[0];
+
+  // Base values from backend
+  const totalRemaining = Number(result.remaining_value || 0);
+  const monthsRemaining = result.months_remaining !== null ? Number(result.months_remaining) : null;
+  let suggestedMonthly = result.suggested_monthly !== null ? Number(result.suggested_monthly) : null;
+
+  // For online mode, also calculate monthly progress and adjust suggestion intelligently
+  const goal = await goalService.getGoalById(goalId);
+  let monthlyContributed = 0;
+  let monthlyRemaining = 0;
+  
+  if (goal && !goal.error) {
+    const entries = await goalService.getEntries(goalId);
+    if (!entries.error) {
+      const { contributed } = calculateCurrentMonthProgress(entries.data || []);
+      monthlyContributed = contributed;
+
+      // Recalculate suggestedMonthly using intelligent logic when we know the months remaining
+      if (monthsRemaining !== null) {
+        const intelligentSuggested = calculateIntelligentMonthlySuggestion(
+          totalRemaining,
+          monthsRemaining,
+          monthlyContributed
+        );
+        suggestedMonthly = intelligentSuggested;
+      }
+
+      const safeSuggested = suggestedMonthly !== null ? suggestedMonthly : 0;
+      monthlyRemaining = Math.max(0, safeSuggested - monthlyContributed);
+    }
+  }
+
   return {
-    remainingValue: Number(result.remaining_value || 0),
-    monthsRemaining: result.months_remaining !== null ? Number(result.months_remaining) : null,
-    suggestedMonthly: result.suggested_monthly !== null ? Number(result.suggested_monthly) : null,
+    remainingValue: totalRemaining,
+    monthsRemaining,
+    suggestedMonthly,
+    monthlyContributed: monthlyContributed > 0 ? monthlyContributed : 0,
+    monthlyRemaining: monthlyRemaining > 0 ? monthlyRemaining : 0,
   };
 };

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -13,16 +13,34 @@ interface EntryFormProps {
   onSubmit: (data: { value: number; description: string; month: number; year: number }) => Promise<void> | void;
   onCancel?: () => void;
   submitting?: boolean;
+  initial?: { value: number; description: string; month: number; year: number } | null;
 }
 
-export const EntryForm = ({ onSubmit, onCancel, submitting }: EntryFormProps) => {
+export const EntryForm = ({ onSubmit, onCancel, submitting, initial }: EntryFormProps) => {
   const { t } = useLanguage();
   const { currencySymbol } = useCurrency();
-  const now = new Date();
+  const [defaultMonth] = useState(() => String(new Date().getMonth() + 1));
+  const [defaultYear] = useState(() => String(new Date().getFullYear()));
   const [value, setValue] = useState('');
   const [description, setDescription] = useState('');
-  const [month, setMonth] = useState((now.getMonth() + 1).toString());
-  const [year, setYear] = useState(now.getFullYear().toString());
+  const [month, setMonth] = useState(defaultMonth);
+  const [year, setYear] = useState(defaultYear);
+
+  useEffect(() => {
+    if (initial) {
+      setValue(initial.value.toFixed(2).replace('.', ','));
+      setDescription(initial.description || '');
+      setMonth(String(initial.month));
+      setYear(String(initial.year));
+      return;
+    }
+
+    // reset to defaults when closing or switching back to create mode
+    setValue('');
+    setDescription('');
+    setMonth(defaultMonth);
+    setYear(defaultYear);
+  }, [initial, defaultMonth, defaultYear]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
