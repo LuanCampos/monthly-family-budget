@@ -1,6 +1,5 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import type { GoalEntry } from '@/types';
 import { Pencil, Trash2, Calendar, DollarSign } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -25,8 +24,7 @@ export const EntryHistory = ({ entries, onEdit, onDelete }: EntryHistoryProps) =
   }
 
   return (
-    <ScrollArea className="max-h-96 pr-3">
-      <div className="space-y-3">
+    <div className="space-y-3 pr-2">
         {entries.map((entry) => {
           const isAutomatic = Boolean(entry.expenseId);
           return (
@@ -81,7 +79,6 @@ export const EntryHistory = ({ entries, onEdit, onDelete }: EntryHistoryProps) =
             </div>
           );
         })}
-      </div>
-    </ScrollArea>
+    </div>
   );
 };

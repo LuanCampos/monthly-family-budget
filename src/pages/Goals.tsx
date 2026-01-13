@@ -71,12 +71,6 @@ const GoalsPage = () => {
   };
 
   useEffect(() => {
-    if (currentFamilyId) {
-      loadGoals();
-    }
-  }, [currentFamilyId, loadGoals]);
-
-  useEffect(() => {
     const fetchEntries = async () => {
       if (!historyGoal) return;
       const entries = await getEntries(historyGoal.id);
