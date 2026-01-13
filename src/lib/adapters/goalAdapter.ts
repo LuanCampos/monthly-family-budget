@@ -507,38 +507,38 @@ const calculateCurrentMonthProgress = (entries: any[]): { contributed: number; r
  * Calculate monthly contribution suggestion with intelligent logic
  * Takes into account how much was already contributed this month
  */
-const calculateIntelligentMonthlySuggestion = (
+const calculateMonthlyPlan = (
   totalRemaining: number,
-  diffMonths: number,
+  monthsRemainingRaw: number,
   monthlyContributed: number
-): number => {
-  if (diffMonths <= 0) return totalRemaining;
+): {
+  recommendedMonthly: number;
+  monthlyRemaining: number;
+} => {
+  // Always consider at least the current month
+  const monthsRemaining = Math.max(1, monthsRemainingRaw);
 
-  if (diffMonths === 1) {
-    // Last month - need to contribute the entire remaining amount
-    return totalRemaining;
+  // Average at the start of the month (includes what is already logged)
+  const startOfMonthAverage = (totalRemaining + monthlyContributed) / monthsRemaining;
+
+  // Already met or exceeded this month's average
+  if (monthlyContributed >= startOfMonthAverage) {
+    const monthsAfterThis = Math.max(1, monthsRemaining - 1);
+    // Average after removing the current month (overachieved)
+    const afterMonthAverage = totalRemaining / monthsAfterThis;
+
+    return {
+      recommendedMonthly: afterMonthAverage,
+      monthlyRemaining: 0,
+    };
   }
 
-  // Calculate how much needs to be contributed in remaining months (excluding current month if already contributed)
-  // If already contributed >= suggested amount for this month, don't reduce the monthly suggestion
-  // Otherwise, calculate how much is needed for remaining months
-
-  // For months after this one
-  const remainingMonthsAfterThis = diffMonths - 1;
-
-  // If we haven't contributed enough this month yet, we need to account for it
-  // But if we've already met/exceeded the initial suggestion, don't reduce the monthly amount
-  const simpleAverage = totalRemaining / diffMonths;
-
-  // If current month contribution already meets or exceeds the simple average, 
-  // spread the remaining value over remaining months
-  if (monthlyContributed >= simpleAverage) {
-    const stillNeeded = totalRemaining - monthlyContributed;
-    return remainingMonthsAfterThis > 0 ? stillNeeded / remainingMonthsAfterThis : 0;
-  }
-
-  // Otherwise use the simple average (or adjust slightly if we've contributed something)
-  return simpleAverage;
+  // Still need to log this month
+  const monthlyRemaining = Math.max(0, startOfMonthAverage - monthlyContributed);
+  return {
+    recommendedMonthly: startOfMonthAverage,
+    monthlyRemaining,
+  };
 };
 
 /**
@@ -583,15 +583,12 @@ export const calculateMonthlySuggestion = async (goalId: string): Promise<{
     const { contributed: monthlyContributed } = calculateCurrentMonthProgress(entries);
 
     // Calculate intelligent suggested monthly amount
-    const suggestedMonthly = calculateIntelligentMonthlySuggestion(remaining, diffMonths, monthlyContributed);
-
-    // Calculate how much still needs to be contributed this month
-    const monthlyRemaining = Math.max(0, suggestedMonthly - monthlyContributed);
+    const { recommendedMonthly, monthlyRemaining } = calculateMonthlyPlan(remaining, diffMonths, monthlyContributed);
 
     return {
       remainingValue: remaining,
       monthsRemaining: diffMonths,
-      suggestedMonthly: diffMonths > 0 ? suggestedMonthly : (remaining > 0 ? remaining : 0),
+      suggestedMonthly: recommendedMonthly,
       monthlyContributed: monthlyContributed > 0 ? monthlyContributed : 0,
       monthlyRemaining: monthlyRemaining > 0 ? monthlyRemaining : 0,
     };
@@ -608,7 +605,7 @@ export const calculateMonthlySuggestion = async (goalId: string): Promise<{
   // Base values from backend
   const totalRemaining = Number(result.remaining_value || 0);
   const monthsRemaining = result.months_remaining !== null ? Number(result.months_remaining) : null;
-  let suggestedMonthly = result.suggested_monthly !== null ? Number(result.suggested_monthly) : null;
+  let suggestedMonthly: number | null = result.suggested_monthly !== null ? Number(result.suggested_monthly) : null;
 
   // For online mode, also calculate monthly progress and adjust suggestion intelligently
   const goal = await goalService.getGoalById(goalId);
@@ -621,18 +618,15 @@ export const calculateMonthlySuggestion = async (goalId: string): Promise<{
       const { contributed } = calculateCurrentMonthProgress(entries.data || []);
       monthlyContributed = contributed;
 
-      // Recalculate suggestedMonthly using intelligent logic when we know the months remaining
       if (monthsRemaining !== null) {
-        const intelligentSuggested = calculateIntelligentMonthlySuggestion(
+        const { recommendedMonthly, monthlyRemaining: remainingThisMonth } = calculateMonthlyPlan(
           totalRemaining,
           monthsRemaining,
           monthlyContributed
         );
-        suggestedMonthly = intelligentSuggested;
+        suggestedMonthly = recommendedMonthly;
+        monthlyRemaining = remainingThisMonth;
       }
-
-      const safeSuggested = suggestedMonthly !== null ? suggestedMonthly : 0;
-      monthlyRemaining = Math.max(0, safeSuggested - monthlyContributed);
     }
   }
 

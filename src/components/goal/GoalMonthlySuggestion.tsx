@@ -40,7 +40,7 @@ export const GoalMonthlySuggestion = ({ goal, calculateSuggestion }: GoalMonthly
       }
     };
     load();
-  }, [goal.id, calculateSuggestion]);
+  }, [goal.id, goal.currentValue, calculateSuggestion]);
 
   if (loading) {
     return (

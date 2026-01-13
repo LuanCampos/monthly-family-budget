@@ -123,6 +123,9 @@ const GoalsPage = () => {
         setHistoryEntries(refreshedEntries);
       }
 
+      // also refresh goals so cards show updated currentValue/suggestions
+      await loadGoals();
+
       setEntryGoal(null);
       setEditingEntry(null);
     } finally {
@@ -135,6 +138,7 @@ const GoalsPage = () => {
     setDeletingEntry(true);
     try {
       await deleteEntry(entry.id, historyGoal.id);
+      await loadGoals();
     } finally {
       setDeletingEntry(false);
       setEntryToDelete(null);

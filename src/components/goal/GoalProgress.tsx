@@ -32,7 +32,7 @@ export const GoalProgress = ({ goal }: GoalProgressProps) => {
       }
     };
     loadSuggestion();
-  }, [goal.id, hasTargetDate, getMonthlySuggestion]);
+  }, [goal.id, hasTargetDate, goal.currentValue, getMonthlySuggestion]);
 
   const pct = goal.targetValue > 0 ? Math.min(100, Math.max(0, ((goal.currentValue || 0) / goal.targetValue) * 100)) : 0;
   const remaining = goal.targetValue - (goal.currentValue || 0);
