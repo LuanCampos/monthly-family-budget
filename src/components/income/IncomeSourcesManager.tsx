@@ -207,8 +207,8 @@ export const IncomeSourcesManager = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border sm:max-w-2xl flex flex-col gap-0 p-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+      <DialogContent className="bg-card border-border w-[95vw] max-w-[480px] sm:max-w-2xl max-h-[90vh] sm:max-h-[80vh] overflow-hidden flex flex-col gap-0 p-0">
+          <DialogHeader className="px-5 sm:px-6 pt-5 pb-3 border-b border-border">
             <DialogTitle>
               {t('manageIncomeSources') || 'Fontes de Renda'}
             </DialogTitle>
@@ -217,7 +217,7 @@ export const IncomeSourcesManager = ({
             </DialogDescription>
           </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-3 flex flex-col gap-4">
           {/* Total Income Display */}
           <div className="rounded-lg border border-border/80 bg-muted/10 p-4 shadow-sm">
             <div className="text-xs text-muted-foreground mb-1">{t('totalIncome') || 'Renda Total'}</div>
@@ -295,19 +295,19 @@ export const IncomeSourcesManager = ({
                             </div>
                           </div>
                         ) : (
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
-                            <div className="flex items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto">
+                          <>
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
                               <span className="text-sm text-foreground font-medium truncate">
                                 {source.name || t('unnamedIncomeSource') || 'Sem nome'}
                               </span>
                               {source.isNew && (
-                                <Badge variant="outline" className="bg-primary/5 text-primary text-xs flex-shrink-0">
+                                <Badge variant="outline" className="bg-primary/5 text-primary text-xs">
                                   {t('draft') || 'Rascunho'}
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 sm:ml-2 sm:flex-shrink-0 w-full sm:w-auto justify-between sm:justify-end">
-                              <span className="text-sm text-foreground font-semibold tabular-nums whitespace-nowrap">
+                            <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
+                              <span className="text-sm text-foreground font-semibold tabular-nums">
                                 {formatCurrency(parseFloat((source.value || '0').replace(',', '.')))}
                               </span>
 
@@ -334,7 +334,7 @@ export const IncomeSourcesManager = ({
                                 </Button>
                               </div>
                             </div>
-                          </div>
+                          </>
                         )}
                       </div>
                     );
