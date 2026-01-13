@@ -295,19 +295,19 @@ export const IncomeSourcesManager = ({
                             </div>
                           </div>
                         ) : (
-                          <>
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
+                            <div className="flex items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto">
                               <span className="text-sm text-foreground font-medium truncate">
                                 {source.name || t('unnamedIncomeSource') || 'Sem nome'}
                               </span>
                               {source.isNew && (
-                                <Badge variant="outline" className="bg-primary/5 text-primary text-xs">
+                                <Badge variant="outline" className="bg-primary/5 text-primary text-xs flex-shrink-0">
                                   {t('draft') || 'Rascunho'}
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
-                              <span className="text-sm text-foreground font-semibold tabular-nums">
+                            <div className="flex items-center gap-1.5 sm:ml-2 sm:flex-shrink-0 w-full sm:w-auto justify-between sm:justify-end">
+                              <span className="text-sm text-foreground font-semibold tabular-nums whitespace-nowrap">
                                 {formatCurrency(parseFloat((source.value || '0').replace(',', '.')))}
                               </span>
 
@@ -334,7 +334,7 @@ export const IncomeSourcesManager = ({
                                 </Button>
                               </div>
                             </div>
-                          </>
+                          </div>
                         )}
                       </div>
                     );

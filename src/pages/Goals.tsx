@@ -201,16 +201,12 @@ const GoalsPage = () => {
           </div>
         ) : (
           <>
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-semibold">{t('goals') || 'Metas'}</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('goalsSubtitle') || 'Gerencie suas metas financeiras conectadas a subcategorias.'}
-                </p>
-              </div>
-              <Button 
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="sr-only">{t('goals') || 'Metas'}</h2>
+              <Button
+                size="sm"
                 onClick={() => { setOpenGoalDialog(true); setEditingGoal(null); }}
-                className="gap-2 w-full sm:w-auto"
+                className="gap-2 w-auto"
               >
                 <Plus className="h-4 w-4" />
                 {t('addGoal') || 'Nova Meta'}
