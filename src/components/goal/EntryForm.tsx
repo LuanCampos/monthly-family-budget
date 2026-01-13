@@ -27,7 +27,7 @@ export const EntryForm = ({ onSubmit, onCancel, submitting }: EntryFormProps) =>
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const numericValue = parseCurrencyInput(value);
-    if (numericValue <= 0 || !description.trim()) return;
+    if (numericValue === 0 || !description.trim()) return;
     await onSubmit({ 
       value: numericValue, 
       description: description.trim(), 

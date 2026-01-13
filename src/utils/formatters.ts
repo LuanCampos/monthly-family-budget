@@ -18,5 +18,10 @@ export const formatCurrencyInput = (value: number): string => {
 };
 
 export const sanitizeCurrencyInput = (value: string): string => {
-  return value.replace(/[^\d,]/g, '');
+  // Allow digits, comma, and minus sign at the start
+  const cleaned = value.replace(/[^\d,-]/g, '');
+  // Ensure minus only appears at the start
+  const firstMinus = cleaned.indexOf('-');
+  if (firstMinus === -1) return cleaned;
+  return '-' + cleaned.replace(/-/g, '');
 };

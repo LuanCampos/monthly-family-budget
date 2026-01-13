@@ -152,6 +152,7 @@ export type CreateGoalEntryInput = z.infer<typeof CreateGoalEntryInputSchema>;
 
 /**
  * Validate manual goal entry creation
+ * Note: value can be negative (e.g., withdrawals, corrections)
  */
 export const CreateManualGoalEntryInputSchema = z.object({
   goal_id: z.string(),

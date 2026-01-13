@@ -33,15 +33,11 @@ export const useGoals = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const resetState = useCallback(() => {
-    setGoals([]);
-    setEntriesByGoal({});
-    setError(null);
-  }, []);
-
   const loadGoals = useCallback(async () => {
     if (!currentFamilyId) {
-      resetState();
+      setGoals([]);
+      setEntriesByGoal({});
+      setError(null);
       setLoading(false);
       return;
     }
@@ -54,13 +50,11 @@ export const useGoals = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentFamilyId, resetState]);
+  }, [currentFamilyId]);
 
   useEffect(() => {
-    resetState();
-    if (!currentFamilyId) return;
     loadGoals();
-  }, [currentFamilyId, loadGoals, resetState]);
+  }, [currentFamilyId, loadGoals]);
 
   const addGoal = useCallback(async (payload: GoalInput) => {
     if (!currentFamilyId) return null;
