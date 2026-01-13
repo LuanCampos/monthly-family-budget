@@ -331,20 +331,20 @@ export const updateEntry = async (
   }
 };
 
-export const deleteEntry = async (familyId: string | null, entryId: string): Promise<void> => {
+export const deleteEntry = async (familyId: string | null, entryId: string, allowAutomaticDelete = false): Promise<void> => {
   if (!familyId) return;
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     const entry = await offlineAdapter.get<any>('goal_entries', entryId);
     if (!entry) return;
-    if (entry.expense_id) throw new Error('Automatic entries cannot be deleted');
+    if (entry.expense_id && !allowAutomaticDelete) throw new Error('Automatic entries cannot be deleted');
     await offlineAdapter.delete('goal_entries', entryId);
     return;
   }
 
   const { data: existing, error: loadError } = await goalService.getEntryById(entryId);
   if (loadError) throw loadError;
-  if (existing?.expense_id) throw new Error('Automatic entries cannot be deleted');
+  if (existing?.expense_id && !allowAutomaticDelete) throw new Error('Automatic entries cannot be deleted');
 
   const { error } = await goalService.deleteEntry(entryId);
   if (error) {

@@ -44,12 +44,13 @@ export const insertExpense = async (familyId: string | null, payload: Partial<Ex
     created_at: now,
     updated_at: now,
   };
+  const shouldCreateEntryOffline = !offlineExpenseData.is_pending;
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     await offlineAdapter.put('expenses', offlineExpenseData as any);
     
-    // Check for linked goal and create entry
-    if (offlineExpenseData.subcategory_id) {
+    // Check for linked goal and create entry only if already paid
+    if (shouldCreateEntryOffline) {
       await handleGoalEntryCreation(familyId, offlineExpenseData as any);
     }
     
@@ -67,12 +68,16 @@ export const insertExpense = async (familyId: string | null, payload: Partial<Ex
     if (!offlineAdapter.isOfflineId(familyId)) {
       await offlineAdapter.sync.add({ type: 'expense', action: 'insert', data: offlineExpenseData, familyId });
     }
+    if (shouldCreateEntryOffline) {
+      await handleGoalEntryCreation(familyId, offlineExpenseData as any);
+    }
     return offlineExpenseData;
   }
   
-  // Check for linked goal and create entry
-  if (res.data && payload.subcategory_id) {
-    await handleGoalEntryCreation(familyId, res.data as any);
+  const expenseData = res.data as any;
+  const shouldCreateEntryOnline = expenseData && !expenseData.is_pending;
+  if (expenseData && shouldCreateEntryOnline) {
+    await handleGoalEntryCreation(familyId, expenseData);
   }
   
   return res;
@@ -87,14 +92,14 @@ export const updateExpense = async (familyId: string | null, id: string, data: P
   
   // Get the old expense data before updating
   const oldExpense = await offlineAdapter.get<any>('expenses', id);
+  const mergedOfflineExpense = oldExpense ? { ...oldExpense, ...data } : null;
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     const expense = await offlineAdapter.get<any>('expenses', id);
     if (expense) await offlineAdapter.put('expenses', { ...expense, ...data } as any);
-    
-    // Update goal entry if exists
-    if (oldExpense && oldExpense.subcategory_id) {
-      await handleGoalEntryUpdate(familyId, id, oldExpense, { ...oldExpense, ...data });
+
+    if (mergedOfflineExpense) {
+      await handleGoalEntryUpdate(familyId, id, oldExpense, mergedOfflineExpense);
     }
     
     return;
@@ -111,9 +116,10 @@ export const updateExpense = async (familyId: string | null, id: string, data: P
     }
   }
   
-  // Update goal entry if exists
-  if (oldExpense && oldExpense.subcategory_id && res.data) {
-    await handleGoalEntryUpdate(familyId, id, oldExpense, res.data as any);
+  const updatedExpense = (res && res.data) ? res.data as any : mergedOfflineExpense;
+  if (updatedExpense) {
+    await handleGoalEntryUpdate(familyId, id, oldExpense, updatedExpense);
+    await offlineAdapter.put('expenses', updatedExpense as any);
   }
   
   return res;
@@ -124,23 +130,28 @@ export const updateExpense = async (familyId: string | null, id: string, data: P
  */
 export const setExpensePending = async (familyId: string | null, id: string, pending: boolean) => {
   if (!familyId) return;
+  const currentExpense = await offlineAdapter.get<any>('expenses', id);
+  if (!currentExpense) return;
+  const updatedExpense = { ...currentExpense, is_pending: pending } as any;
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const expense = await offlineAdapter.get<any>('expenses', id);
-    if (expense) await offlineAdapter.put('expenses', { ...expense, is_pending: pending } as any);
+    await offlineAdapter.put('expenses', updatedExpense);
+    await handleGoalEntryUpdate(familyId, id, currentExpense, updatedExpense);
     return;
   }
   
   const res = await budgetService.setExpensePending(id, pending);
   if (res.error) {
     // Fallback to offline and queue sync if it's an online family
-    const expense = await offlineAdapter.get<any>('expenses', id);
-    if (expense) await offlineAdapter.put('expenses', { ...expense, is_pending: pending } as any);
+    await offlineAdapter.put('expenses', updatedExpense);
     // Only queue if it's an online family (created with UUID from Supabase)
     if (!offlineAdapter.isOfflineId(familyId)) {
       await offlineAdapter.sync.add({ type: 'expense', action: 'update', data: { id, is_pending: pending }, familyId });
     }
   }
+  const persistedExpense = (res && (res as any).data) ? (res as any).data : updatedExpense;
+  await offlineAdapter.put('expenses', persistedExpense as any);
+  await handleGoalEntryUpdate(familyId, id, currentExpense, persistedExpense as any);
   return res;
 };
 
@@ -159,7 +170,7 @@ export const deleteExpense = async (familyId: string | null, id: string) => {
     
     // Delete goal entry if exists
     if (expense) {
-      await handleGoalEntryDeletion(familyId, id, expense);
+      await handleGoalEntryDeletion(familyId, id);
     }
     
     return;
@@ -169,7 +180,7 @@ export const deleteExpense = async (familyId: string | null, id: string) => {
   
   // Delete goal entry if exists
   if (expense && !res.error) {
-    await handleGoalEntryDeletion(familyId, id, expense);
+    await handleGoalEntryDeletion(familyId, id);
   }
   
   return res;
@@ -198,105 +209,100 @@ const extractMonthYear = (expense: any): { month: number; year: number } => {
 };
 
 /**
- * Helper: Handle goal entry creation when expense is created
+ * Helper: Find linked goal by subcategory or category 'liberdade'
+ */
+const findLinkedGoal = async (expense: any) => {
+  if (!expense) return null;
+  if (expense.subcategory_id) {
+    const goal = await goalAdapter.getGoalBySubcategoryId(expense.subcategory_id);
+    if (goal) return goal;
+  }
+  if (expense.category_key === 'liberdade') {
+    return goalAdapter.getGoalByCategoryKey('liberdade');
+  }
+  return null;
+};
+
+const createGoalEntryFromExpense = async (familyId: string, goalId: string, expense: any) => {
+  const { month, year } = extractMonthYear(expense);
+  await goalAdapter.createEntry(familyId, {
+    goalId,
+    expenseId: expense.id,
+    value: expense.value || 0,
+    month,
+    year,
+    description: expense.title,
+  });
+  logger.info('expense.goal.entry.created', { expenseId: expense.id, goalId });
+};
+
+/**
+ * Helper: Handle goal entry creation when expense is created or marked as paid
  */
 const handleGoalEntryCreation = async (familyId: string, expense: any) => {
   try {
-    // Verificar se tem subcategoria vinculada OU se é da categoria 'liberdade'
-    let linkedGoal = null;
-    
-    if (expense.subcategory_id) {
-      linkedGoal = await goalAdapter.getGoalBySubcategoryId(expense.subcategory_id);
-    }
-    
-    // Se não encontrou por subcategoria e é da categoria liberdade, buscar pela categoria
-    if (!linkedGoal && expense.category_key === 'liberdade') {
-      linkedGoal = await goalAdapter.getGoalByCategoryKey('liberdade');
-    }
-    
+    if (expense.is_pending) return;
+    const linkedGoal = await findLinkedGoal(expense);
     if (!linkedGoal) return;
-    
-    const { month, year } = extractMonthYear(expense);
-    
-    await goalAdapter.createEntry(familyId, {
-      goalId: linkedGoal.id,
-      expenseId: expense.id,
-      value: expense.value || 0,
-      month,
-      year,
-    });
-    
-    logger.info('expense.goal.entry.created', { expenseId: expense.id, goalId: linkedGoal.id });
+
+    const existingEntry = await goalAdapter.getEntryByExpense(expense.id);
+    if (existingEntry) return;
+
+    await createGoalEntryFromExpense(familyId, linkedGoal.id, expense);
   } catch (error) {
     logger.error('expense.goal.entry.create.failed', { expenseId: expense.id, error: (error as Error).message });
   }
 };
 
 /**
- * Helper: Handle goal entry update when expense is updated
+ * Helper: Handle goal entry update when expense is updated or pending flag changes
  */
-const handleGoalEntryUpdate = async (familyId: string, expenseId: string, oldExpense: any, newExpense: any) => {
+const handleGoalEntryUpdate = async (familyId: string, expenseId: string, _oldExpense: any, newExpense: any) => {
   try {
     const entry = await goalAdapter.getEntryByExpense(expenseId);
-    if (!entry) return;
-    
-    // Buscar goal pela subcategoria ou pela categoria liberdade
-    let linkedGoal = null;
-    if (oldExpense.subcategory_id) {
-      linkedGoal = await goalAdapter.getGoalBySubcategoryId(oldExpense.subcategory_id);
+    const linkedGoal = await findLinkedGoal(newExpense);
+    const shouldHaveEntry = !newExpense?.is_pending && !!linkedGoal;
+
+    // If entry exists and should be deleted (no longer linked or pending)
+    if (entry && (!shouldHaveEntry || (linkedGoal && entry.goalId !== linkedGoal.id))) {
+      await goalAdapter.deleteEntry(familyId, entry.id, true);
     }
-    if (!linkedGoal && oldExpense.category_key === 'liberdade') {
-      linkedGoal = await goalAdapter.getGoalByCategoryKey('liberdade');
+
+    // If should not have entry, we're done
+    if (!shouldHaveEntry) return;
+
+    // If entry exists and goal is the same, just update it
+    if (entry && linkedGoal && entry.goalId === linkedGoal.id) {
+      const { month, year } = extractMonthYear(newExpense);
+      await goalAdapter.updateEntry(familyId, entry.id, {
+        value: newExpense.value || 0,
+        month,
+        year,
+        description: newExpense.title,
+      }, true);
+      logger.info('expense.goal.entry.updated', { expenseId, entryId: entry.id, goalId: entry.goalId });
+      return;
     }
-    if (!linkedGoal) return;
-    
-    const oldValue = oldExpense.value || 0;
-    const newValue = newExpense.value || 0;
-    
-    const { month, year } = extractMonthYear(newExpense);
-    
-    // Update entry (month, year, and value - allowed for automatic entries when expense changes)
-    await goalAdapter.updateEntry(familyId, entry.id, {
-      value: newValue,
-      month,
-      year,
-    }, true); // allowAutomaticUpdate = true
-    
-    // Note: currentValue is now calculated dynamically from entries
-    
-    logger.info('expense.goal.entry.updated', { expenseId, entryId: entry.id, oldValue, newValue });
+
+    // If no entry exists but should (e.g., expense marked as paid), create it
+    if (!entry && linkedGoal) {
+      await createGoalEntryFromExpense(familyId, linkedGoal.id, newExpense);
+    }
   } catch (error) {
     logger.error('expense.goal.entry.update.failed', { expenseId, error: (error as Error).message });
   }
 };
 
 /**
- * Helper: Handle goal entry deletion when expense is deleted
+ * Helper: Handle goal entry deletion when expense is deleted or loses link/payment
  */
-const handleGoalEntryDeletion = async (familyId: string, expenseId: string, expense: any) => {
+const handleGoalEntryDeletion = async (familyId: string, expenseId: string) => {
   try {
     const entry = await goalAdapter.getEntryByExpense(expenseId);
     if (!entry) return;
-    
-    // Buscar goal pela subcategoria ou pela categoria liberdade
-    let linkedGoal = null;
-    if (expense.subcategory_id) {
-      linkedGoal = await goalAdapter.getGoalBySubcategoryId(expense.subcategory_id);
-    }
-    if (!linkedGoal && expense.category_key === 'liberdade') {
-      linkedGoal = await goalAdapter.getGoalByCategoryKey('liberdade');
-    }
-    if (!linkedGoal) return;
-    
-    // Note: No need to decrement goal value - currentValue is now calculated dynamically
-    // The entry will be deleted via cascade in database or explicitly in offline mode
-    
-    // Delete the entry (this will cascade from expense deletion in DB, but we do it explicitly for offline)
-    if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-      await offlineAdapter.delete('goal_entries', entry.id);
-    }
-    
-    logger.info('expense.goal.entry.deleted', { expenseId, entryId: entry.id, goalId: linkedGoal.id });
+
+    await goalAdapter.deleteEntry(familyId, entry.id, true);
+    logger.info('expense.goal.entry.deleted', { expenseId, entryId: entry.id, goalId: entry.goalId });
   } catch (error) {
     logger.error('expense.goal.entry.delete.failed', { expenseId, error: (error as Error).message });
   }
