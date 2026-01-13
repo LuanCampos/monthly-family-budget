@@ -6,9 +6,14 @@
     <script>
       // GitHub Pages SPA redirect script
       // This script redirects all 404s back to index.html with the original path/hash preserved
-      var pathSegmentsToKeep = 1; // Keep '/monthly-family-budget/' in the path
-      
       var l = window.location;
+
+      // Detect if the site is served from the GitHub Pages repo path or a custom domain/root
+      var repoBase = 'monthly-family-budget';
+      var pathSegments = l.pathname.split('/').filter(Boolean);
+      var hasRepoBase = pathSegments[0] === repoBase;
+      var pathSegmentsToKeep = hasRepoBase ? 1 : 0;
+
       var redirectPath = l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?';
       
       // Preserve the original path after the base
