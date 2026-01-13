@@ -157,3 +157,17 @@ export const importExpenseAsEntry = async (goalId: string, expenseId: string) =>
 export const calculateMonthlySuggestion = async (goalId: string) => {
   return supabase.rpc('calculate_monthly_contribution_suggestion', { goal_id: goalId });
 };
+
+export const getEntriesByGoalIds = async (goalIds: string[]) => {
+  if (goalIds.length === 0) {
+    return { data: [], error: null };
+  }
+
+  return supabase
+    .from('goal_entry')
+    .select('*')
+    .in('goal_id', goalIds)
+    .order('year', { ascending: false })
+    .order('month', { ascending: false })
+    .order('created_at', { ascending: false });
+};

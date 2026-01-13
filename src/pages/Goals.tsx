@@ -11,6 +11,7 @@ import { useFamily } from '@/contexts/FamilyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Goal, GoalEntry } from '@/types';
 import { SettingsPanel } from '@/components/settings';
+import { FamilySetup } from '@/components/family';
 import { Loader2, Target, Settings as SettingsIcon, Wallet, Plus, History, Import } from 'lucide-react';
 import {
   AlertDialog,
@@ -23,7 +24,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-const GoalsPage = () => {
+// Inner component that uses useGoals - will be remounted when family changes via key
+const GoalsContent = () => {
   const { t } = useLanguage();
   const { currentFamilyId, myPendingInvitations } = useFamily();
   const { user } = useAuth();
@@ -83,6 +85,11 @@ const GoalsPage = () => {
   }, [historyGoal, entriesByGoal, getEntries]);
 
   const pageTitle = useMemo(() => t('goals') || 'Metas', [t]);
+
+  // Update page title based on language
+  useEffect(() => {
+    document.title = pageTitle;
+  }, [pageTitle]);
 
   const handleSaveGoal = async (data: { name: string; targetValue: number; currentValue?: number; targetDate?: string; account?: string; linkedSubcategoryId?: string }) => {
     setSavingGoal(true);
@@ -212,11 +219,8 @@ const GoalsPage = () => {
 
       <main className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">{t('loading') || 'Carregando...'}</p>
-            </div>
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
           <>
@@ -404,6 +408,30 @@ const GoalsPage = () => {
       <SettingsPanel open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
+};
+
+// Main GoalsPage component - handles auth/family loading and provides key for remounting
+const GoalsPage = () => {
+  const { loading: authLoading } = useAuth();
+  const { currentFamilyId, loading: familyLoading } = useFamily();
+
+  // Show loading while checking auth/family
+  if (authLoading || familyLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show family setup if no family selected
+  if (!currentFamilyId) {
+    return <FamilySetup />;
+  }
+
+  // Render GoalsContent with key - forces remount when family changes
+  // This cleanly resets all state without a full page reload
+  return <GoalsContent key={currentFamilyId} />;
 };
 
 export default GoalsPage;

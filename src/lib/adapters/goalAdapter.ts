@@ -32,36 +32,42 @@ interface GoalEntryPayload {
 }
 
 /**
- * Calculate current value by summing all goal entries
+ * Enrich goals with currentValue using a single batch query (online) or a single
+ * offline read. Avoids N calls to goalService.getEntries (one per goal).
  */
-const calculateCurrentValue = async (familyId: string, goalId: string): Promise<number> => {
-  let entries: any[] = [];
-  
+const addCurrentValueToGoals = async (familyId: string, goals: Goal[]): Promise<Goal[]> => {
+  if (goals.length === 0) return goals;
+
+  const goalIds = goals.map(goal => goal.id);
+  const goalIdSet = new Set(goalIds);
+
+  // Offline / offline-id families: one read, then aggregate locally
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    entries = await offlineAdapter.getAllByIndex<any>('goal_entries', 'goal_id', goalId) || [];
-  } else {
-    const { data, error } = await goalService.getEntries(goalId);
-    if (!error && data) {
-      entries = data;
-    }
+    const allEntries = await offlineAdapter.getAll<any>('goal_entries');
+    const sums = (allEntries || []).reduce((acc, entry: any) => {
+      if (!goalIdSet.has(entry.goal_id)) return acc;
+      acc[entry.goal_id] = (acc[entry.goal_id] || 0) + Number(entry.value || 0);
+      return acc;
+    }, {} as Record<string, number>);
+
+    return goals.map(goal => ({ ...goal, currentValue: sums[goal.id] ?? 0 }));
   }
-  
-  return entries.reduce((sum, entry) => sum + Number(entry.value || 0), 0);
-};
 
-/**
- * Enrich a single goal with calculated currentValue
- */
-const enrichGoalWithCurrentValue = async (familyId: string, goal: Goal): Promise<Goal> => {
-  const currentValue = await calculateCurrentValue(familyId, goal.id);
-  return { ...goal, currentValue };
-};
+  // Online: single query for all goal entries
+  const { data, error } = await goalService.getEntriesByGoalIds(goalIds);
+  if (error) {
+    logger.warn('goal.entries.batch.failed', { familyId, error: error.message });
+    return goals.map(goal => ({ ...goal, currentValue: goal.currentValue ?? 0 }));
+  }
 
-/**
- * Enrich multiple goals with calculated currentValue
- */
-const enrichGoalsWithCurrentValue = async (familyId: string, goals: Goal[]): Promise<Goal[]> => {
-  return Promise.all(goals.map(goal => enrichGoalWithCurrentValue(familyId, goal)));
+  const sums = (data || []).reduce((acc, entry: any) => {
+    const goalId = entry.goal_id;
+    if (!goalId) return acc;
+    acc[goalId] = (acc[goalId] || 0) + Number(entry.value || 0);
+    return acc;
+  }, {} as Record<string, number>);
+
+  return goals.map(goal => ({ ...goal, currentValue: sums[goal.id] ?? 0 }));
 };
 
 const ensureSubcategoryIsValid = async (familyId: string, subcategoryId: string | undefined, categoryKey: string | undefined, currentGoalId?: string) => {
@@ -124,7 +130,7 @@ export const getGoals = async (familyId: string | null): Promise<Goal[]> => {
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     const data = await offlineAdapter.getAllByIndex<any>('goals', 'family_id', familyId);
     const goals = mapGoals(data || []);
-    return enrichGoalsWithCurrentValue(familyId, goals);
+    return addCurrentValueToGoals(familyId, goals);
   }
 
   const { data, error } = await goalService.getGoals(familyId);
@@ -133,7 +139,7 @@ export const getGoals = async (familyId: string | null): Promise<Goal[]> => {
     return [];
   }
   const goals = mapGoals(data || []);
-  return enrichGoalsWithCurrentValue(familyId, goals);
+  return addCurrentValueToGoals(familyId, goals);
 };
 
 export const createGoal = async (familyId: string | null, payload: GoalPayload): Promise<Goal | null> => {
@@ -155,7 +161,8 @@ export const createGoal = async (familyId: string | null, payload: GoalPayload):
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     await offlineAdapter.put('goals', offlineGoal as any);
     const goal = mapGoal(offlineGoal as any);
-    return enrichGoalWithCurrentValue(familyId, goal);
+    const [enriched] = await addCurrentValueToGoals(familyId, [goal]);
+    return enriched;
   }
 
   const { data, error } = await goalService.createGoal(goalRow);
@@ -166,11 +173,13 @@ export const createGoal = async (familyId: string | null, payload: GoalPayload):
       await offlineAdapter.sync.add({ type: 'goal', action: 'insert', data: offlineGoal, familyId });
     }
     const goal = mapGoal(offlineGoal as any);
-    return enrichGoalWithCurrentValue(familyId, goal);
+    const [enriched] = await addCurrentValueToGoals(familyId, [goal]);
+    return enriched;
   }
 
   const goal = mapGoal(data);
-  return enrichGoalWithCurrentValue(familyId, goal);
+  const [enriched] = await addCurrentValueToGoals(familyId, [goal]);
+  return enriched;
 };
 
 export const updateGoal = async (familyId: string | null, goalId: string, payload: Partial<GoalPayload>): Promise<void> => {

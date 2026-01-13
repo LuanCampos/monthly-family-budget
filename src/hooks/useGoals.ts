@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as storageAdapter from '@/lib/adapters/storageAdapter';
 import { useFamily } from '@/contexts/FamilyContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -33,6 +33,12 @@ export const useGoals = () => {
   const [entriesByGoal, setEntriesByGoal] = useState<Record<string, GoalEntry[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use ref to always access the latest entriesByGoal without adding it to dependencies
+  const entriesByGoalRef = useRef(entriesByGoal);
+  useEffect(() => {
+    entriesByGoalRef.current = entriesByGoal;
+  }, [entriesByGoal]);
 
   const loadGoals = useCallback(async () => {
     if (!currentFamilyId) {
@@ -128,11 +134,13 @@ export const useGoals = () => {
 
   const getEntries = useCallback(async (goalId: string) => {
     if (!currentFamilyId) return [] as GoalEntry[];
-    if (entriesByGoal[goalId]) return entriesByGoal[goalId];
+    // Access current value via ref to avoid stale closures
+    const cached = entriesByGoalRef.current[goalId];
+    if (cached) return cached;
     const data = await storageAdapter.getGoalEntries(currentFamilyId, goalId);
     setEntriesByGoal(prev => ({ ...prev, [goalId]: data }));
     return data;
-  }, [currentFamilyId, entriesByGoal]);
+  }, [currentFamilyId]);
 
   const refreshEntries = useCallback(async (goalId: string) => {
     if (!currentFamilyId) return [] as GoalEntry[];
