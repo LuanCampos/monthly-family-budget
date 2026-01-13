@@ -45,22 +45,26 @@ export const GoalCard = ({ goal, entries, onViewHistory, onEdit, onDelete, onFet
       <CardContent className="space-y-2 pt-2 pb-3.5">
         <GoalProgress goal={goal} />
 
-        <div className="grid grid-cols-[1fr_1fr_auto_auto] sm:flex sm:flex-wrap gap-2 items-center !mt-4">
+        <div className="goal-actions flex flex-wrap items-center gap-2 !mt-4">
           <GoalDetailsDialog 
             goal={goal} 
             entries={entries}
             onFetchEntries={onFetchEntries}
             calculateSuggestion={calculateSuggestion}
           />
-          <Button size="sm" variant="outline" onClick={onViewHistory} className="gap-1.5 w-full sm:w-auto">
-            <History className="h-4 w-4" />
-            <span>{t('history') || 'Histórico'}</span>
+          <button
+            type="button"
+            onClick={onViewHistory}
+            className="goal-action-btn"
+          >
+            <History className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="leading-none">{t('history') || 'Histórico'}</span>
+          </button>
+          <Button size="icon" variant="ghost" onClick={onEdit} aria-label={t('edit') || 'Editar'} className="justify-center hover:text-primary !h-8 !w-8">
+            <Pencil className="h-3.5 w-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" onClick={onEdit} aria-label={t('edit') || 'Editar'} className="justify-center">
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button size="icon" variant="destructive" onClick={onDelete} aria-label={t('delete') || 'Excluir'} className="justify-center">
-            <Trash2 className="h-4 w-4" />
+          <Button size="icon" variant="ghost" onClick={onDelete} aria-label={t('delete') || 'Excluir'} className="justify-center text-destructive hover:bg-destructive/10 hover:text-destructive !h-8 !w-8">
+            <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
       </CardContent>
