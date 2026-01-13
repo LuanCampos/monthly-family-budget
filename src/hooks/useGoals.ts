@@ -54,7 +54,7 @@ export const useGoals = () => {
 
   useEffect(() => {
     loadGoals();
-  }, [currentFamilyId, loadGoals]);
+  }, [loadGoals]);
 
   const addGoal = useCallback(async (payload: GoalInput) => {
     if (!currentFamilyId) return null;
@@ -75,12 +75,13 @@ export const useGoals = () => {
     if (!currentFamilyId) return;
     try {
       await storageAdapter.updateGoal(currentFamilyId, id, payload);
-      await loadGoals();
+      const data = await storageAdapter.getGoals(currentFamilyId);
+      setGoals(data);
       toast({ title: t('goalUpdated') });
     } catch (err) {
       toast({ title: t('errorSaving'), description: (err as Error).message, variant: 'destructive' });
     }
-  }, [currentFamilyId, loadGoals, toast, t]);
+  }, [currentFamilyId, toast, t]);
 
   const deleteGoal = useCallback(async (id: string) => {
     if (!currentFamilyId) return;
@@ -124,33 +125,36 @@ export const useGoals = () => {
         year: input.year,
       });
       await refreshEntries(input.goalId);
-      await loadGoals();
+      const data = await storageAdapter.getGoals(currentFamilyId);
+      setGoals(data);
       toast({ title: t('entryCreated') });
       return entry;
     } catch (err) {
       toast({ title: t('errorSaving'), description: (err as Error).message, variant: 'destructive' });
       return null;
     }
-  }, [currentFamilyId, refreshEntries, loadGoals, toast, t]);
+  }, [currentFamilyId, refreshEntries, toast, t]);
 
   const updateEntry = useCallback(async (entryId: string, goalId: string, data: Partial<Pick<ManualEntryInput, 'description' | 'month' | 'year'>>) => {
     if (!currentFamilyId) return;
     await storageAdapter.updateGoalEntry(currentFamilyId, entryId, data);
     await refreshEntries(goalId);
-    await loadGoals();
-  }, [currentFamilyId, refreshEntries, loadGoals]);
+    const goals = await storageAdapter.getGoals(currentFamilyId);
+    setGoals(goals);
+  }, [currentFamilyId, refreshEntries]);
 
   const deleteEntry = useCallback(async (entryId: string, goalId: string) => {
     if (!currentFamilyId) return;
     try {
       await storageAdapter.deleteGoalEntry(currentFamilyId, entryId);
       await refreshEntries(goalId);
-      await loadGoals();
+      const data = await storageAdapter.getGoals(currentFamilyId);
+      setGoals(data);
       toast({ title: t('entryDeleted') });
     } catch (err) {
       toast({ title: t('errorDeleting'), description: (err as Error).message, variant: 'destructive' });
     }
-  }, [currentFamilyId, refreshEntries, loadGoals, toast, t]);
+  }, [currentFamilyId, refreshEntries, toast, t]);
 
   const getHistoricalExpenses = useCallback(async (subcategoryId: string) => {
     if (!currentFamilyId) return [];
@@ -162,9 +166,9 @@ export const useGoals = () => {
     try {
       const entry = await storageAdapter.importGoalExpense(currentFamilyId, goalId, expenseId);
       if (entry) {
-        // Only refresh if successful
         await refreshEntries(goalId);
-        await loadGoals();
+        const data = await storageAdapter.getGoals(currentFamilyId);
+        setGoals(data);
         toast({ title: t('expenseImported') });
       }
       return entry;
@@ -181,7 +185,7 @@ export const useGoals = () => {
       }
       return null;
     }
-  }, [currentFamilyId, refreshEntries, loadGoals, toast, t]);
+  }, [currentFamilyId, refreshEntries, toast, t]);
 
   const getMonthlySuggestion = useCallback(async (goalId: string) => {
     return storageAdapter.calculateGoalMonthlySuggestion(goalId);
