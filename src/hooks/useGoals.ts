@@ -3,6 +3,7 @@ import * as storageAdapter from '@/lib/adapters/storageAdapter';
 import { useFamily } from '@/contexts/FamilyContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from './ui/use-toast';
+import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import { logger } from '@/lib/logger';
 import type { Goal, GoalEntry } from '@/types';
 
@@ -30,7 +31,7 @@ export const useGoals = () => {
   const { toast } = useToast();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [entriesByGoal, setEntriesByGoal] = useState<Record<string, GoalEntry[]>>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadGoals = useCallback(async () => {
@@ -55,6 +56,32 @@ export const useGoals = () => {
   useEffect(() => {
     loadGoals();
   }, [loadGoals]);
+
+  // Set up realtime subscriptions (only for cloud families)
+  useEffect(() => {
+    if (!currentFamilyId || offlineAdapter.isOfflineId(currentFamilyId) || !navigator.onLine) return;
+
+    const channel = storageAdapter.createChannel(`goals-${currentFamilyId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'goals', filter: `family_id=eq.${currentFamilyId}` }, () => {
+        loadGoals();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'goal_entries' }, async (payload) => {
+        // Reload goals to update current values
+        await loadGoals();
+        // If we have a goal ID in the payload, refresh its entries
+        if (payload.new && 'goal_id' in payload.new) {
+          const goalId = payload.new.goal_id as string;
+          const data = await storageAdapter.getGoalEntries(currentFamilyId, goalId);
+          setEntriesByGoal(prev => ({ ...prev, [goalId]: data }));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      storageAdapter.removeChannel(channel);
+    };
+  }, [currentFamilyId, loadGoals]);
+
 
   const addGoal = useCallback(async (payload: GoalInput) => {
     if (!currentFamilyId) return null;
