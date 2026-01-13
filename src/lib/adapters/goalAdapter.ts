@@ -242,7 +242,12 @@ export const getEntries = async (familyId: string | null, goalId: string): Promi
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     const entries = await offlineAdapter.getAllByIndex<any>('goal_entries', 'goal_id', goalId);
-    return mapGoalEntries(entries || []);
+    const mapped = mapGoalEntries(entries || []);
+    // Sort by year/month descending (most recent first)
+    return mapped.sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year;
+      return b.month - a.month;
+    });
   }
 
   const { data, error } = await goalService.getEntries(goalId);
@@ -331,20 +336,37 @@ export const updateEntry = async (
   }
 };
 
+/**
+ * Delete a goal entry
+ * 
+ * @param allowAutomaticDelete - When true, bypasses any checks (used by expenseAdapter)
+ *                               When false (default), allows manual deletion by user
+ * 
+ * Note: Users can manually delete automatic entries to fix errors,
+ *       then re-import if needed using the import functionality
+ */
 export const deleteEntry = async (familyId: string | null, entryId: string, allowAutomaticDelete = false): Promise<void> => {
   if (!familyId) return;
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     const entry = await offlineAdapter.get<any>('goal_entries', entryId);
     if (!entry) return;
-    if (entry.expense_id && !allowAutomaticDelete) throw new Error('Automatic entries cannot be deleted');
+    // Allow manual deletion of automatic entries - user may need to fix errors
+    // Only block when called from internal operations (allowAutomaticDelete flag)
+    if (entry.expense_id && !allowAutomaticDelete) {
+      logger.debug('goal.entry.delete.automatic', { entryId, expenseId: entry.expense_id });
+    }
     await offlineAdapter.delete('goal_entries', entryId);
     return;
   }
 
   const { data: existing, error: loadError } = await goalService.getEntryById(entryId);
   if (loadError) throw loadError;
-  if (existing?.expense_id && !allowAutomaticDelete) throw new Error('Automatic entries cannot be deleted');
+  // Allow manual deletion of automatic entries - user may need to fix errors
+  // Only block when called from internal operations (allowAutomaticDelete flag)
+  if (existing?.expense_id && !allowAutomaticDelete) {
+    logger.debug('goal.entry.delete.automatic', { entryId, expenseId: existing.expense_id });
+  }
 
   const { error } = await goalService.deleteEntry(entryId);
   if (error) {
@@ -412,7 +434,13 @@ export const getHistoricalExpenses = async (familyId: string | null, subcategory
       e.subcategory_id === subcategoryId && !importedExpenseIds.has(e.id)
     );
     
-    return filtered.map(mapExpense);
+    const mapped = filtered.map(mapExpense);
+    // Sort by year/month descending (most recent first)
+    return mapped.sort((a, b) => {
+      if (a.year && b.year && b.year !== a.year) return b.year - a.year;
+      if (a.month && b.month) return b.month - a.month;
+      return 0;
+    });
   }
 
   const { data, error } = await goalService.getHistoricalExpenses(subcategoryId);
@@ -420,7 +448,13 @@ export const getHistoricalExpenses = async (familyId: string | null, subcategory
     logger.warn('goal.historical.failed', { subcategoryId, error: error.message });
     return [];
   }
-  return (data || []).map(mapExpense);
+  const mapped = (data || []).map(mapExpense);
+  // Sort by year/month descending (most recent first)
+  return mapped.sort((a, b) => {
+    if (a.year && b.year && b.year !== a.year) return b.year - a.year;
+    if (a.month && b.month) return b.month - a.month;
+    return 0;
+  });
 };
 
 export const importExpense = async (familyId: string | null, goalId: string, expenseId: string): Promise<GoalEntry | null> => {
@@ -443,9 +477,12 @@ export const importExpense = async (familyId: string | null, goalId: string, exp
     let parsedYear = new Date(expense.created_at || Date.now()).getFullYear();
     let parsedMonth = new Date(expense.created_at || Date.now()).getMonth() + 1;
     if (typeof expense.month_id === 'string') {
-      const [y, m] = expense.month_id.split('-');
-      parsedYear = Number(y) || parsedYear;
-      parsedMonth = Number(m) || parsedMonth;
+      const parts = expense.month_id.split('-');
+      // month_id format: familyId-YYYY-MM (3 parts)
+      if (parts.length >= 3) {
+        parsedYear = Number(parts[parts.length - 2]) || parsedYear;
+        parsedMonth = Number(parts[parts.length - 1]) || parsedMonth;
+      }
     } else if (typeof expense.month === 'number' && typeof expense.year === 'number') {
       parsedYear = expense.year;
       parsedMonth = expense.month;
@@ -459,7 +496,7 @@ export const importExpense = async (familyId: string | null, goalId: string, exp
       year: parsedYear,
       description: expense.title,
     });
-    logger.info('goal.import.success_offline', { goalId, expenseId });
+    logger.debug('goal.import.success_offline', { goalId, expenseId });
     return entry;
   }
 
@@ -483,7 +520,7 @@ export const importExpense = async (familyId: string | null, goalId: string, exp
     throw new Error('Failed to import expense - no data returned');
   }
   
-  logger.info('goal.import.success', { goalId, expenseId });
+  logger.debug('goal.import.success', { goalId, expenseId });
   return mapGoalEntry(data as any);
 };
 

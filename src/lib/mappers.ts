@@ -29,22 +29,60 @@ export const mapIncomeSource = (source: IncomeSourceRow): IncomeSource => ({
 /**
  * Map database Expense to application Expense
  */
-export const mapExpense = (expense: ExpenseRow): Expense => ({
-  id: expense.id,
-  title: expense.title,
-  category: expense.category_key as CategoryKey,
-  subcategoryId: expense.subcategory_id ?? undefined,
-  value: expense.value,
-  isRecurring: expense.is_recurring,
-  isPending: expense.is_pending ?? undefined,
-  dueDay: expense.due_day ?? undefined,
-  recurringExpenseId: expense.recurring_expense_id ?? undefined,
-  createdAt: expense.created_at,
-  installmentInfo:
-    expense.installment_current && expense.installment_total
-      ? { current: expense.installment_current, total: expense.installment_total }
-      : undefined,
-});
+export const mapExpense = (expense: ExpenseRow | any): Expense => {
+  // Extract month and year from month_id (format: familyId-YYYY-MM) for offline mode
+  let month: number | undefined;
+  let year: number | undefined;
+  
+  // First, check if we have month data from JOIN (Supabase online mode)
+  if (expense.month && typeof expense.month === 'object') {
+    year = expense.month.year;
+    month = expense.month.month;
+  }
+  
+  // Fallback: parse month_id for offline mode
+  if ((!month || !year) && expense.month_id && typeof expense.month_id === 'string') {
+    const parts = expense.month_id.split('-');
+    if (parts.length >= 2) {
+      const maybeYear = parseInt(parts[parts.length - 2], 10);
+      const maybeMonth = parseInt(parts[parts.length - 1], 10);
+      const validMonth = !Number.isNaN(maybeMonth) && maybeMonth >= 1 && maybeMonth <= 12;
+      const validYear = !Number.isNaN(maybeYear) && maybeYear >= 1900 && maybeYear <= 2500;
+      if (validMonth && validYear) {
+        year = maybeYear;
+        month = maybeMonth;
+      }
+    }
+  }
+
+  // Final fallback: derive month/year from created_at
+  if ((!month || !year) && expense.created_at) {
+    const created = new Date(expense.created_at);
+    if (!Number.isNaN(created.getTime())) {
+      year = year ?? created.getFullYear();
+      month = month ?? created.getMonth() + 1;
+    }
+  }
+
+  return {
+    id: expense.id,
+    title: expense.title,
+    category: expense.category_key as CategoryKey,
+    subcategoryId: expense.subcategory_id ?? undefined,
+    value: expense.value,
+    isRecurring: expense.is_recurring,
+    isPending: expense.is_pending ?? undefined,
+    dueDay: expense.due_day ?? undefined,
+    recurringExpenseId: expense.recurring_expense_id ?? undefined,
+    createdAt: expense.created_at,
+    month,
+    year,
+    installmentInfo:
+      expense.installment_current && expense.installment_total
+        ? { current: expense.installment_current, total: expense.installment_total }
+        : undefined,
+  };
+};
 
 /**
  * Map database RecurringExpense to application RecurringExpense

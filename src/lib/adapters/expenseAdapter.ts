@@ -190,13 +190,16 @@ export const deleteExpense = async (familyId: string | null, id: string) => {
  * Helper: Extract month and year from expense
  */
 const extractMonthYear = (expense: any): { month: number; year: number } => {
-  // Try to extract from month_id (format: YYYY-MM or YYYY-M)
+  // Try to extract from month_id (format: familyId-YYYY-MM)
   if (expense.month_id && typeof expense.month_id === 'string') {
-    const [yearStr, monthStr] = expense.month_id.split('-');
-    const year = parseInt(yearStr, 10);
-    const month = parseInt(monthStr, 10);
-    if (!isNaN(year) && !isNaN(month)) {
-      return { year, month };
+    const parts = expense.month_id.split('-');
+    // month_id format: familyId-YYYY-MM (3 parts)
+    if (parts.length >= 3) {
+      const year = parseInt(parts[parts.length - 2], 10);
+      const month = parseInt(parts[parts.length - 1], 10);
+      if (!isNaN(year) && !isNaN(month)) {
+        return { year, month };
+      }
     }
   }
   
@@ -233,7 +236,7 @@ const createGoalEntryFromExpense = async (familyId: string, goalId: string, expe
     year,
     description: expense.title,
   });
-  logger.info('expense.goal.entry.created', { expenseId: expense.id, goalId });
+  logger.debug('expense.goal.entry.created', { expenseId: expense.id, goalId });
 };
 
 /**
@@ -280,7 +283,7 @@ const handleGoalEntryUpdate = async (familyId: string, expenseId: string, _oldEx
         year,
         description: newExpense.title,
       }, true);
-      logger.info('expense.goal.entry.updated', { expenseId, entryId: entry.id, goalId: entry.goalId });
+      logger.debug('expense.goal.entry.updated', { expenseId, entryId: entry.id, goalId: entry.goalId });
       return;
     }
 
@@ -302,7 +305,7 @@ const handleGoalEntryDeletion = async (familyId: string, expenseId: string) => {
     if (!entry) return;
 
     await goalAdapter.deleteEntry(familyId, entry.id, true);
-    logger.info('expense.goal.entry.deleted', { expenseId, entryId: entry.id, goalId: entry.goalId });
+    logger.debug('expense.goal.entry.deleted', { expenseId, entryId: entry.id, goalId: entry.goalId });
   } catch (error) {
     logger.error('expense.goal.entry.delete.failed', { expenseId, error: (error as Error).message });
   }

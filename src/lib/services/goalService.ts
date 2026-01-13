@@ -62,6 +62,8 @@ export const getEntries = async (goalId: string) => {
     .from('goal_entry')
     .select('*')
     .eq('goal_id', goalId)
+    .order('year', { ascending: false })
+    .order('month', { ascending: false })
     .order('created_at', { ascending: false });
 };
 
@@ -114,10 +116,10 @@ export const deleteEntry = async (id: string) => {
 };
 
 export const getHistoricalExpenses = async (subcategoryId: string) => {
-  // Get all expenses for this subcategory
+  // Get all expenses for this subcategory with month details via JOIN
   const { data: expenses, error: expensesError } = await supabase
     .from('expense')
-    .select('*')
+    .select('*, month!inner(year, month)')
     .eq('subcategory_id', subcategoryId)
     .order('created_at', { ascending: false });
 

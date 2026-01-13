@@ -49,9 +49,9 @@ export const EntryHistory = ({ entries, onEdit, onDelete }: EntryHistoryProps) =
                   </div>
                 </div>
                 
-                {!isAutomatic && (onEdit || onDelete) && (
+                {(onEdit || onDelete) && (
                   <div className="flex flex-col sm:flex-row gap-1.5 flex-shrink-0">
-                    {onEdit && (
+                    {!isAutomatic && onEdit && (
                       <Button 
                         variant="outline" 
                         size="sm" 

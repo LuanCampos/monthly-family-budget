@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Expense } from '@/types';
-import { Import, Loader2, Receipt, DollarSign } from 'lucide-react';
+import { Import, Loader2, Receipt, DollarSign, Calendar } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
@@ -76,10 +76,18 @@ export const ImportExpenseDialog = ({ trigger, subcategoryId, fetchExpenses, onI
                 >
                   <div className="space-y-1.5 min-w-0 flex-1">
                     <p className="font-medium leading-tight break-words">{expense.title}</p>
-                    <p className="text-sm font-semibold text-primary flex items-center gap-1.5">
-                      <DollarSign className="h-4 w-4" />
-                      {formatCurrency(expense.value)}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-sm font-semibold text-primary flex items-center gap-1.5">
+                        <DollarSign className="h-4 w-4" />
+                        {formatCurrency(expense.value)}
+                      </p>
+                      {expense.month && expense.year && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {String(expense.month).padStart(2, '0')}/{expense.year}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <Button
                     size="sm"
@@ -88,8 +96,13 @@ export const ImportExpenseDialog = ({ trigger, subcategoryId, fetchExpenses, onI
                       try {
                         setImporting(expense.id);
                         await onImport(expense.id);
+                        // Refresh the list after import
+                        if (subcategoryId) {
+                          const data = await fetchExpenses(subcategoryId);
+                          setExpenses(data);
+                        }
                         setImporting(null);
-                        setOpen(false);
+                        // Don't close dialog - keep it open for more imports
                       } catch (error) {
                         setImporting(null);
                       }

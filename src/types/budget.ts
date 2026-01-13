@@ -30,6 +30,8 @@ export interface Expense {
   dueDay?: number;
   recurringExpenseId?: string;
   createdAt?: string;
+  month?: number;
+  year?: number;
   installmentInfo?: {
     current: number;
     total: number;
