@@ -70,14 +70,16 @@ const GoalsPage = () => {
     return email.slice(0, 2).toUpperCase();
   };
 
+  // Keep historyEntries synchronized with entriesByGoal
   useEffect(() => {
-    const fetchEntries = async () => {
-      if (!historyGoal) return;
-      const entries = await getEntries(historyGoal.id);
-      setHistoryEntries(entries);
-    };
-    fetchEntries();
-  }, [historyGoal, getEntries]);
+    if (!historyGoal) return;
+    const cachedEntries = entriesByGoal[historyGoal.id];
+    if (cachedEntries) {
+      setHistoryEntries(cachedEntries);
+    } else {
+      getEntries(historyGoal.id).then(setHistoryEntries);
+    }
+  }, [historyGoal, entriesByGoal, getEntries]);
 
   const pageTitle = useMemo(() => t('goals') || 'Metas', [t]);
 
@@ -100,10 +102,8 @@ const GoalsPage = () => {
     setEntryGoal(goal);
   };
 
-  const handleViewHistory = async (goal: Goal) => {
+  const handleViewHistory = (goal: Goal) => {
     setHistoryGoal(goal);
-    const entries = await getEntries(goal.id);
-    setHistoryEntries(entries);
   };
 
   const handleSaveEntry = async (payload: { value: number; description: string; month: number; year: number }) => {
@@ -111,8 +111,6 @@ const GoalsPage = () => {
     setSavingEntry(true);
     try {
       await addManualEntry({ goalId: entryGoal.id, ...payload });
-      const entries = await getEntries(entryGoal.id);
-      setHistoryEntries(entries);
       setEntryGoal(null);
     } finally {
       setSavingEntry(false);
@@ -124,8 +122,6 @@ const GoalsPage = () => {
     setDeletingEntry(true);
     try {
       await deleteEntry(entry.id, historyGoal.id);
-      const entries = await getEntries(historyGoal.id);
-      setHistoryEntries(entries);
     } finally {
       setDeletingEntry(false);
       setEntryToDelete(null);
@@ -306,8 +302,7 @@ const GoalsPage = () => {
                   fetchExpenses={getHistoricalExpenses}
                   onImport={async (expenseId) => {
                     await importExpense(historyGoal.id, expenseId);
-                    const entries = await refreshEntries(historyGoal.id);
-                    setHistoryEntries(entries);
+                    await refreshEntries(historyGoal.id);
                   }}
                 />
               )}
