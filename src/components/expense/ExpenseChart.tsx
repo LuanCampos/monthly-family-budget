@@ -25,6 +25,11 @@ export const ExpenseChart = ({
   const { t } = useLanguage();
   const { formatCurrency } = useCurrency();
 
+  // Responsive radii based on screen size
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const innerRadius = isMobile ? 40 : 55;
+  const outerRadius = isMobile ? 70 : 95;
+
   if (!hasExpenses) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground text-center px-4">
@@ -51,15 +56,15 @@ export const ExpenseChart = ({
   }
 
   return (
-    <div className="h-48">
+    <div className="h-48 sm:h-60">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={chartData}
             cx="50%"
             cy="50%"
-            innerRadius={40}
-            outerRadius={70}
+            innerRadius={innerRadius}
+            outerRadius={outerRadius}
             paddingAngle={2}
             dataKey="value"
             style={{ cursor: onSelectCategory ? 'pointer' : 'default' }}

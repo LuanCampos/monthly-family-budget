@@ -311,9 +311,11 @@ const GoalsContent = () => {
               <History className="h-5 w-5 text-primary" />
               {t('entryHistory') || 'Histórico de Lançamentos'}
             </DialogTitle>
-            <DialogDescription>
-              {historyGoal && ((t('entriesForGoal') && t('entriesForGoal').replace('{{goal}}', historyGoal.name)) || `Lançamentos de ${historyGoal.name}`)}
-            </DialogDescription>
+            {historyGoal && (
+              <DialogDescription className="break-words">
+                {historyGoal.name}
+              </DialogDescription>
+            )}
           </DialogHeader>
           
           <div className="flex-1 overflow-y-auto">

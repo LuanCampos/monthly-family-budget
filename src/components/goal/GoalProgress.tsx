@@ -87,14 +87,14 @@ export const GoalProgress = ({ goal }: GoalProgressProps) => {
           )}
 
           {suggestion && suggestion.monthlyRemaining !== null && suggestion.monthlyRemaining > 0 && (
-            <Badge variant="secondary" className="gap-1.5 text-xs text-red-600 dark:text-red-400">
+            <Badge variant="secondary" className="gap-1.5 text-xs bg-red-500/10 dark:bg-red-500/15 border-red-200/30 dark:border-red-900/30">
               {t('thisMonthRemaining') || 'Faltam este mês'}:{' '}
               {formatCurrency(suggestion.monthlyRemaining)}
             </Badge>
           )}
 
           {suggestion && suggestion.monthlyContributed !== null && suggestion.monthlyContributed > 0 && (
-            <Badge variant="secondary" className="gap-1.5 text-xs text-green-600 dark:text-green-400">
+            <Badge variant="secondary" className="gap-1.5 text-xs bg-green-500/10 dark:bg-green-500/15 border-green-200/30 dark:border-green-900/30">
               {t('thisMonth') || 'Este mês'}: {formatCurrency(suggestion.monthlyContributed)}
             </Badge>
           )}

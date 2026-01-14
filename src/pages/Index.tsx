@@ -314,9 +314,7 @@ const BudgetContent = () => {
                     hasExpenses={hasExpenses}
                     onSelectCategory={setActiveCategory}
                   />
-                  <div className="mt-4">
-                    <CategoryLegend />
-                  </div>
+                  <CategoryLegend />
                 </div>
               </div>
 
