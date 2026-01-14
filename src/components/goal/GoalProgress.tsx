@@ -87,16 +87,16 @@ export const GoalProgress = ({ goal }: GoalProgressProps) => {
           )}
 
           {suggestion && suggestion.monthlyRemaining !== null && suggestion.monthlyRemaining > 0 && (
-            <Badge variant="outline" className="gap-1.5 text-xs bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300">
+            <Badge variant="secondary" className="gap-1.5 text-xs text-red-600 dark:text-red-400">
               {t('thisMonthRemaining') || 'Faltam este mês'}:{' '}
               <span className="font-semibold">{formatCurrency(suggestion.monthlyRemaining)}</span>
             </Badge>
           )}
 
           {suggestion && suggestion.monthlyContributed !== null && suggestion.monthlyContributed > 0 && (
-            <Badge variant="outline" className="gap-1.5 text-xs">
-              {t('contributed') || 'Logged this month'}:{' '}
-              <span className="font-semibold">{formatCurrency(suggestion.monthlyContributed)}</span>
+            <Badge variant="secondary" className="gap-1.5 text-xs text-green-600 dark:text-green-400">
+              <CheckCircle2 className="h-3 w-3" />
+              {t('thisMonth') || 'Este mês'}: {formatCurrency(suggestion.monthlyContributed)}
             </Badge>
           )}
         </div>

@@ -121,6 +121,7 @@ export const pt = {
   setTargetDateForSuggestion: 'Defina uma data objetivo para ver a sugestão de aporte mensal',
   thisMonthRemaining: 'Falta este mês',
   thisMonthComplete: 'Meta do mês OK',
+  thisMonth: 'Este mês',
   contributed: 'Lançado no mês',
   goal: 'meta',
   editEntry: 'Editar lançamento',
