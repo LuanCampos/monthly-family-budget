@@ -62,13 +62,13 @@ export const SubcategoryChart = ({
     }
   });
 
-  const data = Object.entries(totals).map(([id, data], index, arr) => ({
+  const data = Object.entries(totals).map(([id, entry], _index, arr) => ({
     id,
-    name: data.name,
-    value: data.value,
+    name: entry.name,
+    value: entry.value,
     color: generateSubcategoryColor(
       category.color,
-      index,
+      _index,
       arr.length + (uncategorized > 0 ? 1 : 0)
     ),
   }));
@@ -114,7 +114,7 @@ export const SubcategoryChart = ({
                   paddingAngle={2}
                   dataKey="value"
                 >
-                  {data.map((entry, index) => (
+                  {data.map((entry, _index) => (
                     <Cell key={entry.id} fill={entry.color} />
                   ))}
                 </Pie>

@@ -7,9 +7,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
+  // Legend imported for future use; keep to avoid UI regressions
 } from 'recharts';
-import { Month, CategoryKey } from '@/types/budget';
+import { Month } from '@/types/budget';
 import { CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';

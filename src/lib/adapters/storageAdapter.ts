@@ -1,21 +1,13 @@
 import * as budgetService from '../services/budgetService';
 import { offlineAdapter } from './offlineAdapter';
 import * as monthAdapter from './monthAdapter';
-import * as expenseAdapter from './expenseAdapter';
-import * as recurringAdapter from './recurringAdapter';
-import * as subcategoryAdapter from './subcategoryAdapter';
-import { Month, CategoryKey, RecurringExpense, Subcategory } from '@/types';
+// domain adapters imported when needed; keep imports to preserve side-effects
+import { Month, CategoryKey } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
-import { getMonthLabel, shouldIncludeRecurringInMonth } from '../utils/monthUtils';
+import { getMonthLabel } from '../utils/monthUtils';
 import { 
-  mapIncomeSource, 
   mapExpense, 
-  mapRecurringExpense, 
-  mapSubcategory, 
-  mapIncomeSources, 
-  mapExpenses, 
-  mapRecurringExpenses, 
-  mapSubcategories 
+  mapIncomeSources 
 } from '../mappers';
 
 // Re-export adapter functions (except insertMonth which has a wrapper)

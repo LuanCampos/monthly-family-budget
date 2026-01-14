@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { supabase } from '@/lib/supabase';
+// supabase import not required in this context
 import * as familyService from '@/lib/services/familyService';
 import * as userService from '@/lib/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -82,7 +82,7 @@ export const useFamily = () => {
 };
 
 export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const [families, setFamilies] = useState<Family[]>([]);
   const [currentFamilyId, setCurrentFamilyId] = useState<string | null>(null);
   const [members, setMembers] = useState<FamilyMember[]>([]);
@@ -131,7 +131,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       } else {
         setFamilies(offlineFamilies);
       }
-    } catch (e) {
+    } catch (_e) {
       console.log('Error loading families, using offline only');
       setFamilies(offlineFamilies);
     }
@@ -162,7 +162,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (!error && data) {
         setMembers(data);
       }
-    } catch (e) {
+    } catch (_e) {
       console.log('Family tables not yet created');
       setMembers([]);
     }
@@ -215,8 +215,8 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       } else {
         setMyPendingInvitations([]);
       }
-    } catch (e) {
-      console.log('Error in refreshMyInvitations:', e);
+    } catch (_e) {
+      console.log('Error in refreshMyInvitations:');
       setMyPendingInvitations([]);
     }
   }, [user?.email]);
@@ -249,7 +249,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [refreshMyInvitations, refreshFamilyInvitations]);
 
   // Load user preferences to get current family
-  const loadUserPreferences = useCallback(async () => {
+  const _loadUserPreferences = useCallback(async () => {
     // If no user, only allow offline families from localStorage
     if (!user) {
       const savedFamilyId = localStorage.getItem('current-family-id');
@@ -277,7 +277,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setCurrentFamilyId(savedFamilyId);
         }
       }
-    } catch (e) {
+    } catch (_e) {
       console.log('User preferences table not yet created');
     }
   }, [user]);
@@ -295,7 +295,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       await userService.updateCurrentFamily(user.id, familyId);
-    } catch (e) {
+    } catch (_e) {
       console.log('User preferences table not yet created');
     }
   }, [user]);
@@ -339,7 +339,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             
             allFamilies = [...cloudFamilies, ...offlineFamilies];
           }
-        } catch (e) {
+          } catch (_e) {
           console.log('Error loading families, using offline only');
         }
       }
@@ -383,7 +383,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 selectedFamilyId = data.current_family_id;
               }
             }
-          } catch (e) {
+          } catch (_e) {
             console.log('User preferences table not yet created');
           }
         }

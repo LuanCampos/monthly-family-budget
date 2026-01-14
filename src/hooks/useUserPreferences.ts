@@ -3,7 +3,7 @@ import { User } from '@supabase/supabase-js';
 import * as userService from '@/lib/services/userService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme, ThemeKey } from '@/contexts/ThemeContext';
-import { useCurrency, CurrencyCode } from '@/contexts/CurrencyContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 export const useUserPreferences = (user: User | null, loading: boolean) => {
   const { setLanguage } = useLanguage();

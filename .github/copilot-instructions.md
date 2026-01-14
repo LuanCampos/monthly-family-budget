@@ -8,7 +8,7 @@ Give AI coding agents the immediately actionable, project-specific knowledge the
 **Stack**: Vite + React + TypeScript + Supabase + IndexedDB (offline)
 
 **Key Files & Layers**:
-- **UI**: `src/components/` organized by domain (expense, recurring, family, settings, income, month, subcategory, goal, common) + `ui/` for primitives
+- **UI**: `src/components/` organized by domain (expense, recurring, family, settings, income, month, subcategory, goal, common) + `ui/` for shadcn-ui primitives
 - **State**: `src/hooks/useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`, `useGoals.ts`; `src/hooks/ui/` for UI-only hooks
 - **Data Layer**: 
   - `src/lib/services/` - Supabase API calls (budgetService, userService, familyService, goalService)
@@ -18,6 +18,7 @@ Give AI coding agents the immediately actionable, project-specific knowledge the
   - `src/lib/mappers.ts`, `schemas.ts`, `validators.ts`, `logger.ts`
 - **Context**: `src/contexts/` provides state (FamilyContext, AuthContext, LanguageContext, CurrencyContext, ThemeContext, OnlineContext)
 - **Types**: `src/types/` centralized (budget.ts, database.ts, index.ts barrel)
+- **Pages**: `src/pages/` - Index.tsx (main budget view), Goals.tsx, NotFound.tsx
 
 ## Architecture Pattern
 
@@ -66,13 +67,13 @@ Give AI coding agents the immediately actionable, project-specific knowledge the
 - State patterns use `useBudgetState.ts` setters: `setMonths()`, `setExpenses()`, etc.
 - Goals have their own self-contained state in `useGoals.ts` (not part of useBudgetState)
 
-### Componentsgoal/`, `common/`, `ui/`
+### Components
+- Organized by domain: `expense/`, `recurring/`, `family/`, `settings/`, `month/`, `income/`, `subcategory/`, `goal/`, `common/`, `ui/`
 - Each folder has index.tsx for re-exports
-- Use primitives from `src/components/ui/*` (shadcn-ui)
-- No direct imports of `src/lib/*` - use hooks
-- Named exports (no default export)
-- Goal components: GoalCard, GoalForm, GoalList, GoalProgress, GoalTimelineChart, GoalMonthlySuggestion, GoalDetailsDialog, EntryForm, EntryHistory, ImportExpenseDialog- use hooks
-- Named exports (no default export)
+- Use primitives from `src/components/ui/*` (shadcn-ui based on Radix UI)
+- No direct imports of `src/lib/*` - use hooks instead
+- Named exports only (no default exports)
+- Goal components: GoalCard, GoalForm, GoalList, GoalProgress, GoalTimelineChart, GoalMonthlySuggestion, GoalDetailsDialog, EntryForm, EntryHistory, ImportExpenseDialog
 
 ### Validation
 - Input validation: `src/lib/validators.ts` (Zod input schemas)
@@ -96,7 +97,9 @@ npm run preview      # Preview production build
 ```
 
 ## Files You'll Frequently Edit
-, `goalAdapter.ts`
+
+**Data adapters**:
+- `src/lib/adapters/monthAdapter.ts`, `expenseAdapter.ts`, `recurringAdapter.ts`, `subcategoryAdapter.ts`, `goalAdapter.ts`
 - `src/lib/adapters/storageAdapter.ts` (wrapper/coordinator)
 - `src/lib/services/budgetService.ts`, `userService.ts`, `familyService.ts`, `goalService.ts`
 
@@ -104,9 +107,7 @@ npm run preview      # Preview production build
 - `src/hooks/useBudget.ts`, `useBudgetApi.ts`, `useBudgetState.ts`, `useGoals.ts`
 
 **UI Components**:
-- `src/components/{expense,recurring,family,settings,month,income,subcategory,goal
-**UI Components**:
-- `src/components/{expense,recurring,family,settings,month,income,subcategory,common}/`
+- `src/components/{expense,recurring,family,settings,month,income,subcategory,goal,common}/`
 
 **Types**:
 - `src/types/budget.ts` (app types), `database.ts` (DB rows), `index.ts` (barrel)
@@ -152,7 +153,8 @@ const expense = {
 ### Adding a component
 1. Create folder: `src/components/{domain}/MyComponent.tsx`
 2. Add to `src/components/{domain}/index.tsx`: `export { MyComponent } from './MyComponent'`
-3. Import in other files: `import { MyComponent } from '@/com
+3. Import in other files: `import { MyComponent } from '@/components/{domain}'`
+4. Use named export: `export const MyComponent = (...) => {}`
 
 ### Goals Feature Pattern
 Goals track savings/financial targets with entries. Key patterns:
@@ -161,8 +163,7 @@ Goals track savings/financial targets with entries. Key patterns:
 - `useGoals` hook manages state separately from `useBudget` (self-contained)
 - Components in `src/components/goal/` follow same structure as other domains
 - Historical expense import allows linking past expenses to new goals
-- Monthly suggestions calculate recommended contributions based on target dateponents/{domain}'`
-4. Use named export: `export const MyComponent = (...) => {}`
+- Monthly suggestions calculate recommended contributions based on target date
 
 ## Windows PATH Troubleshooting (Node.js/npm not found)
 
@@ -176,7 +177,12 @@ Goals track savings/financial targets with entries. Key patterns:
 5. Restart VS Code / terminal completely
 6. Test: `node --version`
 
-**Note**: Environment changes take effect only in NEW terminal sessions.goal/, etc.)
+**Note**: Environment changes take effect only in NEW terminal sessions.
+
+## Project Status & History
+
+### Recent Reorganization ✅
+- Components: Organized into subfolders by domain (expense/, recurring/, family/, goal/, etc.)
 - Lib: Organized by layer (services/, adapters/, utils/, storage/)
 - Hooks: Separated UI hooks (ui/) from business logic hooks
 - All imports updated, build validated
@@ -186,16 +192,11 @@ Goals track savings/financial targets with entries. Key patterns:
   - New domain: `goalAdapter.ts`, `goalService.ts`, `useGoals.ts`, `src/components/goal/`
   - Dedicated page: `src/pages/Goals.tsx`
   - Types: `Goal`, `GoalEntry` in `src/types/budget.ts` and `database.ts`
+
 ### Phase 1-3 Completed ✅
 - **Phase 1**: Type safety foundation (database.ts, monthUtils.ts, logger.ts)
 - **Phase 2**: Modularization (adapters/, services/, schemas, validators, mappers)
 - **Phase 3**: Patterns + simplification (standardized nomenclature, custom hooks, logging)
-
-### Recent Reorganization ✅
-- Components: Organized into subfolders by domain (expense/, recurring/, family/, etc.)
-- Lib: Organized by layer (services/, adapters/, utils/, storage/)
-- Hooks: Separated UI hooks (ui/) from business logic hooks
-- All imports updated, build validated
 
 ### Bug Fixes ✅
 - Installment fields now conditionally assigned (checks `hasInstallments`)
@@ -214,7 +215,7 @@ Goals track savings/financial targets with entries. Key patterns:
 
 ## TypeScript Strict Mode ✅
 
-Project enforces `January 12, 2026`tsconfig.json`. This means:
+Project enforces strict TypeScript mode in `tsconfig.json`. This means:
 - All types must be explicit
 - `any` is forbidden
 - `null` and `undefined` must be handled
@@ -224,9 +225,10 @@ Project enforces `January 12, 2026`tsconfig.json`. This means:
 
 - **TypeScript**: 0 errors (verified with `npx tsc --noEmit`)
 - **ESLint**: Runs on all files (`npm run lint`)
-- **Build**: Vite 5.4.21, 2634 modules, ~1.2MB gzipped
-- **CI**: Not yet integrated (future work)
+- **Build**: Vite ~5.4.x, optimized production bundles
+- **Deployment**: Automated via GitHub Actions (`.github/workflows/deploy.yml`) to GitHub Pages
+- **CI**: GitHub Actions workflow builds on every push to main
 
 ---
 
-**Last Updated**: December 23, 2025 | **Status**: Production-ready ✅
+**Last Updated**: January 14, 2026 | **Status**: Production-ready ✅

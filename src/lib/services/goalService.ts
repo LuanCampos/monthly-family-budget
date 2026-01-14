@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import type { GoalRow, GoalEntryRow, ExpenseRow } from '@/types/database';
+import type { GoalRow, GoalEntryRow } from '@/types/database';
 
 export const getGoals = async (familyId: string) => {
   return supabase

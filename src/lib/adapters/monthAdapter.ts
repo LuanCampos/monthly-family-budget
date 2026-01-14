@@ -1,7 +1,7 @@
 /**
  * Month Adapter
  * 
- * Operations related to months and their management
+ * Operations related to months and their management 
  * Handles both online (Supabase) and offline (IndexedDB) flows
  * 
  * Naming Convention:
@@ -17,7 +17,7 @@ import * as expenseAdapter from './expenseAdapter';
 import { logger } from '../logger';
 import type { Month, CategoryKey, RecurringExpense } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
-import { getMonthLabel, shouldIncludeRecurringInMonth } from '../utils/monthUtils';
+import { getMonthLabel as _getMonthLabel, shouldIncludeRecurringInMonth } from '../utils/monthUtils';
 import { mapIncomeSources, mapRecurringExpense } from '../mappers';
 
 const getDefaultLimits = (): Record<CategoryKey, number> => {

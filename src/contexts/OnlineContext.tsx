@@ -94,8 +94,8 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
           await familyService.deleteByIdFromTable(table, id);
           setSyncProgress({ step: 'Revertendo alterações...', current: createdCloudIds.length - i, total: createdCloudIds.length });
-        } catch (e) {
-          console.error(`Failed to rollback ${table}:${id}`, e);
+        } catch (_e) {
+          console.error(`Failed to rollback ${table}:${id}`, _e);
         }
       }
 
@@ -104,8 +104,8 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
           await familyService.deleteMembersByFamily(newFamilyId);
           await familyService.deleteFamily(newFamilyId);
-        } catch (e) {
-          console.error('Failed to rollback family', e);
+        } catch (_e) {
+          console.error('Failed to rollback family', _e);
         }
       }
     };

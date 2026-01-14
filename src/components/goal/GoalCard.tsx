@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { GoalProgress } from './GoalProgress';
 import { GoalTimelineChart } from './GoalTimelineChart';
 import type { Goal, GoalEntry } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { List, Pencil, Trash2, Wallet, TrendingUp, Loader2, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';

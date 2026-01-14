@@ -27,7 +27,7 @@ import {
 // Inner component that uses useGoals - will be remounted when family changes via key
 const GoalsContent = () => {
   const { t } = useLanguage();
-  const { currentFamilyId, myPendingInvitations } = useFamily();
+    const { currentFamilyId: _currentFamilyId, myPendingInvitations } = useFamily();
   const { user } = useAuth();
   const { subcategories } = useBudget();
   const {

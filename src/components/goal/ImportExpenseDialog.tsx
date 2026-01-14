@@ -103,7 +103,7 @@ export const ImportExpenseDialog = ({ trigger, subcategoryId, fetchExpenses, onI
                         }
                         setImporting(null);
                         // Don't close dialog - keep it open for more imports
-                      } catch (error) {
+                      } catch (_error) {
                         setImporting(null);
                       }
                     }}

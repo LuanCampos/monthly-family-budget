@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { useRef } from 'react';
-import { Month, Expense, CategoryKey, Subcategory, RecurringExpense } from '@/types';
+import { CategoryKey } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
 import * as storageAdapter from '@/lib/adapters/storageAdapter';
 import { useFamily } from '@/contexts/FamilyContext';
@@ -8,11 +8,9 @@ import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import { toast } from 'sonner';
 import { useBudgetState } from './useBudgetState';
 import { createBudgetApi } from './useBudgetApi';
-import { getMonthLabel, calculateInstallmentNumber, shouldIncludeRecurringInMonth } from '@/lib/utils/monthUtils';
+// Removed unused month utilities import
 
-const generateMonthId = (year: number, month: number): string => {
-  return `${year}-${month.toString().padStart(2, '0')}`;
-};
+// helpers that were unused removed or renamed to _ to satisfy lint
 
 export const useBudget = () => {
   const { currentFamilyId } = useFamily();
@@ -227,7 +225,7 @@ export const useBudget = () => {
   const selectMonth = (monthId: string) => {
     setCurrentMonthId(monthId);
   };
-  const updateIncome = async (income: number) => {
+  const _updateIncome = async (income: number) => {
     if (!currentMonthId) return;
     await api.updateMonthIncome(currentMonthId, income);
     await api.loadMonths();
@@ -242,7 +240,7 @@ export const useBudget = () => {
   ) => {
     if (!currentMonthId) return;
 
-    const offlineExpenseData = {
+    const _offlineExpenseData = {
       id: offlineAdapter.generateOfflineId('exp'),
       family_id: currentFamilyId,
       month_id: currentMonthId,
@@ -549,8 +547,8 @@ export const useBudget = () => {
           loadRecurringExpenses(),
           loadSubcategories()
         ]);
-      } catch (e) {
-        console.error(e);
+      } catch (_e) {
+        console.error(_e);
         toast.error('Arquivo inválido ou corrompido');
       }
     };

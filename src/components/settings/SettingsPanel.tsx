@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive, Pencil } from 'lucide-react';
+import { Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TriggerButton from '@/components/ui/trigger-button';
 import {
@@ -31,7 +31,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme, themes, ThemeKey } from '@/contexts/ThemeContext';
@@ -48,7 +47,7 @@ import * as userService from '@/lib/services/userService';
 import { clearOfflineCache } from '@/lib/storage/offlineStorage';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
+// Separator and cn are not used in this component
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -239,7 +238,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
       if ((res as any).error) {
         throw (res as any).error;
       }
-    } catch (err) {
+    } catch (_err) {
       // Fallback: save to offline store and enqueue sync
       try {
         await offlineAdapter.put('user_preferences', {
@@ -262,8 +261,8 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
     try {
       setLanguage(newLanguage);
       await persistUserPreference({ language: newLanguage });
-    } catch (err) {
-      console.error('Error handling language change:', err);
+    } catch (_err) {
+      console.error('Error handling language change:', _err);
     }
   };
 
@@ -271,8 +270,8 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
     try {
       setCurrency(newCurrency);
       await persistUserPreference({ currency: newCurrency });
-    } catch (err) {
-      console.error('Error handling currency change:', err);
+    } catch (_err) {
+      console.error('Error handling currency change:', _err);
     }
   };
 
@@ -282,10 +281,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
       setTheme(newTheme);
 
       await persistUserPreference({ theme: newTheme });
-    } catch (err) {
+    } catch (_err) {
       // Error here is non-fatal because we already applied the theme and
       // attempted server/offline persistence. Log for diagnostics only.
-      console.error('Error handling theme change:', err);
+      console.error('Error handling theme change:', _err);
     }
   };
 

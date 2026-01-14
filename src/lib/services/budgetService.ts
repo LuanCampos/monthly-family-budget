@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import type { MonthRow, ExpenseRow, RecurringExpenseRow, SubcategoryRow, CategoryLimitRow, IncomeSourceRow, SupabaseChannel } from '@/types/database';
+import type { CategoryLimitRow } from '@/types/database';
 
 // Thin wrapper around Supabase used by useBudget. Keep functions small and
 // directly mappable to existing supabase calls so this is a safe, behavior-preserving
@@ -61,9 +61,9 @@ export const clearSubcategoryReferences = async (id: string) => {
   return supabase.from('expense').update({ subcategory_id: null }).eq('subcategory_id', id);
 };
 
-export const createChannel = (name: string): SupabaseChannel => supabase.channel(name);
+export const createChannel = (name: string) => supabase.channel(name);
 
-export const removeChannel = (channel: SupabaseChannel): void => { supabase.removeChannel(channel); };
+export const removeChannel = (channel: any): void => { supabase.removeChannel(channel); };
 
 export const insertMonth = async (familyId: string, year: number, month: number) => {
   return supabase

@@ -1,4 +1,3 @@
-import { CATEGORIES } from '@/constants/categories';
 import * as storageAdapter from '@/lib/adapters/storageAdapter';
 import { Month, CategoryKey, RecurringExpense, Subcategory } from '@/types';
 
@@ -10,7 +9,7 @@ export const createBudgetApi = (opts: {
   categoryPercentages: Record<CategoryKey, number>;
   setCategoryPercentages: (g: Record<CategoryKey, number>) => void;
 }) => {
-  const { currentFamilyId, setMonths, setRecurringExpenses, setSubcategories, categoryPercentages, setCategoryPercentages } = opts;
+  const { currentFamilyId, setMonths, setRecurringExpenses, setSubcategories, categoryPercentages: _categoryPercentages, setCategoryPercentages: _setCategoryPercentages } = opts;
 
   // Data loading functions - delegate to storageAdapter and update state
   const loadMonths = async () => {
