@@ -276,18 +276,11 @@ const GoalsContent = () => {
 
       <Dialog open={Boolean(entryGoal)} onOpenChange={(open) => { if (!open) { setEntryGoal(null); setEditingEntry(null); } }}>
         <DialogContent className="max-w-xl">
-          <DialogHeader>
+          <DialogHeader className="text-left">
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5 text-primary" />
               {editingEntry ? (t('editEntry') || 'Editar lançamento') : (t('addEntry') || 'Adicionar Lançamento')}
             </DialogTitle>
-            <DialogDescription>
-              {entryGoal && (
-                editingEntry
-                  ? ((t('editEntryForGoal') && t('editEntryForGoal').replace('{{goal}}', entryGoal.name)) || `Editando lançamento de ${entryGoal.name}`)
-                  : ((t('addEntryForGoal') && t('addEntryForGoal').replace('{{goal}}', entryGoal.name)) || `Adicionando lançamento para ${entryGoal.name}`)
-              )}
-            </DialogDescription>
           </DialogHeader>
           {entryGoal && (
             <EntryForm
@@ -307,13 +300,13 @@ const GoalsContent = () => {
 
       <Dialog open={Boolean(historyGoal)} onOpenChange={(open) => { if (!open) { setHistoryGoal(null); setHistoryEntries([]); } }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
+          <DialogHeader className="text-left">
             <DialogTitle className="flex items-center gap-2">
               <History className="h-5 w-5 text-primary" />
               {t('entryHistory') || 'Histórico de Lançamentos'}
             </DialogTitle>
             {historyGoal && (
-              <DialogDescription className="break-words">
+              <DialogDescription className="break-words text-left">
                 {historyGoal.name}
               </DialogDescription>
             )}
