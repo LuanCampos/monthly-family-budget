@@ -155,10 +155,11 @@ export const RecurringExpenses = ({
           finalStartYear,
           finalStartMonth
         );
-        setView('list');
-        resetForm();
       } finally {
         setIsSaving(false);
+        // Close and reset only after all async operations complete
+        setView('list');
+        resetForm();
       }
     }
 
@@ -192,12 +193,12 @@ export const RecurringExpenses = ({
         finalStartMonth,
         updatePast
       );
-
+    } finally {
+      setIsSaving(false);
+      // Close and reset only after all async operations complete
       setShowUpdateDialog(false);
       setView('list');
       resetForm();
-    } finally {
-      setIsSaving(false);
     }
   };
 

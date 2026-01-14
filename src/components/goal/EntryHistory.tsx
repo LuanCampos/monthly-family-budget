@@ -28,53 +28,53 @@ export const EntryHistory = ({ entries, onEdit, onDelete }: EntryHistoryProps) =
         {entries.map((entry) => {
           const isAutomatic = Boolean(entry.expenseId);
           return (
-            <div key={entry.id} className="border rounded-lg p-3 sm:p-4 space-y-2 bg-card hover:bg-accent/50 transition-colors">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-2 min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-base flex items-center gap-1.5">
-                      <DollarSign className="h-4 w-4 text-primary" />
-                      {formatCurrency(entry.value)}
-                    </span>
-                    <Badge variant={isAutomatic ? 'secondary' : 'default'} className="text-xs">
-                      {isAutomatic ? (t('automaticEntry') || 'Automático') : (t('manualEntry') || 'Manual')}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground break-words">
-                    {entry.description || (t('noDescription') || 'Sem descrição')}
-                  </p>
+            <div key={entry.id} className="border rounded-lg p-2.5 sm:p-3 bg-card hover:bg-accent/50 transition-colors">
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-base flex items-center gap-1.5">
+                    <DollarSign className="h-4 w-4 text-primary" />
+                    {formatCurrency(entry.value)}
+                  </span>
+                  <Badge variant={isAutomatic ? 'secondary' : 'default'} className="text-xs">
+                    {isAutomatic ? (t('automaticEntry') || 'Automático') : (t('manualEntry') || 'Manual')}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground break-words">
+                  {entry.description || (t('noDescription') || 'Sem descrição')}
+                </p>
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5" />
                     <span>{String(entry.month).padStart(2, '0')}/{entry.year}</span>
                   </div>
+                  
+                  {(onEdit || onDelete) && (
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {!isAutomatic && onEdit && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => onEdit(entry)}
+                          aria-label={t('edit') || 'Editar'}
+                          className="h-8 w-8 hover:text-primary hover:bg-primary/10"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      {onDelete && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => onDelete(entry)}
+                          aria-label={t('delete') || 'Excluir'}
+                          className="h-8 w-8 hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
-                
-                {(onEdit || onDelete) && (
-                  <div className="flex flex-col sm:flex-row gap-1.5 flex-shrink-0">
-                    {!isAutomatic && onEdit && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => onEdit(entry)}
-                        className="gap-1.5 h-8"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">{t('edit') || 'Editar'}</span>
-                      </Button>
-                    )}
-                    {onDelete && (
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        onClick={() => onDelete(entry)}
-                        className="gap-1.5 h-8"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">{t('delete') || 'Excluir'}</span>
-                      </Button>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           );

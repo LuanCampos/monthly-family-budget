@@ -4,7 +4,7 @@ import { GoalTimelineChart } from './GoalTimelineChart';
 import type { Goal, GoalEntry } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { History, Pencil, Trash2, Wallet, TrendingUp, Loader2 } from 'lucide-react';
+import { List, Pencil, Trash2, Wallet, TrendingUp, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useState } from 'react';
@@ -58,14 +58,14 @@ export const GoalCard = ({ goal, entries, onViewHistory, onEdit, onDelete, onFet
       <CardContent className="pt-0 pb-4">
         <GoalProgress goal={goal} />
 
-        <div className="goal-actions flex flex-wrap items-center gap-2 mt-4 sm:mt-5">
+        <div className="goal-actions flex flex-wrap items-center gap-0.5 sm:gap-2 mt-4 sm:mt-5">
           <button
             type="button"
             onClick={onViewHistory}
             className="goal-action-btn"
           >
-            <History className="h-3.5 w-3.5 flex-shrink-0" />
-            <span className="leading-none">{t('history') || 'Histórico'}</span>
+            <List className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="leading-none">{t('entries') || 'Lançamentos'}</span>
           </button>
           <button
             type="button"
@@ -78,7 +78,7 @@ export const GoalCard = ({ goal, entries, onViewHistory, onEdit, onDelete, onFet
           <Button size="icon" variant="ghost" onClick={onEdit} aria-label={t('edit') || 'Editar'} className="justify-center hover:text-primary !h-8 !w-8">
             <Pencil className="h-3.5 w-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" onClick={onDelete} aria-label={t('delete') || 'Excluir'} className="justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 !h-8 !w-8">
+          <Button size="icon" variant="ghost" onClick={onDelete} aria-label={t('delete') || 'Excluir'} className="justify-center hover:text-destructive hover:bg-destructive/10 !h-8 !w-8">
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>

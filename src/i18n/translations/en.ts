@@ -136,8 +136,8 @@ export const en: Record<TranslationKey, string> = {
   // Goal Entries
   entries: 'Entries',
   addEntry: 'Add Entry',
-  manualEntry: 'Manual Entry',
-  automaticEntry: 'Automatic Entry',
+  manualEntry: 'Manual',
+  automaticEntry: 'Automatic',
   entryValue: 'Value',
   entryValueHelp: 'Positive = deposit, Negative = withdrawal',
   entryValueNotEditable: 'Value cannot be edited (linked to expense)',

@@ -99,10 +99,10 @@ export const ExpenseForm = ({
       if (mode === 'edit' && onUpdate && initialData) {
         await onUpdate(initialData.id, title.trim(), category, finalSubcategoryId, numericValue, isPending);
       }
-
-      resetForm();
     } finally {
       setIsSaving(false);
+      // Close modal only after all async operations complete
+      resetForm();
     }
   };
 

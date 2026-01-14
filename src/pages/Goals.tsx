@@ -99,10 +99,11 @@ const GoalsContent = () => {
       } else {
         await addGoal(data);
       }
-      setOpenGoalDialog(false);
-      setEditingGoal(null);
     } finally {
       setSavingGoal(false);
+      // Close modal only after all async operations complete
+      setOpenGoalDialog(false);
+      setEditingGoal(null);
     }
   };
 
@@ -132,11 +133,11 @@ const GoalsContent = () => {
 
       // also refresh goals so cards show updated currentValue/suggestions
       await loadGoals();
-
-      setEntryGoal(null);
-      setEditingEntry(null);
     } finally {
       setSavingEntry(false);
+      // Close modal only after all async operations complete
+      setEntryGoal(null);
+      setEditingEntry(null);
     }
   };
 
@@ -305,7 +306,7 @@ const GoalsContent = () => {
       </Dialog>
 
       <Dialog open={Boolean(historyGoal)} onOpenChange={(open) => { if (!open) { setHistoryGoal(null); setHistoryEntries([]); } }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <History className="h-5 w-5 text-primary" />

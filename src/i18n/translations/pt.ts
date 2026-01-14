@@ -136,8 +136,8 @@ export const pt = {
   // Goal Entries
   entries: 'Lançamentos',
   addEntry: 'Lançamento',
-  manualEntry: 'Lançamento Manual',
-  automaticEntry: 'Lançamento Automático',
+  manualEntry: 'Manual',
+  automaticEntry: 'Automático',
   entryValue: 'Valor',
   entryValueHelp: 'Positivo = entrada, Negativo = saída/saque',
   entryValueNotEditable: 'Valor não pode ser editado (vinculado ao gasto)',
