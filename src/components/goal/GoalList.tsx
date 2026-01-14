@@ -37,7 +37,7 @@ export const GoalList = ({ goals, entriesByGoal, onViewHistory, onEdit, onDelete
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+    <div className="grid gap-4 sm:gap-6 sm:grid-cols-1 lg:grid-cols-2">
       {goals.map(goal => (
         <GoalCard
           key={goal.id}

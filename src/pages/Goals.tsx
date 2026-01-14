@@ -217,7 +217,7 @@ const GoalsContent = () => {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
         {loading ? (
           <div className="min-h-[60vh] flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
