@@ -268,7 +268,7 @@ export const updateMonthLimits = async (familyId: string | null, monthId: string
 export const getIncomeSourcesByMonth = async (monthId: string) => {
   const { data, error } = await budgetService.getIncomeSourcesByMonth(monthId);
   if (error) {
-    console.error('Error loading income sources:', error);
+    logger.error('incomeSource.load.failed', { monthId, error });
     return [];
   }
   return mapIncomeSources(data || []);

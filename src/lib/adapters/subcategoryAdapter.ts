@@ -28,7 +28,7 @@ export const getSubcategories = async (familyId: string | null) => {
   }
 
   const { data, error } = await budgetService.getSubcategories(familyId);
-  if (error) { console.error('Error loading subcategories:', error); return [] as Subcategory[]; }
+  if (error) { logger.error('subcategory.load.failed', { familyId, error }); return [] as Subcategory[]; }
   return mapSubcategories(data || []);
 };
 

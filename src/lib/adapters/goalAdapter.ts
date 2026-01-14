@@ -308,7 +308,7 @@ export const getEntries = async (familyId: string | null, goalId: string): Promi
   if (!familyId) return [];
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    await ensureSubcategoryIsValid(familyId, payload.linkedSubcategoryId, payload.linkedCategoryKey, payload.status);
+    const entries = await offlineAdapter.getAllByIndex<any>('goal_entries', 'goal_id', goalId);
     const mapped = mapGoalEntries(entries || []);
     // Sort by year/month descending (most recent first)
     return mapped.sort((a, b) => {

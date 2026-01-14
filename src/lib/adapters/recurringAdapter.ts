@@ -32,7 +32,7 @@ export const getRecurringExpenses = async (familyId: string | null) => {
   }
 
   const { data, error } = await budgetService.getRecurringExpenses(familyId);
-  if (error) { console.error('Error loading recurring expenses:', error); return [] as RecurringExpense[]; }
+  if (error) { logger.error('recurring.load.failed', { familyId, error }); return [] as RecurringExpense[]; }
   return mapRecurringExpenses(data || []);
 };
 

@@ -4,6 +4,7 @@ import * as familyService from '@/lib/services/familyService';
 import * as userService from '@/lib/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
 import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
+import { logger } from '@/lib/logger';
 
 export type FamilyRole = 'owner' | 'admin' | 'member';
 
@@ -132,7 +133,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setFamilies(offlineFamilies);
       }
     } catch (_e) {
-      console.log('Error loading families, using offline only');
+      logger.debug('family.loadFamilies.fallbackOffline');
       setFamilies(offlineFamilies);
     }
   }, [user, loadOfflineFamilies]);
@@ -163,7 +164,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setMembers(data);
       }
     } catch (_e) {
-      console.log('Family tables not yet created');
+      logger.debug('family.refreshMembers.tablesNotCreated');
       setMembers([]);
     }
   }, [currentFamilyId, user?.id]);
@@ -194,7 +195,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const { data: myInvites, error } = await familyService.getInvitationsByEmailSimple(user.email);
 
       if (error) {
-        console.log('Error fetching invitations:', error);
+        logger.debug('family.refreshMyInvitations.error', { error });
         setMyPendingInvitations([]);
         return;
       }
@@ -216,7 +217,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setMyPendingInvitations([]);
       }
     } catch (_e) {
-      console.log('Error in refreshMyInvitations:');
+      logger.debug('family.refreshMyInvitations.catchError');
       setMyPendingInvitations([]);
     }
   }, [user?.email]);
@@ -278,7 +279,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       }
     } catch (_e) {
-      console.log('User preferences table not yet created');
+      logger.debug('family.loadUserPreferences.tablesNotCreated');
     }
   }, [user]);
 
@@ -296,7 +297,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       await userService.updateCurrentFamily(user.id, familyId);
     } catch (_e) {
-      console.log('User preferences table not yet created');
+      logger.debug('family.saveCurrentFamily.tablesNotCreated');
     }
   }, [user]);
 
@@ -340,7 +341,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             allFamilies = [...cloudFamilies, ...offlineFamilies];
           }
           } catch (_e) {
-          console.log('Error loading families, using offline only');
+          logger.debug('family.init.fallbackOffline');
         }
       }
       
@@ -384,7 +385,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
               }
             }
           } catch (_e) {
-            console.log('User preferences table not yet created');
+            logger.debug('family.init.preferencesNotCreated');
           }
         }
 
@@ -456,7 +457,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           lastFamiliesLengthRef.current === families.length) {
         // We already tried to reload for this ID and family still not found
         // User was likely removed from this family - select another one if available
-        console.log('Family not found after reload, selecting another family:', currentFamilyId);
+        logger.info('family.handleMissingFamily.selectingAnother', { currentFamilyId });
         
         // Find remaining families to select from
         const remainingFamilies = families.filter(f => f.id !== currentFamilyId);
@@ -518,18 +519,18 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     if (!navigator.onLine || !sessionUser) {
       // Create offline family
-      console.log('Creating offline family. Online:', navigator.onLine, 'User:', !!sessionUser);
+      logger.debug('family.createFamily.offlineMode', { online: navigator.onLine, hasUser: !!sessionUser });
       return createOfflineFamily(name);
     }
 
-    console.log('Creating cloud family for user:', sessionUser.email);
+    logger.debug('family.createFamily.cloudMode', { email: sessionUser.email });
 
     // Create cloud family
     const { data: family, error } = await familyService.insertFamily(name, sessionUser.id);
 
     if (error) {
       // Fallback to offline on error
-      console.error('Cloud family creation failed, creating offline:', error);
+      logger.warn('family.createFamily.cloudFailed', { error });
       return createOfflineFamily(name);
     }
 
@@ -542,7 +543,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
 
     if (memberError && (memberError as any).code !== '23505') {
-      console.error('Member creation error:', memberError);
+      logger.warn('family.createFamily.memberError', { error: memberError });
     }
 
     await refreshFamilies();

@@ -11,6 +11,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface IncomeSourcesManagerProps {
   open: boolean;
@@ -126,7 +127,7 @@ export const IncomeSourcesManager = ({
       succeeded = true;
     } catch (error) {
       toast.error(t('errorSaving') || 'Erro ao salvar');
-      console.error(error);
+      logger.error('incomeSource.save.failed', { error });
     } finally {
       setLoading(false);
       if (succeeded) {
@@ -162,7 +163,7 @@ export const IncomeSourcesManager = ({
       setActiveRowId((prev) => (prev === deleteSourceId ? null : prev));
     } catch (error) {
       toast.error(t('errorDeleting') || 'Erro ao deletar');
-      console.error(error);
+      logger.error('incomeSource.delete.failed', { sourceId: deleteSourceId, error });
     } finally {
       setLoading(false);
       setDeleteSourceId(null);

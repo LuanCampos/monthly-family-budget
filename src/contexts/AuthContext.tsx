@@ -5,6 +5,7 @@ import { getAppBaseUrl } from '@/lib/utils/appBaseUrl';
 import * as userService from '@/lib/services/userService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/ui/use-toast';
+import { logger } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -31,10 +32,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
   const [postAuthType, setPostAuthType] = useState<'signup' | 'recovery' | null>(null);
+  
+  // Rate limiting state
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<Date | null>(null);
 
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash) return;
+    
+    // SECURITY: Clear hash IMMEDIATELY before any processing to prevent token exposure
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
 
     const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
     const type = params.get('type');
@@ -54,11 +62,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: t('success'),
         description: t('emailConfirmedSuccess'),
       });
-    }
-
-    // Remove o hash da URL para não expor tokens no navegador/histórico
-    if (window.location.hash) {
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
     }
 
     setPostAuthType(null);
@@ -130,11 +133,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await userService.upsertUserPreference(payload);
           } catch (upsertErr) {
             // Non-fatal, log for diagnostics
-            console.error('Failed to upsert user preferences on first auth:', upsertErr);
+            logger.warn('auth.upsertPreferences.failed', { error: upsertErr });
           }
         }
       } catch (err) {
-        console.error('Error syncing local preferences to server:', err);
+        logger.error('auth.syncPreferences.failed', { error: err });
       }
     };
 
@@ -142,10 +145,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const signIn = async (email: string, password: string) => {
+    // Check lockout
+    if (lockoutUntil && new Date() < lockoutUntil) {
+      const remainingSeconds = Math.ceil((lockoutUntil.getTime() - Date.now()) / 1000);
+      return { error: new Error(`Muitas tentativas. Tente novamente em ${remainingSeconds} segundos.`) };
+    }
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
+    if (error) {
+      const attempts = loginAttempts + 1;
+      setLoginAttempts(attempts);
+      
+      // Lock out after 5 failed attempts for 5 minutes
+      if (attempts >= 5) {
+        setLockoutUntil(new Date(Date.now() + 5 * 60 * 1000));
+        setLoginAttempts(0);
+        logger.warn('auth.signIn.lockout', { email });
+      }
+    } else {
+      // Reset on successful login
+      setLoginAttempts(0);
+      setLockoutUntil(null);
+    }
+    
     return { error };
   };
 

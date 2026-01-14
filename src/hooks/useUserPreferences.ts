@@ -4,6 +4,7 @@ import * as userService from '@/lib/services/userService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme, ThemeKey } from '@/contexts/ThemeContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { logger } from '@/lib/logger';
 
 export const useUserPreferences = (user: User | null, loading: boolean) => {
   const { setLanguage } = useLanguage();
@@ -30,7 +31,7 @@ export const useUserPreferences = (user: User | null, loading: boolean) => {
         const { data, error } = await userService.getUserPreferences(user.id);
 
         if (error) {
-          console.error('Error loading user preferences:', error);
+          logger.warn('userPreferences.load.error', { userId: user.id, error });
           return;
         }
 
@@ -52,7 +53,7 @@ export const useUserPreferences = (user: User | null, loading: boolean) => {
 
         hasLoadedRef.current = true;
       } catch (err) {
-        console.error('Error loading user preferences:', err);
+        logger.error('userPreferences.load.failed', { userId: user.id, error: err });
       }
     };
 

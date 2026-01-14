@@ -21,6 +21,10 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": "off",
       
+      // Security: Prevent console.* in production code
+      // Use logger.ts instead for structured logging
+      "no-console": "error",
+      
       // Type safety rules
       "@typescript-eslint/no-unused-vars": [
         "error",

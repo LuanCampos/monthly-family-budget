@@ -8,6 +8,7 @@ import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import { toast } from 'sonner';
 import { useBudgetState } from './useBudgetState';
 import { createBudgetApi } from './useBudgetApi';
+import { logger } from '@/lib/logger';
 // Removed unused month utilities import
 
 // helpers that were unused removed or renamed to _ to satisfy lint
@@ -93,7 +94,7 @@ export const useBudget = () => {
           api.loadSubcategories()
         ]);
       } catch (error) {
-        console.error('Erro ao carregar dados do orçamento:', error);
+        logger.error('budget.loadData.failed', { familyId: currentFamilyId, error });
         toast.error('Erro ao carregar dados desta família. Tente recarregar a página.');
       } finally {
         setLoading(false);
@@ -548,7 +549,7 @@ export const useBudget = () => {
           loadSubcategories()
         ]);
       } catch (_e) {
-        console.error(_e);
+        logger.error('budget.importData.failed', _e);
         toast.error('Arquivo inválido ou corrompido');
       }
     };

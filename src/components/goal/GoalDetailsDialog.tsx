@@ -6,6 +6,7 @@ import { BarChart3, TrendingUp, Loader2, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { Goal, GoalEntry } from '@/types';
+import { logger } from '@/lib/logger';
 
 interface GoalDetailsDialogProps {
   goal: Goal;
@@ -34,7 +35,7 @@ export const GoalDetailsDialog = ({ goal, entries, onFetchEntries }: GoalDetails
         const freshEntries = await onFetchEntries();
         setCurrentEntries(freshEntries);
       } catch (error) {
-        console.error('Failed to load goal entries', error);
+        logger.error('goal.loadEntries.failed', { goalId: goal.id, error });
       } finally {
         setLoadingEntries(false);
       }

@@ -3,6 +3,7 @@ import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import * as familyService from '@/lib/services/familyService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export interface SyncProgress {
   step: string;
@@ -95,7 +96,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           await familyService.deleteByIdFromTable(table, id);
           setSyncProgress({ step: 'Revertendo alterações...', current: createdCloudIds.length - i, total: createdCloudIds.length });
         } catch (_e) {
-          console.error(`Failed to rollback ${table}:${id}`, _e);
+          logger.error('sync.rollback.tableFailed', { table, id, error: _e });
         }
       }
 
@@ -105,7 +106,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           await familyService.deleteMembersByFamily(newFamilyId);
           await familyService.deleteFamily(newFamilyId);
         } catch (_e) {
-          console.error('Failed to rollback family', _e);
+          logger.error('sync.rollback.familyFailed', { familyId: newFamilyId, error: _e });
         }
       }
     };
@@ -336,7 +337,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       return { newFamilyId };
     } catch (error) {
-      console.error('Sync error:', error);
+      logger.error('sync.family.failed', { familyId, error });
       
       // Attempt rollback
       if (createdCloudIds.length > 0 || newFamilyId) {
@@ -378,7 +379,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
           await offlineAdapter.sync.remove(item.id);
         } catch (error) {
-          console.error('Error syncing item:', item, error);
+          logger.error('sync.item.failed', { item, error });
         }
       }
 

@@ -9,6 +9,7 @@ import { List, Pencil, Trash2, Wallet, TrendingUp, Loader2, CheckCircle2 } from 
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useState } from 'react';
+import { logger } from '@/lib/logger';
 
 interface GoalCardProps {
   goal: Goal;
@@ -36,7 +37,7 @@ export const GoalCard = ({ goal, entries, onViewHistory, onEdit, onDelete, onFet
       const freshEntries = await onFetchEntries();
       setCurrentEntries(freshEntries);
     } catch (error) {
-      console.error('Failed to load goal entries', error);
+      logger.error('goal.loadEntries.failed', { goalId: goal.id, error });
     } finally {
       setLoadingEntries(false);
     }

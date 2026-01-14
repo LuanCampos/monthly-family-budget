@@ -47,6 +47,7 @@ import * as userService from '@/lib/services/userService';
 import { clearOfflineCache } from '@/lib/storage/offlineStorage';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { logger } from '@/lib/logger';
 // Separator and cn are not used in this component
 import {
   DropdownMenu,
@@ -252,7 +253,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
           familyId: '',
         });
       } catch (offlineErr) {
-        console.error('Failed to persist user preference offline:', offlineErr);
+        logger.error('settings.persistPreference.offlineFailed', { error: offlineErr });
       }
     }
   };
@@ -262,7 +263,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
       setLanguage(newLanguage);
       await persistUserPreference({ language: newLanguage });
     } catch (_err) {
-      console.error('Error handling language change:', _err);
+      logger.error('settings.languageChange.failed', { error: _err });
     }
   };
 
@@ -271,7 +272,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
       setCurrency(newCurrency);
       await persistUserPreference({ currency: newCurrency });
     } catch (_err) {
-      console.error('Error handling currency change:', _err);
+      logger.error('settings.currencyChange.failed', { error: _err });
     }
   };
 
@@ -284,7 +285,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
     } catch (_err) {
       // Error here is non-fatal because we already applied the theme and
       // attempted server/offline persistence. Log for diagnostics only.
-      console.error('Error handling theme change:', _err);
+      logger.error('settings.themeChange.failed', { error: _err });
     }
   };
 

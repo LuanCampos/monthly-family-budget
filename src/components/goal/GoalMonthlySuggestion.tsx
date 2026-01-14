@@ -3,6 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { TrendingUp, Calendar, Target, AlertCircle } from 'lucide-react';
 import type { Goal } from '@/types';
+import { logger } from '@/lib/logger';
 
 interface GoalMonthlySuggestionProps {
   goal: Goal;
@@ -34,7 +35,7 @@ export const GoalMonthlySuggestion = ({ goal, calculateSuggestion }: GoalMonthly
         const result = await calculateSuggestion(goal.id);
         setSuggestion(result);
       } catch (error) {
-        console.error('Failed to calculate suggestion:', error);
+        logger.error('goal.calculateSuggestion.failed', { goalId: goal.id, error });
       } finally {
         setLoading(false);
       }

@@ -1,5 +1,13 @@
 import { supabase } from '../supabase';
-import type { CategoryLimitRow } from '@/types/database';
+import type { CategoryLimitRow, ExpenseRow, RecurringExpenseRow } from '@/types/database';
+import { 
+  CreateSubcategoryInputSchema, 
+  CreateExpenseInputSchema, 
+  CreateRecurringExpenseInputSchema,
+  CreateIncomeSourceInputSchema,
+  CreateMonthInputSchema
+} from '../validators';
+import { logger } from '../logger';
 
 // Thin wrapper around Supabase used by useBudget. Keep functions small and
 // directly mappable to existing supabase calls so this is a safe, behavior-preserving
@@ -46,7 +54,12 @@ export const getSubcategories = async (familyId: string) => {
 // See getMonthLimits, insertMonthLimit, updateMonthLimit functions below.
 
 export const insertSubcategory = async (familyId: string, name: string, categoryKey: string) => {
-  return supabase.from('subcategory').insert({ family_id: familyId, name, category_key: categoryKey });
+  const validation = CreateSubcategoryInputSchema.safeParse({ name, category_key: categoryKey });
+  if (!validation.success) {
+    logger.warn('budgetService.insertSubcategory.validationFailed', { error: validation.error.message });
+    return { data: null, error: new Error('Invalid input: ' + validation.error.message) };
+  }
+  return supabase.from('subcategory').insert({ family_id: familyId, name: validation.data.name, category_key: validation.data.category_key });
 };
 
 export const updateSubcategoryById = async (id: string, name: string) => {
@@ -66,9 +79,14 @@ export const createChannel = (name: string) => supabase.channel(name);
 export const removeChannel = (channel: any): void => { supabase.removeChannel(channel); };
 
 export const insertMonth = async (familyId: string, year: number, month: number) => {
+  const validation = CreateMonthInputSchema.safeParse({ year, month });
+  if (!validation.success) {
+    logger.warn('budgetService.insertMonth.validationFailed', { error: validation.error.message });
+    return { data: null, error: new Error('Invalid input: ' + validation.error.message) };
+  }
   return supabase
     .from('month')
-    .insert({ family_id: familyId, year, month, income: 0 })
+    .insert({ family_id: familyId, year: validation.data.year, month: validation.data.month, income: 0 })
     .select()
     .single();
 };
@@ -105,6 +123,11 @@ export const copyLimitsToMonth = async (sourceMonthId: string, targetMonthId: st
 };
 
 export const insertExpense = async (expense: Partial<ExpenseRow>) => {
+  const validation = CreateExpenseInputSchema.safeParse(expense);
+  if (!validation.success) {
+    logger.warn('budgetService.insertExpense.validationFailed', { error: validation.error.message });
+    return { data: null, error: new Error('Invalid input: ' + validation.error.message) };
+  }
   return supabase.from('expense').insert(expense).select().single();
 };
 
@@ -141,6 +164,11 @@ export const setExpensePending = async (id: string, pending: boolean) => {
 };
 
 export const insertRecurring = async (familyId: string, payload: Partial<RecurringExpenseRow>) => {
+  const validation = CreateRecurringExpenseInputSchema.safeParse(payload);
+  if (!validation.success) {
+    logger.warn('budgetService.insertRecurring.validationFailed', { error: validation.error.message });
+    return { data: null, error: new Error('Invalid input: ' + validation.error.message) };
+  }
   return supabase.from('recurring_expense').insert({ family_id: familyId, ...payload }).select().single();
 };
 
@@ -166,9 +194,14 @@ export const getIncomeSourcesByMonth = async (monthId: string) => {
 };
 
 export const insertIncomeSource = async (monthId: string, name: string, value: number) => {
+  const validation = CreateIncomeSourceInputSchema.safeParse({ name, value });
+  if (!validation.success) {
+    logger.warn('budgetService.insertIncomeSource.validationFailed', { error: validation.error.message });
+    return { data: null, error: new Error('Invalid input: ' + validation.error.message) };
+  }
   return supabase
     .from('income_source')
-    .insert({ month_id: monthId, name, value })
+    .insert({ month_id: monthId, name: validation.data.name, value: validation.data.value })
     .select()
     .single();
 };
