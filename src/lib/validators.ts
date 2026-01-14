@@ -124,6 +124,7 @@ export const CreateGoalInputSchema = z.object({
   account: z.string().optional().nullable(),
   linked_subcategory_id: z.string().optional().nullable(),
   linked_category_key: z.string().optional().nullable(),
+  status: z.enum(['active', 'archived']).optional().default('active'),
 });
 
 export type CreateGoalInput = z.infer<typeof CreateGoalInputSchema>;

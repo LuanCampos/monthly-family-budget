@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { GoalProgress } from './GoalProgress';
 import { GoalTimelineChart } from './GoalTimelineChart';
 import type { Goal, GoalEntry } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { List, Pencil, Trash2, Wallet, TrendingUp, Loader2 } from 'lucide-react';
+import { List, Pencil, Trash2, Wallet, TrendingUp, Loader2, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useState } from 'react';
@@ -16,14 +17,17 @@ interface GoalCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onFetchEntries: () => Promise<GoalEntry[]>;
+  onCompleteGoal?: () => void;
 }
 
-export const GoalCard = ({ goal, entries, onViewHistory, onEdit, onDelete, onFetchEntries }: GoalCardProps) => {
+export const GoalCard = ({ goal, entries, onViewHistory, onEdit, onDelete, onFetchEntries, onCompleteGoal }: GoalCardProps) => {
   const { t } = useLanguage();
   const { formatCurrency } = useCurrency();
   const [evolutionOpen, setEvolutionOpen] = useState(false);
   const [currentEntries, setCurrentEntries] = useState<GoalEntry[]>(entries);
   const [loadingEntries, setLoadingEntries] = useState(false);
+  const isActive = (goal.status ?? 'active') === 'active';
+  const isCompleted = goal.targetValue > 0 && (goal.currentValue || 0) >= goal.targetValue;
 
   const handleEvolutionClick = async () => {
     setEvolutionOpen(true);
@@ -43,7 +47,25 @@ export const GoalCard = ({ goal, entries, onViewHistory, onEdit, onDelete, onFet
       <CardHeader className="pb-2 sm:pb-1 space-y-0">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1 min-w-0 flex-1">
-            <h3 className="text-base sm:text-lg font-semibold leading-tight break-words">{goal.name}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-base sm:text-lg font-semibold leading-tight break-words">{goal.name}</h3>
+              {goal.status && goal.status !== 'active' && (
+                <Badge variant="outline" className="text-[11px] h-5 px-2">
+                  {t('goalStatusArchived') || 'Concluída/Inativa'}
+                </Badge>
+              )}
+              {isActive && isCompleted && onCompleteGoal && (
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="h-8 px-3 gap-1.5 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white"
+                  onClick={onCompleteGoal}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  {t('goalMarkComplete') || 'Concluir meta'}
+                </Button>
+              )}
+            </div>
             <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
               <Wallet className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
               <span className="truncate">{goal.account || t('notSpecified') || 'Conta não informada'}</span>

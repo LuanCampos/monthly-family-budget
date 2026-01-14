@@ -13,7 +13,7 @@ import { YearSelector } from '@/components/ui/year-selector';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
-import type { Goal, Subcategory } from '@/types';
+import type { Goal, GoalStatus, Subcategory } from '@/types';
 
 interface GoalFormProps {
   initial?: Partial<Goal>;
@@ -26,6 +26,7 @@ interface GoalFormProps {
     account?: string; 
     linkedSubcategoryId?: string;
     linkedCategoryKey?: string;
+    status?: GoalStatus;
   }) => Promise<void> | void;
   onCancel?: () => void;
   submitting?: boolean;
@@ -47,6 +48,7 @@ export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submittin
   const [linkedSubcategoryId, setLinkedSubcategoryId] = useState<string | undefined>(
     initial?.linkedCategoryKey === 'liberdade' ? LIBERDADE_UI_ID : initial?.linkedSubcategoryId
   );
+  const [status, setStatus] = useState<GoalStatus>(initial?.status ?? 'active');
 
   const monthOptions = useMemo(
     () => [
@@ -82,6 +84,7 @@ export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submittin
     setLinkedSubcategoryId(
       initial?.linkedCategoryKey === 'liberdade' ? LIBERDADE_UI_ID : initial?.linkedSubcategoryId
     );
+    setStatus(initial?.status ?? 'active');
   }, [initial]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,6 +104,7 @@ export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submittin
       account: account || undefined,
       linkedSubcategoryId: isLiberdade ? undefined : linkedSubcategoryId,
       linkedCategoryKey: isLiberdade ? 'liberdade' : undefined,
+      status,
     });
   };
 
@@ -138,6 +142,21 @@ export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submittin
                 {sub.name}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">
+          {t('goalStatus') || 'Status'}
+        </Label>
+        <Select value={status} onValueChange={(v) => setStatus(v as GoalStatus)}>
+          <SelectTrigger className="h-10 bg-secondary/50 border-border">
+            <SelectValue placeholder={t('goalStatus')} />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border">
+            <SelectItem value="active">{t('goalStatusActive') || 'Ativa'}</SelectItem>
+            <SelectItem value="archived">{t('goalStatusArchived') || 'Concluída/Inativa'}</SelectItem>
           </SelectContent>
         </Select>
       </div>

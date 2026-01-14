@@ -10,7 +10,7 @@ import {
   UpdateGoalEntryInputSchema,
 } from '../validators';
 import { mapGoal, mapGoals, mapGoalEntries, mapGoalEntry, mapExpense } from '../mappers';
-import type { Goal, GoalEntry, Expense } from '@/types';
+import type { Goal, GoalEntry, Expense, GoalStatus } from '@/types';
 
 interface GoalPayload {
   name: string;
@@ -20,6 +20,7 @@ interface GoalPayload {
   account?: string;
   linkedSubcategoryId?: string;
   linkedCategoryKey?: string;
+  status?: GoalStatus;
 }
 
 interface GoalEntryPayload {
@@ -70,15 +71,39 @@ const addCurrentValueToGoals = async (familyId: string, goals: Goal[]): Promise<
   return goals.map(goal => ({ ...goal, currentValue: sums[goal.id] ?? 0 }));
 };
 
-const ensureSubcategoryIsValid = async (familyId: string, subcategoryId: string | undefined, categoryKey: string | undefined, currentGoalId?: string) => {
+const ensureSubcategoryIsValid = async (
+  familyId: string,
+  subcategoryId: string | undefined,
+  categoryKey: string | undefined,
+  status: GoalStatus | undefined,
+  currentGoalId?: string
+) => {
   // Simplified - let database handle constraints if any
   // Just verify subcategory exists if provided
   if (!subcategoryId && !categoryKey) return;
+
+  const effectiveStatus: GoalStatus = status ?? 'active';
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     if (subcategoryId) {
       const subcategory = await offlineAdapter.get<any>('subcategories', subcategoryId);
       if (!subcategory) throw new Error('Subcategory not found');
+
+      const offlineGoals = await offlineAdapter.getAllByIndex<any>('goals', 'linked_subcategory_id', subcategoryId);
+      const belongsToFamily = (goal: any) => goal.family_id === familyId || goal.familyId === familyId;
+      const activeGoal = (offlineGoals || []).find((g: any) => belongsToFamily(g) && (g.status ?? 'active') === 'active' && g.id !== currentGoalId);
+      if (activeGoal && effectiveStatus === 'active') {
+        throw new Error('Esta subcategoria já está vinculada a uma meta ativa');
+      }
+    }
+
+    if (categoryKey === 'liberdade' && effectiveStatus === 'active') {
+      const offlineGoals = await offlineAdapter.getAll<any>('goals');
+      const belongsToFamily = (goal: any) => goal.family_id === familyId || goal.familyId === familyId;
+      const activeGoal = (offlineGoals || []).find((g: any) => belongsToFamily(g) && (g.linked_category_key === 'liberdade') && (g.status ?? 'active') === 'active' && g.id !== currentGoalId);
+      if (activeGoal) {
+        throw new Error('Já existe uma meta ativa vinculada à categoria Liberdade Financeira');
+      }
     }
     return;
   }
@@ -88,6 +113,20 @@ const ensureSubcategoryIsValid = async (familyId: string, subcategoryId: string 
     if (error) throw error;
     const subcategory = (subcategories || []).find((s: any) => s.id === subcategoryId);
     if (!subcategory) throw new Error('Subcategory not found');
+
+    if (effectiveStatus === 'active') {
+      const existingGoal = await getGoalBySubcategoryId(subcategoryId);
+      if (existingGoal && existingGoal.id !== currentGoalId && (existingGoal.status ?? 'active') === 'active') {
+        throw new Error('Esta subcategoria já está vinculada a uma meta ativa');
+      }
+    }
+  }
+
+  if (categoryKey === 'liberdade' && effectiveStatus === 'active') {
+    const existingGoal = await getGoalByCategoryKey('liberdade');
+    if (existingGoal && existingGoal.id !== currentGoalId && (existingGoal.status ?? 'active') === 'active') {
+      throw new Error('Já existe uma meta ativa vinculada à categoria Liberdade Financeira');
+    }
   }
 };
 
@@ -101,6 +140,7 @@ const toGoalRow = (familyId: string, payload: GoalPayload) => {
     account: payload.account ?? null,
     linked_subcategory_id: payload.linkedSubcategoryId ?? null,
     linked_category_key: payload.linkedCategoryKey ?? null,
+    status: payload.status ?? 'active',
   };
   
   CreateGoalInputSchema.parse(data);
@@ -146,7 +186,7 @@ export const createGoal = async (familyId: string | null, payload: GoalPayload):
   if (!familyId) return null;
 
   if (payload.linkedSubcategoryId || payload.linkedCategoryKey) {
-    await ensureSubcategoryIsValid(familyId, payload.linkedSubcategoryId, payload.linkedCategoryKey);
+    await ensureSubcategoryIsValid(familyId, payload.linkedSubcategoryId, payload.linkedCategoryKey, payload.status);
   }
 
   const goalRow = toGoalRow(familyId, payload);
@@ -185,8 +225,22 @@ export const createGoal = async (familyId: string | null, payload: GoalPayload):
 export const updateGoal = async (familyId: string | null, goalId: string, payload: Partial<GoalPayload>): Promise<void> => {
   if (!familyId) return;
 
-  if (payload.linkedSubcategoryId || payload.linkedCategoryKey) {
-    await ensureSubcategoryIsValid(familyId, payload.linkedSubcategoryId, payload.linkedCategoryKey, goalId);
+  let existingGoal: any = null;
+  if (!payload.linkedSubcategoryId || !payload.linkedCategoryKey || !payload.status) {
+    if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
+      existingGoal = await offlineAdapter.get<any>('goals', goalId);
+    } else {
+      const { data } = await goalService.getGoalById(goalId);
+      existingGoal = data;
+    }
+  }
+
+  const effectiveSubcategoryId = payload.linkedSubcategoryId ?? existingGoal?.linked_subcategory_id ?? existingGoal?.linkedSubcategoryId;
+  const effectiveCategoryKey = payload.linkedCategoryKey ?? existingGoal?.linked_category_key ?? existingGoal?.linkedCategoryKey;
+  const effectiveStatus: GoalStatus = payload.status ?? (existingGoal?.status as GoalStatus | undefined) ?? 'active';
+
+  if (effectiveSubcategoryId || effectiveCategoryKey || payload.status) {
+    await ensureSubcategoryIsValid(familyId, effectiveSubcategoryId, effectiveCategoryKey, effectiveStatus, goalId);
   }
 
   const updateData: any = {
@@ -201,6 +255,10 @@ export const updateGoal = async (familyId: string | null, goalId: string, payloa
   // Só adiciona linked_category_key se estiver presente
   if (payload.linkedCategoryKey) {
     updateData.linked_category_key = payload.linkedCategoryKey;
+  }
+
+  if (payload.status) {
+    updateData.status = payload.status;
   }
 
   UpdateGoalInputSchema.parse(updateData);
@@ -250,7 +308,7 @@ export const getEntries = async (familyId: string | null, goalId: string): Promi
   if (!familyId) return [];
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const entries = await offlineAdapter.getAllByIndex<any>('goal_entries', 'goal_id', goalId);
+    await ensureSubcategoryIsValid(familyId, payload.linkedSubcategoryId, payload.linkedCategoryKey, payload.status);
     const mapped = mapGoalEntries(entries || []);
     // Sort by year/month descending (most recent first)
     return mapped.sort((a, b) => {
@@ -389,8 +447,9 @@ export const deleteEntry = async (familyId: string | null, entryId: string, allo
 
 export const getGoalBySubcategoryId = async (subcategoryId: string): Promise<Goal | null> => {
   const offlineMatches = await offlineAdapter.getAllByIndex<any>('goals', 'linked_subcategory_id', subcategoryId);
-  if (offlineMatches && offlineMatches[0]) {
-    return mapGoal(offlineMatches[0]);
+  const activeOffline = (offlineMatches || []).find((goal) => (goal.status ?? 'active') === 'active');
+  if (activeOffline) {
+    return mapGoal(activeOffline);
   }
 
   if (!navigator.onLine) return null;
@@ -401,7 +460,7 @@ export const getGoalBySubcategoryId = async (subcategoryId: string): Promise<Goa
 
 export const getGoalByCategoryKey = async (categoryKey: string): Promise<Goal | null> => {
   const offlineMatches = await offlineAdapter.getAll<any>('goals');
-  const match = offlineMatches.find((g: any) => g.linked_category_key === categoryKey);
+  const match = offlineMatches.find((g: any) => g.linked_category_key === categoryKey && (g.status ?? 'active') === 'active');
   if (match) {
     return mapGoal(match);
   }
@@ -602,6 +661,9 @@ export const calculateMonthlySuggestion = async (goalId: string): Promise<{
     const goal = await offlineAdapter.get<any>('goals', goalId);
     if (!goal) return null;
 
+    const status: GoalStatus = (goal.status as GoalStatus | undefined) ?? 'active';
+    if (status !== 'active') return null;
+
     // Calculate current value dynamically from entries
     const entries = await offlineAdapter.getAllByIndex<any>('goal_entries', 'goal_id', goalId) || [];
     const currentValue = entries.reduce((sum: number, entry: any) => sum + Number(entry.value || 0), 0);
@@ -640,6 +702,16 @@ export const calculateMonthlySuggestion = async (goalId: string): Promise<{
     };
   }
 
+  const goalResult = await goalService.getGoalById(goalId);
+  if (goalResult.error || !goalResult.data) {
+    logger.warn('goal.suggestion.goal_not_found', { goalId, error: goalResult.error?.message });
+    return null;
+  }
+
+  const goalData = goalResult.data as any;
+  const status: GoalStatus = (goalData.status as GoalStatus | undefined) ?? 'active';
+  if (status !== 'active') return null;
+
   const { data, error } = await goalService.calculateMonthlySuggestion(goalId);
   if (error || !data || !Array.isArray(data) || data.length === 0) {
     logger.warn('goal.suggestion.failed', { goalId, error: error?.message });
@@ -654,25 +726,22 @@ export const calculateMonthlySuggestion = async (goalId: string): Promise<{
   let suggestedMonthly: number | null = result.suggested_monthly !== null ? Number(result.suggested_monthly) : null;
 
   // For online mode, also calculate monthly progress and adjust suggestion intelligently
-  const goal = await goalService.getGoalById(goalId);
   let monthlyContributed = 0;
   let monthlyRemaining = 0;
-  
-  if (goal && !goal.error) {
-    const entries = await goalService.getEntries(goalId);
-    if (!entries.error) {
-      const { contributed } = calculateCurrentMonthProgress(entries.data || []);
-      monthlyContributed = contributed;
 
-      if (monthsRemaining !== null) {
-        const { recommendedMonthly, monthlyRemaining: remainingThisMonth } = calculateMonthlyPlan(
-          totalRemaining,
-          monthsRemaining,
-          monthlyContributed
-        );
-        suggestedMonthly = recommendedMonthly;
-        monthlyRemaining = remainingThisMonth;
-      }
+  const entries = await goalService.getEntries(goalId);
+  if (!entries.error) {
+    const { contributed } = calculateCurrentMonthProgress(entries.data || []);
+    monthlyContributed = contributed;
+
+    if (monthsRemaining !== null) {
+      const { recommendedMonthly, monthlyRemaining: remainingThisMonth } = calculateMonthlyPlan(
+        totalRemaining,
+        monthsRemaining,
+        monthlyContributed
+      );
+      suggestedMonthly = recommendedMonthly;
+      monthlyRemaining = remainingThisMonth;
     }
   }
 

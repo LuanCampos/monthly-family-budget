@@ -14,6 +14,7 @@ export const GoalProgress = ({ goal }: GoalProgressProps) => {
   const { getMonthlySuggestion } = useGoals();
   const { t } = useLanguage();
   const { formatCurrency } = useCurrency();
+  const isActive = (goal.status ?? 'active') === 'active';
   const [suggestion, setSuggestion] = useState<{ 
     remainingValue: number
     monthsRemaining: number | null
@@ -25,16 +26,19 @@ export const GoalProgress = ({ goal }: GoalProgressProps) => {
 
   useEffect(() => {
     const loadSuggestion = async () => {
-      if (hasTargetDate) {
-        const result = await getMonthlySuggestion(goal.id);
-        setSuggestion(result);
+      if (!hasTargetDate || !isActive) {
+        setSuggestion(null);
+        return;
       }
+      const result = await getMonthlySuggestion(goal.id);
+      setSuggestion(result);
     };
     loadSuggestion();
-  }, [goal.id, hasTargetDate, goal.currentValue, getMonthlySuggestion]);
+  }, [goal.id, hasTargetDate, goal.currentValue, getMonthlySuggestion, isActive]);
 
   const pct = goal.targetValue > 0 ? Math.min(100, Math.max(0, ((goal.currentValue || 0) / goal.targetValue) * 100)) : 0;
   const remaining = goal.targetValue - (goal.currentValue || 0);
+  const progressIsComplete = pct >= 100;
 
   const MONTH_NAMES = [
     'Janeiro', 'Fevereiro', 'Março', 
@@ -64,13 +68,19 @@ export const GoalProgress = ({ goal }: GoalProgressProps) => {
       </div>
       <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full transition-all duration-300"
+          className={`h-full rounded-full transition-all duration-300 ${progressIsComplete ? 'bg-green-500 dark:bg-green-400' : ''}`}
           style={{
             width: `${Math.min(pct, 100)}%`,
-            backgroundColor: 'hsl(var(--primary) / 0.7)',
+            backgroundColor: progressIsComplete ? undefined : 'hsl(var(--primary) / 0.7)',
           }}
         />
       </div>
+
+      {!isActive && (
+        <p className="text-xs text-muted-foreground pt-1">
+          {t('goalArchivedInfo') || 'Meta arquivada. Novos gastos não serão vinculados automaticamente.'}
+        </p>
+      )}
 
       {hasTargetDate && (
         <div className="flex flex-wrap gap-2 pt-0.5">

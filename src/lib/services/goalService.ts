@@ -22,6 +22,7 @@ export const getGoalBySubcategoryId = async (subcategoryId: string) => {
     .from('goal')
     .select('*')
     .eq('linked_subcategory_id', subcategoryId)
+    .eq('status', 'active')
     .maybeSingle();
 };
 
@@ -30,6 +31,7 @@ export const getGoalByCategoryKey = async (categoryKey: string) => {
     .from('goal')
     .select('*')
     .eq('linked_category_key', categoryKey)
+    .eq('status', 'active')
     .maybeSingle();
 };
 

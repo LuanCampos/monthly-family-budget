@@ -70,6 +70,8 @@ export interface Month {
   categoryLimits?: Record<CategoryKey, number>;
 }
 
+export type GoalStatus = 'active' | 'archived';
+
 export interface Goal {
   id: string;
   familyId: string;
@@ -83,6 +85,7 @@ export interface Goal {
   linkedCategoryKey?: string;
   createdAt?: string;
   updatedAt?: string;
+  status?: GoalStatus;
 }
 
 export interface GoalEntry {

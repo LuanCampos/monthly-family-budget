@@ -89,6 +89,7 @@ export interface GoalRow {
   account: string;
   linked_subcategory_id: string | null;
   linked_category_key: string | null;
+  status: 'active' | 'archived' | null;
   created_at: string;
   updated_at: string;
 }

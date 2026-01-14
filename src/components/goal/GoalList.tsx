@@ -15,10 +15,16 @@ interface GoalListProps {
     monthsRemaining: number | null;
     suggestedMonthly: number | null;
   } | null>;
+  onCompleteGoal?: (goal: Goal) => void;
 }
 
-export const GoalList = ({ goals, entriesByGoal, onViewHistory, onEdit, onDelete, onFetchEntries, calculateSuggestion }: GoalListProps) => {
+export const GoalList = ({ goals, entriesByGoal, onViewHistory, onEdit, onDelete, onFetchEntries, calculateSuggestion, onCompleteGoal }: GoalListProps) => {
   const { t } = useLanguage();
+
+  const sortedGoals = [...goals].sort((a, b) => {
+    const weight = (status: Goal['status']) => (status && status !== 'active' ? 1 : 0);
+    return weight(a.status) - weight(b.status);
+  });
 
   if (!goals.length) {
     return (
@@ -38,7 +44,7 @@ export const GoalList = ({ goals, entriesByGoal, onViewHistory, onEdit, onDelete
 
   return (
     <div className="grid gap-4 sm:gap-6 sm:grid-cols-1 lg:grid-cols-2">
-      {goals.map(goal => (
+      {sortedGoals.map(goal => (
         <GoalCard
           key={goal.id}
           goal={goal}
@@ -47,6 +53,7 @@ export const GoalList = ({ goals, entriesByGoal, onViewHistory, onEdit, onDelete
           onEdit={() => onEdit(goal)}
           onDelete={() => onDelete(goal)}
           onFetchEntries={() => onFetchEntries(goal.id)}
+          onCompleteGoal={onCompleteGoal ? () => onCompleteGoal(goal) : undefined}
           calculateSuggestion={calculateSuggestion}
         />
       ))}

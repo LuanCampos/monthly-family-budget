@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from './ui/use-toast';
 import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import { logger } from '@/lib/logger';
-import type { Goal, GoalEntry } from '@/types';
+import type { Goal, GoalEntry, GoalStatus } from '@/types';
 
 interface GoalInput {
   name: string;
@@ -15,6 +15,7 @@ interface GoalInput {
   account?: string;
   linkedSubcategoryId?: string;
   linkedCategoryKey?: string;
+  status?: GoalStatus;
 }
 
 interface ManualEntryInput {

@@ -9,7 +9,7 @@ import { useBudget } from '@/hooks/useBudget';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFamily } from '@/contexts/FamilyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Goal, GoalEntry } from '@/types';
+import type { Goal, GoalEntry, GoalStatus } from '@/types';
 import { SettingsPanel } from '@/components/settings';
 import { FamilySetup } from '@/components/family';
 import { Loader2, Target, Settings as SettingsIcon, Wallet, Plus, History, Import } from 'lucide-react';
@@ -91,7 +91,7 @@ const GoalsContent = () => {
     document.title = pageTitle;
   }, [pageTitle]);
 
-  const handleSaveGoal = async (data: { name: string; targetValue: number; currentValue?: number; targetDate?: string; account?: string; linkedSubcategoryId?: string }) => {
+  const handleSaveGoal = async (data: { name: string; targetValue: number; currentValue?: number; targetDate?: string; account?: string; linkedSubcategoryId?: string; status?: GoalStatus }) => {
     setSavingGoal(true);
     try {
       if (editingGoal) {
@@ -105,6 +105,11 @@ const GoalsContent = () => {
       setOpenGoalDialog(false);
       setEditingGoal(null);
     }
+  };
+
+  const handleCompleteGoal = async (goal: Goal) => {
+    await updateGoal(goal.id, { status: 'archived' });
+    await loadGoals();
   };
 
   const handleAddEntry = (goal: Goal) => {
@@ -244,6 +249,7 @@ const GoalsContent = () => {
               onEdit={(goal) => { setEditingGoal(goal); setOpenGoalDialog(true); }}
               onDelete={(goal) => setGoalToDelete(goal)}
               onFetchEntries={getEntries}
+              onCompleteGoal={handleCompleteGoal}
               calculateSuggestion={getMonthlySuggestion}
             />
           </>

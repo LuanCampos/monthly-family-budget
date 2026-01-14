@@ -14,7 +14,7 @@ import type {
   GoalRow, 
   GoalEntryRow 
 } from '@/types/database';
-import type { Month, Expense, RecurringExpense, Subcategory, IncomeSource, CategoryKey, Goal, GoalEntry } from '@/types';
+import type { Month, Expense, RecurringExpense, Subcategory, IncomeSource, CategoryKey, Goal, GoalEntry, GoalStatus } from '@/types';
 
 /**
  * Map database IncomeSource to application IncomeSource
@@ -164,6 +164,7 @@ export const mapGoal = (goal: GoalRow): Goal => ({
   linkedCategoryKey: goal.linked_category_key ?? undefined,
   createdAt: goal.created_at,
   updatedAt: goal.updated_at,
+  status: (goal.status as GoalStatus | null) ?? 'active',
 });
 
 /**
