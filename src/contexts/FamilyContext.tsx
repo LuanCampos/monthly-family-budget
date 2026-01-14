@@ -93,6 +93,11 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const currentFamily = families.find(f => f.id === currentFamilyId) || null;
   const userRole = members.find(m => m.user_id === user?.id && m.family_id === currentFamilyId)?.role || null;
   const isCurrentFamilyOffline = currentFamily?.isOffline ?? offlineAdapter.isOfflineId(currentFamilyId || '');
+  const userKey = user ? `${user.id}:${user.email ?? ''}` : 'anonymous';
+
+  // Track initialization per user identity so token refreshes don't force full reloads
+  const prevUserKeyRef = useRef<string | null>(null);
+  const hasInitializedRef = useRef(false);
 
   // Load offline families
   const loadOfflineFamilies = useCallback(async (): Promise<Family[]> => {
@@ -306,11 +311,16 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [user]);
 
-  // Track user ID to detect login changes
-  const prevUserIdRef = useRef<string | null>(null);
-
   // Initial load
   useEffect(() => {
+    // Skip re-initialization when the same user session is refreshed (e.g. tab visibility change)
+    if (hasInitializedRef.current && prevUserKeyRef.current === userKey) {
+      return;
+    }
+
+    prevUserKeyRef.current = userKey;
+    hasInitializedRef.current = true;
+
     const init = async () => {
       setLoading(true);
       
@@ -397,12 +407,11 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       } else {
         localStorage.removeItem('current-family-id');
       }
-      
-      prevUserIdRef.current = user?.id || null;
+
       setLoading(false);
     };
-    init();
-  }, [user, loadOfflineFamilies, refreshMyInvitations]);
+    void init();
+  }, [userKey, loadOfflineFamilies, refreshMyInvitations]);
 
   // Load members and family invitations when family changes
   useEffect(() => {
