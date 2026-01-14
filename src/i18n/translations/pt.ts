@@ -29,6 +29,7 @@ export const pt = {
   delete: 'Excluir',
   details: 'Detalhes',
   history: 'Histórico',
+  evolution: 'Evolução',
   
   // Month Selector
   selectMonth: 'Selecione um mês',

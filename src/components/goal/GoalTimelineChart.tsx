@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { GoalEntry } from '@/types';
@@ -37,6 +37,14 @@ export const GoalTimelineChart = ({ entries, targetValue }: GoalTimelineChartPro
     return data;
   }, [entries, t]);
 
+  // Calculate max value for Y axis to include target
+  const maxYValue = useMemo(() => {
+    const maxDataValue = Math.max(...chartData.map(d => d.value), 0);
+    // Make sure the chart shows at least up to the target value + 10% margin
+    const maxNeeded = Math.max(maxDataValue, targetValue);
+    return maxNeeded * 1.1; // 10% margin on top
+  }, [chartData, targetValue]);
+
   if (!chartData.length) {
     return (
       <div className="text-center py-8 text-sm text-muted-foreground">
@@ -57,6 +65,7 @@ export const GoalTimelineChart = ({ entries, targetValue }: GoalTimelineChartPro
           />
           <YAxis
             className="text-xs"
+            domain={[0, maxYValue]}
             tick={{ fill: 'hsl(var(--muted-foreground))' }}
             tickFormatter={(value) => {
               // Format compact: 1K, 1M, etc.
@@ -83,14 +92,18 @@ export const GoalTimelineChart = ({ entries, targetValue }: GoalTimelineChartPro
             activeDot={{ r: 6 }}
           />
           {targetValue > 0 && (
-            <Line
-              type="monotone"
-              dataKey={() => targetValue}
+            <ReferenceLine
+              y={targetValue}
               stroke="hsl(var(--muted-foreground))"
-              strokeWidth={1}
+              strokeWidth={2}
               strokeDasharray="5 5"
-              dot={false}
-              name={t('targetValue')}
+              label={{
+                value: formatCurrency(targetValue),
+                position: 'top',
+                fill: 'hsl(var(--muted-foreground))',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
             />
           )}
         </LineChart>

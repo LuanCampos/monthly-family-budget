@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, TrendingUp } from 'lucide-react';
+import { Calendar, TrendingUp, CheckCircle2 } from 'lucide-react';
 import type { Goal } from '@/types';
 import { useGoals } from '@/hooks/useGoals';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -50,23 +49,28 @@ export const GoalProgress = ({ goal }: GoalProgressProps) => {
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>{pct.toFixed(1)}%</span>
-        <span>
+    <div className="space-y-2 mt-2 sm:mt-0 sm:-mt-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-semibold text-green-600 dark:text-green-400">
+          <CheckCircle2 className="inline h-3.5 w-3.5 mr-1" />
           {formatCurrency(goal.currentValue || 0)}
-          {' / '}
-          {formatCurrency(goal.targetValue)}
         </span>
+        <span className="text-muted-foreground">{pct.toFixed(0)}%</span>
+        {remaining > 0 && (
+          <span className="text-muted-foreground">
+            {t('goalRemaining') || 'Faltam'} {formatCurrency(remaining)}
+          </span>
+        )}
       </div>
-      <Progress value={pct} className="h-2" />
-      
-      {remaining > 0 && (
-        <div className="text-sm text-muted-foreground">
-                {(t('goalRemaining') || 'Faltam')}{' '}
-                <span className="font-semibold text-foreground">{formatCurrency(remaining)}</span>
-        </div>
-      )}
+      <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-300"
+          style={{
+            width: `${Math.min(pct, 100)}%`,
+            backgroundColor: 'hsl(var(--primary) / 0.7)',
+          }}
+        />
+      </div>
 
       {hasTargetDate && (
         <div className="flex flex-wrap gap-2 pt-0.5">
