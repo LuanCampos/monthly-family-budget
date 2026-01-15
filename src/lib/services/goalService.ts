@@ -1,5 +1,7 @@
 import { supabase } from '../supabase';
 import type { GoalRow, GoalEntryRow } from '@/types/database';
+import { logger } from '../logger';
+import { CreateGoalInputSchema, UpdateGoalInputSchema, CreateGoalEntryInputSchema, CreateManualGoalEntryInputSchema, UpdateGoalEntryInputSchema } from '../validators';
 
 export const getGoals = async (familyId: string) => {
   return supabase
@@ -36,23 +38,36 @@ export const getGoalByCategoryKey = async (categoryKey: string) => {
 };
 
 export const createGoal = async (data: Partial<GoalRow>) => {
+  const validation = CreateGoalInputSchema.safeParse(data);
+  if (!validation.success) {
+    logger.warn('goalService.createGoal.validationFailed', { error: validation.error.message });
+    return { data: null, error: new Error('Invalid input: ' + validation.error.message) };
+  }
   return supabase
     .from('goal')
-    .insert(data)
+    .insert(validation.data)
     .select()
     .single();
 };
 
 export const updateGoal = async (id: string, data: Partial<GoalRow>) => {
+  const validation = UpdateGoalInputSchema.safeParse(data);
+  if (!validation.success) {
+    logger.warn('goalService.updateGoal.validationFailed', { error: validation.error.message });
+    return { data: null, error: new Error('Invalid input: ' + validation.error.message) };
+  }
   return supabase
     .from('goal')
-    .update(data)
+    .update(validation.data)
     .eq('id', id)
     .select()
     .single();
 };
 
 export const deleteGoal = async (id: string) => {
+  if (!id || typeof id !== 'string' || id.length < 10) {
+    return { data: null, error: new Error('Invalid ID') };
+  }
   return supabase
     .from('goal')
     .delete()
@@ -86,31 +101,49 @@ export const getEntryByExpense = async (expenseId: string) => {
 };
 
 export const createEntry = async (data: Partial<GoalEntryRow>) => {
+  const validation = CreateGoalEntryInputSchema.safeParse(data);
+  if (!validation.success) {
+    logger.warn('goalService.createEntry.validationFailed', { error: validation.error.message });
+    return { data: null, error: new Error('Invalid input: ' + validation.error.message) };
+  }
   return supabase
     .from('goal_entry')
-    .insert(data)
+    .insert(validation.data)
     .select()
     .single();
 };
 
 export const createManualEntry = async (data: Partial<GoalEntryRow>) => {
+  const validation = CreateManualGoalEntryInputSchema.safeParse(data);
+  if (!validation.success) {
+    logger.warn('goalService.createManualEntry.validationFailed', { error: validation.error.message });
+    return { data: null, error: new Error('Invalid input: ' + validation.error.message) };
+  }
   return supabase
     .from('goal_entry')
-    .insert(data)
+    .insert(validation.data)
     .select()
     .single();
 };
 
 export const updateEntry = async (id: string, data: Partial<GoalEntryRow>) => {
+  const validation = UpdateGoalEntryInputSchema.safeParse(data);
+  if (!validation.success) {
+    logger.warn('goalService.updateEntry.validationFailed', { error: validation.error.message });
+    return { data: null, error: new Error('Invalid input: ' + validation.error.message) };
+  }
   return supabase
     .from('goal_entry')
-    .update(data)
+    .update(validation.data)
     .eq('id', id)
     .select()
     .single();
 };
 
 export const deleteEntry = async (id: string) => {
+  if (!id || typeof id !== 'string' || id.length < 10) {
+    return { data: null, error: new Error('Invalid ID') };
+  }
   return supabase
     .from('goal_entry')
     .delete()

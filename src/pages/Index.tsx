@@ -12,6 +12,7 @@ import { CategoryLegend, SummaryTable, LimitsPanel, AnnualViewChart, OnlineStatu
 import { RecurringExpenses } from '@/components/recurring';
 import { SettingsPanel } from '@/components/settings';
 import { FamilySetup } from '@/components/family';
+import { getSecureStorageItem, setSecureStorageItem } from '@/lib/secureStorage';
 import type { SortType, SortDirection } from '@/components/expense';
 import type { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -92,7 +93,7 @@ const BudgetContent = () => {
   // Restore persisted sort preference (don't lose it on reload or remount)
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(sortStorageKey);
+      const raw = getSecureStorageItem(sortStorageKey);
       if (!raw) return;
       const parsed: unknown = JSON.parse(raw);
 
@@ -116,7 +117,7 @@ const BudgetContent = () => {
   // Persist current choice
   useEffect(() => {
     try {
-      localStorage.setItem(sortStorageKey, JSON.stringify({ sortType, sortDirection }));
+      setSecureStorageItem(sortStorageKey, JSON.stringify({ sortType, sortDirection }));
     } catch {
       // ignore quota / privacy modes
     }

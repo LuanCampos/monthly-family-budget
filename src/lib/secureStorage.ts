@@ -10,9 +10,14 @@ import { logger } from './logger';
 // Validation patterns for different storage keys
 const VALIDATION_PATTERNS: Record<string, RegExp> = {
   'current-family-id': /^[a-zA-Z0-9-_]+$/,
-  'budget-app-theme': /^(light|dark|system)$/,
+  'budget-app-theme': /^(light|dark|system|[a-z-]+)$/,  // Extended for custom themes
   'budget-app-language': /^(pt|en)$/,
   'budget-app-currency': /^(BRL|USD)$/,
+};
+
+// Pattern for dynamic keys (prefix-based)
+const DYNAMIC_KEY_PATTERNS: Record<string, RegExp> = {
+  'month-expenses-sort:': /^\{"sortType":"(createdAt|category|value|dueDate)","sortDirection":"(asc|desc)"\}$/,
 };
 
 // Default values for known keys
@@ -20,6 +25,23 @@ const DEFAULT_VALUES: Record<string, string | null> = {
   'budget-app-theme': 'dark',
   'budget-app-language': 'pt',
   'budget-app-currency': 'BRL',
+};
+
+/**
+ * Get validation pattern for a key (handles dynamic keys with prefixes)
+ */
+const getValidationPattern = (key: string): RegExp | undefined => {
+  // Check exact match first
+  if (VALIDATION_PATTERNS[key]) {
+    return VALIDATION_PATTERNS[key];
+  }
+  // Check dynamic key patterns (prefix-based)
+  for (const [prefix, pattern] of Object.entries(DYNAMIC_KEY_PATTERNS)) {
+    if (key.startsWith(prefix)) {
+      return pattern;
+    }
+  }
+  return undefined;
 };
 
 /**
@@ -32,7 +54,7 @@ export const getSecureStorageItem = (key: string): string | null => {
     if (!value) return null;
 
     // If we have a validation pattern for this key, validate the value
-    const pattern = VALIDATION_PATTERNS[key];
+    const pattern = getValidationPattern(key);
     if (pattern && !pattern.test(value)) {
       logger.warn('secureStorage.invalidValue', { key, value: value.substring(0, 50) });
       // Remove invalid value
@@ -54,7 +76,7 @@ export const getSecureStorageItem = (key: string): string | null => {
 export const setSecureStorageItem = (key: string, value: string): boolean => {
   try {
     // Validate value if we have a pattern
-    const pattern = VALIDATION_PATTERNS[key];
+    const pattern = getValidationPattern(key);
     if (pattern && !pattern.test(value)) {
       logger.warn('secureStorage.setItem.invalidValue', { key });
       return false;
