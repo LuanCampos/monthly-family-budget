@@ -163,7 +163,9 @@ const BudgetContent = () => {
     setEditingExpense(null);
   };
 
-  if (budgetLoading || !hasInitialized) {
+  // Show loading spinner while loading OR while waiting for month auto-selection
+  // This prevents flash of empty state when months exist but currentMonthId hasn't been set yet
+  if (budgetLoading || !hasInitialized || (months.length > 0 && !currentMonthId)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
