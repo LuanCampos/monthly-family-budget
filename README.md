@@ -37,6 +37,8 @@ Open the app at `http://localhost:8080` (or the URL Vite prints).
 
 ## Contributing
 
+> **🆕 New to the project?** Start with [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) — A beginner-friendly guide.
+>
 > **⚠️ Before contributing, read [`CONTRIBUTING.md`](CONTRIBUTING.md)** — Contains all coding standards, architecture guidelines, and security rules.
 
 - Open an issue to propose changes or report bugs
@@ -78,6 +80,12 @@ O app ficará disponível em `http://localhost:8080` (ou na URL que o Vite exibi
 
 - Instalar dependências: `npm install`
 - Iniciar servidor dev: `npm run dev`
+
+### Contribuindo
+
+> **🆕 Novo no projeto?** Comece por [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) — Guia para iniciantes.
+>
+> **⚠️ Antes de contribuir, leia [`CONTRIBUTING.md`](CONTRIBUTING.md)** — Contém padrões de código, arquitetura e regras de segurança.
 - Build para produção: `npm run build`
 - Visualizar build de produção: `npm run preview`
 
