@@ -1,4 +1,4 @@
-# Guia do Desenvolvedor — Monthly Family Budget
+﻿# Guia do Desenvolvedor — Monthly Family Budget
 
 > **⚠️ LEIA ANTES DE QUALQUER ALTERAÇÃO**
 
@@ -214,6 +214,18 @@ const handleError = (error: any) => { ... }
 const handleError = (error: unknown) => { ... }
 const handleError = (error: Error | PostgrestError) => { ... }
 ```
+
+---
+
+## 💬 Comentários
+
+Código deve ser auto-documentado. **Comentários explicam o "porquê", não o "quê".**
+
+| ✅ Comentar | ❌ Evitar |
+|-------------|-----------|
+| Decisões não-óbvias, workarounds | `// Set loading to true` (óbvio) |
+| `SECURITY:` para código crítico | `// Handlers` (seção genérica) |
+| `NOTE:` para contexto futuro | Comentários desatualizados |
 
 ---
 

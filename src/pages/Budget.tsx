@@ -73,7 +73,6 @@ const BudgetContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Get user initials for avatar
   const getUserInitials = () => {
     if (!user) return '?';
     const email = user.email || '';
@@ -84,7 +83,6 @@ const BudgetContent = () => {
     return email.slice(0, 2).toUpperCase();
   };
 
-  // Update page title based on language
   useEffect(() => {
     document.title = t('appTitle');
   }, [t]);
@@ -164,7 +162,6 @@ const BudgetContent = () => {
     setEditingExpense(null);
   };
 
-  // Show loading while budget data loads
   if (budgetLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -173,7 +170,6 @@ const BudgetContent = () => {
     );
   }
 
-  // Show create first month UI when no months exist
   if (months.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -203,11 +199,9 @@ const BudgetContent = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Bar */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between min-h-[3.5rem] sm:min-h-[4rem] py-2 gap-2">
-            {/* Logo + Title */}
             <div className="flex items-center gap-2.5 sm:gap-3 md:gap-3.5 min-w-0 flex-shrink pl-0.5 sm:pl-1">
               <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0 self-center" />
               <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight">
@@ -218,7 +212,6 @@ const BudgetContent = () => {
             {/* Spacer to push month selector to right */}
             <div className="flex-1" />
 
-            {/* Month Selector */}
             <div className="flex-shrink-0">
               <MonthSelector
                 months={months}
@@ -228,7 +221,6 @@ const BudgetContent = () => {
               />
             </div>
 
-            {/* Settings Dropdown Menu */}
             <div className="flex-shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -270,11 +262,9 @@ const BudgetContent = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {currentMonthId ? (
           <div className="space-y-4 sm:space-y-6">
-            {/* Income Section */}
             <div className="dashboard-card">
               <div className="dashboard-card-header flex items-center gap-2 sm:gap-4 justify-start">
                 <div className="flex items-center gap-1.5 sm:gap-2">
@@ -289,9 +279,7 @@ const BudgetContent = () => {
               </div>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-              {/* Expenses Chart Card */}
               <div className="dashboard-card lg:col-span-3">
                 <div className="dashboard-card-header">
                   <div className="flex items-center gap-2 flex-1">
@@ -323,7 +311,6 @@ const BudgetContent = () => {
                 </div>
               </div>
 
-              {/* Summary Card */}
               <div className="dashboard-card lg:col-span-6">
                 <div className="dashboard-card-header">
                   <div className="flex items-center gap-2">
@@ -341,7 +328,6 @@ const BudgetContent = () => {
                 </div>
               </div>
 
-              {/* Limits Card */}
               <div className="dashboard-card lg:col-span-3">
                 <div className="dashboard-card-header">
                   <div className="flex items-center gap-2">
@@ -358,19 +344,14 @@ const BudgetContent = () => {
               </div>
             </div>
 
-            {/* Expense List Section */}
             <div className="dashboard-card">
-              {/* Header: Title + Search + Actions */}
               <div className="dashboard-card-header flex-col sm:flex-row gap-3 sm:gap-4">
-                {/* Title */}
                 <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
                   <Receipt className="h-4 w-4 text-primary flex-shrink-0" />
                   <span className="dashboard-card-title">{t('monthExpenses')}</span>
                 </div>
                 
-                {/* Search + Buttons row */}
                 <div className="flex items-center gap-2 flex-1 flex-wrap sm:flex-nowrap sm:justify-end">
-                  {/* Search input */}
                   <div className="relative flex-1 min-w-[120px] sm:min-w-[160px] sm:max-w-[220px]">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <Input
@@ -393,7 +374,6 @@ const BudgetContent = () => {
                     )}
                   </div>
 
-                  {/* Action buttons */}
                   <div className="action-btn-group flex-shrink-0">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -494,7 +474,6 @@ const BudgetContent = () => {
         )}
       </main>
 
-      {/* Subcategory Chart Dialog */}
       <Dialog
         open={!!activeCategory}
         onOpenChange={(open) => {
@@ -518,7 +497,6 @@ const BudgetContent = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Annual View Dialog */}
       <Dialog open={showAnnualView} onOpenChange={setShowAnnualView}>
         <DialogContent className="bg-card border-border sm:max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
@@ -536,7 +514,6 @@ const BudgetContent = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Income Sources Dialog */}
       <IncomeSourceListDialog
         open={showIncomeSourcesDialog}
         onOpenChange={setShowIncomeSourcesDialog}
@@ -547,7 +524,6 @@ const BudgetContent = () => {
         totalIncome={currentMonth?.income || 0}
       />
 
-      {/* Expense Edit */}
       {editingExpense && (
         <ExpenseFormDialog
           mode="edit"
@@ -558,10 +534,8 @@ const BudgetContent = () => {
         />
       )}
 
-      {/* Online Status Indicator */}
       <OnlineStatusBar />
 
-      {/* Settings Panel (controlled) */}
       <SettingsDialog
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
@@ -577,7 +551,6 @@ const Budget = () => {
   const { loading: authLoading } = useAuth();
   const { currentFamilyId, loading: familyLoading } = useFamily();
 
-  // Show loading while checking auth/family
   if (authLoading || familyLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -586,13 +559,11 @@ const Budget = () => {
     );
   }
 
-  // Show family setup if no family selected
   if (!currentFamilyId) {
     return <FamilySetup />;
   }
 
-  // Render BudgetContent with key - forces remount when family changes
-  // This cleanly resets all state (including IndexedDB hooks) without a full page reload
+  // Forces remount when family changes, cleanly resetting all state
   return <BudgetContent key={currentFamilyId} />;
 };
 

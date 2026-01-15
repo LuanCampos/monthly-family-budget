@@ -56,7 +56,6 @@ const GoalsContent = () => {
   const [entryToDelete, setEntryToDelete] = useState<GoalEntry | null>(null);
   const [deletingEntry, setDeletingEntry] = useState(false);
 
-  // Get user initials for avatar
   const getUserInitials = () => {
     if (!user) return '?';
     const email = user.email || '';
@@ -67,7 +66,6 @@ const GoalsContent = () => {
     return email.slice(0, 2).toUpperCase();
   };
 
-  // Keep historyEntries synchronized with entriesByGoal
   useEffect(() => {
     if (!historyGoal) return;
     const cachedEntries = entriesByGoal[historyGoal.id];
@@ -80,7 +78,6 @@ const GoalsContent = () => {
 
   const pageTitle = useMemo(() => t('goals') || 'Metas', [t]);
 
-  // Update page title based on language
   useEffect(() => {
     document.title = pageTitle;
   }, [pageTitle]);
@@ -175,11 +172,9 @@ const GoalsContent = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Bar */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between min-h-[3.5rem] sm:min-h-[4rem] py-2 gap-2">
-            {/* Logo + Title */}
             <div className="flex items-center gap-2.5 sm:gap-3 md:gap-3.5 min-w-0 flex-shrink pl-0.5 sm:pl-1">
               <Target className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0 self-center" />
               <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight">
@@ -187,10 +182,8 @@ const GoalsContent = () => {
               </h1>
             </div>
 
-            {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Settings Dropdown Menu */}
             <div className="flex-shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -337,7 +330,6 @@ const GoalsPage = () => {
   const { loading: authLoading } = useAuth();
   const { currentFamilyId, loading: familyLoading } = useFamily();
 
-  // Show loading while checking auth/family
   if (authLoading || familyLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -346,7 +338,6 @@ const GoalsPage = () => {
     );
   }
 
-  // Show family setup if no family selected
   if (!currentFamilyId) {
     return <FamilySetup />;
   }
