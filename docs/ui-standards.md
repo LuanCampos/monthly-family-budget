@@ -43,9 +43,10 @@ App → Header → Main Content (Cards, Listas, Modais) → Footer
 | Texto destaque | `text-primary` |
 | Texto erro | `text-destructive` |
 | Texto sucesso | `text-success` |
+| Texto aviso | `text-warning` |
 | Bordas | `border-border` |
 
-**PROIBIDO**: Cores hardcoded (`text-gray-500`, `bg-slate-100`)
+**PROIBIDO**: Cores hardcoded (`text-gray-500`, `bg-slate-100`, `text-amber-500`)
 
 ### Cores de Categoria (CSS vars)
 ```css
@@ -118,12 +119,31 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 | Máximo | `sm:max-w-2xl` | Goals |
 
 ### AlertDialog (Confirmações)
-**ÚNICO caso com DialogDescription obrigatória:**
+
+> **💡 RECOMENDAÇÃO**: Use `ConfirmDialog` de `@/components/common` para confirmações simples.
+> Só use AlertDialog diretamente quando precisar de `AlertDialogTrigger` ou lógica especial.
+
+**ConfirmDialog (preferido):**
+```tsx
+import { ConfirmDialog } from '@/components/common';
+
+<ConfirmDialog
+  open={showConfirm}
+  onOpenChange={setShowConfirm}
+  onConfirm={handleDelete}
+  title={t('confirmDelete')}
+  description={t('deleteWarning')}
+  variant="destructive"  // | "warning" | "default"
+  confirmText={t('delete')}
+/>
+```
+
+**AlertDialog manual (casos especiais):**
 ```tsx
 <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-  <AlertDialogContent className="bg-card border-border sm:max-w-md">
+  <AlertDialogContent className="bg-card border-border sm:max-w-sm">
     <AlertDialogHeader>
-      <AlertDialogTitle className="flex items-center gap-2">
+      <AlertDialogTitle className="flex items-center gap-2 text-lg font-semibold">
         <AlertTriangle className="h-5 w-5 text-destructive" />
         {t('confirmDelete')}
       </AlertDialogTitle>
@@ -140,6 +160,13 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
   </AlertDialogContent>
 </AlertDialog>
 ```
+
+**Variants e ícones:**
+| Variant | Ícone | Cor título | Botão ação |
+|---------|-------|------------|------------|
+| `destructive` | `Trash2` | `text-destructive` | `bg-destructive` |
+| `warning` | `AlertTriangle` | `text-warning` | `bg-primary` |
+| `default` | `AlertCircle` | `text-primary` | `bg-primary` |
 
 ---
 

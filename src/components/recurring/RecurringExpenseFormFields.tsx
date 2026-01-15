@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { YearSelector } from '@/components/ui/year-selector';
+import { YearSelector } from '@/components/common';
 import { CategoryKey, Subcategory } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';

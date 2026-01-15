@@ -37,7 +37,7 @@ export const pt = {
   addMonth: 'Adicionar Mês',
   selectMonthAndYear: 'Selecione o mês e ano para adicionar',
   deleteMonth: 'Excluir mês',
-  deleteMonthConfirm: 'Tem certeza que deseja excluir o mês',
+  deleteMonthConfirm: 'Excluir mês',
   deleteMonthWarning: 'Esta ação não pode ser desfeita.',
   deleteCurrentMonth: 'Excluir mês atual',
   deleteCurrentMonthDescription: 'Exclua o mês atual e todos os seus gastos. Esta ação não pode ser desfeita.',
@@ -53,7 +53,7 @@ export const pt = {
   incomeSourceUpdated: 'Fonte de renda atualizada',
   incomeSourceDeleted: 'Fonte de renda removida',
   deleteIncomeSource: 'Excluir fonte de renda',
-  deleteIncomeSourceMessage: 'Tem certeza que deseja excluir esta fonte de renda? Esta ação não pode ser desfeita.',
+  deleteIncomeSourceMessage: 'Esta ação não pode ser desfeita.',
   incomeSourcesDescription: 'Atualize e gerencie as fontes de renda da sua família.',
   autoUpdatedHint: 'Este valor é atualizado automaticamente quando você salva as fontes.',
   incomeSourcesList: 'Fontes cadastradas',
@@ -68,7 +68,7 @@ export const pt = {
   errorSaving: 'Erro ao salvar',
   errorDeleting: 'Erro ao remover',
   update: 'Atualizar',
-  confirmDelete: 'Tem certeza?',
+  confirmDelete: 'Confirmar exclusão',
   name: 'Nome',
   value: 'Valor',
   
@@ -99,7 +99,7 @@ export const pt = {
   selectSubcategory: 'Selecione uma subcategoria',
   editGoal: 'Editar Meta',
   deleteGoal: 'Excluir Meta',
-  deleteGoalConfirm: 'Tem certeza que deseja excluir esta meta?',
+  deleteGoalConfirm: 'Excluir meta?',
   deleteGoalWarning: 'Os lançamentos vinculados serão removidos. Os gastos continuarão existindo.',
   goalCreated: 'Meta criada com sucesso!',
   goalUpdated: 'Meta atualizada com sucesso!',
@@ -156,7 +156,7 @@ export const pt = {
   entryHistory: 'Histórico de Lançamentos',
   noEntries: 'Nenhum lançamento',
   deleteEntry: 'Excluir Lançamento',
-  deleteEntryConfirm: 'Tem certeza que deseja excluir este lançamento?',
+  deleteEntryConfirm: 'Excluir lançamento?',
   deleteEntryWarning: 'O valor será descontado da meta.',
   entryCreated: 'Lançamento adicionado com sucesso!',
   entryUpdated: 'Lançamento atualizado com sucesso!',
@@ -218,7 +218,7 @@ export const pt = {
   expenseSubcategory: 'Subcategoria',
   saveChanges: 'Salvar alterações',
   deleteExpense: 'Excluir gasto',
-  deleteExpenseMessage: 'Tem certeza que deseja excluir este gasto? Esta ação não pode ser desfeita.',
+  deleteExpenseMessage: 'Esta ação não pode ser desfeita.',
   
   // Recurring Expenses
   recurringExpenses: 'Gastos Recorrentes',
@@ -253,6 +253,8 @@ export const pt = {
   subcategoryName: 'Nome da sub-categoria',
   noSubcategories: 'Nenhuma sub-categoria',
   noSubcategoryExpenses: 'Nenhuma sub-categoria com gastos',
+  deleteSubcategory: 'Excluir subcategoria?',
+  deleteSubcategoryWarning: 'Esta ação não pode ser desfeita.',
   notSpecified: 'Não especificado',
 
   // Limits
@@ -285,7 +287,7 @@ export const pt = {
   
   // Delete Recurring Expense
   deleteRecurringExpense: 'Excluir gasto recorrente',
-  deleteRecurringExpenseConfirm: 'Tem certeza que deseja excluir este gasto recorrente? Esta ação não pode ser desfeita.',
+  deleteRecurringExpenseConfirm: 'Esta ação não pode ser desfeita.',
   
   // Settings
   settings: 'Configurações',
@@ -432,9 +434,9 @@ export const pt = {
   familyNameUpdated: 'Nome da família atualizado!',
   leaveFamily: 'Sair da família',
   deleteFamily: 'Excluir família',
-  leaveFamilyConfirm: 'Tem certeza que deseja sair desta família?',
+  leaveFamilyConfirm: 'Sair da família?',
   leaveFamilyWarning: 'Ao sair, você perderá imediatamente o acesso a todos os dados de orçamento compartilhados com esta família. Caso deseje retornar no futuro, será necessário solicitar um novo convite a um administrador da família.',
-  deleteFamilyConfirm: 'Tem certeza que deseja excluir?',
+  deleteFamilyConfirm: 'Excluir família?',
   deleteFamilyWarning: 'Esta ação é irreversível e todos os dados serão perdidos permanentemente.',
   deleteFamilyWarningOnline: 'ATENÇÃO: Esta família está na nuvem. Ao excluí-la, TODOS OS MEMBROS perderão acesso permanentemente. Todos os dados de orçamento, despesas e histórico serão apagados para sempre. Esta ação NÃO pode ser desfeita!',
   familyDeleted: 'Família excluída',
@@ -451,6 +453,8 @@ export const pt = {
   openFamilySettings: 'Abrir configurações da família',
   sendInvitation: 'Enviar convite',
   removeMember: 'Remover membro',
+  removeMemberConfirm: 'Remover membro?',
+  removeMemberWarning: 'O membro perderá acesso aos dados da família.',
   cancelInvitation: 'Cancelar convite',
   rejectInvitation: 'Rejeitar convite',
   acceptInvitation: 'Aceitar convite',

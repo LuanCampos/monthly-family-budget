@@ -16,7 +16,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import TriggerButton from '@/components/ui/trigger-button';
+import { TriggerButton } from '@/components/common';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/ui/use-toast';
 import type { User as SupabaseUser } from '@supabase/supabase-js';

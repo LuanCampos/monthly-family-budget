@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { ConfirmDialog } from '@/components/common';
 import {
   Select,
   SelectContent,
@@ -43,7 +44,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/ui/use-toast';
 
-export const FamilyManager = () => {
+export const FamilySettingsDialog = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { 
@@ -71,6 +72,7 @@ export const FamilyManager = () => {
   const [newFamilyName, setNewFamilyName] = useState('');
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showLeaveAlert, setShowLeaveAlert] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState<string | null>(null);
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const [isDeletingFamily, setIsDeletingFamily] = useState(false);
@@ -368,7 +370,7 @@ export const FamilyManager = () => {
                             variant="ghost"
                             size="icon"
                             className="h-9 w-9 text-destructive hover:bg-destructive/10"
-                            onClick={() => handleRemoveMember(member.id)}
+                            onClick={() => setMemberToRemove(member.id)}
                             disabled={processingAction === member.id}
                             aria-label={t('removeMember')}
                           >
@@ -543,9 +545,9 @@ export const FamilyManager = () => {
 
       {/* Delete Alert */}
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-md">
+        <AlertDialogContent className="bg-card border-border sm:max-w-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
+            <AlertDialogTitle className="flex items-center gap-2 text-lg font-semibold">
               <Trash2 className="h-5 w-5 text-destructive" />
               {t('deleteFamilyConfirm')}
             </AlertDialogTitle>
@@ -563,25 +565,28 @@ export const FamilyManager = () => {
       </AlertDialog>
 
       {/* Leave Alert */}
-      <AlertDialog open={showLeaveAlert} onOpenChange={setShowLeaveAlert}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <LogOut className="h-5 w-5 text-destructive" />
-              {t('leaveFamilyConfirm')}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              {t('leaveFamilyWarning')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLeavingFamily}>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLeaveFamily} disabled={isLeavingFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t('leave')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={showLeaveAlert}
+        onOpenChange={setShowLeaveAlert}
+        onConfirm={handleLeaveFamily}
+        title={t('leaveFamilyConfirm')}
+        description={t('leaveFamilyWarning')}
+        variant="destructive"
+        icon={LogOut}
+        confirmLabel={t('leave')}
+        loading={isLeavingFamily}
+      />
+
+      {/* Remove Member Confirm */}
+      <ConfirmDialog
+        open={!!memberToRemove}
+        onOpenChange={(open) => !open && setMemberToRemove(null)}
+        onConfirm={() => memberToRemove && handleRemoveMember(memberToRemove)}
+        title={t('removeMemberConfirm') || 'Remover membro?'}
+        description={t('removeMemberWarning') || 'O membro perderá acesso aos dados da família.'}
+        variant="destructive"
+        loading={!!processingAction}
+      />
     </>
   );
 };

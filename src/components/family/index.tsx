@@ -1,2 +1,2 @@
-export { FamilyManager } from './FamilyManager';
+export { FamilySettingsDialog } from './FamilySettingsDialog';
 export { FamilySetup } from './FamilySetup';

@@ -10,6 +10,7 @@ import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
+import { ConfirmDialog } from '@/components/common';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,10 +27,12 @@ type SortDirection = 'asc' | 'desc';
 
 type ViewMode = 'list' | 'add' | 'edit';
 
-interface RecurringExpensesProps {
+interface RecurringExpensesPanelProps {
   expenses: RecurringExpense[];
   subcategories: Subcategory[];
   currentMonthExpenses: Expense[];
+  defaultMonth?: number;
+  defaultYear?: number;
   onAdd: (
     title: string,
     category: CategoryKey,
@@ -58,17 +61,24 @@ interface RecurringExpensesProps {
   onApply: (id: string) => boolean | Promise<boolean>;
 }
 
-export const RecurringExpenses = ({
+export const RecurringExpensesPanel = ({
   expenses,
   subcategories,
   currentMonthExpenses,
+  defaultMonth,
+  defaultYear,
   onAdd,
   onUpdate,
   onRemove,
   onApply,
-}: RecurringExpensesProps) => {
+}: RecurringExpensesPanelProps) => {
   const { t } = useLanguage();
   const { formatCurrency } = useCurrency();
+  
+  // Use app's current month/year as default, fallback to system date
+  const getDefaultMonth = () => String(defaultMonth ?? new Date().getMonth() + 1);
+  const getDefaultYear = () => String(defaultYear ?? new Date().getFullYear());
+  
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<ViewMode>('list');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -88,8 +98,8 @@ export const RecurringExpenses = ({
   const [dueDay, setDueDay] = useState('');
   const [hasInstallments, setHasInstallments] = useState(false);
   const [totalInstallments, setTotalInstallments] = useState('');
-  const [startYear, setStartYear] = useState('');
-  const [startMonth, setStartMonth] = useState('');
+  const [startYear, setStartYear] = useState(getDefaultYear);
+  const [startMonth, setStartMonth] = useState(getDefaultMonth);
 
   const resetForm = () => {
     setTitle('');
@@ -99,8 +109,8 @@ export const RecurringExpenses = ({
     setDueDay('');
     setHasInstallments(false);
     setTotalInstallments('');
-    setStartYear('');
-    setStartMonth('');
+    setStartYear(getDefaultYear());
+    setStartMonth(getDefaultMonth());
     setEditingId(null);
   };
 
@@ -490,9 +500,9 @@ export const RecurringExpenses = ({
       </Dialog>
 
       <AlertDialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-md">
+        <AlertDialogContent className="bg-card border-border sm:max-w-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
+            <AlertDialogTitle className="flex items-center gap-2 text-lg font-semibold">
               <RefreshCw className="h-5 w-5 text-primary" />
               {t('updateRecurringTitle')}
             </AlertDialogTitle>
@@ -522,29 +532,16 @@ export const RecurringExpenses = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" />
-              {t('deleteRecurringExpense')}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              {t('deleteRecurringExpenseConfirm')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t('delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={handleDeleteConfirm}
+        title={t('deleteRecurringExpense')}
+        description={t('deleteRecurringExpenseConfirm')}
+        variant="destructive"
+        icon={Trash2}
+        loading={isDeleting}
+      />
     </>
   );
 };

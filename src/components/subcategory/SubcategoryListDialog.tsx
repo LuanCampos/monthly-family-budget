@@ -19,20 +19,21 @@ import { CategoryKey, Subcategory } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TranslationKey } from '@/i18n/translations/pt';
+import { ConfirmDialog } from '@/components/common';
 
-interface SubcategoryManagerProps {
+interface SubcategoryListDialogProps {
   subcategories: Subcategory[];
   onAdd: (name: string, categoryKey: CategoryKey) => void | Promise<void>;
   onUpdate: (id: string, name: string) => void | Promise<void>;
   onRemove: (id: string) => void | Promise<void>;
 }
 
-export const SubcategoryManager = ({
+export const SubcategoryListDialog = ({
   subcategories,
   onAdd,
   onUpdate,
   onRemove,
-}: SubcategoryManagerProps) => {
+}: SubcategoryListDialogProps) => {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [newName, setNewName] = useState('');
@@ -42,6 +43,7 @@ export const SubcategoryManager = ({
   const [isAdding, setIsAdding] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteSubId, setDeleteSubId] = useState<string | null>(null);
 
   const handleAdd = async () => {
     if (!newName.trim() || isAdding) return;
@@ -84,6 +86,7 @@ export const SubcategoryManager = ({
       await onRemove(id);
     } finally {
       setDeletingId(null);
+      setDeleteSubId(null);
     }
   };
 
@@ -238,7 +241,7 @@ export const SubcategoryManager = ({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleRemove(sub.id)}
+                                  onClick={() => setDeleteSubId(sub.id)}
                                   disabled={deletingId === sub.id}
                                   className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                   aria-label={t('delete')}
@@ -258,6 +261,16 @@ export const SubcategoryManager = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!deleteSubId}
+        onOpenChange={(open) => !open && setDeleteSubId(null)}
+        onConfirm={() => deleteSubId && handleRemove(deleteSubId)}
+        title={t('deleteSubcategory') || 'Excluir subcategoria?'}
+        description={t('deleteSubcategoryWarning') || 'Esta ação não pode ser desfeita.'}
+        variant="destructive"
+        loading={!!deletingId}
+      />
     </>
   );
 };

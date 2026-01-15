@@ -18,7 +18,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import TriggerButton from '@/components/ui/trigger-button';
+import { TriggerButton } from '@/components/common';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme, ThemeKey } from '@/contexts/ThemeContext';
 import { useCurrency, CurrencyCode } from '@/contexts/CurrencyContext';
@@ -42,20 +42,21 @@ import {
   LeaveFamilyAlert,
   CreateFamilyDialog,
 } from './sections';
+import { ConfirmDialog } from '@/components/common';
 
-interface SettingsPanelProps {
+interface SettingsDialogProps {
   currentMonthLabel?: string;
   onDeleteMonth?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-export const SettingsPanel = ({ 
+export const SettingsDialog = ({ 
   currentMonthLabel, 
   onDeleteMonth, 
   open: controlledOpen, 
   onOpenChange: controlledOnOpenChange 
-}: SettingsPanelProps) => {
+}: SettingsDialogProps) => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { currency, setCurrency } = useCurrency();
@@ -97,6 +98,7 @@ export const SettingsPanel = ({
   const [newFamilyName, setNewFamilyName] = useState('');
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showLeaveAlert, setShowLeaveAlert] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState<string | null>(null);
   const [showCreateFamilyDialog, setShowCreateFamilyDialog] = useState(false);
   const [isCreatingFamily, setIsCreatingFamily] = useState(false);
@@ -498,7 +500,7 @@ export const SettingsPanel = ({
                   onRejectInvitation={handleRejectInvitation}
                   onCancelInvitation={handleCancelInvitation}
                   onRoleChange={handleRoleChange}
-                  onRemoveMember={handleRemoveMember}
+                  onRemoveMember={(memberId) => setMemberToRemove(memberId)}
                   onShowLeaveAlert={() => setShowLeaveAlert(true)}
                   onShowDeleteAlert={() => setShowDeleteAlert(true)}
                   t={t}
@@ -535,6 +537,16 @@ export const SettingsPanel = ({
         isCreating={isCreatingFamily}
         onCreate={handleCreateFamily}
         t={t}
+      />
+
+      <ConfirmDialog
+        open={!!memberToRemove}
+        onOpenChange={(open) => !open && setMemberToRemove(null)}
+        onConfirm={() => memberToRemove && handleRemoveMember(memberToRemove)}
+        title={t('removeMemberConfirm') || 'Remover membro?'}
+        description={t('removeMemberWarning') || 'O membro perderá acesso aos dados da família.'}
+        variant="destructive"
+        loading={!!processingAction}
       />
     </>
   );

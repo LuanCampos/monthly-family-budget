@@ -1,19 +1,19 @@
 import { useState, useEffect, KeyboardEvent } from 'react';
 import { IncomeSource } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Trash2, Plus, Edit2, Check, X } from 'lucide-react';
+import { Plus, Edit2, Check, X, Trash2 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/common';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/lib/utils/formatters';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 
-interface IncomeSourcesManagerProps {
+interface IncomeSourceListDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   incomeSources: IncomeSource[];
@@ -30,7 +30,7 @@ interface EditingSource {
   isNew: boolean;
 }
 
-export const IncomeSourcesManager = ({
+export const IncomeSourceListDialog = ({
   open,
   onOpenChange,
   incomeSources,
@@ -38,7 +38,7 @@ export const IncomeSourcesManager = ({
   onUpdate,
   onDelete,
   totalIncome,
-}: IncomeSourcesManagerProps) => {
+}: IncomeSourceListDialogProps) => {
   const { t } = useLanguage();
   const { currencySymbol, formatCurrency } = useCurrency();
   const [editingSources, setEditingSources] = useState<EditingSource[]>([]);
@@ -208,34 +208,33 @@ export const IncomeSourcesManager = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border w-[95vw] max-w-[480px] sm:max-w-2xl max-h-[85vh] sm:max-h-[80vh] overflow-hidden flex flex-col gap-0 p-0">
-          <DialogHeader className="px-5 sm:px-6 pt-5 pb-3 border-b border-border">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-              <Plus className="h-5 w-5 text-primary" />
-              {t('manageIncomeSources') || 'Fontes de Renda'}
-            </DialogTitle>
-          </DialogHeader>
+      <DialogContent className="bg-card border-border sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+            <Plus className="h-5 w-5 text-primary" />
+            {t('manageIncomeSources') || 'Fontes de Renda'}
+          </DialogTitle>
+        </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 sm:px-6 py-3 flex flex-col gap-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 flex flex-col gap-4">
           {/* Total Income Display */}
-          <div className="rounded-lg border border-border/80 bg-muted/10 p-4 shadow-sm">
-            <div className="text-xs text-muted-foreground mb-1">{t('totalIncome') || 'Renda Total'}</div>
+          <div className="rounded-lg border border-border bg-secondary/30 p-4">
+            <div className="text-sm text-muted-foreground mb-1">{t('totalIncome') || 'Renda Total'}</div>
             <div className="text-xl font-semibold text-primary tracking-tight">
-              {currencySymbol}
-              {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(totalIncome)}
             </div>
           </div>
 
           {/* Editable Income Sources List */}
           <div className="flex-1 flex flex-col gap-3">
             <ScrollArea className="flex-1">
-              <div className="space-y-3 pb-2">
+              <div className="space-y-2">
                 {editingSources.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-center">
-                    <p className="font-medium text-foreground">
+                  <div className="text-center py-8 border-2 border-dashed border-border rounded-lg bg-secondary/20">
+                    <p className="text-base font-semibold text-foreground">
                       {t('noIncomeSources') || 'Nenhuma fonte de renda adicionada'}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mt-1">
                       {t('addIncomeSourceHint') || 'Crie sua primeira fonte para distribuir a renda do mês.'}
                     </p>
                   </div>
@@ -256,7 +255,7 @@ export const IncomeSourcesManager = ({
                               disabled={loading}
                               autoFocus
                               onKeyDown={(event) => handleKeyDown(event, index)}
-                              className="min-w-0 flex-1 h-9 text-sm"
+                              className="min-w-0 flex-1 h-10 text-sm bg-secondary/50 border-border"
                             />
                             <div className="relative w-28 sm:w-36 flex-shrink-0">
                               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -269,7 +268,7 @@ export const IncomeSourcesManager = ({
                                 value={source.value}
                                 onChange={(e) => updateSource(index, 'value', e.target.value)}
                                 disabled={loading}
-                                className="pl-8 h-9 text-sm"
+                                className="pl-8 h-10 text-sm bg-secondary/50 border-border"
                                 onKeyDown={(event) => handleKeyDown(event, index)}
                               />
                             </div>
@@ -344,45 +343,29 @@ export const IncomeSourcesManager = ({
                 )}
               </div>
             </ScrollArea>
-
-            {/* Add New Line Button */}
-            <div className="flex justify-center pt-2 border-t border-border/50">
-              <Button
-                onClick={addNewLine}
-                disabled={loading}
-                size="sm"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-8 px-2.5 sm:h-9 sm:px-3 sm:text-sm"
-              >
-                <Plus className="h-3.5 w-3.5 mr-1.5" />
-                {t('addIncomeSource') || 'Adicionar Fonte'}
-              </Button>
-            </div>
           </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-border bg-secondary/30">
+          <Button
+            onClick={addNewLine}
+            disabled={loading}
+            className="w-full h-10 gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {t('addIncomeSource') || 'Adicionar Fonte'}
+          </Button>
         </div>
       </DialogContent>
 
-      <AlertDialog open={!!deleteSourceId} onOpenChange={(open) => !open && setDeleteSourceId(null)}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" />
-              {t('deleteIncomeSource')}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              {t('deleteIncomeSourceMessage')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t('delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!deleteSourceId}
+        onOpenChange={(open) => !open && setDeleteSourceId(null)}
+        onConfirm={handleDeleteConfirm}
+        title={t('deleteIncomeSource')}
+        description={t('deleteIncomeSourceMessage')}
+        variant="destructive"
+      />
     </Dialog>
   );
 };

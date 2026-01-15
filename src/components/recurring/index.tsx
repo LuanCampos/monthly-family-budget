@@ -1,2 +1,2 @@
-export { RecurringExpenses } from './RecurringExpenses';
+export { RecurringExpensesPanel } from './RecurringExpensesPanel';
 export { RecurringExpenseFormFields } from './RecurringExpenseFormFields';

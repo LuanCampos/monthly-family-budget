@@ -45,4 +45,4 @@ const TriggerButton = React.forwardRef<HTMLButtonElement, TriggerButtonProps>(
 
 TriggerButton.displayName = 'TriggerButton';
 
-export default TriggerButton;
+export { TriggerButton };

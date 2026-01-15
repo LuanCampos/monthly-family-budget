@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { Plus, AlertTriangle, Loader2 } from 'lucide-react';
+import { Plus, Trash2, LogOut, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -42,10 +42,10 @@ export const DeleteFamilyAlert: React.FC<DeleteFamilyAlertProps> = ({
   t,
 }) => (
   <AlertDialog open={open} onOpenChange={onOpenChange}>
-    <AlertDialogContent className="bg-card border-border sm:max-w-md">
+    <AlertDialogContent className="bg-card border-border sm:max-w-sm">
       <AlertDialogHeader>
-        <AlertDialogTitle className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-destructive" />
+        <AlertDialogTitle className="flex items-center gap-2 text-lg font-semibold">
+          <Trash2 className="h-5 w-5 text-destructive" />
           {t('deleteFamilyConfirm')}
         </AlertDialogTitle>
         <AlertDialogDescription className={!isCurrentOffline ? "text-destructive font-medium" : ""}>
@@ -83,10 +83,10 @@ export const LeaveFamilyAlert: React.FC<LeaveFamilyAlertProps> = ({
   t,
 }) => (
   <AlertDialog open={open} onOpenChange={onOpenChange}>
-    <AlertDialogContent className="bg-card border-border sm:max-w-md">
+    <AlertDialogContent className="bg-card border-border sm:max-w-sm">
       <AlertDialogHeader>
-        <AlertDialogTitle className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-destructive" />
+        <AlertDialogTitle className="flex items-center gap-2 text-lg font-semibold">
+          <LogOut className="h-5 w-5 text-destructive" />
           {t('leaveFamilyConfirm')}
         </AlertDialogTitle>
         <AlertDialogDescription className="text-muted-foreground">

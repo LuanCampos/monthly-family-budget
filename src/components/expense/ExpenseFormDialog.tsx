@@ -15,10 +15,10 @@ import { ExpenseFormFields, ExpenseFormFieldsRef } from './ExpenseFormFields';
 import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/lib/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-type ExpenseFormMode = 'create' | 'edit';
+type ExpenseFormDialogMode = 'create' | 'edit';
 
-interface ExpenseFormProps {
-  mode: ExpenseFormMode;
+interface ExpenseFormDialogProps {
+  mode: ExpenseFormDialogMode;
   subcategories: Subcategory[];
   initialData?: {
     id: string;
@@ -35,7 +35,7 @@ interface ExpenseFormProps {
   disabled?: boolean;
 }
 
-export const ExpenseForm = ({
+export const ExpenseFormDialog = ({
   mode,
   subcategories,
   initialData,
@@ -43,7 +43,7 @@ export const ExpenseForm = ({
   onUpdate,
   onCancel,
   disabled,
-}: ExpenseFormProps) => {
+}: ExpenseFormDialogProps) => {
   const { t } = useLanguage();
   const formFieldsRef = useRef<ExpenseFormFieldsRef>(null);
   const [isOpen, setIsOpen] = useState(false);

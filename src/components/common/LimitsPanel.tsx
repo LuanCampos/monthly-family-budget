@@ -77,24 +77,37 @@ export const LimitsPanel = ({ percentages, onEdit }: LimitsPanelProps) => {
           <Button
             variant="outline"
             size="sm"
-            className="w-full h-9 border-border text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+            className="w-full h-9 gap-2 border-border text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
           >
-            <Edit2 className="h-3.5 w-3.5 mr-2" />
+            <Edit2 className="h-4 w-4" />
             {t('edit')}
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
+        <DialogContent className="bg-card border-border sm:max-w-md max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-              <Edit2 className="h-5 w-5 text-primary" />
-              {t('editLimits')}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+                <Edit2 className="h-5 w-5 text-primary" />
+                {t('editLimits')}
+              </DialogTitle>
+              <span
+                className={`text-sm font-semibold tabular-nums px-2 py-0.5 rounded-md mr-6 ${
+                  total === 100
+                    ? 'bg-success/20 text-success'
+                    : total > 100
+                    ? 'bg-destructive/20 text-destructive'
+                    : 'bg-secondary text-muted-foreground'
+                }`}
+              >
+                {total}%
+              </span>
+            </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
             {CATEGORIES.map((cat) => (
-              <div key={cat.key} className="space-y-2">
+              <div key={cat.key} className="space-y-1.5">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <span
@@ -109,7 +122,7 @@ export const LimitsPanel = ({ percentages, onEdit }: LimitsPanelProps) => {
                     max={100}
                     value={localPercentages[cat.key]}
                     onChange={(e) => handleInputChange(cat.key, e.target.value)}
-                    className="w-16 h-8 text-right text-sm tabular-nums bg-secondary/50 border-border"
+                    className="w-16 h-8 text-right text-sm tabular-nums bg-secondary/50 border-border px-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>
 
@@ -127,26 +140,12 @@ export const LimitsPanel = ({ percentages, onEdit }: LimitsPanelProps) => {
                 />
               </div>
             ))}
-
-            <div className="pt-3 border-t border-border">
-              <p
-                className={`text-sm font-medium ${
-                  total === 100
-                    ? 'text-success'
-                    : total > 100
-                    ? 'text-destructive'
-                    : 'text-muted-foreground'
-                }`}
-              >
-                {t('total')}: {total}%
-              </p>
-            </div>
           </div>
 
           <div className="px-6 py-4 border-t border-border bg-secondary/30">
             <Button
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || total !== 100}
               className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isSaving ? t('saving') : t('save')}

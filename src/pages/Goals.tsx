@@ -6,17 +6,16 @@ import {
   GoalList, 
   GoalFormDialog, 
   EntryFormDialog, 
-  EntryHistoryDialog, 
-  DeleteGoalDialog, 
-  DeleteEntryDialog 
+  EntryHistoryDialog 
 } from '@/components/goal';
+import { ConfirmDialog } from '@/components/common';
 import { useGoals } from '@/hooks/useGoals';
 import { useBudget } from '@/hooks/useBudget';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFamily } from '@/contexts/FamilyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Goal, GoalEntry, GoalStatus } from '@/types';
-import { SettingsPanel } from '@/components/settings';
+import { SettingsDialog } from '@/components/settings';
 import { FamilySetup } from '@/components/family';
 import { Loader2, Target, Settings as SettingsIcon, Wallet, Plus } from 'lucide-react';
 
@@ -25,7 +24,7 @@ const GoalsContent = () => {
   const { t } = useLanguage();
   const { myPendingInvitations } = useFamily();
   const { user } = useAuth();
-  const { subcategories } = useBudget();
+  const { subcategories, currentMonth } = useBudget();
   const {
     goals,
     entriesByGoal,
@@ -287,6 +286,8 @@ const GoalsContent = () => {
           entry={editingEntry}
           onSave={handleSaveEntry}
           saving={savingEntry}
+          defaultMonth={currentMonth?.month}
+          defaultYear={currentMonth?.year}
         />
       )}
 
@@ -305,24 +306,30 @@ const GoalsContent = () => {
       )}
 
       {goalToDelete && (
-        <DeleteGoalDialog
+        <ConfirmDialog
           open={Boolean(goalToDelete)}
           onOpenChange={(open) => { if (!open) setGoalToDelete(null); }}
           onConfirm={handleDeleteGoal}
-          deleting={deletingGoal}
+          title={t('deleteGoalConfirm') || 'Excluir meta?'}
+          description={t('deleteGoalWarning') || 'Os lançamentos vinculados serão removidos. Os gastos continuarão existindo.'}
+          variant="destructive"
+          loading={deletingGoal}
         />
       )}
 
       {entryToDelete && (
-        <DeleteEntryDialog
+        <ConfirmDialog
           open={Boolean(entryToDelete)}
           onOpenChange={(open) => { if (!open) setEntryToDelete(null); }}
           onConfirm={handleDeleteEntry}
-          deleting={deletingEntry}
+          title={t('deleteEntryConfirm') || 'Excluir lançamento?'}
+          description={t('deleteEntryWarning') || 'O valor será descontado da meta.'}
+          variant="destructive"
+          loading={deletingEntry}
         />
       )}
 
-      <SettingsPanel open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 };

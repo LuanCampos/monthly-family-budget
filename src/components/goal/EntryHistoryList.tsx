@@ -5,13 +5,13 @@ import { Pencil, Trash2, Calendar, DollarSign } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
-interface EntryHistoryProps {
+interface EntryHistoryListProps {
   entries: GoalEntry[];
   onEdit?: (entry: GoalEntry) => void;
   onDelete?: (entry: GoalEntry) => void;
 }
 
-export const EntryHistory = ({ entries, onEdit, onDelete }: EntryHistoryProps) => {
+export const EntryHistoryList = ({ entries, onEdit, onDelete }: EntryHistoryListProps) => {
   const { t } = useLanguage();
   const { formatCurrency } = useCurrency();
 

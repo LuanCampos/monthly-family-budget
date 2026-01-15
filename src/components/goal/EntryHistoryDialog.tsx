@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { List, Plus, Import } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { EntryHistory } from './EntryHistory';
+import { EntryHistoryList } from './EntryHistoryList';
 import { ImportExpenseDialog } from './ImportExpenseDialog';
 import type { Goal, GoalEntry, Expense } from '@/types';
 
@@ -57,7 +57,7 @@ export const EntryHistoryDialog = ({
         </DialogHeader>
         
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          <EntryHistory 
+          <EntryHistoryList 
             entries={entries} 
             onDelete={onDeleteEntry}
             onEdit={onEditEntry}

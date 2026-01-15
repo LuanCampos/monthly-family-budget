@@ -5,12 +5,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useFamily } from '@/contexts/FamilyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { MonthSelector } from '@/components/month';
-import { IncomeInput, IncomeSourcesManager } from '@/components/income';
-import { ExpenseChart, ExpenseForm, ExpenseList } from '@/components/expense';
-import { SubcategoryChart, SubcategoryManager } from '@/components/subcategory';
+import { IncomeInput, IncomeSourceListDialog } from '@/components/income';
+import { ExpenseChart, ExpenseFormDialog, ExpenseList } from '@/components/expense';
+import { SubcategoryChart, SubcategoryListDialog } from '@/components/subcategory';
 import { CategoryLegend, SummaryTable, LimitsPanel, AnnualViewChart, OnlineStatusBar } from '@/components/common';
-import { RecurringExpenses } from '@/components/recurring';
-import { SettingsPanel } from '@/components/settings';
+import { RecurringExpensesPanel } from '@/components/recurring';
+import { SettingsDialog } from '@/components/settings';
 import { FamilySetup } from '@/components/family';
 import { getSecureStorageItem, setSecureStorageItem } from '@/lib/storage/secureStorage';
 import type { SortType, SortDirection } from '@/components/expense';
@@ -396,22 +396,24 @@ const BudgetContent = () => {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  <SubcategoryManager
+                  <SubcategoryListDialog
                     subcategories={subcategories}
                     onAdd={addSubcategory}
                     onUpdate={updateSubcategory}
                     onRemove={removeSubcategory}
                   />
-                  <RecurringExpenses
+                  <RecurringExpensesPanel
                     expenses={recurringExpenses}
                     subcategories={subcategories}
                     currentMonthExpenses={currentMonth?.expenses || []}
+                    defaultMonth={currentMonth?.month}
+                    defaultYear={currentMonth?.year}
                     onAdd={addRecurringExpense}
                     onUpdate={updateRecurringExpense}
                     onRemove={removeRecurringExpense}
                     onApply={applyRecurringToCurrentMonth}
                   />
-                  <ExpenseForm
+                  <ExpenseFormDialog
                     mode="create"
                     subcategories={subcategories}
                     onAdd={addExpense}
@@ -497,7 +499,7 @@ const BudgetContent = () => {
       </Dialog>
 
       {/* Income Sources Manager */}
-      <IncomeSourcesManager
+      <IncomeSourceListDialog
         open={showIncomeSourcesModal}
         onOpenChange={setShowIncomeSourcesModal}
         incomeSources={currentMonth?.incomeSources || []}
@@ -509,7 +511,7 @@ const BudgetContent = () => {
 
       {/* Expense Edit */}
       {editingExpense && (
-        <ExpenseForm
+        <ExpenseFormDialog
           mode="edit"
           subcategories={subcategories}
           initialData={editingExpense}
@@ -522,7 +524,7 @@ const BudgetContent = () => {
       <OnlineStatusBar />
 
       {/* Settings Panel (controlled) */}
-      <SettingsPanel
+      <SettingsDialog
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
         currentMonthLabel={currentMonth ? `${t(`month-${currentMonth.month - 1}` as any)} ${currentMonth.year}` : undefined}

@@ -14,8 +14,7 @@ import {
   WifiOff, 
   Trash2, 
   HardDrive, 
-  Loader2, 
-  AlertTriangle 
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -234,10 +233,10 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     <span className="text-sm">{t('delete')} "{currentMonthLabel}"</span>
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="bg-card border-border sm:max-w-md">
+                <AlertDialogContent className="bg-card border-border sm:max-w-sm">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5 text-destructive" />
+                    <AlertDialogTitle className="flex items-center gap-2 text-lg font-semibold">
+                      <Trash2 className="h-5 w-5 text-destructive" />
                       {t('deleteMonth')}
                     </AlertDialogTitle>
                     <AlertDialogDescription className="text-muted-foreground">
@@ -272,10 +271,10 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                   <span className="text-sm">{t('clearOfflineCache')}</span>
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="bg-card border-border sm:max-w-md">
+              <AlertDialogContent className="bg-card border-border sm:max-w-sm">
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                  <AlertDialogTitle className="flex items-center gap-2 text-lg font-semibold">
+                    <Trash2 className="h-5 w-5 text-destructive" />
                     {t('clearOfflineCache')}
                   </AlertDialogTitle>
                   <AlertDialogDescription className="text-muted-foreground">

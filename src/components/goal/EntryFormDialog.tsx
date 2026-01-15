@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { YearSelector } from '@/components/ui/year-selector';
+import { YearSelector } from '@/components/common';
 import { Plus, Pencil, DollarSign, Calendar } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -25,6 +25,8 @@ interface EntryFormDialogProps {
   entry: GoalEntry | null;
   onSave: (payload: { value: number; description: string; month: number; year: number }) => Promise<void>;
   saving: boolean;
+  defaultMonth?: number;
+  defaultYear?: number;
 }
 
 export const EntryFormDialog = ({
@@ -34,16 +36,22 @@ export const EntryFormDialog = ({
   entry,
   onSave,
   saving,
+  defaultMonth,
+  defaultYear,
 }: EntryFormDialogProps) => {
   const { t } = useLanguage();
   const { currencySymbol } = useCurrency();
+  
+  // Use app's current month/year as default, fallback to system date
+  const getDefaultMonth = () => String(defaultMonth ?? new Date().getMonth() + 1);
+  const getDefaultYear = () => String(defaultYear ?? new Date().getFullYear());
   
   // Internal state - all form values are controlled here
   const [isOpen, setIsOpen] = useState(false);
   const [value, setValue] = useState('');
   const [description, setDescription] = useState('');
-  const [month, setMonth] = useState(() => String(new Date().getMonth() + 1));
-  const [year, setYear] = useState(() => String(new Date().getFullYear()));
+  const [month, setMonth] = useState(getDefaultMonth);
+  const [year, setYear] = useState(getDefaultYear);
   const [isEditing, setIsEditing] = useState(false);
 
   // Sync internal open state with external open prop - only when OPENING
@@ -59,20 +67,20 @@ export const EntryFormDialog = ({
       } else {
         setValue('');
         setDescription('');
-        setMonth(String(new Date().getMonth() + 1));
-        setYear(String(new Date().getFullYear()));
+        setMonth(getDefaultMonth());
+        setYear(getDefaultYear());
         setIsEditing(false);
       }
       setIsOpen(true);
     }
-  }, [open, goal, entry]);
+  }, [open, goal, entry, defaultMonth, defaultYear]);
 
   const resetAndClose = () => {
     // Reset form and close at the same time - this prevents flash
     setValue('');
     setDescription('');
-    setMonth(String(new Date().getMonth() + 1));
-    setYear(String(new Date().getFullYear()));
+    setMonth(getDefaultMonth());
+    setYear(getDefaultYear());
     setIsEditing(false);
     setIsOpen(false);
     // Notify parent that we closed

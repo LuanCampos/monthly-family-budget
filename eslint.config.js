@@ -48,8 +48,16 @@ export default tseslint.config(
         },
         {
           selector: "variable",
-          format: ["camelCase", "UPPER_CASE"],
+          format: ["camelCase", "UPPER_CASE", "PascalCase"],
           leadingUnderscore: "allow",
+        },
+        {
+          selector: "function",
+          format: ["camelCase", "PascalCase"],
+        },
+        {
+          selector: "import",
+          format: ["camelCase", "PascalCase"],
         },
         {
           selector: "typeLike",
@@ -63,6 +71,11 @@ export default tseslint.config(
         {
           selector: "objectLiteralProperty",
           format: null,
+        },
+        // Allow PascalCase in object literal methods (React component props)
+        {
+          selector: "objectLiteralMethod",
+          format: ["camelCase", "PascalCase"],
         },
         // Allow snake_case in type properties (database types)
         {

@@ -38,7 +38,7 @@ export const en: Record<TranslationKey, string> = {
   addMonth: 'Add Month',
   selectMonthAndYear: 'Select the month and year to add',
   deleteMonth: 'Delete month',
-  deleteMonthConfirm: 'Are you sure you want to delete the month',
+  deleteMonthConfirm: 'Delete month',
   deleteMonthWarning: 'This action cannot be undone.',
   deleteCurrentMonth: 'Delete current month',
   deleteCurrentMonthDescription: 'Delete the current month and all its expenses. This action cannot be undone.',
@@ -54,7 +54,7 @@ export const en: Record<TranslationKey, string> = {
   incomeSourceUpdated: 'Income source updated',
   incomeSourceDeleted: 'Income source removed',
   deleteIncomeSource: 'Delete income source',
-  deleteIncomeSourceMessage: 'Are you sure you want to delete this income source? This action cannot be undone.',
+  deleteIncomeSourceMessage: 'This action cannot be undone.',
   incomeSourcesDescription: 'Update and manage your family income sources.',
   autoUpdatedHint: 'This value is updated automatically when you save sources.',
   incomeSourcesList: 'Registered sources',
@@ -69,7 +69,7 @@ export const en: Record<TranslationKey, string> = {
   errorSaving: 'Error saving',
   errorDeleting: 'Error deleting',
   update: 'Update',
-  confirmDelete: 'Are you sure?',
+  confirmDelete: 'Confirm deletion',
   name: 'Name',
   value: 'Value',
   
@@ -100,7 +100,7 @@ export const en: Record<TranslationKey, string> = {
   selectSubcategory: 'Select a subcategory',
   editGoal: 'Edit Goal',
   deleteGoal: 'Delete Goal',
-  deleteGoalConfirm: 'Are you sure you want to delete this goal?',
+  deleteGoalConfirm: 'Delete goal?',
   deleteGoalWarning: 'Linked entries will be removed. Expenses will remain.',
   goalCreated: 'Goal created successfully!',
   goalUpdated: 'Goal updated successfully!',
@@ -156,7 +156,7 @@ export const en: Record<TranslationKey, string> = {
   entryHistory: 'Entry History',
   noEntries: 'No entries',
   deleteEntry: 'Delete Entry',
-  deleteEntryConfirm: 'Are you sure you want to delete this entry?',
+  deleteEntryConfirm: 'Delete entry?',
   deleteEntryWarning: 'The value will be deducted from the goal.',
   entryCreated: 'Entry added successfully!',
   entryUpdated: 'Entry updated successfully!',
@@ -218,7 +218,7 @@ export const en: Record<TranslationKey, string> = {
   expenseSubcategory: 'Subcategory',
   saveChanges: 'Save changes',
   deleteExpense: 'Delete expense',
-  deleteExpenseMessage: 'Are you sure you want to delete this expense? This action cannot be undone.',
+  deleteExpenseMessage: 'This action cannot be undone.',
   
   // Recurring Expenses
   recurringExpenses: 'Recurring Expenses',
@@ -253,6 +253,8 @@ export const en: Record<TranslationKey, string> = {
   subcategoryName: 'Subcategory name',
   noSubcategories: 'No subcategories',
   noSubcategoryExpenses: 'No subcategory with expenses',
+  deleteSubcategory: 'Delete subcategory?',
+  deleteSubcategoryWarning: 'This action cannot be undone.',
   notSpecified: 'Not specified',
 
   // Limits
@@ -285,7 +287,7 @@ export const en: Record<TranslationKey, string> = {
   
   // Delete Recurring Expense
   deleteRecurringExpense: 'Delete recurring expense',
-  deleteRecurringExpenseConfirm: 'Are you sure you want to delete this recurring expense? This action cannot be undone.',
+  deleteRecurringExpenseConfirm: 'This action cannot be undone.',
   
   // Settings
   settings: 'Settings',
@@ -432,9 +434,9 @@ export const en: Record<TranslationKey, string> = {
   familyNameUpdated: 'Family name updated!',
   leaveFamily: 'Leave family',
   deleteFamily: 'Delete family',
-  leaveFamilyConfirm: 'Are you sure you want to leave this family?',
+  leaveFamilyConfirm: 'Leave family?',
   leaveFamilyWarning: 'By leaving, you will immediately lose access to all shared budget data from this family. If you wish to return in the future, you will need to request a new invitation from a family administrator.',
-  deleteFamilyConfirm: 'Are you sure you want to delete?',
+  deleteFamilyConfirm: 'Delete family?',
   deleteFamilyWarning: 'This action is irreversible and all data will be permanently lost.',
   deleteFamilyWarningOnline: 'WARNING: This family is in the cloud. By deleting it, ALL MEMBERS will permanently lose access. All budget data, expenses, and history will be erased forever. This action CANNOT be undone!',
   familyDeleted: 'Family deleted',
@@ -451,6 +453,8 @@ export const en: Record<TranslationKey, string> = {
   openFamilySettings: 'Open family settings',
   sendInvitation: 'Send invitation',
   removeMember: 'Remove member',
+  removeMemberConfirm: 'Remove member?',
+  removeMemberWarning: 'The member will lose access to family data.',
   cancelInvitation: 'Cancel invitation',
   rejectInvitation: 'Reject invitation',
   acceptInvitation: 'Accept invitation',

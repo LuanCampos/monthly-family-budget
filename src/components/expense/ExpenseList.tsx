@@ -6,16 +6,7 @@ import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { ConfirmDialog } from '@/components/common';
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -323,52 +314,28 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
         </div>
       )}
 
-      <AlertDialog open={!!confirmPaymentId} onOpenChange={(open) => !open && setConfirmPaymentId(null)}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-primary" />
-              {t('confirmPayment')}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              {t('confirmPaymentMessage')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmPayment}
-              disabled={isConfirming}
-            >
-              {t('confirm')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!confirmPaymentId}
+        onOpenChange={(open) => !open && setConfirmPaymentId(null)}
+        onConfirm={handleConfirmPayment}
+        title={t('confirmPayment')}
+        description={t('confirmPaymentMessage')}
+        variant="default"
+        icon={AlertCircle}
+        confirmLabel={t('confirm')}
+        loading={isConfirming}
+      />
 
-      <AlertDialog open={!!deleteExpenseId} onOpenChange={(open) => !open && setDeleteExpenseId(null)}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" />
-              {t('deleteExpense')}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              {t('deleteExpenseMessage')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteExpense}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t('delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!deleteExpenseId}
+        onOpenChange={(open) => !open && setDeleteExpenseId(null)}
+        onConfirm={handleDeleteExpense}
+        title={t('deleteExpense')}
+        description={t('deleteExpenseMessage')}
+        variant="destructive"
+        icon={Trash2}
+        loading={isDeleting}
+      />
     </div>
   );
 };

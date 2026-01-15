@@ -1,6 +1,7 @@
 # GitHub Copilot Instructions — Monthly Family Budget
 
-> **Documentação completa para desenvolvedores**: [`CONTRIBUTING.md`](../CONTRIBUTING.md)
+> **🚨 REGRA PRINCIPAL**: Sempre siga [`CONTRIBUTING.md`](../CONTRIBUTING.md) como fonte de verdade.
+> Este arquivo é um resumo. Em caso de dúvida, consulte CONTRIBUTING.md.
 
 ## Stack & Architecture
 **Vite + React + TypeScript + Supabase + IndexedDB** — Cloud-first, offline-capable family budget app.
@@ -16,47 +17,61 @@
 | Components | `src/components/{domain}/` | Domain folders: expense/, goal/, family/, recurring/, settings/, ui/ |
 | Types | `src/types/` | `budget.ts` (app types), `database.ts` (DB rows with snake_case) |
 
-## File Naming Conventions
+## Component Naming — MANDATORY Taxonomy
 
-### Components (`src/components/`)
-| Type | Pattern | Example |
-|------|---------|---------|
-| UI primitives (shadcn) | `kebab-case.tsx` | `button.tsx`, `dialog.tsx`, `dropdown-menu.tsx` |
-| Domain components | `PascalCase.tsx` | `ExpenseForm.tsx`, `GoalCard.tsx` |
-| Dialog/Modal wrappers | `{Name}Dialog.tsx` | `EntryFormDialog.tsx`, `GoalDetailsDialog.tsx` |
-| Section components | `{Name}Section.tsx` | `ProfileSection.tsx`, `AuthSection.tsx` |
-| Index exports | `index.tsx` or `index.ts` | Re-exports all domain components |
+> **⚠️ CRITICAL**: Each suffix has specific meaning. Use the correct one.
 
-### Hooks (`src/hooks/`)
-| Type | Pattern | Example |
-|------|---------|---------|
-| Domain hooks | `use{Domain}.ts` (camelCase) | `useBudget.ts`, `useGoals.ts` |
-| UI hooks | `use-{name}.ts` (kebab-case) | `use-mobile.ts`, `use-toast.ts` |
-| UI hooks folder | `src/hooks/ui/` | For reusable UI-related hooks |
+| Suffix | Purpose | Example |
+|--------|---------|---------|
+| `*FormFields` | Form fields ONLY — no Dialog, no submit | `ExpenseFormFields.tsx` |
+| `*FormDialog` | Dialog to create/edit ONE entity | `ExpenseFormDialog.tsx`, `GoalFormDialog.tsx` |
+| `*ListDialog` | Dialog with list + inline CRUD | `SubcategoryListDialog.tsx` |
+| `*SettingsDialog` | Complex dialog with tabs/sections | `FamilySettingsDialog.tsx` |
+| `*ViewDialog` | Read-only detail view | `GoalViewDialog.tsx` |
+| `*SelectDialog` | Item picker dialog | `ExpenseSelectDialog.tsx` |
+| `*Card` | Single entity display | `GoalCard.tsx` |
+| `*List` | Renderable list (NOT a Dialog) | `ExpenseList.tsx` |
+| `*Section` | Page section | `ProfileSection.tsx` |
+| `*Chart` | Data visualization | `ExpenseChart.tsx` |
+| `*Panel` | Complex autonomous component | `LimitsPanel.tsx`, `RecurringExpensesPanel.tsx` |
+| `*Input` | Custom input field | `IncomeInput.tsx` |
+| `*Selector` | Inline picker (no dialog) | `MonthSelector.tsx`, `YearSelector.tsx` |
+| `*Button` | Stateful custom button | `TriggerButton.tsx` |
+| `*Progress` | Progress indicator | `GoalProgress.tsx` |
 
-### Services & Adapters (`src/lib/`)
-| Type | Pattern | Example |
-|------|---------|---------|
-| Services | `{domain}Service.ts` | `budgetService.ts`, `familyService.ts` |
-| Adapters | `{domain}Adapter.ts` | `expenseAdapter.ts`, `monthAdapter.ts` |
-| Complex adapters | `src/lib/adapters/{domain}/` folder | `goal/goalCoreAdapter.ts` |
-| Utilities | `src/lib/utils/{name}.ts` | `formatters.ts`, `monthUtils.ts` |
-| Storage | `src/lib/storage/{name}.ts` | `secureStorage.ts`, `offlineStorage.ts` |
-| Core lib files | `src/lib/{name}.ts` | `mappers.ts`, `validators.ts`, `logger.ts` |
+> **💡 Confirmations**: Use `ConfirmDialog` from `@/components/common` — generic reusable component. **DO NOT create** individual `Delete*ConfirmDialog` files.
 
-### Other Files
-| Type | Pattern | Example |
-|------|---------|---------|
-| Pages | `PascalCase.tsx` | `Budget.tsx`, `Goals.tsx` |
-| Types | `camelCase.ts` | `budget.ts`, `database.ts` |
-| Constants | `camelCase.ts` | `categories.ts` |
-| Contexts | `{Name}Context.tsx` | `AuthContext.tsx`, `FamilyContext.tsx` |
+### ❌ FORBIDDEN Suffixes
+| Don't Use | Use Instead |
+|-----------|-------------|
+| `*Manager` | `*ListDialog` or `*SettingsDialog` |
+| `*Form` (for dialogs) | `*FormDialog` |
+| `*Modal` | `*Dialog` |
+| `*Component` | Specific suffix |
+| `*Container` | `*Section`, `*Panel`, or `*List` |
+| `*Wrapper` | Describe actual function |
+| Plural without suffix | `*List`, `*Panel`, or `*Section` |
+| `*ConfirmDialog` (individual) | Use generic `ConfirmDialog` from `/common` |
 
-### General Rules
-- **Named exports only** — no default exports (except pages for lazy loading)
-- **Index files** — use for barrel exports, not logic
-- **Folder per domain** — when >3 related files, create subfolder
-- **Suffix indicates purpose**: `*Service`, `*Adapter`, `*Context`, `*Dialog`, `*Section`
+### ❌ Multi-export FORBIDDEN
+- **One component per file** — never export multiple components from same file
+- **Exception**: Index files (re-exports only), types files, internal helper components
+
+## Other File Naming
+
+| Type | Pattern | Location | Example |
+|------|---------|----------|---------|
+| UI primitives (shadcn) | `kebab-case.tsx` | `src/components/ui/` | `button.tsx`, `dialog.tsx` |
+| Domain hooks | `use{Domain}.ts` | `src/hooks/` | `useBudget.ts`, `useGoals.ts` |
+| UI hooks | `use-{name}.ts` | `src/hooks/ui/` | `use-mobile.ts`, `use-toast.ts` |
+| Services | `{domain}Service.ts` | `src/lib/services/` | `budgetService.ts` |
+| Adapters | `{domain}Adapter.ts` | `src/lib/adapters/` | `expenseAdapter.ts` |
+| Complex adapters | `{function}Adapter.ts` | `src/lib/adapters/{domain}/` | `goalCoreAdapter.ts` |
+| Utilities | `{name}.ts` | `src/lib/utils/` | `formatters.ts` |
+| Storage | `{name}Storage.ts` | `src/lib/storage/` | `secureStorage.ts` |
+| Core lib | `{name}.ts` | `src/lib/` | `mappers.ts`, `logger.ts` |
+| Pages | `PascalCase.tsx` | `src/pages/` | `Budget.tsx`, `Goals.tsx` |
+| Contexts | `{Name}Context.tsx` | `src/contexts/` | `AuthContext.tsx` |
 
 ## Critical Patterns
 
@@ -99,3 +114,5 @@ npm run lint      # ESLint
 - Call Supabase from components — use hooks
 - Use `navigator.onLine` alone — check `offlineAdapter.isOfflineId(familyId)` first
 - Place files in root `lib/` or `components/` — use subfolders
+- Use forbidden suffixes (`*Manager`, `*Form` for dialogs, `*Modal`)
+- Invent new suffixes — use the taxonomy from CONTRIBUTING.md

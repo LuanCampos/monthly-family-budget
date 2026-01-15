@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { YearSelector } from '@/components/ui/year-selector';
+import { YearSelector } from '@/components/common';
 import { Month } from '@/types/budget';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TranslationKey } from '@/i18n/translations/pt';
