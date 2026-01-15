@@ -76,6 +76,9 @@ export const useBudget = () => {
   // Initial data load - reset state and reload when family changes
   useEffect(() => {
     const loadData = async () => {
+      // Set loading FIRST to prevent flash of empty state
+      setLoading(true);
+
       // Reset all state when family changes or is cleared
       setMonths([]);
       setRecurringExpenses([]);
@@ -90,7 +93,6 @@ export const useBudget = () => {
         return;
       }
 
-      setLoading(true);
       try {
         await Promise.all([
           api.loadMonths(),
