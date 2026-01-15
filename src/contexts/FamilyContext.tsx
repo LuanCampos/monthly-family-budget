@@ -83,7 +83,7 @@ export const useFamily = () => {
 };
 
 export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [families, setFamilies] = useState<Family[]>([]);
   const [currentFamilyId, setCurrentFamilyId] = useState<string | null>(null);
   const [members, setMembers] = useState<FamilyMember[]>([]);
@@ -318,18 +318,26 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [user]);
 
-  // Initial load
+  // Initial load - wait for auth to finish loading before initializing
   useEffect(() => {
+    // Don't initialize until auth state is resolved to prevent flash of FamilySetup
+    if (authLoading) {
+      return;
+    }
+
     // Skip re-initialization when the same user session is refreshed (e.g. tab visibility change)
     if (hasInitializedRef.current && prevUserKeyRef.current === userKey) {
       return;
     }
 
+    // Set loading BEFORE async init to prevent flash of FamilySetup
+    // when user identity changes (e.g., auth session restored)
+    setLoading(true);
+
     prevUserKeyRef.current = userKey;
     hasInitializedRef.current = true;
 
     const init = async () => {
-      setLoading(true);
       
       // Load families first
       const offlineFamilies = await loadOfflineFamilies();
@@ -424,7 +432,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
     void init();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- user is not needed, userKey handles identity changes
-  }, [userKey, loadOfflineFamilies, refreshMyInvitations]);
+  }, [authLoading, userKey, loadOfflineFamilies, refreshMyInvitations]);
 
   // Load members and family invitations when family changes
   useEffect(() => {
