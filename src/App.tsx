@@ -10,9 +10,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { FamilyProvider } from "@/contexts/FamilyContext";
 import { OnlineProvider } from "@/contexts/OnlineContext";
 import { UserPreferencesLoader } from "@/components/common";
-import Budget from "./pages/Budget";
-import Goals from "./pages/Goals";
-import NotFound from "./pages/NotFound";
+import { Budget } from "./pages/Budget";
+import { Goals } from "./pages/Goals";
+import { NotFound } from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -52,4 +52,4 @@ const App = () => (
   </QueryClientProvider>
 );
 
-export default App;
+export { App };

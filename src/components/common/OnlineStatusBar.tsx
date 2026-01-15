@@ -14,8 +14,8 @@ export const OnlineStatusBar = () => {
 
   return (
     <div className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg ${
-      isOnline ? 'bg-primary/90' : 'bg-amber-500/90'
-    } text-white`}>
+      isOnline ? 'bg-primary/90' : 'bg-warning/90'
+    } text-primary-foreground`}>
       {isOnline ? (
         <Wifi className="h-4 w-4" />
       ) : (
@@ -28,7 +28,7 @@ export const OnlineStatusBar = () => {
 
       {pendingSyncCount > 0 && (
         <>
-          <Badge variant="secondary" className="bg-white/20 text-white text-xs">
+          <Badge variant="secondary" className="bg-background/20 text-primary-foreground text-xs">
             {pendingSyncCount} {t('pendingChanges')}
           </Badge>
           
@@ -36,7 +36,7 @@ export const OnlineStatusBar = () => {
             <Button
               size="sm"
               variant="ghost"
-              className="h-7 px-2 text-white hover:bg-white/20"
+              className="h-7 px-2 text-primary-foreground hover:bg-background/20"
               onClick={syncNow}
               disabled={isSyncing}
             >

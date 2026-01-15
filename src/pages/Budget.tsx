@@ -559,4 +559,4 @@ const Budget = () => {
   return <BudgetContent key={currentFamilyId} />;
 };
 
-export default Budget;
+export { Budget };

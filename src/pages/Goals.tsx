@@ -358,4 +358,4 @@ const GoalsPage = () => {
   return <GoalsContent key={currentFamilyId} />;
 };
 
-export default GoalsPage;
+export { GoalsPage as Goals };
