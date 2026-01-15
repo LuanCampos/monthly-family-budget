@@ -100,7 +100,7 @@ export const ExpenseFormDialog = ({
       }
     } finally {
       setIsSaving(false);
-      // Close modal only after all async operations complete
+      // Close dialog only after all async operations complete
       resetForm();
     }
   };

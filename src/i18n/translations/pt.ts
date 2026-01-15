@@ -208,7 +208,9 @@ export const pt = {
   
   // Expense List
   monthExpenses: 'Gastos do mês',
+  searchExpenses: 'Buscar gastos...',
   noExpenses: 'Nenhum gasto registrado',
+  noExpensesMatchSearch: 'Nenhum gasto encontrado',
   addExpense: 'Adicionar Gasto',
   newExpense: 'Novo Gasto',
   editExpense: 'Editar Gasto',
@@ -268,7 +270,7 @@ export const pt = {
   pending: 'Pendentes',
   
   // Sorting
-  sortBy: 'Ordenar por',
+  sortBy: 'Ordenar',
   sortCreatedAt: 'Data de Criação',
   sortCategory: 'Categoria',
   sortValue: 'Valor',

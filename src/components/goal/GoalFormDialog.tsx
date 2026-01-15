@@ -1,7 +1,7 @@
 /**
  * Goal Form Dialog
  * 
- * Modal for creating or editing a goal.
+ * Dialog for creating or editing a goal.
  * Controls its own internal state to avoid flash on close.
  */
 

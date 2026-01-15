@@ -210,7 +210,9 @@ export const en: Record<TranslationKey, string> = {
   
   // Expense List
   monthExpenses: 'Monthly expenses',
+  searchExpenses: 'Search expenses...',
   noExpenses: 'No expenses recorded',
+  noExpensesMatchSearch: 'No expenses found',
   addExpense: 'Add Expense',
   newExpense: 'New Expense',
   editExpense: 'Edit Expense',
@@ -270,7 +272,7 @@ export const en: Record<TranslationKey, string> = {
   pending: 'Pending',
   
   // Sorting
-  sortBy: 'Sort by',
+  sortBy: 'Sort',
   sortCreatedAt: 'Creation Date',
   sortCategory: 'Category',
   sortValue: 'Value',

@@ -281,7 +281,7 @@ export const RecurringExpensesPanel = ({
         onClick={() => setIsOpen(true)}
       >
         <RefreshCw className="h-3.5 w-3.5 xs:mr-1.5" />
-        <span className="hidden xs:inline">{t('recurringExpenses')}</span>
+        <span className="hidden xs:inline">{t('recurring')}</span>
         <span className="hidden xs:inline ml-1 text-muted-foreground">({expenses.length})</span>
       </Button>
 

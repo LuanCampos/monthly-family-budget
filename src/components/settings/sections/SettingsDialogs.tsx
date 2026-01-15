@@ -1,5 +1,5 @@
 /**
- * Settings Dialogs - Alert dialogs and modals for settings
+ * Settings Dialogs - Alert dialogs for settings
  */
 
 import React from 'react';

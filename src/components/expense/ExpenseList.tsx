@@ -17,6 +17,7 @@ interface ExpenseListProps {
   onConfirmPayment: (id: string) => void | Promise<void>;
   sortType: SortType;
   sortDirection: SortDirection;
+  searchTerm?: string;
 }
 
 type FilterType = 
@@ -48,7 +49,7 @@ const generateSubcategoryColor = (
   return `hsl(${h}, ${s}%, ${newL}%)`;
 };
 
-export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemove, onEdit, onConfirmPayment, sortType, sortDirection }: ExpenseListProps) => {
+export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemove, onEdit, onConfirmPayment, sortType, sortDirection, searchTerm = '' }: ExpenseListProps) => {
   const { t } = useLanguage();
   const { formatCurrency } = useCurrency();
   const [filter, setFilter] = useState<FilterType>(null);
@@ -56,6 +57,9 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Normalize search term for comparison
+  const normalizedSearch = searchTerm.toLowerCase().trim();
 
   if (expenses.length === 0) {
     return (
@@ -79,6 +83,19 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
   };
 
   const filteredExpenses = expenses.filter(expense => {
+    // First apply text search
+    if (normalizedSearch) {
+      const matchesTitle = expense.title.toLowerCase().includes(normalizedSearch);
+      const matchesCategory = t(getCategoryByKey(expense.category).key as TranslationKey).toLowerCase().includes(normalizedSearch);
+      const sub = subcategories.find(s => s.id === expense.subcategoryId);
+      const matchesSubcategory = sub?.name.toLowerCase().includes(normalizedSearch) ?? false;
+      
+      if (!matchesTitle && !matchesCategory && !matchesSubcategory) {
+        return false;
+      }
+    }
+
+    // Then apply filter
     if (!filter) return true;
     
     if (filter.type === 'category') {
@@ -186,7 +203,6 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
     <div className="space-y-2">
       {filter && (
         <div className="flex items-center gap-2 pb-2 border-b border-border mb-2">
-          <span className="text-xs text-muted-foreground">{t('all')}:</span>
           <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-primary/20 text-primary font-medium">
             {getFilterLabel()}
             <button
@@ -201,7 +217,7 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
 
       {sortedExpenses.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
-          <p className="text-sm">{t('noExpenses')}</p>
+          <p className="text-sm">{normalizedSearch ? t('noExpensesMatchSearch') : t('noExpenses')}</p>
         </div>
       ) : (
         <div className="space-y-1.5">

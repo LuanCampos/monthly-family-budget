@@ -1,7 +1,7 @@
 /**
  * Entry History Dialog
  * 
- * Modal for viewing and managing goal entry history
+ * Dialog for viewing and managing goal entry history
  */
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

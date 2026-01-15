@@ -95,7 +95,7 @@ const GoalsContent = () => {
       }
     } finally {
       setSavingGoal(false);
-      // Note: Modal closes itself via GoalFormDialog's resetAndClose()
+      // Note: Dialog closes itself via GoalFormDialog's resetAndClose()
       // We do NOT reset openGoalDialog/editingGoal here to avoid race condition flash
     }
   };
@@ -133,7 +133,7 @@ const GoalsContent = () => {
       await loadGoals();
     } finally {
       setSavingEntry(false);
-      // Note: Modal closes itself via EntryFormDialog's resetAndClose()
+      // Note: Dialog closes itself via EntryFormDialog's resetAndClose()
       // We do NOT reset entryGoal/editingEntry here to avoid race condition flash
     }
   };

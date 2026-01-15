@@ -1,7 +1,7 @@
 /**
  * Entry Form Dialog
  * 
- * Modal for creating or editing a goal entry.
+ * Dialog for creating or editing a goal entry.
  * Controls its own internal state to avoid flash on close.
  */
 

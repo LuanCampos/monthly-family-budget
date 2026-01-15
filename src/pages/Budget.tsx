@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useBudget } from '@/hooks/useBudget';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -17,8 +17,9 @@ import type { SortType, SortDirection } from '@/components/expense';
 import type { Expense, CategoryKey } from '@/types/budget';
 import type { TranslationKey } from '@/i18n/translations/pt';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, Loader2, Settings as SettingsIcon } from 'lucide-react';
+import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, Loader2, Settings as SettingsIcon, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,8 +68,10 @@ const BudgetContent = () => {
   const [sortType, setSortType] = useState<SortType>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showAnnualView, setShowAnnualView] = useState(false);
-  const [showIncomeSourcesModal, setShowIncomeSourcesModal] = useState(false);
+  const [showIncomeSourcesDialog, setShowIncomeSourcesDialog] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Get user initials for avatar
   const getUserInitials = () => {
@@ -280,7 +283,7 @@ const BudgetContent = () => {
                 </div>
                 <IncomeInput
                   value={currentMonth?.income || 0}
-                  onEditClick={() => setShowIncomeSourcesModal(true)}
+                  onEditClick={() => setShowIncomeSourcesDialog(true)}
                   disabled={!currentMonthId}
                 />
               </div>
@@ -357,69 +360,99 @@ const BudgetContent = () => {
 
             {/* Expense List Section */}
             <div className="dashboard-card">
-              <div className="dashboard-card-header flex-wrap gap-2 xs:gap-3">
-                <div className="flex items-center gap-2 flex-1">
-                  <Receipt className="h-4 w-4 text-primary" />
+              {/* Header: Title + Search + Actions */}
+              <div className="dashboard-card-header flex-col sm:flex-row gap-3 sm:gap-4">
+                {/* Title */}
+                <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
+                  <Receipt className="h-4 w-4 text-primary flex-shrink-0" />
                   <span className="dashboard-card-title">{t('monthExpenses')}</span>
                 </div>
-                <div className="action-btn-group justify-center xs:justify-end">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="border-border hover:bg-secondary text-xs h-8 px-2 xs:px-2.5 sm:h-9 sm:px-3 sm:text-sm">
-                        <ArrowUpDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        <span className="hidden sm:inline">{t('sortBy')}</span>
+                
+                {/* Search + Buttons row */}
+                <div className="flex items-center gap-2 flex-1 flex-wrap sm:flex-nowrap sm:justify-end">
+                  {/* Search input */}
+                  <div className="relative flex-1 min-w-[120px] sm:min-w-[160px] sm:max-w-[220px]">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder={t('searchExpenses')}
+                      className="h-8 text-sm pl-8 pr-8"
+                    />
+                    {searchTerm && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0.5 top-1/2 -translate-y-1/2 h-7 w-7"
+                        onClick={() => setSearchTerm('')}
+                      >
+                        <X className="h-3.5 w-3.5" />
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40 bg-popover">
-                      <DropdownMenuItem onClick={() => handleSortClick('createdAt')} className="flex items-center justify-between">
-                        {t('sortCreatedAt')}
-                        {sortType === 'createdAt' && (
-                          sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSortClick('category')} className="flex items-center justify-between">
-                        {t('sortCategory')}
-                        {sortType === 'category' && (
-                          sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSortClick('value')} className="flex items-center justify-between">
-                        {t('sortValue')}
-                        {sortType === 'value' && (
-                          sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleSortClick('dueDate')} className="flex items-center justify-between">
-                        {t('sortDueDate')}
-                        {sortType === 'dueDate' && (
-                          sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
-                        )}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <SubcategoryListDialog
-                    subcategories={subcategories}
-                    onAdd={addSubcategory}
-                    onUpdate={updateSubcategory}
-                    onRemove={removeSubcategory}
-                  />
-                  <RecurringExpensesPanel
-                    expenses={recurringExpenses}
-                    subcategories={subcategories}
-                    currentMonthExpenses={currentMonth?.expenses || []}
-                    defaultMonth={currentMonth?.month}
-                    defaultYear={currentMonth?.year}
-                    onAdd={addRecurringExpense}
-                    onUpdate={updateRecurringExpense}
-                    onRemove={removeRecurringExpense}
-                    onApply={applyRecurringToCurrentMonth}
-                  />
-                  <ExpenseFormDialog
-                    mode="create"
-                    subcategories={subcategories}
-                    onAdd={addExpense}
-                    disabled={!currentMonthId}
-                  />
+                    )}
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="action-btn-group flex-shrink-0">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="border-border hover:bg-secondary text-xs h-8 px-2 xs:px-2.5 sm:h-9 sm:px-3 sm:text-sm">
+                          <ArrowUpDown className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <span className="hidden sm:inline">{t('sortBy')}</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40 bg-popover">
+                        <DropdownMenuItem onClick={() => handleSortClick('createdAt')} className="flex items-center justify-between">
+                          {t('sortCreatedAt')}
+                          {sortType === 'createdAt' && (
+                            sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSortClick('category')} className="flex items-center justify-between">
+                          {t('sortCategory')}
+                          {sortType === 'category' && (
+                            sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSortClick('value')} className="flex items-center justify-between">
+                          {t('sortValue')}
+                          {sortType === 'value' && (
+                            sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSortClick('dueDate')} className="flex items-center justify-between">
+                          {t('sortDueDate')}
+                          {sortType === 'dueDate' && (
+                            sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5 text-primary" /> : <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                          )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <SubcategoryListDialog
+                      subcategories={subcategories}
+                      onAdd={addSubcategory}
+                      onUpdate={updateSubcategory}
+                      onRemove={removeSubcategory}
+                    />
+                    <RecurringExpensesPanel
+                      expenses={recurringExpenses}
+                      subcategories={subcategories}
+                      currentMonthExpenses={currentMonth?.expenses || []}
+                      defaultMonth={currentMonth?.month}
+                      defaultYear={currentMonth?.year}
+                      onAdd={addRecurringExpense}
+                      onUpdate={updateRecurringExpense}
+                      onRemove={removeRecurringExpense}
+                      onApply={applyRecurringToCurrentMonth}
+                    />
+                    <ExpenseFormDialog
+                      mode="create"
+                      subcategories={subcategories}
+                      onAdd={addExpense}
+                      disabled={!currentMonthId}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -433,6 +466,7 @@ const BudgetContent = () => {
                   onConfirmPayment={confirmPayment}
                   sortType={sortType}
                   sortDirection={sortDirection}
+                  searchTerm={searchTerm}
                 />
               </div>
             </div>
@@ -460,7 +494,7 @@ const BudgetContent = () => {
         )}
       </main>
 
-      {/* Subcategory Chart Modal */}
+      {/* Subcategory Chart Dialog */}
       <Dialog
         open={!!activeCategory}
         onOpenChange={(open) => {
@@ -468,6 +502,9 @@ const BudgetContent = () => {
         }}
       >
         <DialogContent className="bg-card border-border sm:max-w-md max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogTitle className="sr-only">
+            {activeCategory ? t(activeCategory as TranslationKey) : ''}
+          </DialogTitle>
           <div className="px-6 py-4 overflow-y-auto">
             {activeCategory && currentMonth && (
               <SubcategoryChart
@@ -481,7 +518,7 @@ const BudgetContent = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Annual View Modal */}
+      {/* Annual View Dialog */}
       <Dialog open={showAnnualView} onOpenChange={setShowAnnualView}>
         <DialogContent className="bg-card border-border sm:max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
@@ -499,10 +536,10 @@ const BudgetContent = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Income Sources Manager */}
+      {/* Income Sources Dialog */}
       <IncomeSourceListDialog
-        open={showIncomeSourcesModal}
-        onOpenChange={setShowIncomeSourcesModal}
+        open={showIncomeSourcesDialog}
+        onOpenChange={setShowIncomeSourcesDialog}
         incomeSources={currentMonth?.incomeSources || []}
         onAdd={addIncomeSource}
         onUpdate={updateIncomeSource}
