@@ -257,7 +257,7 @@ export const useBudget = () => {
       is_pending: false,
     };
 
-    await api.insertExpense({ family_id: currentFamilyId, month_id: currentMonthId, title, category_key: category, subcategory_id: subcategoryId || null, value, is_recurring: false, is_pending: false });
+    await api.insertExpense({ month_id: currentMonthId, title, category_key: category, subcategory_id: subcategoryId || null, value, is_recurring: false, is_pending: false });
     await api.loadMonths();
   };
 

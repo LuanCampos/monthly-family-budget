@@ -260,7 +260,6 @@ const GoalsContent = () => {
               onDelete={(goal) => setGoalToDelete(goal)}
               onFetchEntries={getEntries}
               onCompleteGoal={handleCompleteGoal}
-              calculateSuggestion={getMonthlySuggestion}
             />
           </>
         )}

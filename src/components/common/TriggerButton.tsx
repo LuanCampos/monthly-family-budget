@@ -4,11 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import type { User } from '@supabase/supabase-js';
-import type { FamilyInvitation } from '@/contexts/FamilyContext';
-
 interface TriggerButtonProps extends React.ComponentPropsWithoutRef<typeof Button> {
   user?: User | null;
-  myPendingInvitations?: FamilyInvitation[];
+  myPendingInvitations?: { id: string }[];
   getUserInitials?: () => string;
   getDisplayName?: () => string;
 }

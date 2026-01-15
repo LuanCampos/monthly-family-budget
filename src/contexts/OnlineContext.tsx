@@ -381,9 +381,9 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           if (item.action === 'insert') {
             await familyService.insertToTable(item.type, item.data);
           } else if (item.action === 'update') {
-            await familyService.updateInTable(item.type, item.data.id, item.data);
+            await familyService.updateInTable(item.type, item.data.id as string, item.data);
           } else if (item.action === 'delete') {
-            await familyService.deleteByIdFromTable(item.type, item.data.id);
+            await familyService.deleteByIdFromTable(item.type, item.data.id as string);
           }
 
           await offlineAdapter.sync.remove(item.id);

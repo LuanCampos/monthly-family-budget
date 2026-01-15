@@ -60,7 +60,8 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           // Foca no botão de fechar para evitar teclado mobile mas satisfazer a11y
-          const closeButton = e.currentTarget.querySelector('[data-sheet-close]') as HTMLButtonElement | null;
+          const target = e.currentTarget as HTMLElement;
+          const closeButton = target.querySelector('[data-sheet-close]') as HTMLButtonElement | null;
           closeButton?.focus();
           onOpenAutoFocus?.(e);
         }}

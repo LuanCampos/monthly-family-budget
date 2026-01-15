@@ -33,7 +33,8 @@ const DrawerContent = React.forwardRef<
       onOpenAutoFocus={(e) => {
         e.preventDefault();
         // Foca no handle do drawer para evitar teclado mobile mas satisfazer a11y
-        const handle = e.currentTarget.querySelector('[data-vaul-handle-hitarea]') as HTMLElement | null;
+        const target = e.currentTarget as HTMLElement;
+        const handle = target.querySelector('[data-vaul-handle-hitarea]') as HTMLElement | null;
         handle?.focus();
         onOpenAutoFocus?.(e);
       }}

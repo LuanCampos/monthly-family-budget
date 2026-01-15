@@ -10,15 +10,10 @@ interface GoalListProps {
   onEdit: (goal: Goal) => void;
   onDelete: (goal: Goal) => void;
   onFetchEntries: (goalId: string) => Promise<GoalEntry[]>;
-  calculateSuggestion: (goalId: string) => Promise<{
-    remainingValue: number;
-    monthsRemaining: number | null;
-    suggestedMonthly: number | null;
-  } | null>;
   onCompleteGoal?: (goal: Goal) => void;
 }
 
-export const GoalList = ({ goals, entriesByGoal, onViewHistory, onEdit, onDelete, onFetchEntries, calculateSuggestion, onCompleteGoal }: GoalListProps) => {
+export const GoalList = ({ goals, entriesByGoal, onViewHistory, onEdit, onDelete, onFetchEntries, onCompleteGoal }: GoalListProps) => {
   const { t } = useLanguage();
 
   const sortedGoals = [...goals].sort((a, b) => {
@@ -54,7 +49,6 @@ export const GoalList = ({ goals, entriesByGoal, onViewHistory, onEdit, onDelete
           onDelete={() => onDelete(goal)}
           onFetchEntries={() => onFetchEntries(goal.id)}
           onCompleteGoal={onCompleteGoal ? () => onCompleteGoal(goal) : undefined}
-          calculateSuggestion={calculateSuggestion}
         />
       ))}
     </div>

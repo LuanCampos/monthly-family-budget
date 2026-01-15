@@ -28,7 +28,7 @@ interface PasswordSectionProps {
   // For uncontrolled trigger mode
   controlledOpen?: boolean;
   user: SupabaseUser | null;
-  myPendingInvitations: unknown[];
+  myPendingInvitations: { id: string }[];
   getUserInitials: () => string;
   getDisplayName: () => string;
 }
