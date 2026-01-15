@@ -32,6 +32,8 @@ export const useBudget = () => {
     setSubcategories,
     loading,
     setLoading,
+    hasInitialized,
+    setHasInitialized,
     categoryPercentages,
     setCategoryPercentages,
     currentMonth,
@@ -90,6 +92,7 @@ export const useBudget = () => {
 
       if (!currentFamilyId) {
         setLoading(false);
+        setHasInitialized(true);
         return;
       }
 
@@ -104,11 +107,12 @@ export const useBudget = () => {
         toast.error('Erro ao carregar dados desta família. Tente recarregar a página.');
       } finally {
         setLoading(false);
+        setHasInitialized(true);
       }
     };
 
     loadData();
-  }, [currentFamilyId, api, setMonths, setRecurringExpenses, setSubcategories, setCurrentMonthId, setCategoryPercentages, setLoading]);
+  }, [currentFamilyId, api, setMonths, setRecurringExpenses, setSubcategories, setCurrentMonthId, setCategoryPercentages, setLoading, setHasInitialized]);
 
   // Auto-select the most recent month after months are loaded
   useEffect(() => {
@@ -575,6 +579,7 @@ export const useBudget = () => {
     currentMonthLimits,
     subcategories,
     loading,
+    hasInitialized,
     addMonth,
     removeMonth,
     selectMonth,

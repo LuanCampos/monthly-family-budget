@@ -8,6 +8,9 @@ export const useBudgetState = () => {
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [loading, setLoading] = useState(true);
+  // Track whether the initial data load has completed at least once
+  // to prevent flash of empty state on page reload
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const [categoryPercentages, setCategoryPercentages] =
     useState<Record<CategoryKey, number>>(
@@ -29,6 +32,8 @@ export const useBudgetState = () => {
     setSubcategories,
     loading,
     setLoading,
+    hasInitialized,
+    setHasInitialized,
     categoryPercentages,
     setCategoryPercentages,
     currentMonth,

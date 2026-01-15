@@ -40,6 +40,7 @@ const BudgetContent = () => {
     recurringExpenses,
     subcategories,
     loading: budgetLoading,
+    hasInitialized,
     addMonth,
     selectMonth,
     addExpense,
@@ -162,7 +163,7 @@ const BudgetContent = () => {
     setEditingExpense(null);
   };
 
-  if (budgetLoading) {
+  if (budgetLoading || !hasInitialized) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
