@@ -279,4 +279,45 @@ npm run preview   # Preview do build de produção
 
 ---
 
+## 🌐 Internacionalização (i18n)
+
+### Arquivos de tradução
+
+| Idioma | Arquivo |
+|--------|---------|
+| Português (padrão) | `src/i18n/translations/pt.ts` |
+| Inglês | `src/i18n/translations/en.ts` |
+
+### Regras
+
+1. **Sempre adicione chaves em TODOS os idiomas** — nunca adicione só em um arquivo
+2. **Use a mesma ordem de chaves** em ambos os arquivos para facilitar comparação
+3. **Chaves em camelCase** — ex: `deleteMonthConfirm`, não `delete_month_confirm`
+4. **Agrupe por seção** — mantenha comentários `// Section Name` alinhados
+
+```tsx
+// ✅ Correto - adicionar em ambos os arquivos
+// pt.ts
+thisMonth: 'Este mês',
+
+// en.ts
+thisMonth: 'This month',
+
+// ❌ Errado - adicionar só em um idioma
+```
+
+---
+
+## 🤖 Automação e CI
+
+O projeto usa GitHub Actions para CI/CD. O workflow roda automaticamente em todo push para `main`:
+
+1. **Lint** — `npm run lint` deve passar com zero warnings
+2. **Build** — `npm run build` deve completar sem erros
+3. **Deploy** — Deploya para GitHub Pages se os passos anteriores passarem
+
+> **⚠️ Bots e ferramentas automatizadas** devem rodar `npm run lint` antes de fazer commits/merges.
+
+---
+
 *Se algo parecer errado ou inseguro, provavelmente é. Pergunte antes de fazer.*

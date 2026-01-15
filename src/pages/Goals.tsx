@@ -39,7 +39,6 @@ const GoalsContent = () => {
     deleteEntry,
     getHistoricalExpenses,
     importExpense,
-    getMonthlySuggestion,
     loading,
   } = useGoals();
 
