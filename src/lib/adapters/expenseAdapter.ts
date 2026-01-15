@@ -13,7 +13,7 @@
  */
 
 import * as budgetService from '../services/budgetService';
-import * as goalAdapter from './goalAdapter';
+import * as goalAdapter from './goal';
 import { offlineAdapter } from './offlineAdapter';
 import { logger } from '../logger';
 import type { ExpenseRow } from '@/types/database';

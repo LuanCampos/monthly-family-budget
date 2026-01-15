@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CategoryKey, Subcategory } from '@/types';
 import { DEFAULT_CATEGORY } from '@/constants/categories';
 import { ExpenseFormFields, ExpenseFormFieldsRef } from './ExpenseFormFields';
-import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
+import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/lib/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 type ExpenseFormMode = 'create' | 'edit';

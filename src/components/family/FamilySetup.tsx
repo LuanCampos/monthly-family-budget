@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Users, Plus, Mail, Check, X, Loader2, WifiOff, Lock, User, ArrowLeft, LogIn, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/ui/use-toast';
-import { supabase } from '@/lib/supabase';
+import * as userService from '@/lib/services/userService';
 import { getAppBaseUrl } from '@/lib/utils/appBaseUrl';
 
 export const FamilySetup = () => {
@@ -204,9 +204,7 @@ export const FamilySetup = () => {
     }
 
     setIsAuthLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: getAppBaseUrl(),
-    });
+    const { error } = await userService.resetPasswordForEmail(email, getAppBaseUrl());
     setIsAuthLoading(false);
 
     if (error) {
@@ -285,13 +283,10 @@ export const FamilySetup = () => {
     if (pendingEmailVerification) {
       const handleResendVerification = async () => {
         setIsAuthLoading(true);
-        const { error } = await supabase.auth.resend({
-          type: 'signup',
-           email: pendingEmailVerification,
-           options: {
-             emailRedirectTo: getAppBaseUrl(),
-           },
-        });
+        const { error } = await userService.resendVerificationEmail(
+          pendingEmailVerification,
+          getAppBaseUrl()
+        );
         setIsAuthLoading(false);
 
         if (error) {

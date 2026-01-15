@@ -61,7 +61,7 @@ export {
   getHistoricalExpenses as getGoalHistoricalExpenses,
   importExpense as importGoalExpense,
   calculateMonthlySuggestion as calculateGoalMonthlySuggestion,
-} from './goalAdapter';
+} from './goal';
 
 const getDefaultLimits = (): Record<CategoryKey, number> => {
   return Object.fromEntries(CATEGORIES.map(c => [c.key, c.percentage])) as Record<CategoryKey, number>;

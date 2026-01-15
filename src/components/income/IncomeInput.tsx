@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { formatCurrencyInput } from '@/utils/formatters';
+import { formatCurrencyInput } from '@/lib/utils/formatters';
 import { Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

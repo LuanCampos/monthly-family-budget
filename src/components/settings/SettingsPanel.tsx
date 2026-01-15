@@ -1,61 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive, Pencil, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import TriggerButton from '@/components/ui/trigger-button';
-import {
+/**
+ * Settings Panel - Main settings dialog component
+ * 
+ * This component orchestrates the settings UI, delegating to modular sections:
+ * - ProfileSection: Edit user profile
+ * - PasswordSection: Change password
+ * - AuthSection: Login/Signup for offline users
+ * - GeneralSection: User account, preferences, data management
+ * - FamilySection: Family selector, members, invitations
+ */
+
+import React, { useState } from 'react';
+import { 
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogDescription,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import TriggerButton from '@/components/ui/trigger-button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useTheme, themes, ThemeKey } from '@/contexts/ThemeContext';
-import { useCurrency, currencies, CurrencyCode } from '@/contexts/CurrencyContext';
+import { useTheme, ThemeKey } from '@/contexts/ThemeContext';
+import { useCurrency, CurrencyCode } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFamily, FamilyRole } from '@/contexts/FamilyContext';
-import { languages, Language } from '@/i18n';
-import { TranslationKey } from '@/i18n/translations/pt';
-import { supabase } from '@/lib/supabase';
+import { Language } from '@/i18n';
 import { toast } from '@/hooks/ui/use-toast';
 import { useOnline } from '@/contexts/OnlineContext';
 import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import * as userService from '@/lib/services/userService';
 import { clearOfflineCache } from '@/lib/storage/offlineStorage';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { logger } from '@/lib/logger';
-// Separator and cn are not used in this component
+
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  ProfileSection,
+  PasswordSection,
+  AuthSection,
+  GeneralSection,
+  FamilySection,
+  DeleteFamilyAlert,
+  LeaveFamilyAlert,
+  CreateFamilyDialog,
+} from './sections';
 
 interface SettingsPanelProps {
   currentMonthLabel?: string;
@@ -64,11 +50,16 @@ interface SettingsPanelProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controlledOpen, onOpenChange: controlledOnOpenChange }: SettingsPanelProps) => {
+export const SettingsPanel = ({ 
+  currentMonthLabel, 
+  onDeleteMonth, 
+  open: controlledOpen, 
+  onOpenChange: controlledOnOpenChange 
+}: SettingsPanelProps) => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { currency, setCurrency } = useCurrency();
-  const { user, signOut, signIn, signUp } = useAuth();
+  const { user, signOut } = useAuth();
   const { 
     currentFamily, 
     families,
@@ -91,24 +82,13 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
   } = useFamily();
   const { syncFamily, isSyncing, syncProgress, isOnline } = useOnline();
   
+  // Navigation state
   const [activeSection, setActiveSection] = useState<'main' | 'profile' | 'password' | 'auth'>('main');
-  const [displayName, setDisplayName] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [internalOpen, setInternalOpen] = useState(false);
   
   // Use controlled state if provided, otherwise use internal state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = controlledOnOpenChange || setInternalOpen;
-  
-  // Auth form state
-  const [authEmail, setAuthEmail] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
-  const [authConfirmPassword, setAuthConfirmPassword] = useState('');
-  const [authDisplayName, setAuthDisplayName] = useState('');
-  const [authTab, setAuthTab] = useState<'login' | 'signup'>('login');
   
   // Family management state
   const [inviteEmail, setInviteEmail] = useState('');
@@ -125,18 +105,9 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
   const [isDeletingFamily, setIsDeletingFamily] = useState(false);
   const [isLeavingFamily, setIsLeavingFamily] = useState(false);
 
-  const isAdmin = userRole === 'owner' || userRole === 'admin';
   const isCurrentOffline = currentFamily?.isOffline || offlineAdapter.isOfflineId(currentFamily?.id || '');
-  const isOnlyMember = members.length === 1;
-  const adminCount = members.filter(m => m.role === 'owner' || m.role === 'admin').length;
-  const isOnlyAdmin = isAdmin && adminCount === 1 && members.length > 1;
 
-  useEffect(() => {
-    if (user) {
-      setDisplayName(user.user_metadata?.display_name || user.user_metadata?.full_name || '');
-    }
-  }, [user]);
-
+  // Helper functions
   const getUserInitials = () => {
     if (!user) return '?';
     const email = user.email || '';
@@ -152,69 +123,13 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
     return user.user_metadata?.display_name || user.user_metadata?.full_name || user.email;
   };
 
-  // Using shared TriggerButton from ui/ to reduce duplication and match other dialogs
-
+  // Dialog handlers
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (!isOpen) {
       setActiveSection('main');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
       setInviteEmail('');
       setEditingName(false);
-    }
-  };
-
-  const handleUpdateProfile = async () => {
-    if (!displayName.trim()) {
-      toast({ title: t('error'), description: t('displayNameRequired'), variant: 'destructive' });
-      return;
-    }
-    setIsLoading(true);
-    const { error } = await supabase.auth.updateUser({ data: { display_name: displayName.trim() } });
-    setIsLoading(false);
-    if (error) {
-      toast({ title: t('error'), description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: t('success'), description: t('profileUpdated') });
-      setActiveSection('main');
-    }
-  };
-
-  const handleUpdatePassword = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast({ title: t('error'), description: t('fillAllFields'), variant: 'destructive' });
-      return;
-    }
-    if (newPassword.length < 6) {
-      toast({ title: t('error'), description: t('passwordTooShort'), variant: 'destructive' });
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast({ title: t('error'), description: t('passwordsDoNotMatch'), variant: 'destructive' });
-      return;
-    }
-    setIsLoading(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: user?.email || '',
-      password: currentPassword,
-    });
-    if (signInError) {
-      setIsLoading(false);
-      toast({ title: t('error'), description: t('currentPasswordIncorrect'), variant: 'destructive' });
-      return;
-    }
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    setIsLoading(false);
-    if (error) {
-      toast({ title: t('error'), description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: t('success'), description: t('passwordUpdated') });
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setActiveSection('main');
     }
   };
 
@@ -223,6 +138,7 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
     setOpen(false);
   };
 
+  // Preference persistence
   const persistUserPreference = async (partial: { theme?: ThemeKey; language?: Language; currency?: CurrencyCode }) => {
     if (!user) return;
 
@@ -278,75 +194,14 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
 
   const handleThemeChange = async (newTheme: ThemeKey) => {
     try {
-      // Apply immediately in UI
       setTheme(newTheme);
-
       await persistUserPreference({ theme: newTheme });
     } catch (_err) {
-      // Error here is non-fatal because we already applied the theme and
-      // attempted server/offline persistence. Log for diagnostics only.
       logger.error('settings.themeChange.failed', { error: _err });
     }
   };
 
-  // Auth handlers for offline mode
-  const handleAuthSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authEmail || !authPassword) {
-      toast({ title: t('error'), description: t('fillAllFields'), variant: 'destructive' });
-      return;
-    }
-    setIsLoading(true);
-    const { error } = await signIn(authEmail, authPassword);
-    setIsLoading(false);
-    if (error) {
-      toast({
-        title: t('error'),
-        description: error.message === 'Invalid login credentials' ? t('invalidCredentials') : error.message,
-        variant: 'destructive',
-      });
-    } else {
-      toast({ title: t('success'), description: t('loginSuccess') });
-      setActiveSection('main');
-      setAuthEmail('');
-      setAuthPassword('');
-    }
-  };
-
-  const handleAuthSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!authEmail || !authPassword || !authConfirmPassword || !authDisplayName.trim()) {
-      toast({ title: t('error'), description: t('fillAllFields'), variant: 'destructive' });
-      return;
-    }
-    if (authPassword.length < 6) {
-      toast({ title: t('error'), description: t('passwordTooShort'), variant: 'destructive' });
-      return;
-    }
-    if (authPassword !== authConfirmPassword) {
-      toast({ title: t('error'), description: t('passwordsDoNotMatch'), variant: 'destructive' });
-      return;
-    }
-    setIsLoading(true);
-    const { error } = await signUp(authEmail, authPassword, authDisplayName.trim());
-    setIsLoading(false);
-    if (error) {
-      if (error.message.includes('already registered')) {
-        toast({ title: t('error'), description: t('emailAlreadyRegistered'), variant: 'destructive' });
-      } else {
-        toast({ title: t('error'), description: error.message, variant: 'destructive' });
-      }
-    } else {
-      toast({ title: t('success'), description: t('signupSuccess') });
-      setActiveSection('main');
-      setAuthEmail('');
-      setAuthPassword('');
-      setAuthConfirmPassword('');
-      setAuthDisplayName('');
-    }
-  };
-
-  // Family selector handlers
+  // Family handlers
   const handleCreateFamily = async () => {
     if (!createFamilyName.trim()) return;
     setIsCreatingFamily(true);
@@ -367,7 +222,6 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
     if (error) {
       toast({ title: t('error'), description: error.message, variant: 'destructive' });
     } else if (newFamilyId) {
-      // Refresh families to get the new cloud family and select it
       await refreshFamilies();
       await selectFamily(newFamilyId);
     }
@@ -391,7 +245,6 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
     }
   };
 
-  // Family management handlers
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
     setIsInviting(true);
@@ -502,238 +355,54 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
     }
   };
 
-  const getRoleIcon = (role: FamilyRole) => {
-    if (role === 'owner' || role === 'admin') {
-      return <Crown className="h-4 w-4 text-yellow-500" />;
-    }
-    return <User className="h-4 w-4 text-muted-foreground" />;
-  };
-  
-  const getRoleLabel = (role: FamilyRole) => {
-    if (role === 'owner' || role === 'admin') {
-      return t('role_admin');
-    }
-    return t('role_member');
-  };
-
-  // Profile section
+  // Render Profile Section
   if (activeSection === 'profile') {
     return (
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        {controlledOpen === undefined && (
-          <DialogTrigger asChild>
-            <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
-          </DialogTrigger>
-        )}
-        <DialogContent className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-              <User className="h-5 w-5 text-primary" />
-              {t('editProfile')}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {t('profileDialogDescription')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('email')}</Label>
-              <Input id="email" type="email" value={user?.email || ''} disabled className="h-10 bg-muted border-border" />
-              <p className="text-xs text-muted-foreground">{t('emailCannotBeChanged')}</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="displayName">{t('displayName')}</Label>
-              <Input id="displayName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t('displayNamePlaceholder')} className="h-10 bg-secondary/50 border-border" />
-            </div>
-          </div>
-          <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => setActiveSection('main')}>{t('cancel')}</Button>
-            <Button onClick={handleUpdateProfile} disabled={isLoading}>
-              {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('saveChanges')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ProfileSection
+        open={open}
+        onOpenChange={handleOpenChange}
+        onBack={() => setActiveSection('main')}
+        t={t}
+        controlledOpen={controlledOpen}
+        user={user}
+        myPendingInvitations={myPendingInvitations}
+        getUserInitials={getUserInitials}
+        getDisplayName={getDisplayName}
+      />
     );
   }
 
-  // Password section
+  // Render Password Section
   if (activeSection === 'password') {
     return (
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        {controlledOpen === undefined && (
-          <DialogTrigger asChild>
-            <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
-          </DialogTrigger>
-        )}
-        <DialogContent className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-              <KeyRound className="h-5 w-5 text-primary" />
-              {t('changePassword')}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              {t('passwordDialogDescription')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword">{t('currentPassword')}</Label>
-              <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder={t('currentPasswordPlaceholder')} className="h-10 bg-secondary/50 border-border" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">{t('newPassword')}</Label>
-              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('newPasswordPlaceholder')} className="h-10 bg-secondary/50 border-border" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">{t('confirmNewPassword')}</Label>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t('confirmPasswordPlaceholder')} className="h-10 bg-secondary/50 border-border" />
-            </div>
-          </div>
-          <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => setActiveSection('main')}>{t('cancel')}</Button>
-            <Button onClick={handleUpdatePassword} disabled={isLoading}>
-              {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('updatePassword')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PasswordSection
+        open={open}
+        onOpenChange={handleOpenChange}
+        onBack={() => setActiveSection('main')}
+        t={t}
+        controlledOpen={controlledOpen}
+        user={user}
+        myPendingInvitations={myPendingInvitations}
+        getUserInitials={getUserInitials}
+        getDisplayName={getDisplayName}
+      />
     );
   }
 
-  // Auth section (for offline mode users)
+  // Render Auth Section
   if (activeSection === 'auth') {
     return (
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        {controlledOpen === undefined && (
-          <DialogTrigger asChild>
-            <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
-          </DialogTrigger>
-        )}
-        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
-          <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
-            <DialogTitle className="flex items-center gap-2 text-base font-semibold">
-              <LogIn className="h-5 w-5" />
-              {t('loginOrSignup')}
-            </DialogTitle>
-            <DialogDescription>
-              {t('authDialogDescription')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto dashboard-card-content space-y-4">
-            <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as 'login' | 'signup')} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="login">{t('login')}</TabsTrigger>
-                <TabsTrigger value="signup">{t('signup')}</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login" className="mt-0">
-                <form onSubmit={handleAuthSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="auth-email">{t('email')}</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="auth-email"
-                        type="email"
-                        placeholder={t('emailPlaceholder')}
-                        value={authEmail}
-                        onChange={(e) => setAuthEmail(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="auth-password">{t('password')}</Label>
-                    <div className="relative">
-                      <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="auth-password"
-                        type="password"
-                        placeholder={t('passwordPlaceholder')}
-                        value={authPassword}
-                        onChange={(e) => setAuthPassword(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('login')}
-                  </Button>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="signup" className="mt-0">
-                <form onSubmit={handleAuthSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="auth-name">{t('displayName')}</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="auth-name"
-                        type="text"
-                        placeholder={t('displayNamePlaceholder')}
-                        value={authDisplayName}
-                        onChange={(e) => setAuthDisplayName(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="auth-signup-email">{t('email')}</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="auth-signup-email"
-                        type="email"
-                        placeholder={t('emailPlaceholder')}
-                        value={authEmail}
-                        onChange={(e) => setAuthEmail(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="auth-signup-password">{t('password')}</Label>
-                    <div className="relative">
-                      <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="auth-signup-password"
-                        type="password"
-                        placeholder={t('passwordPlaceholder')}
-                        value={authPassword}
-                        onChange={(e) => setAuthPassword(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="auth-confirm-password">{t('confirmPassword')}</Label>
-                    <div className="relative">
-                      <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="auth-confirm-password"
-                        type="password"
-                        placeholder={t('confirmPasswordPlaceholder')}
-                        value={authConfirmPassword}
-                        onChange={(e) => setAuthConfirmPassword(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('signup')}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-            
-            <Button variant="ghost" onClick={() => setActiveSection('main')} className="w-full">
-              {t('back')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AuthSection
+        open={open}
+        onOpenChange={handleOpenChange}
+        onBack={() => setActiveSection('main')}
+        t={t}
+        controlledOpen={controlledOpen}
+        user={user}
+        myPendingInvitations={myPendingInvitations}
+        getUserInitials={getUserInitials}
+        getDisplayName={getDisplayName}
+      />
     );
   }
 
@@ -741,10 +410,14 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        {/* Only show trigger if not controlled externally */}
         {controlledOpen === undefined && (
           <DialogTrigger asChild>
-            <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
+            <TriggerButton 
+              user={user} 
+              myPendingInvitations={myPendingInvitations} 
+              getUserInitials={getUserInitials} 
+              getDisplayName={getDisplayName} 
+            />
           </DialogTrigger>
         )}
         <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0">
@@ -752,8 +425,14 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
             <DialogTitle className="text-lg font-semibold">{t('settings')}</DialogTitle>
           </DialogHeader>
           
-          <Tabs defaultValue={myPendingInvitations.length > 0 ? 'family' : 'general'} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <TabsList className="grid w-full grid-cols-2 mx-5 flex-shrink-0 h-9" style={{ width: 'calc(100% - 2.5rem)' }}>
+          <Tabs 
+            defaultValue={myPendingInvitations.length > 0 ? 'family' : 'general'} 
+            className="flex-1 flex flex-col min-h-0 overflow-hidden"
+          >
+            <TabsList 
+              className="grid w-full grid-cols-2 mx-5 flex-shrink-0 h-9" 
+              style={{ width: 'calc(100% - 2.5rem)' }}
+            >
               <TabsTrigger value="general" className="text-sm">{t('preferences')}</TabsTrigger>
               <TabsTrigger value="family" className="relative text-sm">
                 {t('family')}
@@ -766,483 +445,97 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
             </TabsList>
 
             <div className="flex-1 overflow-y-auto dashboard-card-content min-h-0">
-              {/* General Tab */}
-              <TabsContent value="general" className="mt-0 space-y-5">
-                {/* User Account Section */}
-                  {user ? (
-                    <div className="dashboard-card">
-                      <div className="dashboard-card-content space-y-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-11 w-11">
-                            <AvatarImage src={user.user_metadata?.avatar_url} alt={getDisplayName()} />
-                            <AvatarFallback className="bg-primary text-primary-foreground">{getUserInitials()}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{getDisplayName()}</p>
-                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => setActiveSection('profile')} className="flex-1 h-8 text-xs">
-                            <User className="h-3.5 w-3.5 mr-1.5" />{t('editProfile')}
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => setActiveSection('password')} className="flex-1 h-8 text-xs">
-                            <KeyRound className="h-3.5 w-3.5 mr-1.5" />{t('changePassword')}
-                          </Button>
-                        </div>
-                        <div className="flex justify-center">
-                          <Button variant="ghost" size="sm" className="h-8 text-muted-foreground hover:text-destructive" onClick={handleSignOut}>
-                            <LogOut className="h-3.5 w-3.5 mr-2" />
-                            <span className="text-sm">{t('logout')}</span>
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="dashboard-card">
-                      <div className="dashboard-card-content space-y-3">
-                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-                          <WifiOff className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">{t('offlineMode')}</span>
-                        </div>
-                        <Button variant="outline" className="w-full h-9" onClick={() => setActiveSection('auth')}>
-                          <LogIn className="h-4 w-4 mr-2" />{t('loginOrSignup')}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                {/* Preferences Section */}
-                <div className="dashboard-card">
-                  <div className="dashboard-card-content">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('preferences')}</p>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                          <Globe className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{t('language')}</span>
-                        </div>
-                        <Select value={language} onValueChange={(v) => handleLanguageChange(v as Language)}>
-                          <SelectTrigger className="w-36 h-9 text-sm"><SelectValue /></SelectTrigger>
-                          <SelectContent className="bg-card border-border">
-                            {languages.map((lang) => <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                          <Coins className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{t('currency')}</span>
-                        </div>
-                        <Select value={currency} onValueChange={(v) => handleCurrencyChange(v as CurrencyCode)}>
-                          <SelectTrigger className="w-36 h-9 text-sm"><SelectValue /></SelectTrigger>
-                          <SelectContent className="bg-card border-border">
-                            {currencies.map((curr) => <SelectItem key={curr.code} value={curr.code}>{curr.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                          <Palette className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{t('theme')}</span>
-                        </div>
-                        <Select value={theme} onValueChange={(v) => handleThemeChange(v as ThemeKey)}>
-                          <SelectTrigger className="w-36 h-9 text-sm"><SelectValue /></SelectTrigger>
-                          <SelectContent className="bg-card border-border">
-                            {themes.map((themeOption) => <SelectItem key={themeOption.key} value={themeOption.key}>{t(themeOption.labelKey as TranslationKey)}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Danger Zone - More subtle */}
-                <div className="dashboard-card">
-                  <div className="dashboard-card-content">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">{t('dataManagement')}</p>
-                    <div className="space-y-1.5 flex flex-col items-center">
-                    {onDeleteMonth && currentMonthLabel && (
-                      <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="w-3/4 justify-center h-8 text-destructive ring-1 ring-destructive/20 rounded">
-                            <Trash2 className="h-3.5 w-3.5 mr-2" />
-                            <span className="text-sm">{t('delete')} "{currentMonthLabel}"</span>
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-card border-border sm:max-w-md">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="flex items-center gap-2">
-                              <AlertTriangle className="h-5 w-5 text-destructive" />
-                              {t('deleteMonth')}
-                            </AlertDialogTitle>
-                            <AlertDialogDescription className="text-muted-foreground">{t('deleteMonthConfirm')} <strong>{currentMonthLabel}</strong>? {t('deleteMonthWarning')}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-                            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={onDeleteMonth}>{t('delete')}</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-3/4 justify-center h-8 text-destructive ring-1 ring-destructive/20 rounded"
-                          disabled={processingAction === 'clear-offline-cache'}
-                        >
-                          {processingAction === 'clear-offline-cache' ? (
-                            <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-                          ) : (
-                            <HardDrive className="h-3.5 w-3.5 mr-2" />
-                          )}
-                          <span className="text-sm">{t('clearOfflineCache')}</span>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-card border-border sm:max-w-md">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="flex items-center gap-2">
-                            <AlertTriangle className="h-5 w-5 text-destructive" />
-                            {t('clearOfflineCache')}
-                          </AlertDialogTitle>
-                          <AlertDialogDescription className="text-muted-foreground">{t('clearOfflineCacheWarning')}</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={handleClearOfflineCache}
-                          >
-                            {t('delete')}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              </div>
+              <TabsContent value="general">
+                <GeneralSection
+                  user={user}
+                  language={language}
+                  theme={theme}
+                  currency={currency}
+                  currentMonthLabel={currentMonthLabel}
+                  processingAction={processingAction}
+                  onLanguageChange={handleLanguageChange}
+                  onThemeChange={handleThemeChange}
+                  onCurrencyChange={handleCurrencyChange}
+                  onEditProfile={() => setActiveSection('profile')}
+                  onEditPassword={() => setActiveSection('password')}
+                  onSignOut={handleSignOut}
+                  onAuthClick={() => setActiveSection('auth')}
+                  onDeleteMonth={onDeleteMonth}
+                  onClearOfflineCache={handleClearOfflineCache}
+                  getUserInitials={getUserInitials}
+                  getDisplayName={getDisplayName}
+                  t={t}
+                />
               </TabsContent>
 
-              {/* Family Tab */}
-              <TabsContent value="family" className="mt-0 space-y-5">
-                {/* Pending invitations for current user - Highlighted */}
-                {myPendingInvitations.length > 0 && (
-                  <div className="dashboard-card">
-                    <div className="dashboard-card-content p-3 rounded-lg bg-primary/10 border border-primary/20 space-y-2">
-                      <p className="text-xs font-medium uppercase tracking-wider mb-2">{t('pendingInvitations')}</p>
-                      {myPendingInvitations.map((invitation) => (
-                        <div key={invitation.id} className="flex items-center justify-between p-2 rounded-md bg-background">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm truncate">{invitation.family_name}</p>
-                            <p className="text-xs text-muted-foreground">{t('invitedToFamily')}</p>
-                          </div>
-                          <div className="flex items-center gap-1 ml-2">
-                            <Button size="sm" variant="ghost" className="h-9 w-9 p-0" onClick={() => handleRejectInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('rejectInvitation')}>
-                              <X className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" className="h-9 px-3 text-xs" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('acceptInvitation')}>
-                              {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : t('accept')}
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Family Selector with inline edit */}
-                <div className="dashboard-card">
-                  <div className="dashboard-card-content space-y-3">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('selectFamily')}</p>
-                    
-                    {editingName ? (
-                      <div className="flex gap-2">
-                        <Input 
-                          className="h-10 flex-1" 
-                          value={newFamilyName} 
-                          onChange={(e) => setNewFamilyName(e.target.value)} 
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleUpdateFamilyName();
-                            if (e.key === 'Escape') setEditingName(false);
-                          }}
-                          autoFocus
-                        />
-                        <Button size="sm" className="h-10 px-3" onClick={handleUpdateFamilyName} disabled={isUpdatingName}>
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="h-10 px-3" onClick={() => setEditingName(false)} disabled={isUpdatingName}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="flex-1 justify-between h-10">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <Users className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                                <span className="truncate font-medium">
-                                  {currentFamily?.name || t('selectFamily')}
-                                </span>
-                                {isCurrentOffline && (
-                                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-amber-500/20 text-amber-500 flex-shrink-0">
-                                    <WifiOff className="h-3 w-3" />
-                                  </Badge>
-                                )}
-                              </div>
-                              <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="w-56">
-                            {families.map((family) => (
-                              <DropdownMenuItem
-                                key={family.id}
-                                onClick={() => selectFamily(family.id)}
-                                className="flex items-center justify-between"
-                              >
-                                <span className="truncate">{family.name}</span>
-                                <div className="flex items-center gap-1">
-                                  {(family.isOffline || offlineAdapter.isOfflineId(family.id)) && (
-                                    <WifiOff className="h-3 w-3 text-amber-500" />
-                                  )}
-                                  {currentFamily?.id === family.id && (
-                                    <Check className="h-4 w-4 text-primary" />
-                                  )}
-                                </div>
-                              </DropdownMenuItem>
-                            ))}
-                            <DropdownMenuSeparator />
-                            {isCurrentOffline && isOnline && !isSyncing && (
-                              <DropdownMenuItem onClick={handleSyncFamily} disabled={isSyncing}>
-                                <Cloud className="h-4 w-4 mr-2" />
-                                {t('syncToCloud')}
-                              </DropdownMenuItem>
-                            )}
-                            {isSyncing && syncProgress && (
-                              <div className="px-2 py-3 space-y-2">
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                  <span className="truncate">{syncProgress.step}</span>
-                                </div>
-                                <Progress value={(syncProgress.current / syncProgress.total) * 100} className="h-1.5" />
-                                <div className="flex justify-between text-[10px] text-muted-foreground">
-                                  <span>{syncProgress.details}</span>
-                                  <span>{syncProgress.current}/{syncProgress.total}</span>
-                                </div>
-                              </div>
-                            )}
-                            <DropdownMenuItem onClick={() => setShowCreateFamilyDialog(true)}>
-                              <Plus className="h-4 w-4 mr-2" />
-                              {t('createFamily')}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        
-                        {isAdmin && currentFamily && (
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="h-10 w-10 flex-shrink-0" 
-                            onClick={() => { setNewFamilyName(currentFamily.name); setEditingName(true); }}
-                            title={t('edit')}
-                            aria-label={t('edit')}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {currentFamily ? (
-                  <>
-                    {/* Members list - */}
-                    <div className="dashboard-card">
-                      <div className="dashboard-card-content">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('members')}</p>
-                        <div className="space-y-1">
-                          {members.map((member) => (
-                            <div key={member.id} className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-muted/30 -mx-2">
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                {getRoleIcon(member.role)}
-                                <div className="min-w-0">
-                                  <p className="text-sm truncate">{member.user_id === user?.id ? t('you') : member.user_email || t('member')}</p>
-                                  <p className="text-[11px] text-muted-foreground capitalize">{getRoleLabel(member.role)}</p>
-                                </div>
-                              </div>
-                              {isAdmin && member.user_id !== user?.id && (
-                                <div className="flex items-center gap-1">
-                                  <Select value={member.role === 'owner' ? 'admin' : member.role} onValueChange={(value) => handleRoleChange(member.id, value as FamilyRole)} disabled={processingAction === member.id}>
-                                    <SelectTrigger className="w-20 h-7 text-xs"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="admin">{t('role_admin')}</SelectItem>
-                                      <SelectItem value="member">{t('role_member')}</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveMember(member.id)} disabled={processingAction === member.id} aria-label={t('removeMember')}>
-                                    {processingAction === member.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Invite member */}
-                    {isAdmin && (
-                      <div className="dashboard-card">
-                        <div className="dashboard-card-content space-y-2">
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('inviteMember')}</p>
-                          <div className="flex gap-2">
-                            <Input className="h-9" placeholder={t('inviteEmailPlaceholder')} type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleInvite()} />
-                            <Button size="sm" className="h-9 px-3" onClick={handleInvite} disabled={!inviteEmail.trim() || isInviting}>
-                              {isInviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Pending sent invitations - Subtle */}
-                    {isAdmin && pendingInvitations.length > 0 && (
-                      <div className="dashboard-card">
-                        <div className="dashboard-card-content space-y-2">
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{t('pendingSent')}</p>
-                          <div className="space-y-1">
-                            {pendingInvitations.map((invitation) => (
-                              <div key={invitation.id} className="flex items-center justify-between py-1.5 px-2 rounded-md bg-muted/20 -mx-2">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <Mail className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                                  <span className="text-sm text-muted-foreground truncate">{invitation.email}</span>
-                                </div>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleCancelInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('cancelInvitation')}>
-                                  {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Danger Zone - Leave/Delete family */}
-                    <div className="dashboard-card">
-                      <div className="dashboard-card-content space-y-1.5 pt-3 border-t border-border/50 flex flex-col items-center">
-                      {!isOnlyMember && (
-                        <div className="flex flex-col items-center w-full">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="w-3/4 justify-center h-8 text-destructive ring-1 ring-destructive/20 rounded" 
-                            onClick={() => setShowLeaveAlert(true)}
-                            disabled={isOnlyAdmin}
-                          >
-                            <LogOut className="h-3.5 w-3.5 mr-2" />
-                            <span className="text-sm">{t('leaveFamily')}</span>
-                          </Button>
-                          {isOnlyAdmin && (
-                            <p className="text-[11px] text-muted-foreground text-center mt-1">{t('promoteAdminFirst')}</p>
-                          )}
-                        </div>
-                      )}
-                      {(isAdmin || isOnlyMember) && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="w-3/4 justify-center h-8 text-destructive ring-1 ring-destructive/20 rounded" 
-                          onClick={() => setShowDeleteAlert(true)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 mr-2" />
-                          <span className="text-sm">{t('deleteFamily')}</span>
-                        </Button>
-                      )}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                    <p className="text-sm">{t('noFamilySelected')}</p>
-                  </div>
-                )}
+              <TabsContent value="family">
+                <FamilySection
+                  user={user}
+                  currentFamily={currentFamily}
+                  families={families}
+                  members={members}
+                  pendingInvitations={pendingInvitations}
+                  myPendingInvitations={myPendingInvitations}
+                  userRole={userRole}
+                  isOnline={isOnline}
+                  isSyncing={isSyncing}
+                  syncProgress={syncProgress}
+                  processingAction={processingAction}
+                  isInviting={isInviting}
+                  inviteEmail={inviteEmail}
+                  editingName={editingName}
+                  newFamilyName={newFamilyName}
+                  isUpdatingName={isUpdatingName}
+                  onSelectFamily={selectFamily}
+                  onInviteEmailChange={setInviteEmail}
+                  onEditingNameChange={setEditingName}
+                  onNewFamilyNameChange={setNewFamilyName}
+                  onInvite={handleInvite}
+                  onUpdateFamilyName={handleUpdateFamilyName}
+                  onSyncFamily={handleSyncFamily}
+                  onShowCreateFamily={() => setShowCreateFamilyDialog(true)}
+                  onAcceptInvitation={handleAcceptInvitation}
+                  onRejectInvitation={handleRejectInvitation}
+                  onCancelInvitation={handleCancelInvitation}
+                  onRoleChange={handleRoleChange}
+                  onRemoveMember={handleRemoveMember}
+                  onShowLeaveAlert={() => setShowLeaveAlert(true)}
+                  onShowDeleteAlert={() => setShowDeleteAlert(true)}
+                  t={t}
+                />
               </TabsContent>
             </div>
           </Tabs>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Alert */}
-      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              {t('deleteFamilyConfirm')}
-            </AlertDialogTitle>
-            <AlertDialogDescription className={!isCurrentOffline ? "text-destructive font-medium" : ""}>
-              {isCurrentOffline ? t('deleteFamilyWarning') : t('deleteFamilyWarningOnline')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletingFamily}>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteFamily} disabled={isDeletingFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('delete')}</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Dialogs */}
+      <DeleteFamilyAlert
+        open={showDeleteAlert}
+        onOpenChange={setShowDeleteAlert}
+        isCurrentOffline={isCurrentOffline}
+        isDeleting={isDeletingFamily}
+        onDelete={handleDeleteFamily}
+        t={t}
+      />
 
-      {/* Leave Alert */}
-      <AlertDialog open={showLeaveAlert} onOpenChange={setShowLeaveAlert}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              {t('leaveFamilyConfirm')}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              {t('leaveFamilyWarning')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLeavingFamily}>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLeaveFamily} disabled={isLeavingFamily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('leave')}</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <LeaveFamilyAlert
+        open={showLeaveAlert}
+        onOpenChange={setShowLeaveAlert}
+        isLeaving={isLeavingFamily}
+        onLeave={handleLeaveFamily}
+        t={t}
+      />
 
-      {/* Create Family Dialog */}
-      <Dialog open={showCreateFamilyDialog} onOpenChange={setShowCreateFamilyDialog}>
-        <DialogContent className="bg-card border-border sm:max-w-sm max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-              <Plus className="h-5 w-5 text-primary" />
-              {t('createFamily')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="px-6 py-4">
-            <Input
-              className="h-10 bg-secondary/50 border-border"
-              placeholder={t('familyNamePlaceholder')}
-              value={createFamilyName}
-              onChange={(e) => setCreateFamilyName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateFamily()}
-            />
-          </div>
-          <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => setShowCreateFamilyDialog(false)}>
-              {t('cancel')}
-            </Button>
-            <Button onClick={handleCreateFamily} disabled={isCreatingFamily || !createFamilyName.trim()}>
-              {isCreatingFamily ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-              {t('createFamily')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CreateFamilyDialog
+        open={showCreateFamilyDialog}
+        onOpenChange={setShowCreateFamilyDialog}
+        familyName={createFamilyName}
+        onFamilyNameChange={setCreateFamilyName}
+        isCreating={isCreatingFamily}
+        onCreate={handleCreateFamily}
+        t={t}
+      />
     </>
   );
 };

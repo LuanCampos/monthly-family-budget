@@ -1,5 +1,7 @@
 # GitHub Copilot Instructions — Monthly Family Budget
 
+> **Documentação completa para desenvolvedores**: [`CONTRIBUTING.md`](../CONTRIBUTING.md)
+
 ## Stack & Architecture
 **Vite + React + TypeScript + Supabase + IndexedDB** — Cloud-first, offline-capable family budget app.
 
@@ -13,6 +15,48 @@
 | Hooks | `src/hooks/` | State orchestration; `useBudget.ts`, `useGoals.ts`, `useBudgetState.ts` |
 | Components | `src/components/{domain}/` | Domain folders: expense/, goal/, family/, recurring/, settings/, ui/ |
 | Types | `src/types/` | `budget.ts` (app types), `database.ts` (DB rows with snake_case) |
+
+## File Naming Conventions
+
+### Components (`src/components/`)
+| Type | Pattern | Example |
+|------|---------|---------|
+| UI primitives (shadcn) | `kebab-case.tsx` | `button.tsx`, `dialog.tsx`, `dropdown-menu.tsx` |
+| Domain components | `PascalCase.tsx` | `ExpenseForm.tsx`, `GoalCard.tsx` |
+| Dialog/Modal wrappers | `{Name}Dialog.tsx` | `EntryFormDialog.tsx`, `GoalDetailsDialog.tsx` |
+| Section components | `{Name}Section.tsx` | `ProfileSection.tsx`, `AuthSection.tsx` |
+| Index exports | `index.tsx` or `index.ts` | Re-exports all domain components |
+
+### Hooks (`src/hooks/`)
+| Type | Pattern | Example |
+|------|---------|---------|
+| Domain hooks | `use{Domain}.ts` (camelCase) | `useBudget.ts`, `useGoals.ts` |
+| UI hooks | `use-{name}.ts` (kebab-case) | `use-mobile.ts`, `use-toast.ts` |
+| UI hooks folder | `src/hooks/ui/` | For reusable UI-related hooks |
+
+### Services & Adapters (`src/lib/`)
+| Type | Pattern | Example |
+|------|---------|---------|
+| Services | `{domain}Service.ts` | `budgetService.ts`, `familyService.ts` |
+| Adapters | `{domain}Adapter.ts` | `expenseAdapter.ts`, `monthAdapter.ts` |
+| Complex adapters | `src/lib/adapters/{domain}/` folder | `goal/goalCoreAdapter.ts` |
+| Utilities | `src/lib/utils/{name}.ts` | `formatters.ts`, `monthUtils.ts` |
+| Storage | `src/lib/storage/{name}.ts` | `secureStorage.ts`, `offlineStorage.ts` |
+| Core lib files | `src/lib/{name}.ts` | `mappers.ts`, `validators.ts`, `logger.ts` |
+
+### Other Files
+| Type | Pattern | Example |
+|------|---------|---------|
+| Pages | `PascalCase.tsx` | `Budget.tsx`, `Goals.tsx` |
+| Types | `camelCase.ts` | `budget.ts`, `database.ts` |
+| Constants | `camelCase.ts` | `categories.ts` |
+| Contexts | `{Name}Context.tsx` | `AuthContext.tsx`, `FamilyContext.tsx` |
+
+### General Rules
+- **Named exports only** — no default exports (except pages for lazy loading)
+- **Index files** — use for barrel exports, not logic
+- **Folder per domain** — when >3 related files, create subfolder
+- **Suffix indicates purpose**: `*Service`, `*Adapter`, `*Context`, `*Dialog`, `*Section`
 
 ## Critical Patterns
 

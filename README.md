@@ -37,6 +37,8 @@ Open the app at `http://localhost:8080` (or the URL Vite prints).
 
 ## Contributing
 
+> **⚠️ Before contributing, read [`CONTRIBUTING.md`](CONTRIBUTING.md)** — Contains all coding standards, architecture guidelines, and security rules.
+
 - Open an issue to propose changes or report bugs
 - Create a branch for your change: `git checkout -b feat/your-feature`
 - Keep changes focused and add tests or verifications when appropriate
@@ -80,6 +82,8 @@ O app ficará disponível em `http://localhost:8080` (ou na URL que o Vite exibi
 - Visualizar build de produção: `npm run preview`
 
 ### Contribuindo
+
+> **⚠️ Antes de contribuir, leia [`CONTRIBUTING.md`](CONTRIBUTING.md)** — Contém todos os padrões de código, guidelines de arquitetura e regras de segurança.
 
 - Abra uma issue para propor mudanças ou reportar bugs
 - Crie uma branch para sua alteração: `git checkout -b feat/sua-mudanca`

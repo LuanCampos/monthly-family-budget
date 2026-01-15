@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { CategoryKey, Subcategory, RecurringExpense, Expense } from '@/types';
 import { getCategoryByKey, DEFAULT_CATEGORY, CATEGORIES } from '@/constants/categories';
 import { RecurringExpenseFormFields } from './RecurringExpenseFormFields';
-import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
+import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/lib/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';

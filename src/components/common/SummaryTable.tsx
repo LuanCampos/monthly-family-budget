@@ -1,5 +1,5 @@
 import { CategoryKey } from '@/types';
-import { formatPercentage } from '@/utils/formatters';
+import { formatPercentage } from '@/lib/utils/formatters';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';

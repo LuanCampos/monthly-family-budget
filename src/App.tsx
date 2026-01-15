@@ -10,7 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { FamilyProvider } from "@/contexts/FamilyContext";
 import { OnlineProvider } from "@/contexts/OnlineContext";
 import { UserPreferencesLoader } from "@/components/common";
-import Index from "./pages/Index";
+import Budget from "./pages/Budget";
 import Goals from "./pages/Goals";
 import NotFound from "./pages/NotFound";
 
@@ -30,7 +30,7 @@ const App = () => (
                     <Sonner />
                     <BrowserRouter basename={import.meta.env.BASE_URL}>
                       <Routes>
-                        <Route path="/" element={<Index />} />
+                        <Route path="/" element={<Budget />} />
                         <Route path="/goals" element={<Goals />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>

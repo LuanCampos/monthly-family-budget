@@ -5,7 +5,7 @@
  * to prevent XSS attacks and data tampering.
  */
 
-import { logger } from './logger';
+import { logger } from '../logger';
 
 // Validation patterns for different storage keys
 const VALIDATION_PATTERNS: Record<string, RegExp> = {

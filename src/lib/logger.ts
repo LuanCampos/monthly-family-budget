@@ -81,8 +81,10 @@ class Logger {
     const style = this.getConsoleStyle(level);
 
     if (this.isDev && context) {
+      // eslint-disable-next-line no-console
       console.log(`%c${prefix}`, style, context);
     } else if (!this.isDev && level !== 'debug') {
+      // eslint-disable-next-line no-console
       console.log(`${prefix}`, context || '');
     }
   }

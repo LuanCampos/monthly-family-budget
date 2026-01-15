@@ -78,3 +78,46 @@ export const updateCurrentFamily = async (userId: string, familyId: string | nul
 export const getSession = async () => {
   return supabase.auth.getSession();
 };
+
+/**
+ * Update user profile metadata (display name, etc.)
+ */
+export const updateUserProfile = async (metadata: { display_name?: string; [key: string]: unknown }) => {
+  return supabase.auth.updateUser({ data: metadata });
+};
+
+/**
+ * Verify current password by attempting sign in
+ */
+export const verifyPassword = async (email: string, password: string) => {
+  return supabase.auth.signInWithPassword({ email, password });
+};
+
+/**
+ * Update user password
+ */
+export const updatePassword = async (newPassword: string) => {
+  return supabase.auth.updateUser({ password: newPassword });
+};
+
+/**
+ * Send password reset email
+ */
+export const resetPasswordForEmail = async (email: string, redirectTo?: string) => {
+  return supabase.auth.resetPasswordForEmail(email, {
+    redirectTo,
+  });
+};
+
+/**
+ * Resend email verification
+ */
+export const resendVerificationEmail = async (email: string, redirectTo?: string) => {
+  return supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo: redirectTo,
+    },
+  });
+};

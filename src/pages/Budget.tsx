@@ -12,7 +12,7 @@ import { CategoryLegend, SummaryTable, LimitsPanel, AnnualViewChart, OnlineStatu
 import { RecurringExpenses } from '@/components/recurring';
 import { SettingsPanel } from '@/components/settings';
 import { FamilySetup } from '@/components/family';
-import { getSecureStorageItem, setSecureStorageItem } from '@/lib/secureStorage';
+import { getSecureStorageItem, setSecureStorageItem } from '@/lib/storage/secureStorage';
 import type { SortType, SortDirection } from '@/components/expense';
 import type { Expense, CategoryKey } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -532,8 +532,8 @@ const BudgetContent = () => {
   );
 };
 
-// Main Index component - handles auth/family loading and provides key for remounting
-const Index = () => {
+// Main Budget component - handles auth/family loading and provides key for remounting
+const Budget = () => {
   const { loading: authLoading } = useAuth();
   const { currentFamilyId, loading: familyLoading } = useFamily();
 
@@ -556,4 +556,4 @@ const Index = () => {
   return <BudgetContent key={currentFamilyId} />;
 };
 
-export default Index;
+export default Budget;

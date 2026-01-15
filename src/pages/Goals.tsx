@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { GoalForm, GoalList, EntryForm, EntryHistory, ImportExpenseDialog } from '@/components/goal';
+import { 
+  GoalList, 
+  GoalFormDialog, 
+  EntryFormDialog, 
+  EntryHistoryDialog, 
+  DeleteGoalDialog, 
+  DeleteEntryDialog 
+} from '@/components/goal';
 import { useGoals } from '@/hooks/useGoals';
 import { useBudget } from '@/hooks/useBudget';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -12,22 +18,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { Goal, GoalEntry, GoalStatus } from '@/types';
 import { SettingsPanel } from '@/components/settings';
 import { FamilySetup } from '@/components/family';
-import { Loader2, Target, Settings as SettingsIcon, Wallet, Plus, List, Import, AlertTriangle, Pencil } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Loader2, Target, Settings as SettingsIcon, Wallet, Plus } from 'lucide-react';
 
 // Inner component that uses useGoals - will be remounted when family changes via key
 const GoalsContent = () => {
   const { t } = useLanguage();
-    const { currentFamilyId: _currentFamilyId, myPendingInvitations } = useFamily();
+  const { myPendingInvitations } = useFamily();
   const { user } = useAuth();
   const { subcategories } = useBudget();
   const {
@@ -91,7 +87,7 @@ const GoalsContent = () => {
     document.title = pageTitle;
   }, [pageTitle]);
 
-  const handleSaveGoal = async (data: { name: string; targetValue: number; currentValue?: number; targetDate?: string; account?: string; linkedSubcategoryId?: string; status?: GoalStatus }) => {
+  const handleSaveGoal = async (data: { name: string; targetValue: number; currentValue?: number; targetDate?: string; account?: string; linkedSubcategoryId?: string; linkedCategoryKey?: string; status?: GoalStatus }) => {
     setSavingGoal(true);
     try {
       if (editingGoal) {
@@ -101,9 +97,8 @@ const GoalsContent = () => {
       }
     } finally {
       setSavingGoal(false);
-      // Close modal only after all async operations complete
-      setOpenGoalDialog(false);
-      setEditingGoal(null);
+      // Note: Modal closes itself via GoalFormDialog's resetAndClose()
+      // We do NOT reset openGoalDialog/editingGoal here to avoid race condition flash
     }
   };
 
@@ -140,17 +135,16 @@ const GoalsContent = () => {
       await loadGoals();
     } finally {
       setSavingEntry(false);
-      // Close modal only after all async operations complete
-      setEntryGoal(null);
-      setEditingEntry(null);
+      // Note: Modal closes itself via EntryFormDialog's resetAndClose()
+      // We do NOT reset entryGoal/editingEntry here to avoid race condition flash
     }
   };
 
-  const handleDeleteEntry = async (entry: GoalEntry) => {
-    if (!historyGoal) return;
+  const handleDeleteEntry = async () => {
+    if (!historyGoal || !entryToDelete) return;
     setDeletingEntry(true);
     try {
-      await deleteEntry(entry.id, historyGoal.id);
+      await deleteEntry(entryToDelete.id, historyGoal.id);
       await loadGoals();
     } finally {
       setDeletingEntry(false);
@@ -162,6 +156,23 @@ const GoalsContent = () => {
     if (!historyGoal) return;
     setEntryGoal(historyGoal);
     setEditingEntry(entry);
+  };
+
+  const handleDeleteGoal = async () => {
+    if (!goalToDelete) return;
+    setDeletingGoal(true);
+    try {
+      await deleteGoal(goalToDelete.id);
+    } finally {
+      setDeletingGoal(false);
+      setGoalToDelete(null);
+    }
+  };
+
+  const handleImportExpense = async (expenseId: string) => {
+    if (!historyGoal) return;
+    await importExpense(historyGoal.id, expenseId);
+    await refreshEntries(historyGoal.id);
   };
 
   return (
@@ -256,176 +267,60 @@ const GoalsContent = () => {
         )}
       </main>
 
-      <Dialog open={openGoalDialog} onOpenChange={(open) => { setOpenGoalDialog(open); if (!open) setEditingGoal(null); }}>
-        <DialogContent className="bg-card border-border sm:max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-              <Target className="h-5 w-5 text-primary" />
-              {editingGoal ? (t('editGoal') || 'Editar Meta') : (t('addGoal') || 'Nova Meta')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="px-6 py-4 overflow-y-auto">
-            <GoalForm 
-              formId="goal-form"
-              initial={editingGoal || undefined} 
-              subcategories={subcategories}
-              onSubmit={handleSaveGoal} 
-              submitting={savingGoal}
-            />
-          </div>
-          <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => setOpenGoalDialog(false)} disabled={savingGoal}>
-              {t('cancel')}
-            </Button>
-            <Button type="submit" form="goal-form" disabled={savingGoal}>
-              {t('save')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Dialogs - conditionally render to avoid flash on close */}
+      {openGoalDialog && (
+        <GoalFormDialog
+          open={openGoalDialog}
+          onOpenChange={(open) => { setOpenGoalDialog(open); if (!open) setEditingGoal(null); }}
+          goal={editingGoal}
+          subcategories={subcategories}
+          onSave={handleSaveGoal}
+          saving={savingGoal}
+        />
+      )}
 
-      <Dialog open={Boolean(entryGoal)} onOpenChange={(open) => { if (!open) { setEntryGoal(null); setEditingEntry(null); } }}>
-        <DialogContent className="bg-card border-border sm:max-w-xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-              {editingEntry ? <Pencil className="h-5 w-5 text-primary" /> : <Plus className="h-5 w-5 text-primary" />}
-              {editingEntry ? (t('editEntry') || 'Editar lançamento') : (t('addEntry') || 'Adicionar Lançamento')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="px-6 py-4 overflow-y-auto">
-            {entryGoal && (
-              <EntryForm
-                formId="entry-form"
-                onSubmit={handleSaveEntry}
-                submitting={savingEntry}
-                initial={editingEntry ? {
-                  value: editingEntry.value,
-                  description: editingEntry.description || '',
-                  month: editingEntry.month,
-                  year: editingEntry.year,
-                } : null}
-              />
-            )}
-          </div>
-          <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => { setEntryGoal(null); setEditingEntry(null); }} disabled={savingEntry}>
-              {t('cancel')}
-            </Button>
-            <Button type="submit" form="entry-form" disabled={savingEntry}>
-              {t('save')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {entryGoal && (
+        <EntryFormDialog
+          open={Boolean(entryGoal)}
+          onOpenChange={(open) => { if (!open) { setEntryGoal(null); setEditingEntry(null); } }}
+          goal={entryGoal}
+          entry={editingEntry}
+          onSave={handleSaveEntry}
+          saving={savingEntry}
+        />
+      )}
 
-      <Dialog open={Boolean(historyGoal)} onOpenChange={(open) => { if (!open) { setHistoryGoal(null); setHistoryEntries([]); } }}>
-        <DialogContent className="bg-card border-border sm:max-w-lg max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-              <List className="h-5 w-5 text-primary" />
-              {t('entries') || 'Lançamentos'}
-            </DialogTitle>
-            {historyGoal && (
-              <p className="text-sm text-muted-foreground">
-                {historyGoal.name}
-              </p>
-            )}
-          </DialogHeader>
-          
-          <div className="flex-1 overflow-y-auto px-6 py-4">
-            <EntryHistory 
-              entries={historyEntries} 
-              onDelete={(entry) => setEntryToDelete(entry)}
-              onEdit={handleEditEntry}
-            />
-          </div>
+      {historyGoal && (
+        <EntryHistoryDialog
+          open={Boolean(historyGoal)}
+          onOpenChange={(open) => { if (!open) { setHistoryGoal(null); setHistoryEntries([]); } }}
+          goal={historyGoal}
+          entries={historyEntries}
+          onAddEntry={() => historyGoal && handleAddEntry(historyGoal)}
+          onEditEntry={handleEditEntry}
+          onDeleteEntry={(entry) => setEntryToDelete(entry)}
+          onImportExpense={handleImportExpense}
+          fetchHistoricalExpenses={getHistoricalExpenses}
+        />
+      )}
 
-          {historyGoal && (
-            <div className="px-6 py-4 border-t border-border bg-secondary/30 flex flex-col sm:flex-row gap-2 sm:justify-end">
-              <Button size="sm" className="w-full sm:w-auto gap-1.5" onClick={() => handleAddEntry(historyGoal)}>
-                <Plus className="h-4 w-4" />
-                <span>{t('addEntry') || 'Lançamento'}</span>
-              </Button>
+      {goalToDelete && (
+        <DeleteGoalDialog
+          open={Boolean(goalToDelete)}
+          onOpenChange={(open) => { if (!open) setGoalToDelete(null); }}
+          onConfirm={handleDeleteGoal}
+          deleting={deletingGoal}
+        />
+      )}
 
-              {historyGoal.linkedSubcategoryId && (
-                <ImportExpenseDialog
-                  trigger={
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto gap-2">
-                      <Import className="h-4 w-4" />
-                      {t('importExpenses') || 'Importar gastos anteriores'}
-                    </Button>
-                  }
-                  subcategoryId={historyGoal.linkedSubcategoryId}
-                  fetchExpenses={getHistoricalExpenses}
-                  onImport={async (expenseId) => {
-                    await importExpense(historyGoal.id, expenseId);
-                    await refreshEntries(historyGoal.id);
-                  }}
-                />
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Goal Confirmation */}
-      <AlertDialog open={Boolean(goalToDelete)} onOpenChange={(open) => { if (!open) setGoalToDelete(null); }}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              {t('deleteGoalConfirm') || 'Excluir meta?'}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              {t('deleteGoalWarning') || 'Os lançamentos vinculados serão removidos. Os gastos continuarão existindo.'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingGoal}>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={deletingGoal}
-              onClick={async () => {
-                if (!goalToDelete) return;
-                setDeletingGoal(true);
-                try {
-                  await deleteGoal(goalToDelete.id);
-                } finally {
-                  setDeletingGoal(false);
-                  setGoalToDelete(null);
-                }
-              }}
-            >
-              {t('delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete Entry Confirmation */}
-      <AlertDialog open={Boolean(entryToDelete)} onOpenChange={(open) => { if (!open) setEntryToDelete(null); }}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              {t('deleteEntryConfirm') || 'Excluir lançamento?'}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              {t('deleteEntryWarning') || 'O valor será descontado da meta.'}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingEntry}>{t('cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={deletingEntry}
-              onClick={() => entryToDelete && handleDeleteEntry(entryToDelete)}
-            >
-              {t('delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {entryToDelete && (
+        <DeleteEntryDialog
+          open={Boolean(entryToDelete)}
+          onOpenChange={(open) => { if (!open) setEntryToDelete(null); }}
+          onConfirm={handleDeleteEntry}
+          deleting={deletingEntry}
+        />
+      )}
 
       <SettingsPanel open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
