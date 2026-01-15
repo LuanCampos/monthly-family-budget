@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -16,6 +15,7 @@ import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '
 import type { Goal, GoalStatus, Subcategory } from '@/types';
 
 interface GoalFormProps {
+  formId?: string;
   initial?: Partial<Goal>;
   subcategories: Subcategory[];
   onSubmit: (data: { 
@@ -28,14 +28,13 @@ interface GoalFormProps {
     linkedCategoryKey?: string;
     status?: GoalStatus;
   }) => Promise<void> | void;
-  onCancel?: () => void;
   submitting?: boolean;
 }
 
 // ID especial apenas para UI (não é enviado ao backend)
 const LIBERDADE_UI_ID = '__category_liberdade__';
 
-export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submitting }: GoalFormProps) => {
+export const GoalForm = ({ formId, initial, subcategories, onSubmit, submitting }: GoalFormProps) => {
   const { t } = useLanguage();
   const { currencySymbol } = useCurrency();
   const [name, setName] = useState(initial?.name ?? '');
@@ -109,7 +108,7 @@ export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submittin
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form id={formId} className="space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="goalName" className="text-sm font-medium">
           {t('goalName')}
@@ -231,17 +230,6 @@ export const GoalForm = ({ initial, subcategories, onSubmit, onCancel, submittin
           placeholder={t('accountPlaceholder')} 
           className="h-10 bg-secondary/50 border-border"
         />
-      </div>
-
-      <div className="flex justify-end gap-2 pt-2">
-        {onCancel && (
-          <Button variant="outline" type="button" onClick={onCancel} disabled={submitting}>
-            {t('cancel')}
-          </Button>
-        )}
-        <Button type="submit" disabled={submitting}>
-          {t('save')}
-        </Button>
       </div>
     </form>
   );

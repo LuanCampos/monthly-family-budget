@@ -112,8 +112,11 @@ export const GoalCard = ({ goal, entries, onViewHistory, onEdit, onDelete, onFet
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
             <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
               <TrendingUp className="h-5 w-5 text-primary" />
-              {t('goalTimeline') || 'Evolução'} - {goal.name}
+              {t('goalTimeline') || 'Evolução'}
             </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {goal.name}
+            </p>
           </DialogHeader>
 
           <div className="px-6 py-4 overflow-y-auto">

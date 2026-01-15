@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { YearSelector } from '@/components/ui/year-selector';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -10,13 +9,13 @@ import { parseCurrencyInput, sanitizeCurrencyInput } from '@/utils/formatters';
 import { DollarSign, Calendar } from 'lucide-react';
 
 interface EntryFormProps {
+  formId?: string;
   onSubmit: (data: { value: number; description: string; month: number; year: number }) => Promise<void> | void;
-  onCancel?: () => void;
   submitting?: boolean;
   initial?: { value: number; description: string; month: number; year: number } | null;
 }
 
-export const EntryForm = ({ onSubmit, onCancel, submitting, initial }: EntryFormProps) => {
+export const EntryForm = ({ formId, onSubmit, submitting, initial }: EntryFormProps) => {
   const { t } = useLanguage();
   const { currencySymbol } = useCurrency();
   const [defaultMonth] = useState(() => String(new Date().getMonth() + 1));
@@ -73,7 +72,7 @@ export const EntryForm = ({ onSubmit, onCancel, submitting, initial }: EntryForm
   );
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form id={formId} className="space-y-4" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <Label htmlFor="entryValue" className="text-sm font-medium flex items-center gap-1.5">
           <DollarSign className="h-4 w-4" />
@@ -140,17 +139,6 @@ export const EntryForm = ({ onSubmit, onCancel, submitting, initial }: EntryForm
             className="h-10 bg-secondary/50 border-border"
           />
         </div>
-      </div>
-
-      <div className="flex justify-end gap-2 pt-2">
-        {onCancel && (
-          <Button variant="outline" type="button" onClick={onCancel} disabled={submitting}>
-            {t('cancel') || 'Cancelar'}
-          </Button>
-        )}
-        <Button type="submit" disabled={submitting}>
-          {t('save') || 'Salvar'}
-        </Button>
       </div>
     </form>
   );

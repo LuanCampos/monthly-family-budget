@@ -525,32 +525,32 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
             <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
           </DialogTrigger>
         )}
-        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
-          <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
-            <DialogTitle className="flex items-center gap-2 text-base font-semibold">
-              <User className="h-5 w-5" />
+        <DialogContent className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <User className="h-5 w-5 text-primary" />
               {t('editProfile')}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-muted-foreground">
               {t('profileDialogDescription')}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto dashboard-card-content space-y-4">
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">{t('email')}</Label>
-              <Input id="email" type="email" value={user?.email || ''} disabled className="bg-muted" />
+              <Input id="email" type="email" value={user?.email || ''} disabled className="h-10 bg-muted border-border" />
               <p className="text-xs text-muted-foreground">{t('emailCannotBeChanged')}</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="displayName">{t('displayName')}</Label>
-              <Input id="displayName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t('displayNamePlaceholder')} />
+              <Input id="displayName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t('displayNamePlaceholder')} className="h-10 bg-secondary/50 border-border" />
             </div>
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" onClick={() => setActiveSection('main')} className="flex-1">{t('cancel')}</Button>
-              <Button onClick={handleUpdateProfile} disabled={isLoading} className="flex-1">
-                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('saveChanges')}
-              </Button>
-            </div>
+          </div>
+          <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setActiveSection('main')}>{t('cancel')}</Button>
+            <Button onClick={handleUpdateProfile} disabled={isLoading}>
+              {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('saveChanges')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -566,35 +566,35 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
             <TriggerButton user={user} myPendingInvitations={myPendingInvitations} getUserInitials={getUserInitials} getDisplayName={getDisplayName} />
           </DialogTrigger>
         )}
-        <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
-          <DialogHeader className="dashboard-card-header px-6 pt-6 pb-4">
-            <DialogTitle className="flex items-center gap-2 text-base font-semibold">
-              <KeyRound className="h-5 w-5" />
+        <DialogContent className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <KeyRound className="h-5 w-5 text-primary" />
               {t('changePassword')}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-muted-foreground">
               {t('passwordDialogDescription')}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto dashboard-card-content space-y-4">
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="currentPassword">{t('currentPassword')}</Label>
-              <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder={t('currentPasswordPlaceholder')} />
+              <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder={t('currentPasswordPlaceholder')} className="h-10 bg-secondary/50 border-border" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="newPassword">{t('newPassword')}</Label>
-              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('newPasswordPlaceholder')} />
+              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('newPasswordPlaceholder')} className="h-10 bg-secondary/50 border-border" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">{t('confirmNewPassword')}</Label>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t('confirmPasswordPlaceholder')} />
+              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t('confirmPasswordPlaceholder')} className="h-10 bg-secondary/50 border-border" />
             </div>
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" onClick={() => setActiveSection('main')} className="flex-1">{t('cancel')}</Button>
-              <Button onClick={handleUpdatePassword} disabled={isLoading} className="flex-1">
-                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('updatePassword')}
-              </Button>
-            </div>
+          </div>
+          <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setActiveSection('main')}>{t('cancel')}</Button>
+            <Button onClick={handleUpdatePassword} disabled={isLoading}>
+              {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('loading')}</> : t('updatePassword')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

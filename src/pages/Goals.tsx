@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { Goal, GoalEntry, GoalStatus } from '@/types';
 import { SettingsPanel } from '@/components/settings';
 import { FamilySetup } from '@/components/family';
-import { Loader2, Target, Settings as SettingsIcon, Wallet, Plus, History, Import, AlertTriangle, Pencil } from 'lucide-react';
+import { Loader2, Target, Settings as SettingsIcon, Wallet, Plus, List, Import, AlertTriangle, Pencil } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -266,12 +266,20 @@ const GoalsContent = () => {
           </DialogHeader>
           <div className="px-6 py-4 overflow-y-auto">
             <GoalForm 
+              formId="goal-form"
               initial={editingGoal || undefined} 
               subcategories={subcategories}
               onSubmit={handleSaveGoal} 
-              onCancel={() => setOpenGoalDialog(false)} 
               submitting={savingGoal}
             />
+          </div>
+          <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setOpenGoalDialog(false)} disabled={savingGoal}>
+              {t('cancel')}
+            </Button>
+            <Button type="submit" form="goal-form" disabled={savingGoal}>
+              {t('save')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -287,8 +295,8 @@ const GoalsContent = () => {
           <div className="px-6 py-4 overflow-y-auto">
             {entryGoal && (
               <EntryForm
+                formId="entry-form"
                 onSubmit={handleSaveEntry}
-                onCancel={() => { setEntryGoal(null); setEditingEntry(null); }}
                 submitting={savingEntry}
                 initial={editingEntry ? {
                   value: editingEntry.value,
@@ -299,6 +307,14 @@ const GoalsContent = () => {
               />
             )}
           </div>
+          <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => { setEntryGoal(null); setEditingEntry(null); }} disabled={savingEntry}>
+              {t('cancel')}
+            </Button>
+            <Button type="submit" form="entry-form" disabled={savingEntry}>
+              {t('save')}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -306,12 +322,14 @@ const GoalsContent = () => {
         <DialogContent className="bg-card border-border sm:max-w-lg max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
             <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-              <History className="h-5 w-5 text-primary" />
-              {t('entryHistory') || 'Histórico de Lançamentos'}
-              {historyGoal && (
-                <span className="text-muted-foreground font-normal">- {historyGoal.name}</span>
-              )}
+              <List className="h-5 w-5 text-primary" />
+              {t('entries') || 'Lançamentos'}
             </DialogTitle>
+            {historyGoal && (
+              <p className="text-sm text-muted-foreground">
+                {historyGoal.name}
+              </p>
+            )}
           </DialogHeader>
           
           <div className="flex-1 overflow-y-auto px-6 py-4">
