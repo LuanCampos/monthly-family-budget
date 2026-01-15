@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, Trash2, RefreshCw, Pencil, Calendar, Check, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CategoryKey, Subcategory, RecurringExpense, Expense } from '@/types';
 import { getCategoryByKey, DEFAULT_CATEGORY, CATEGORIES } from '@/constants/categories';
 import { RecurringExpenseFormFields } from './RecurringExpenseFormFields';
@@ -284,18 +284,14 @@ export const RecurringExpenses = ({
       >
         <DialogContent className="bg-card border-border sm:max-w-xl max-h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <RefreshCw className="h-5 w-5 text-primary" />
               {view === 'list'
                 ? t('recurringExpenses')
                 : view === 'add'
                 ? t('newRecurringExpense')
                 : t('editRecurringExpense')}
             </DialogTitle>
-            {view === 'list' && (
-              <DialogDescription className="text-sm text-muted-foreground">
-                {t('recurringExpensesDescription')}
-              </DialogDescription>
-            )}
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -408,7 +404,7 @@ export const RecurringExpenses = ({
                             aria-label={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
                             disabled={isInCurrentMonth || applyingId === exp.id}
                             title={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
-                            className={`h-8 w-8 ${
+                            className={`h-9 w-9 ${
                               isInCurrentMonth || applyingId === exp.id
                                 ? 'text-muted-foreground/40 cursor-not-allowed' 
                                 : 'text-muted-foreground hover:text-success hover:bg-success/10'
@@ -421,7 +417,7 @@ export const RecurringExpenses = ({
                             variant="ghost"
                             size="icon"
                             onClick={() => openEdit(exp)}
-                            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                            className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10"
                             aria-label={t('edit')}
                           >
                             <Pencil className="h-4 w-4" />
@@ -431,7 +427,7 @@ export const RecurringExpenses = ({
                             variant="ghost"
                             size="icon"
                             onClick={() => setDeleteId(exp.id)}
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                             aria-label={t('delete')}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -496,8 +492,11 @@ export const RecurringExpenses = ({
       <AlertDialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
         <AlertDialogContent className="bg-card border-border sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('updateRecurringTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-primary" />
+              {t('updateRecurringTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               {t('updateRecurringDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -524,10 +523,13 @@ export const RecurringExpenses = ({
       </AlertDialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="bg-card border-border max-w-md">
+        <AlertDialogContent className="bg-card border-border sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('deleteRecurringExpense')}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              {t('deleteRecurringExpense')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               {t('deleteRecurringExpenseConfirm')}
             </AlertDialogDescription>
           </AlertDialogHeader>

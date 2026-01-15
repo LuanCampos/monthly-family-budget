@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { DialogDescription } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CategoryKey, Subcategory } from '@/types';
 import { DEFAULT_CATEGORY } from '@/constants/categories';
@@ -133,14 +132,12 @@ export const ExpenseForm = ({
         </DialogTrigger>
       )}
 
-      <DialogContent className="bg-card border-border sm:max-w-md flex flex-col gap-0 p-0">
+      <DialogContent className="bg-card border-border sm:max-w-md flex flex-col gap-0 p-0 max-h-[90vh] overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-          <DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+            <Plus className="h-5 w-5 text-primary" />
             {mode === 'create' ? t('newExpense') : t('editExpense')}
           </DialogTitle>
-          <DialogDescription>
-            {t('expenseFormDialogDescription')}
-          </DialogDescription>
         </DialogHeader>
 
         <div className="px-6 py-4">
@@ -174,11 +171,19 @@ export const ExpenseForm = ({
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-border bg-secondary/30">
+        <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
+          <Button
+            variant="outline"
+            onClick={() => {
+              resetForm();
+              if (mode === 'edit') onCancel?.();
+            }}
+          >
+            {t('cancel')}
+          </Button>
           <Button
             onClick={handleSubmit}
             disabled={isSaving}
-            className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {mode === 'create' ? t('add') : t('saveChanges')}
           </Button>

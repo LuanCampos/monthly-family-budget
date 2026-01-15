@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -110,10 +109,10 @@ export const SubcategoryManager = ({
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="bg-card border-border sm:max-w-lg max-h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle>{t('manageSubcategories')}</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              {t('addSubcategory')}
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <Tags className="h-5 w-5 text-primary" />
+              {t('manageSubcategories')}
+            </DialogTitle>
           </DialogHeader>
 
           {/* Add new form */}
@@ -205,7 +204,7 @@ export const SubcategoryManager = ({
                                 size="icon"
                                 onClick={saveEdit}
                                 disabled={isSavingEdit}
-                                className="h-8 w-8 text-primary hover:bg-primary/10"
+                                className="h-9 w-9 text-primary hover:bg-primary/10"
                                 aria-label={t('save')}
                               >
                                 <Check className="h-4 w-4" />
@@ -215,7 +214,7 @@ export const SubcategoryManager = ({
                                 size="icon"
                                 onClick={cancelEdit}
                                 disabled={isSavingEdit}
-                                className="h-8 w-8 text-muted-foreground hover:bg-muted"
+                                className="h-9 w-9 text-muted-foreground hover:bg-muted"
                                 aria-label={t('cancel')}
                               >
                                 <X className="h-4 w-4" />
@@ -231,20 +230,20 @@ export const SubcategoryManager = ({
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => startEdit(sub)}
-                                  className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                  className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10"
                                   aria-label={t('edit')}
                                 >
-                                  <Pencil className="h-3.5 w-3.5" />
+                                  <Pencil className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleRemove(sub.id)}
                                   disabled={deletingId === sub.id}
-                                  className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                   aria-label={t('delete')}
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
                             </>

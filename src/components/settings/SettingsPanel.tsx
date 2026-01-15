@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive, Pencil } from 'lucide-react';
+import { Globe, Palette, Trash2, Coins, User, KeyRound, LogIn, LogOut, Users, UserPlus, Mail, Crown, X, Loader2, WifiOff, ChevronDown, Plus, Check, Cloud, HardDrive, Pencil, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import TriggerButton from '@/components/ui/trigger-button';
 import {
@@ -870,10 +870,13 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
                             <span className="text-sm">{t('delete')} "{currentMonthLabel}"</span>
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="sm:max-w-md dashboard-card">
+                        <AlertDialogContent className="bg-card border-border sm:max-w-md">
                           <AlertDialogHeader>
-                            <AlertDialogTitle>{t('deleteMonth')}</AlertDialogTitle>
-                            <AlertDialogDescription>{t('deleteMonthConfirm')} <strong>{currentMonthLabel}</strong>? {t('deleteMonthWarning')}</AlertDialogDescription>
+                            <AlertDialogTitle className="flex items-center gap-2">
+                              <AlertTriangle className="h-5 w-5 text-destructive" />
+                              {t('deleteMonth')}
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="text-muted-foreground">{t('deleteMonthConfirm')} <strong>{currentMonthLabel}</strong>? {t('deleteMonthWarning')}</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
@@ -898,10 +901,13 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
                           <span className="text-sm">{t('clearOfflineCache')}</span>
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="sm:max-w-md dashboard-card">
+                      <AlertDialogContent className="bg-card border-border sm:max-w-md">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>{t('clearOfflineCache')}</AlertDialogTitle>
-                          <AlertDialogDescription>{t('clearOfflineCacheWarning')}</AlertDialogDescription>
+                          <AlertDialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-destructive" />
+                            {t('clearOfflineCache')}
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="text-muted-foreground">{t('clearOfflineCacheWarning')}</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
@@ -933,10 +939,10 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
                             <p className="text-xs text-muted-foreground">{t('invitedToFamily')}</p>
                           </div>
                           <div className="flex items-center gap-1 ml-2">
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleRejectInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('rejectInvitation')}>
+                            <Button size="sm" variant="ghost" className="h-9 w-9 p-0" onClick={() => handleRejectInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('rejectInvitation')}>
                               <X className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" className="h-7 px-2 text-xs" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('acceptInvitation')}>
+                            <Button size="sm" className="h-9 px-3 text-xs" onClick={() => handleAcceptInvitation(invitation.id)} disabled={processingAction === invitation.id} aria-label={t('acceptInvitation')}>
                               {processingAction === invitation.id ? <Loader2 className="h-3 w-3 animate-spin" /> : t('accept')}
                             </Button>
                           </div>
@@ -1076,8 +1082,8 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
                                       <SelectItem value="member">{t('role_member')}</SelectItem>
                                     </SelectContent>
                                   </Select>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveMember(member.id)} disabled={processingAction === member.id} aria-label={t('removeMember')}>
-                                    {processingAction === member.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveMember(member.id)} disabled={processingAction === member.id} aria-label={t('removeMember')}>
+                                    {processingAction === member.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
                                   </Button>
                                 </div>
                               )}
@@ -1172,9 +1178,12 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
 
       {/* Delete Alert */}
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent className="sm:max-w-md dashboard-card">
+        <AlertDialogContent className="bg-card border-border sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('deleteFamilyConfirm')}</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {t('deleteFamilyConfirm')}
+            </AlertDialogTitle>
             <AlertDialogDescription className={!isCurrentOffline ? "text-destructive font-medium" : ""}>
               {isCurrentOffline ? t('deleteFamilyWarning') : t('deleteFamilyWarningOnline')}
             </AlertDialogDescription>
@@ -1188,9 +1197,12 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
 
       {/* Leave Alert */}
       <AlertDialog open={showLeaveAlert} onOpenChange={setShowLeaveAlert}>
-        <AlertDialogContent className="sm:max-w-md dashboard-card">
+        <AlertDialogContent className="bg-card border-border sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('leaveFamilyConfirm')}</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {t('leaveFamilyConfirm')}
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
               {t('leaveFamilyWarning')}
             </AlertDialogDescription>
@@ -1204,22 +1216,27 @@ export const SettingsPanel = ({ currentMonthLabel, onDeleteMonth, open: controll
 
       {/* Create Family Dialog */}
       <Dialog open={showCreateFamilyDialog} onOpenChange={setShowCreateFamilyDialog}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-base">{t('createFamily')}</DialogTitle>
-            <DialogDescription>
-              {t('createFamilyDialogDescription')}
-            </DialogDescription>
+        <DialogContent className="bg-card border-border sm:max-w-sm max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <Plus className="h-5 w-5 text-primary" />
+              {t('createFamily')}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="px-6 py-4">
             <Input
-              className="h-10"
+              className="h-10 bg-secondary/50 border-border"
               placeholder={t('familyNamePlaceholder')}
               value={createFamilyName}
               onChange={(e) => setCreateFamilyName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreateFamily()}
             />
-            <Button onClick={handleCreateFamily} disabled={isCreatingFamily || !createFamilyName.trim()} className="w-full h-9">
+          </div>
+          <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setShowCreateFamilyDialog(false)}>
+              {t('cancel')}
+            </Button>
+            <Button onClick={handleCreateFamily} disabled={isCreatingFamily || !createFamilyName.trim()}>
               {isCreatingFamily ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
               {t('createFamily')}
             </Button>

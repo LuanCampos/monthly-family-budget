@@ -108,21 +108,23 @@ export const GoalCard = ({ goal, entries, onViewHistory, onEdit, onDelete, onFet
       </CardContent>
 
       <Dialog open={evolutionOpen} onOpenChange={setEvolutionOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="bg-card border-border sm:max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
               <TrendingUp className="h-5 w-5 text-primary" />
               {t('goalTimeline') || 'Evolução'} - {goal.name}
             </DialogTitle>
           </DialogHeader>
 
-          {loadingEntries ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : (
-            <GoalTimelineChart entries={currentEntries} targetValue={goal.targetValue} />
-          )}
+          <div className="px-6 py-4 overflow-y-auto">
+            {loadingEntries ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <GoalTimelineChart entries={currentEntries} targetValue={goal.targetValue} />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </Card>

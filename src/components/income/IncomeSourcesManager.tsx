@@ -1,6 +1,6 @@
 import { useState, useEffect, KeyboardEvent } from 'react';
 import { IncomeSource } from '@/types/budget';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -210,12 +210,10 @@ export const IncomeSourcesManager = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border w-[95vw] max-w-[480px] sm:max-w-2xl max-h-[85vh] sm:max-h-[80vh] overflow-hidden flex flex-col gap-0 p-0">
           <DialogHeader className="px-5 sm:px-6 pt-5 pb-3 border-b border-border">
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <Plus className="h-5 w-5 text-primary" />
               {t('manageIncomeSources') || 'Fontes de Renda'}
             </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              {t('incomeSourcesDescription') || 'Atualize os valores para manter o planejamento familiar preciso.'}
-            </DialogDescription>
           </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-5 sm:px-6 py-3 flex flex-col gap-4">
@@ -280,18 +278,18 @@ export const IncomeSourcesManager = ({
                                 size="icon"
                                 onClick={() => saveSource(index)}
                                 disabled={loading}
-                                className="h-8 w-8"
+                                className="h-9 w-9"
                               >
-                                <Check className="h-3.5 w-3.5" />
+                                <Check className="h-4 w-4" />
                               </Button>
                               <Button
                                 size="icon"
                                 variant="ghost"
                                 onClick={() => cancelEdit(index)}
                                 disabled={loading}
-                                className="h-8 w-8"
+                                className="h-9 w-9"
                               >
-                                <X className="h-3.5 w-3.5" />
+                                <X className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
@@ -321,20 +319,20 @@ export const IncomeSourcesManager = ({
                                   size="icon"
                                   onClick={() => setActiveRowId(source.id)}
                                   disabled={loading}
-                                  className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                  className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10"
                                   title={t('edit') || 'Editar'}
                                 >
-                                  <Edit2 className="h-3.5 w-3.5" />
+                                  <Edit2 className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => deleteLine(index, source.id, source.isNew)}
                                   disabled={loading}
-                                  className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                   title={t('delete') || 'Excluir'}
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
                             </div>
@@ -364,10 +362,13 @@ export const IncomeSourcesManager = ({
       </DialogContent>
 
       <AlertDialog open={!!deleteSourceId} onOpenChange={(open) => !open && setDeleteSourceId(null)}>
-        <AlertDialogContent className="bg-card border-border max-w-md">
+        <AlertDialogContent className="bg-card border-border sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('deleteIncomeSource')}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              {t('deleteIncomeSource')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               {t('deleteIncomeSourceMessage')}
             </AlertDialogDescription>
           </AlertDialogHeader>

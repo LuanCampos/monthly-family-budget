@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { GoalTimelineChart } from './GoalTimelineChart';
 import { BarChart3, TrendingUp, Loader2, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -57,47 +57,46 @@ export const GoalDetailsDialog = ({ goal, entries, onFetchEntries }: GoalDetails
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto px-4 py-4 sm:px-5 sm:py-4">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="bg-card border-border sm:max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
               <BarChart3 className="h-5 w-5 text-primary" />
               {goal.name}
             </DialogTitle>
-            <DialogDescription>
-              {t('goalDetailsDescription') || 'Acompanhe a evolução da sua meta'}
-            </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-2 sm:grid-cols-3 mb-2.5">
-            <div className="rounded-lg border bg-card p-3 sm:p-3.5 space-y-1">
-              <p className="text-xs text-muted-foreground">{t('currentValue') || 'Valor Atual'}</p>
-              <p className="text-lg font-semibold leading-tight">{formatCurrency(goal.currentValue)}</p>
-            </div>
-            <div className="rounded-lg border bg-card p-3 sm:p-3.5 space-y-1">
-              <p className="text-xs text-muted-foreground">{t('targetValue') || 'Objetivo'}</p>
-              <p className="text-lg font-semibold leading-tight">{formatCurrency(goal.targetValue)}</p>
-            </div>
-            <div className="rounded-lg border bg-card p-3 sm:p-3.5 space-y-1">
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <Wallet className="h-3.5 w-3.5" />
-                {t('goalRemaining') || 'Faltam'}
-              </p>
-              <p className="text-lg font-semibold leading-tight">{formatCurrency(remaining)}</p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              {t('goalTimeline') || 'Evolução Temporal'}
-            </h3>
-            {loadingEntries ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <div className="px-6 py-4 overflow-y-auto space-y-4">
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className="rounded-lg border bg-secondary/30 p-3 sm:p-3.5 space-y-1">
+                <p className="text-xs text-muted-foreground">{t('currentValue') || 'Valor Atual'}</p>
+                <p className="text-lg font-semibold leading-tight">{formatCurrency(goal.currentValue)}</p>
               </div>
-            ) : (
-              <GoalTimelineChart entries={currentEntries} targetValue={goal.targetValue} />
-            )}
+              <div className="rounded-lg border bg-secondary/30 p-3 sm:p-3.5 space-y-1">
+                <p className="text-xs text-muted-foreground">{t('targetValue') || 'Objetivo'}</p>
+                <p className="text-lg font-semibold leading-tight">{formatCurrency(goal.targetValue)}</p>
+              </div>
+              <div className="rounded-lg border bg-secondary/30 p-3 sm:p-3.5 space-y-1">
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Wallet className="h-3.5 w-3.5" />
+                  {t('goalRemaining') || 'Faltam'}
+                </p>
+                <p className="text-lg font-semibold leading-tight">{formatCurrency(remaining)}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                {t('goalTimeline') || 'Evolução Temporal'}
+              </h3>
+              {loadingEntries ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : (
+                <GoalTimelineChart entries={currentEntries} targetValue={goal.targetValue} />
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

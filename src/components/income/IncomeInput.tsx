@@ -34,10 +34,10 @@ export const IncomeInput = ({ value, onEditClick, disabled }: IncomeInputProps) 
           size="icon"
           onClick={onEditClick}
           disabled={disabled}
-          className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+          className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
           title="Editar fontes de renda"
         >
-          <Edit2 className="h-3.5 w-3.5" />
+          <Edit2 className="h-4 w-4" />
         </Button>
       )}
     </div>

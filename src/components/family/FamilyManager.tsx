@@ -285,17 +285,15 @@ export const FamilyManager = () => {
             )}
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
+        <DialogContent className="bg-card border-border sm:max-w-lg max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <Users className="h-5 w-5 text-primary" />
               {t('familySettings')}
             </DialogTitle>
-            <DialogDescription>
-              {currentFamily.name}
-            </DialogDescription>
           </DialogHeader>
 
+          <div className="px-6 py-4 overflow-y-auto flex-1">
             <Tabs defaultValue={myPendingInvitations.length > 0 ? 'invitations' : 'members'}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="members">{t('members')}</TabsTrigger>
@@ -370,7 +368,7 @@ export const FamilyManager = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            className="h-9 w-9 text-destructive hover:bg-destructive/10"
                             onClick={() => handleRemoveMember(member.id)}
                             disabled={processingAction === member.id}
                             aria-label={t('removeMember')}
@@ -404,7 +402,7 @@ export const FamilyManager = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-9 w-9"
                         onClick={() => handleCancelInvitation(invitation.id)}
                         disabled={processingAction === invitation.id}
                         aria-label={t('cancelInvitation')}
@@ -540,15 +538,19 @@ export const FamilyManager = () => {
               </section>
             </TabsContent>
           </Tabs>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Delete Alert */}
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-card border-border sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('deleteFamilyConfirm')}</AlertDialogTitle>
-            <AlertDialogDescription className={!currentFamily?.isOffline ? "text-destructive font-medium" : ""}>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              {t('deleteFamilyConfirm')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className={!currentFamily?.isOffline ? "text-destructive font-medium" : "text-muted-foreground"}>
               {currentFamily?.isOffline ? t('deleteFamilyWarning') : t('deleteFamilyWarningOnline')}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -563,9 +565,12 @@ export const FamilyManager = () => {
 
       {/* Leave Alert */}
       <AlertDialog open={showLeaveAlert} onOpenChange={setShowLeaveAlert}>
-        <AlertDialogContent className="sm:max-w-md">
+        <AlertDialogContent className="bg-card border-border sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('leaveFamilyConfirm')}</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <LogOut className="h-5 w-5 text-destructive" />
+              {t('leaveFamilyConfirm')}
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
               {t('leaveFamilyWarning')}
             </AlertDialogDescription>

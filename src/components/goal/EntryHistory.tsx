@@ -24,14 +24,15 @@ export const EntryHistory = ({ entries, onEdit, onDelete }: EntryHistoryProps) =
   }
 
   return (
-    <div className="space-y-3 pr-2">
+    <div className="space-y-1.5">
         {entries.map((entry) => {
           const isAutomatic = Boolean(entry.expenseId);
           return (
-            <div key={entry.id} className="border rounded-lg p-2.5 sm:p-3 bg-card hover:bg-accent/50 transition-colors">
-              <div className="space-y-1">
+            <div key={entry.id} className="flex items-center justify-between p-3 bg-secondary/30 hover:bg-secondary/50 rounded-lg group transition-colors">
+              {/* Lado esquerdo */}
+              <div className="flex flex-col gap-1 min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold text-base flex items-center gap-1.5">
+                  <span className="text-sm text-foreground font-semibold tabular-nums flex items-center gap-1.5">
                     <DollarSign className="h-4 w-4 text-primary" />
                     {formatCurrency(entry.value)}
                   </span>
@@ -42,40 +43,39 @@ export const EntryHistory = ({ entries, onEdit, onDelete }: EntryHistoryProps) =
                 <p className="text-sm text-muted-foreground break-words">
                   {entry.description || (t('noDescription') || 'Sem descrição')}
                 </p>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>{String(entry.month).padStart(2, '0')}/{entry.year}</span>
-                  </div>
-                  
-                  {(onEdit || onDelete) && (
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {!isAutomatic && onEdit && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => onEdit(entry)}
-                          aria-label={t('edit') || 'Editar'}
-                          className="h-8 w-8 hover:text-primary hover:bg-primary/10"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      {onDelete && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => onDelete(entry)}
-                          aria-label={t('delete') || 'Excluir'}
-                          className="h-8 w-8 hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>{String(entry.month).padStart(2, '0')}/{entry.year}</span>
                 </div>
               </div>
+              
+              {/* Lado direito - Ações */}
+              {(onEdit || onDelete) && (
+                <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                  {!isAutomatic && onEdit && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => onEdit(entry)}
+                      aria-label={t('edit') || 'Editar'}
+                      className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => onDelete(entry)}
+                      aria-label={t('delete') || 'Excluir'}
+                      className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

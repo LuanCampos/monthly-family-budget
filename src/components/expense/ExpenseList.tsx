@@ -301,9 +301,9 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
                       size="icon"
                       onClick={() => onEdit(expense)}
                       aria-label={t('edit')}
-                      className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                      className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-4 w-4" />
                     </Button>
 
                     <Button
@@ -311,9 +311,9 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
                       size="icon"
                       onClick={() => setDeleteExpenseId(expense.id)}
                       aria-label={t('delete')}
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -324,10 +324,13 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
       )}
 
       <AlertDialog open={!!confirmPaymentId} onOpenChange={(open) => !open && setConfirmPaymentId(null)}>
-        <AlertDialogContent className="bg-card border-border max-w-md">
+        <AlertDialogContent className="bg-card border-border sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('confirmPayment')}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-primary" />
+              {t('confirmPayment')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               {t('confirmPaymentMessage')}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -336,7 +339,6 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
             <AlertDialogAction
               onClick={handleConfirmPayment}
               disabled={isConfirming}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {t('confirm')}
             </AlertDialogAction>
@@ -345,10 +347,13 @@ export const ExpenseList = ({ expenses, subcategories, recurringExpenses, onRemo
       </AlertDialog>
 
       <AlertDialog open={!!deleteExpenseId} onOpenChange={(open) => !open && setDeleteExpenseId(null)}>
-        <AlertDialogContent className="bg-card border-border max-w-md">
+        <AlertDialogContent className="bg-card border-border sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('deleteExpense')}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              {t('deleteExpense')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               {t('deleteExpenseMessage')}
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -463,31 +463,35 @@ const BudgetContent = () => {
           if (!open) setActiveCategory(null);
         }}
       >
-        <DialogContent className="w-full max-w-md p-4 md:p-6 overflow-y-auto max-h-[90vh]">
-          {activeCategory && currentMonth && (
-            <SubcategoryChart
-              categoryKey={activeCategory}
-              expenses={currentMonth.expenses}
-              subcategories={subcategories}
-              onBack={() => setActiveCategory(null)}
-            />
-          )}
+        <DialogContent className="bg-card border-border sm:max-w-md max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <div className="px-6 py-4 overflow-y-auto">
+            {activeCategory && currentMonth && (
+              <SubcategoryChart
+                categoryKey={activeCategory}
+                expenses={currentMonth.expenses}
+                subcategories={subcategories}
+                onBack={() => setActiveCategory(null)}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Annual View Modal */}
       <Dialog open={showAnnualView} onOpenChange={setShowAnnualView}>
-        <DialogContent className="w-full max-w-3xl p-4 md:p-6 overflow-y-auto max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="bg-card border-border sm:max-w-3xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
               <Calendar className="h-5 w-5 text-primary" />
               {t('annualViewTitle')} - {currentMonth?.year || new Date().getFullYear()}
             </DialogTitle>
           </DialogHeader>
-          <AnnualViewChart
-            months={months}
-            currentYear={currentMonth?.year || new Date().getFullYear()}
-          />
+          <div className="px-6 py-4 overflow-y-auto">
+            <AnnualViewChart
+              months={months}
+              currentYear={currentMonth?.year || new Date().getFullYear()}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 

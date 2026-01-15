@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Expense } from '@/types';
@@ -36,17 +36,15 @@ export const ImportExpenseDialog = ({ trigger, subcategoryId, fetchExpenses, onI
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[85vh] sm:max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="bg-card border-border sm:max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
             <Import className="h-5 w-5 text-primary" />
             {t('historicalExpenses') || 'Gastos Anteriores'}
           </DialogTitle>
-          <DialogDescription>
-            {t('importExpensesDescription') || 'Importe despesas anteriores para vincular à meta'}
-          </DialogDescription>
         </DialogHeader>
         
+        <div className="px-6 py-4 overflow-y-auto flex-1">
         {loading && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -72,7 +70,7 @@ export const ImportExpenseDialog = ({ trigger, subcategoryId, fetchExpenses, onI
               {expenses.map((expense) => (
                 <div 
                   key={expense.id} 
-                  className="border rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card hover:bg-accent/50 transition-colors"
+                  className="border rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-secondary/30 hover:bg-secondary/50 transition-colors"
                 >
                   <div className="space-y-1.5 min-w-0 flex-1">
                     <p className="font-medium leading-tight break-words">{expense.title}</p>
@@ -126,6 +124,7 @@ export const ImportExpenseDialog = ({ trigger, subcategoryId, fetchExpenses, onI
             </div>
           </ScrollArea>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );

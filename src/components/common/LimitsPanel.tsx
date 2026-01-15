@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { DialogDescription } from '@/components/ui/dialog';
 
 interface LimitsPanelProps {
   percentages: Record<CategoryKey, number>;
@@ -87,12 +86,10 @@ export const LimitsPanel = ({ percentages, onEdit }: LimitsPanelProps) => {
 
         <DialogContent className="bg-card border-border sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-            <DialogTitle className="text-foreground">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <Edit2 className="h-5 w-5 text-primary" />
               {t('editLimits')}
             </DialogTitle>
-            <DialogDescription>
-              {t('limitsDialogDescription')}
-            </DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">

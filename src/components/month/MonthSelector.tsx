@@ -13,7 +13,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -95,17 +94,16 @@ export const MonthSelector = ({
         </Button>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="bg-card border-border max-w-sm">
-            <DialogHeader>
-              <DialogTitle className="text-foreground">
+          <DialogContent className="bg-card border-border sm:max-w-sm flex flex-col gap-0 p-0 max-h-[90vh] overflow-hidden">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+              <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+                <Calendar className="h-5 w-5 text-primary" />
                 {t('addMonth')}
               </DialogTitle>
-              <DialogDescription className="sr-only">
-                {t('selectMonthAndYear' as any)}
-              </DialogDescription>
             </DialogHeader>
 
-            <div className="flex gap-3 mt-4">
+            <div className="px-6 py-4">
+              <div className="flex gap-3">
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                 <SelectTrigger className="flex-1 bg-secondary border-border">
                   <SelectValue />
@@ -123,15 +121,23 @@ export const MonthSelector = ({
               </Select>
 
               <YearSelector value={selectedYear} onValueChange={setSelectedYear} />
+              </div>
             </div>
 
-            <Button
-              onClick={handleAddMonth}
-              disabled={isAdding}
-              className="mt-4 w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {t('add')}
-            </Button>
+            <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+              >
+                {t('cancel')}
+              </Button>
+              <Button
+                onClick={handleAddMonth}
+                disabled={isAdding}
+              >
+                {t('add')}
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </>
@@ -184,17 +190,16 @@ export const MonthSelector = ({
       </DropdownMenu>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-card border-border max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">
+        <DialogContent className="bg-card border-border sm:max-w-sm flex flex-col gap-0 p-0 max-h-[90vh] overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <Calendar className="h-5 w-5 text-primary" />
               {t('addMonth')}
             </DialogTitle>
-            <DialogDescription className="sr-only">
-              {t('selectMonthAndYear' as any)}
-            </DialogDescription>
           </DialogHeader>
 
-          <div className="flex gap-3 mt-4">
+          <div className="px-6 py-4">
+            <div className="flex gap-3">
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="flex-1 bg-secondary border-border">
                 <SelectValue />
@@ -212,14 +217,23 @@ export const MonthSelector = ({
             </Select>
 
             <YearSelector value={selectedYear} onValueChange={setSelectedYear} />
+            </div>
           </div>
 
-          <Button
-            onClick={handleAddMonth}
-            className="mt-4 w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            {t('add')}
-          </Button>
+          <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+            >
+              {t('cancel')}
+            </Button>
+            <Button
+              onClick={handleAddMonth}
+              disabled={isAdding}
+            >
+              {t('add')}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>
