@@ -31,6 +31,8 @@ export const en: Record<TranslationKey, string> = {
   delete: 'Delete',
   details: 'Details',
   history: 'History',
+  evolution: 'Evolution',
+  thisMonth: 'This month',
   
   // Month Selector
   selectMonth: 'Select a month',

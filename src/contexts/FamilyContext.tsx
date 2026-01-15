@@ -123,9 +123,15 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const { data, error } = await familyService.getFamiliesByUser(user.id);
 
       if (!error && data) {
-        const cloudFamilies = data
-          .map((d) => ({ ...d.family, isOffline: false }))
-          .filter(Boolean) as Family[];
+        const cloudFamilies: Family[] = [];
+        for (const d of data) {
+          // The 'family' relation can be an object or array depending on Supabase types
+          const fam = d.family as unknown;
+          if (fam && typeof fam === 'object' && !Array.isArray(fam) && 'id' in fam) {
+            const famObj = fam as { id: string; name: string; created_by: string; created_at: string };
+            cloudFamilies.push({ ...famObj, isOffline: false });
+          }
+        }
         
         // Merge cloud and offline families
         setFamilies([...cloudFamilies, ...offlineFamilies]);
@@ -334,9 +340,14 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           const { data, error } = await familyService.getFamiliesByUser(user.id);
 
           if (!error && data) {
-            const cloudFamilies = data
-              .map((d) => ({ ...d.family, isOffline: false }))
-              .filter(Boolean) as Family[];
+            const cloudFamilies: Family[] = [];
+            for (const d of data) {
+              const fam = d.family as unknown;
+              if (fam && typeof fam === 'object' && !Array.isArray(fam) && 'id' in fam) {
+                const famObj = fam as { id: string; name: string; created_by: string; created_at: string };
+                cloudFamilies.push({ ...famObj, isOffline: false });
+              }
+            }
             
             allFamilies = [...cloudFamilies, ...offlineFamilies];
           }

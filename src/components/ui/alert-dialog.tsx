@@ -36,7 +36,8 @@ const AlertDialogContent = React.forwardRef<
       onOpenAutoFocus={(e) => {
         e.preventDefault();
         // Foca no botão Cancel para evitar teclado mobile mas satisfazer a11y
-        const cancelButton = e.currentTarget.querySelector('[data-alert-dialog-cancel]') as HTMLButtonElement | null;
+        const target = e.currentTarget as HTMLElement;
+        const cancelButton = target.querySelector('[data-alert-dialog-cancel]') as HTMLButtonElement | null;
         cancelButton?.focus();
         onOpenAutoFocus?.(e);
       }}

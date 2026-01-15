@@ -46,7 +46,7 @@ interface SyncProgress {
   step: string;
   current: number;
   total: number;
-  details: string;
+  details?: string;
 }
 
 interface FamilySectionProps {

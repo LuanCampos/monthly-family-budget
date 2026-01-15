@@ -158,17 +158,11 @@ export const SettingsDialog = ({
         throw res.error;
       }
     } catch (_err) {
-      // Fallback: save to offline store and enqueue sync
+      // Fallback: save to offline store - skip sync queue since user_preference is not a synced type
       try {
         await offlineAdapter.put('user_preferences', {
           ...payload,
           updated_at: new Date().toISOString(),
-        });
-        await offlineAdapter.sync.add({
-          type: 'user_preference',
-          action: 'upsert',
-          data: payload,
-          familyId: '',
         });
       } catch (offlineErr) {
         logger.error('settings.persistPreference.offlineFailed', { error: offlineErr });
