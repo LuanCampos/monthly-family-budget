@@ -31,7 +31,8 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, onOpenAutoFocus, ...props }, ref) => {
-  const ariaDescribedBy = (props as any)['aria-describedby'];
+  const closeButtonRef = React.useRef<HTMLButtonElement>(null);
+  const ariaDescribedBy = (props as React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>)['aria-describedby'];
   return (
   <DialogPortal>
     <DialogOverlay />
@@ -39,6 +40,8 @@ const DialogContent = React.forwardRef<
       ref={ref}
       onOpenAutoFocus={(e) => {
         e.preventDefault();
+        // Foca no botão de fechar para evitar teclado mobile mas satisfazer a11y
+        closeButtonRef.current?.focus();
         onOpenAutoFocus?.(e);
       }}
       className={cn(
@@ -49,7 +52,10 @@ const DialogContent = React.forwardRef<
       aria-describedby={ariaDescribedBy}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+      <DialogPrimitive.Close
+        ref={closeButtonRef}
+        className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+      >
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>

@@ -15,6 +15,7 @@ import { FamilySetup } from '@/components/family';
 import { getSecureStorageItem, setSecureStorageItem } from '@/lib/storage/secureStorage';
 import type { SortType, SortDirection } from '@/components/expense';
 import type { Expense, CategoryKey } from '@/types/budget';
+import type { TranslationKey } from '@/i18n/translations/pt';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, Loader2, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -527,7 +528,7 @@ const BudgetContent = () => {
       <SettingsDialog
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
-        currentMonthLabel={currentMonth ? `${t(`month-${currentMonth.month - 1}` as any)} ${currentMonth.year}` : undefined}
+        currentMonthLabel={currentMonth ? `${t(`month-${currentMonth.month - 1}` as TranslationKey)} ${currentMonth.year}` : undefined}
         onDeleteMonth={currentMonth ? () => removeMonth(currentMonth.id) : undefined}
       />
     </div>

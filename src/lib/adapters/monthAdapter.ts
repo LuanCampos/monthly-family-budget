@@ -16,6 +16,7 @@ import { offlineAdapter } from './offlineAdapter';
 import * as expenseAdapter from './expenseAdapter';
 import { logger } from '../logger';
 import type { Month, CategoryKey, RecurringExpense } from '@/types';
+import type { MonthRow, ExpenseRow, CategoryLimitRow, IncomeSourceRow, RecurringExpenseRow } from '@/types/database';
 import { CATEGORIES } from '@/constants/categories';
 import { getMonthLabel as _getMonthLabel, shouldIncludeRecurringInMonth } from '../utils/monthUtils';
 import { mapIncomeSources, mapRecurringExpense } from '../mappers';
@@ -67,31 +68,31 @@ export const insertMonth = async (
   if (!familyId) return null;
   
   const offlineMonthId = `${familyId}-${year.toString().padStart(2, '0')}-${month.toString().padStart(2, '0')}`;
-  const offlineMonthData = { id: offlineMonthId, family_id: familyId, year, month, income: 0 };
+  const offlineMonthData: Partial<MonthRow> = { id: offlineMonthId, family_id: familyId, year, month, income: 0 };
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     // Find limits BEFORE saving the new month (to avoid it being the "previous" month)
     const limitsToUse = await findPreviousMonthLimits(familyId, getMonthsWithExpenses);
     
     // Now save the month
-    await offlineAdapter.put('months', offlineMonthData as any);
+    await offlineAdapter.put('months', offlineMonthData);
     
     for (const [categoryKey, percentage] of Object.entries(limitsToUse)) {
-      const limitData = {
+      const limitData: Partial<CategoryLimitRow> = {
         id: `${offlineMonthId}-${categoryKey}`,
         month_id: offlineMonthId,
         category_key: categoryKey,
         percentage
       };
-      await offlineAdapter.put('category_limits', limitData as any);
+      await offlineAdapter.put('category_limits', limitData);
     }
     
-    for (const recurring of (await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId)) || []) {
+    for (const recurring of (await offlineAdapter.getAllByIndex<RecurringExpenseRow>('recurring_expenses', 'family_id', familyId)) || []) {
       const mappedRecurring = mapRecurringExpense(recurring);
       const result = shouldIncludeRecurringInMonth(mappedRecurring, year, month);
       if (result.include) {
         const now = new Date().toISOString();
-        const expenseData = {
+        const expenseData: Partial<ExpenseRow> = {
           id: offlineAdapter.generateOfflineId('exp'),
           family_id: familyId,
           month_id: offlineMonthId,
@@ -104,11 +105,11 @@ export const insertMonth = async (
           due_day: recurring.due_day,
           recurring_expense_id: recurring.id,
           installment_current: mappedRecurring.hasInstallments ? result.installmentNumber : null,
-          installment_total: mappedRecurring.hasInstallments ? mappedRecurring.totalInstallments : null,
+          installment_total: mappedRecurring.hasInstallments ? (mappedRecurring.totalInstallments ?? null) : null,
           created_at: now,
           updated_at: now,
         };
-        await offlineAdapter.put('expenses', expenseData as any);
+        await offlineAdapter.put('expenses', expenseData);
       }
     }
     return offlineMonthData;
@@ -120,21 +121,21 @@ export const insertMonth = async (
     // Find limits BEFORE saving the month (to avoid it being the "previous" month)
     const limitsToUse = await findPreviousMonthLimits(familyId, getMonthsWithExpenses);
     
-    await offlineAdapter.put('months', offlineMonthData as any);
+    await offlineAdapter.put('months', offlineMonthData);
     
     for (const [categoryKey, percentage] of Object.entries(limitsToUse)) {
-      const limitData = {
+      const limitData: Partial<CategoryLimitRow> = {
         id: `${offlineMonthId}-${categoryKey}`,
         month_id: offlineMonthId,
         category_key: categoryKey,
         percentage
       };
-      await offlineAdapter.put('category_limits', limitData as any);
+      await offlineAdapter.put('category_limits', limitData);
     }
     
     // Only queue sync if it's an online family (not an offline family)
     if (!offlineAdapter.isOfflineId(familyId)) {
-      await offlineAdapter.sync.add({ type: 'month', action: 'insert', data: offlineMonthData, familyId });
+      await offlineAdapter.sync.add({ type: 'month', action: 'insert', data: offlineMonthData as Record<string, unknown>, familyId });
     }
     return offlineMonthData;
   }
@@ -161,20 +162,20 @@ export const insertMonth = async (
   }
 
   for (const recurring of (await getRecurringExpenses(familyId)) || []) {
-    const result = shouldIncludeRecurringInMonth(recurring as any, year, month);
+    const result = shouldIncludeRecurringInMonth(recurring, year, month);
     if (result.include) {
       await expenseAdapter.insertExpense(familyId, {
         month_id: data.id,
         title: recurring.title,
         category_key: recurring.category,
-        subcategory_id: recurring.subcategoryId,
+        subcategory_id: recurring.subcategoryId ?? null,
         value: recurring.value,
         is_recurring: true,
         is_pending: true,
-        due_day: recurring.dueDay,
+        due_day: recurring.dueDay ?? null,
         recurring_expense_id: recurring.id,
         installment_current: recurring.hasInstallments ? result.installmentNumber : null,
-        installment_total: recurring.hasInstallments ? recurring.totalInstallments : null,
+        installment_total: recurring.hasInstallments ? (recurring.totalInstallments ?? null) : null,
       });
     }
   }
@@ -188,8 +189,8 @@ export const insertMonth = async (
 export const updateMonthIncome = async (familyId: string | null, monthId: string, income: number) => {
   if (!familyId) return;
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const month = await offlineAdapter.get<any>('months', monthId);
-    if (month) await offlineAdapter.put('months', { ...month, income } as any);
+    const month = await offlineAdapter.get<MonthRow>('months', monthId);
+    if (month) await offlineAdapter.put('months', { ...month, income });
     return;
   }
   const { error } = await budgetService.updateMonthIncome(monthId, income);
@@ -204,15 +205,15 @@ export const deleteMonth = async (familyId: string | null, monthId: string) => {
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     await offlineAdapter.delete('months', monthId);
-    const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', monthId);
+    const expenses = await offlineAdapter.getAllByIndex<ExpenseRow>('expenses', 'month_id', monthId);
     for (const expense of expenses || []) {
       await offlineAdapter.delete('expenses', expense.id);
     }
-    const limits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', monthId);
+    const limits = await offlineAdapter.getAllByIndex<CategoryLimitRow>('category_limits', 'month_id', monthId);
     for (const limit of limits || []) {
       await offlineAdapter.delete('category_limits', limit.id);
     }
-    const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', monthId);
+    const incomeSources = await offlineAdapter.getAllByIndex<IncomeSourceRow>('income_sources', 'month_id', monthId);
     for (const source of incomeSources || []) {
       await offlineAdapter.delete('income_sources', source.id);
     }
@@ -242,16 +243,17 @@ export const updateMonthLimits = async (familyId: string | null, monthId: string
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     for (const [categoryKey, percentage] of Object.entries(newLimits)) {
       const limitId = `${monthId}-${categoryKey}`;
-      const existing = await offlineAdapter.get<any>('category_limits', limitId);
+      const existing = await offlineAdapter.get<CategoryLimitRow>('category_limits', limitId);
       if (existing) {
-        await offlineAdapter.put('category_limits', { ...existing, percentage } as any);
+        await offlineAdapter.put('category_limits', { ...existing, percentage });
       } else {
-        await offlineAdapter.put('category_limits', {
+        const newLimit: Partial<CategoryLimitRow> = {
           id: limitId,
           month_id: monthId,
           category_key: categoryKey,
           percentage
-        } as any);
+        };
+        await offlineAdapter.put('category_limits', newLimit);
       }
     }
     return;
@@ -281,19 +283,19 @@ export const insertIncomeSource = async (familyId: string | null, monthId: strin
   if (!familyId) return null;
   
   const offlineId = offlineAdapter.generateOfflineId('inc');
-  const offlineData = { id: offlineId, month_id: monthId, name, value };
+  const offlineData: Partial<IncomeSourceRow> = { id: offlineId, month_id: monthId, name, value };
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    await offlineAdapter.put('income_sources', offlineData as any);
+    await offlineAdapter.put('income_sources', offlineData);
     return offlineData;
   }
 
   const { data, error } = await budgetService.insertIncomeSource(monthId, name, value);
   if (error || !data) {
-    await offlineAdapter.put('income_sources', offlineData as any);
+    await offlineAdapter.put('income_sources', offlineData);
     // Only queue sync if it's an online family (not an offline family)
     if (!offlineAdapter.isOfflineId(familyId)) {
-      await offlineAdapter.sync.add({ type: 'income_source', action: 'insert', data: offlineData, familyId });
+      await offlineAdapter.sync.add({ type: 'income_source', action: 'insert', data: offlineData as Record<string, unknown>, familyId });
     }
     return offlineData;
   }
@@ -307,16 +309,16 @@ export const updateIncomeSource = async (familyId: string | null, id: string, na
   if (!familyId) return;
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const source = await offlineAdapter.get<any>('income_sources', id);
-    if (source) await offlineAdapter.put('income_sources', { ...source, name, value } as any);
+    const source = await offlineAdapter.get<IncomeSourceRow>('income_sources', id);
+    if (source) await offlineAdapter.put('income_sources', { ...source, name, value });
     return;
   }
 
   const { data, error } = await budgetService.updateIncomeSourceById(id, name, value);
   if (error) {
     // Fallback to offline and queue sync if it's an online family
-    const source = await offlineAdapter.get<any>('income_sources', id);
-    if (source) await offlineAdapter.put('income_sources', { ...source, name, value } as any);
+    const source = await offlineAdapter.get<IncomeSourceRow>('income_sources', id);
+    if (source) await offlineAdapter.put('income_sources', { ...source, name, value });
     // Only queue if it's an online family (created with UUID from Supabase)
     if (!offlineAdapter.isOfflineId(familyId)) {
       await offlineAdapter.sync.add({ type: 'income_source', action: 'update', data: { id, name, value }, familyId });

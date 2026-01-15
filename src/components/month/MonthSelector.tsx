@@ -90,7 +90,7 @@ export const MonthSelector = ({
           className="h-10 px-4 bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Plus className="h-4 w-4 mr-2" />
-          {t('createFirstMonth' as any)}
+          {t('createFirstMonth' as TranslationKey)}
         </Button>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

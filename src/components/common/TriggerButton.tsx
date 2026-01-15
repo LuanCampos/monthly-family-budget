@@ -3,10 +3,12 @@ import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import type { User } from '@supabase/supabase-js';
+import type { FamilyInvitation } from '@/contexts/FamilyContext';
 
 interface TriggerButtonProps extends React.ComponentPropsWithoutRef<typeof Button> {
-  user?: any;
-  myPendingInvitations?: Array<any>;
+  user?: User | null;
+  myPendingInvitations?: FamilyInvitation[];
   getUserInitials?: () => string;
   getDisplayName?: () => string;
 }

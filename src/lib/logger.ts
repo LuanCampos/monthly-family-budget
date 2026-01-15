@@ -16,7 +16,7 @@ export interface LogEntry {
   timestamp: string;
   level: LogLevel;
   event: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   error?: Error | string;
 }
 
@@ -28,7 +28,7 @@ class Logger {
   /**
    * Log at debug level (development only)
    */
-  debug(event: string, context?: Record<string, any>) {
+  debug(event: string, context?: Record<string, unknown>) {
     if (!this.isDev) return;
     this.log('debug', event, context);
   }
@@ -36,21 +36,21 @@ class Logger {
   /**
    * Log at info level
    */
-  info(event: string, context?: Record<string, any>) {
+  info(event: string, context?: Record<string, unknown>) {
     this.log('info', event, context);
   }
 
   /**
    * Log at warn level
    */
-  warn(event: string, context?: Record<string, any>) {
+  warn(event: string, context?: Record<string, unknown>) {
     this.log('warn', event, context);
   }
 
   /**
    * Log at error level
    */
-  error(event: string, context?: Record<string, any> | Error | string) {
+  error(event: string, context?: Record<string, unknown> | Error | string) {
     if (context instanceof Error) {
       this.log('error', event, { error: context.message, stack: context.stack });
     } else if (typeof context === 'string') {
@@ -63,7 +63,7 @@ class Logger {
   /**
    * Internal log method
    */
-  private log(level: LogLevel, event: string, context?: Record<string, any>) {
+  private log(level: LogLevel, event: string, context?: Record<string, unknown>) {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
@@ -174,7 +174,7 @@ export const logger = new Logger();
 export const createTimer = (eventName: string) => {
   const startTime = performance.now();
   return {
-    end: (context?: Record<string, any>) => {
+    end: (context?: Record<string, unknown>) => {
       const duration = Math.round(performance.now() - startTime);
       logger.info(`${eventName}.completed`, {
         duration: `${duration}ms`,

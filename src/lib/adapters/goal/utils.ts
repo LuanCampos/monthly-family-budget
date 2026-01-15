@@ -17,6 +17,7 @@ import {
   UpdateGoalEntryInputSchema,
 } from '../../validators';
 import type { Goal, GoalStatus } from '@/types';
+import type { GoalRow, GoalEntryRow, SubcategoryRow } from '@/types/database';
 import type { GoalPayload, GoalEntryPayload } from './types';
 
 /**
@@ -31,8 +32,8 @@ export const addCurrentValueToGoals = async (familyId: string, goals: Goal[]): P
 
   // Offline / offline-id families: one read, then aggregate locally
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const allEntries = await offlineAdapter.getAll<any>('goal_entries');
-    const sums = (allEntries || []).reduce((acc, entry: any) => {
+    const allEntries = await offlineAdapter.getAll<GoalEntryRow>('goal_entries');
+    const sums = (allEntries || []).reduce((acc, entry) => {
       if (!goalIdSet.has(entry.goal_id)) return acc;
       acc[entry.goal_id] = (acc[entry.goal_id] || 0) + Number(entry.value || 0);
       return acc;
@@ -48,7 +49,7 @@ export const addCurrentValueToGoals = async (familyId: string, goals: Goal[]): P
     return goals.map(goal => ({ ...goal, currentValue: goal.currentValue ?? 0 }));
   }
 
-  const sums = (data || []).reduce((acc, entry: any) => {
+  const sums = (data || []).reduce((acc, entry) => {
     const goalId = entry.goal_id;
     if (!goalId) return acc;
     acc[goalId] = (acc[goalId] || 0) + Number(entry.value || 0);
@@ -62,7 +63,7 @@ export const addCurrentValueToGoals = async (familyId: string, goals: Goal[]): P
  * Helper to get goal by subcategory ID (for validation)
  */
 export const getGoalBySubcategoryIdInternal = async (subcategoryId: string): Promise<Goal | null> => {
-  const offlineMatches = await offlineAdapter.getAllByIndex<any>('goals', 'linked_subcategory_id', subcategoryId);
+  const offlineMatches = await offlineAdapter.getAllByIndex<GoalRow>('goals', 'linked_subcategory_id', subcategoryId);
   const activeOffline = (offlineMatches || []).find((goal) => (goal.status ?? 'active') === 'active');
   if (activeOffline) {
     return mapGoal(activeOffline);
@@ -78,8 +79,8 @@ export const getGoalBySubcategoryIdInternal = async (subcategoryId: string): Pro
  * Helper to get goal by category key (for validation)
  */
 export const getGoalByCategoryKeyInternal = async (categoryKey: string): Promise<Goal | null> => {
-  const offlineMatches = await offlineAdapter.getAll<any>('goals');
-  const match = offlineMatches.find((g: any) => g.linked_category_key === categoryKey && (g.status ?? 'active') === 'active');
+  const offlineMatches = await offlineAdapter.getAll<GoalRow>('goals');
+  const match = offlineMatches.find((g) => g.linked_category_key === categoryKey && (g.status ?? 'active') === 'active');
   if (match) {
     return mapGoal(match);
   }
@@ -108,21 +109,21 @@ export const ensureSubcategoryIsValid = async (
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     if (subcategoryId) {
-      const subcategory = await offlineAdapter.get<any>('subcategories', subcategoryId);
+      const subcategory = await offlineAdapter.get<SubcategoryRow>('subcategories', subcategoryId);
       if (!subcategory) throw new Error('Subcategory not found');
 
-      const offlineGoals = await offlineAdapter.getAllByIndex<any>('goals', 'linked_subcategory_id', subcategoryId);
-      const belongsToFamily = (goal: any) => goal.family_id === familyId || goal.familyId === familyId;
-      const activeGoal = (offlineGoals || []).find((g: any) => belongsToFamily(g) && (g.status ?? 'active') === 'active' && g.id !== currentGoalId);
+      const offlineGoals = await offlineAdapter.getAllByIndex<GoalRow>('goals', 'linked_subcategory_id', subcategoryId);
+      const belongsToFamily = (goal: GoalRow) => goal.family_id === familyId;
+      const activeGoal = (offlineGoals || []).find((g) => belongsToFamily(g) && (g.status ?? 'active') === 'active' && g.id !== currentGoalId);
       if (activeGoal && effectiveStatus === 'active') {
         throw new Error('Esta subcategoria já está vinculada a uma meta ativa');
       }
     }
 
     if (categoryKey === 'liberdade' && effectiveStatus === 'active') {
-      const offlineGoals = await offlineAdapter.getAll<any>('goals');
-      const belongsToFamily = (goal: any) => goal.family_id === familyId || goal.familyId === familyId;
-      const activeGoal = (offlineGoals || []).find((g: any) => belongsToFamily(g) && (g.linked_category_key === 'liberdade') && (g.status ?? 'active') === 'active' && g.id !== currentGoalId);
+      const offlineGoals = await offlineAdapter.getAll<GoalRow>('goals');
+      const belongsToFamily = (goal: GoalRow) => goal.family_id === familyId;
+      const activeGoal = (offlineGoals || []).find((g) => belongsToFamily(g) && (g.linked_category_key === 'liberdade') && (g.status ?? 'active') === 'active' && g.id !== currentGoalId);
       if (activeGoal) {
         throw new Error('Já existe uma meta ativa vinculada à categoria Liberdade Financeira');
       }
@@ -133,7 +134,7 @@ export const ensureSubcategoryIsValid = async (
   if (subcategoryId) {
     const { data: subcategories, error } = await budgetService.getSubcategories(familyId);
     if (error) throw error;
-    const subcategory = (subcategories || []).find((s: any) => s.id === subcategoryId);
+    const subcategory = (subcategories || []).find((s) => s.id === subcategoryId);
     if (!subcategory) throw new Error('Subcategory not found');
 
     if (effectiveStatus === 'active') {
@@ -155,8 +156,8 @@ export const ensureSubcategoryIsValid = async (
 /**
  * Convert GoalPayload to database row format
  */
-export const toGoalRow = (familyId: string, payload: GoalPayload) => {
-  const data: any = {
+export const toGoalRow = (familyId: string, payload: GoalPayload): Partial<GoalRow> => {
+  const data: Partial<GoalRow> = {
     family_id: familyId,
     name: payload.name,
     target_value: payload.targetValue,

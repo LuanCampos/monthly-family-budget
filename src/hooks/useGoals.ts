@@ -123,9 +123,8 @@ export const useGoals = () => {
       await storageAdapter.deleteGoal(currentFamilyId, id);
       setGoals(prev => prev.filter(g => g.id !== id));
       setEntriesByGoal(prev => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
+        const { [id]: _, ...rest } = prev;
+        return rest;
       });
       toast({ title: t('goalDeleted') });
     } catch (err) {

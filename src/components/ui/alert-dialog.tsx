@@ -35,6 +35,9 @@ const AlertDialogContent = React.forwardRef<
       ref={ref}
       onOpenAutoFocus={(e) => {
         e.preventDefault();
+        // Foca no botão Cancel para evitar teclado mobile mas satisfazer a11y
+        const cancelButton = e.currentTarget.querySelector('[data-alert-dialog-cancel]') as HTMLButtonElement | null;
+        cancelButton?.focus();
         onOpenAutoFocus?.(e);
       }}
       className={cn(
@@ -101,6 +104,7 @@ const AlertDialogCancel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Cancel
     ref={ref}
+    data-alert-dialog-cancel
     className={cn(buttonVariants({ variant: "outline" }), "h-11 text-sm font-medium", className)}
     {...props}
   />

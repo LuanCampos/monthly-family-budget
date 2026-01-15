@@ -124,7 +124,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (!error && data) {
         const cloudFamilies = data
-          .map((d: any) => ({ ...d.family, isOffline: false }))
+          .map((d) => ({ ...d.family, isOffline: false }))
           .filter(Boolean) as Family[];
         
         // Merge cloud and offline families
@@ -183,7 +183,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       if (!joinError && myInvitesWithFamily) {
         setMyPendingInvitations(
-          myInvitesWithFamily.map((inv: any) => ({
+          myInvitesWithFamily.map((inv) => ({
             ...inv,
             family_name: inv.family?.name || 'Família'
           }))
@@ -208,7 +208,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const familyNameMap = new Map(familiesData?.map(f => [f.id, f.name]) || []);
 
         setMyPendingInvitations(
-          myInvites.map((inv: any) => ({
+          myInvites.map((inv) => ({
             ...inv,
             family_name: familyNameMap.get(inv.family_id) || inv.family_name || 'Família'
           }))
@@ -335,7 +335,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
           if (!error && data) {
             const cloudFamilies = data
-              .map((d: any) => ({ ...d.family, isOffline: false }))
+              .map((d) => ({ ...d.family, isOffline: false }))
               .filter(Boolean) as Family[];
             
             allFamilies = [...cloudFamilies, ...offlineFamilies];
@@ -412,6 +412,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setLoading(false);
     };
     void init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- user is not needed, userKey handles identity changes
   }, [userKey, loadOfflineFamilies, refreshMyInvitations]);
 
   // Load members and family invitations when family changes
@@ -504,7 +505,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       isOffline: true,
     };
 
-    await offlineAdapter.put('families', family as any);
+    await offlineAdapter.put('families', family);
     await refreshFamilies();
     await selectFamily(id);
 
@@ -542,7 +543,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       user_email: sessionUser.email || null,
     });
 
-    if (memberError && (memberError as any).code !== '23505') {
+    if (memberError && (memberError as { code?: string }).code !== '23505') {
       logger.warn('family.createFamily.memberError', { error: memberError });
     }
 
@@ -563,7 +564,7 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (offlineAdapter.isOfflineId(familyId)) {
       const family = await offlineAdapter.get<Family>('families', familyId);
       if (family) {
-        await offlineAdapter.put('families', { ...family, name } as any);
+        await offlineAdapter.put('families', { ...family, name });
         await refreshFamilies();
       }
       return { error: null };
@@ -579,17 +580,17 @@ export const FamilyProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const deleteFamily = async (familyId: string) => {
     if (offlineAdapter.isOfflineId(familyId)) {
       // Delete offline family and all related data
-      const months = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
+      const months = await offlineAdapter.getAllByIndex<{ id: string }>('months', 'family_id', familyId);
       for (const month of months) {
-        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
+        const expenses = await offlineAdapter.getAllByIndex<{ id: string }>('expenses', 'month_id', month.id);
         for (const exp of expenses) await offlineAdapter.delete('expenses', exp.id);
         await offlineAdapter.delete('months', month.id);
       }
       
-      const recurring = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
+      const recurring = await offlineAdapter.getAllByIndex<{ id: string }>('recurring_expenses', 'family_id', familyId);
       for (const rec of recurring) await offlineAdapter.delete('recurring_expenses', rec.id);
       
-      const subs = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', familyId);
+      const subs = await offlineAdapter.getAllByIndex<{ id: string }>('subcategories', 'family_id', familyId);
       for (const sub of subs) await offlineAdapter.delete('subcategories', sub.id);
       
       

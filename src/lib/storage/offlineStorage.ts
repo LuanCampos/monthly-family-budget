@@ -15,7 +15,7 @@ export interface SyncQueueItem {
   id: string;
   type: 'family' | 'month' | 'expense' | 'recurring_expense' | 'subcategory' | 'category_limit' | 'family_member' | 'income_source' | 'goal' | 'goal_entry';
   action: 'insert' | 'update' | 'delete';
-  data: any;
+  data: Record<string, unknown>;
   createdAt: string;
   familyId: string;
 }

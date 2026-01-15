@@ -10,6 +10,7 @@
  */
 
 import { supabase } from '../supabase';
+import type { ExpenseRow, RecurringExpenseRow } from '@/types/database';
 
 // ============================================================================
 // FAMILY QUERIES
@@ -176,15 +177,15 @@ export const deleteByIdFromTable = async (table: string, id: string) => {
   return supabase.from(table).delete().eq('id', id);
 };
 
-export const insertToTable = async (table: string, data: any) => {
+export const insertToTable = async (table: string, data: Record<string, unknown>) => {
   return supabase.from(table).insert(data);
 };
 
-export const updateInTable = async (table: string, id: string, data: any) => {
+export const updateInTable = async (table: string, id: string, data: Record<string, unknown>) => {
   return supabase.from(table).update(data).eq('id', id);
 };
 
-export const insertWithSelect = async (table: string, data: any) => {
+export const insertWithSelect = async (table: string, data: Record<string, unknown>) => {
   return supabase.from(table).insert(data).select().single();
 };
 
@@ -194,7 +195,7 @@ export const insertMonthWithId = async (data: { id: string; family_id: string; y
   return supabase.from('month').insert(data);
 };
 
-export const insertExpenseForSync = async (data: any) => {
+export const insertExpenseForSync = async (data: Partial<ExpenseRow>) => {
   return supabase.from('expense').insert(data).select().single();
 };
 
@@ -202,7 +203,7 @@ export const insertSubcategoryForSync = async (data: { family_id: string; name: 
   return supabase.from('subcategory').insert(data).select().single();
 };
 
-export const insertRecurringForSync = async (data: any) => {
+export const insertRecurringForSync = async (data: Partial<RecurringExpenseRow>) => {
   return supabase.from('recurring_expense').insert(data).select().single();
 };
 export const insertIncomeSourceForSync = async (data: { month_id: string; name: string; value: number }) => {

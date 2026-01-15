@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import type { CategoryLimitRow, ExpenseRow, RecurringExpenseRow } from '@/types/database';
+import type { CategoryLimitRow, ExpenseRow, RecurringExpenseRow, SupabaseChannel } from '@/types/database';
 import { 
   CreateSubcategoryInputSchema, 
   CreateExpenseInputSchema, 
@@ -76,7 +76,7 @@ export const clearSubcategoryReferences = async (id: string) => {
 
 export const createChannel = (name: string) => supabase.channel(name);
 
-export const removeChannel = (channel: any): void => { supabase.removeChannel(channel); };
+export const removeChannel = (channel: SupabaseChannel): void => { supabase.removeChannel(channel); };
 
 export const insertMonth = async (familyId: string, year: number, month: number) => {
   const validation = CreateMonthInputSchema.safeParse({ year, month });

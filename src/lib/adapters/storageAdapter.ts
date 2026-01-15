@@ -1,8 +1,9 @@
 import * as budgetService from '../services/budgetService';
 import { offlineAdapter } from './offlineAdapter';
 import * as monthAdapter from './monthAdapter';
-// domain adapters imported when needed; keep imports to preserve side-effects
+import * as recurringAdapter from './recurringAdapter';
 import { Month, CategoryKey } from '@/types';
+import type { MonthRow, ExpenseRow, CategoryLimitRow, IncomeSourceRow, SupabaseChannel } from '@/types/database';
 import { CATEGORIES } from '@/constants/categories';
 import { getMonthLabel } from '../utils/monthUtils';
 import { 
@@ -71,16 +72,16 @@ export const getMonthsWithExpenses = async (familyId: string | null) => {
   if (!familyId) return [] as Month[];
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const offlineMonths = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
+    const offlineMonths = await offlineAdapter.getAllByIndex<MonthRow>('months', 'family_id', familyId);
     const monthsWithExpenses: Month[] = await Promise.all(offlineMonths.map(async (m) => {
-      const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', m.id);
-      const limits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', m.id);
-      const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', m.id);
+      const expenses = await offlineAdapter.getAllByIndex<ExpenseRow>('expenses', 'month_id', m.id);
+      const limits = await offlineAdapter.getAllByIndex<CategoryLimitRow>('category_limits', 'month_id', m.id);
+      const incomeSources = await offlineAdapter.getAllByIndex<IncomeSourceRow>('income_sources', 'month_id', m.id);
       const categoryLimits: Record<CategoryKey, number> = { ...getDefaultLimits() };
-      limits.forEach((l: any) => { categoryLimits[l.category_key as CategoryKey] = l.percentage; });
+      limits.forEach((l) => { categoryLimits[l.category_key as CategoryKey] = l.percentage; });
       
       // Calculate income from sources
-      const calculatedIncome = incomeSources.reduce((sum: number, source: any) => sum + (source.value || 0), 0);
+      const calculatedIncome = incomeSources.reduce((sum: number, source) => sum + (source.value || 0), 0);
       
       return {
         id: m.id,
@@ -88,27 +89,24 @@ export const getMonthsWithExpenses = async (familyId: string | null) => {
         year: m.year,
         month: m.month,
         income: calculatedIncome || m.income || 0,
-        incomeSources: incomeSources.map((s: any) => ({
+        incomeSources: incomeSources.map((s) => ({
           id: s.id,
           monthId: s.month_id,
           name: s.name,
           value: s.value,
         })),
         categoryLimits,
-        expenses: expenses.map((e: any) => ({
+        expenses: expenses.map((e) => ({
           id: e.id,
           title: e.title,
           category: e.category_key as CategoryKey,
-          subcategoryId: e.subcategory_id,
+          subcategoryId: e.subcategory_id ?? undefined,
           value: e.value,
           isRecurring: e.is_recurring,
           isPending: e.is_pending,
-          dueDay: e.due_day,
-          recurringExpenseId: e.recurring_expense_id,
-          createdAt:
-            typeof e.created_at === 'string'
-              ? e.created_at
-              : (typeof e.createdAt === 'string' ? e.createdAt : undefined),
+          dueDay: e.due_day ?? undefined,
+          recurringExpenseId: e.recurring_expense_id ?? undefined,
+          createdAt: e.created_at,
           installmentInfo: e.installment_current && e.installment_total ? { current: e.installment_current, total: e.installment_total } : undefined,
         }))
       };
@@ -119,17 +117,17 @@ export const getMonthsWithExpenses = async (familyId: string | null) => {
   const { data: monthsData, error } = await budgetService.getMonths(familyId);
   if (error || !monthsData) return [] as Month[];
 
-  const monthsWithExpenses: Month[] = await Promise.all(monthsData.map(async (m: any) => {
+  const monthsWithExpenses: Month[] = await Promise.all(monthsData.map(async (m) => {
     const [{ data: expenses }, { data: limits }, { data: incomeSources }] = await Promise.all([
       budgetService.getExpensesByMonth(m.id),
       budgetService.getMonthLimits(m.id),
       budgetService.getIncomeSourcesByMonth(m.id)
     ]);
     const categoryLimits: Record<CategoryKey, number> = { ...getDefaultLimits() };
-    (limits || []).forEach((l: any) => { categoryLimits[l.category_key as CategoryKey] = l.percentage; });
+    (limits || []).forEach((l) => { categoryLimits[l.category_key as CategoryKey] = l.percentage; });
     
     // Calculate income from sources
-    const calculatedIncome = (incomeSources || []).reduce((sum: number, source: any) => sum + (source.value || 0), 0);
+    const calculatedIncome = (incomeSources || []).reduce((sum: number, source) => sum + (source.value || 0), 0);
     
     return {
       id: m.id,
@@ -147,7 +145,7 @@ export const getMonthsWithExpenses = async (familyId: string | null) => {
 };
 
 export const createChannel = (name: string) => budgetService.createChannel(name);
-export const removeChannel = (channel: any) => budgetService.removeChannel(channel);
+export const removeChannel = (channel: SupabaseChannel) => budgetService.removeChannel(channel);
 
 // Wrapper for insertMonth to provide required callbacks
 export const insertMonth = async (

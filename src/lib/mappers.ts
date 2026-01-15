@@ -29,7 +29,7 @@ export const mapIncomeSource = (source: IncomeSourceRow): IncomeSource => ({
 /**
  * Map database Expense to application Expense
  */
-export const mapExpense = (expense: ExpenseRow | any): Expense => {
+export const mapExpense = (expense: ExpenseRow & { month?: { year: number; month: number } }): Expense => {
   // Extract month and year from month_id (format: familyId-YYYY-MM) for offline mode
   let month: number | undefined;
   let year: number | undefined;

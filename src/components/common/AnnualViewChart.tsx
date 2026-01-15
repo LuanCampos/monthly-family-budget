@@ -15,6 +15,18 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
 
+interface TooltipPayloadEntry {
+  value: number;
+  dataKey: string;
+  color: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+  label?: string;
+}
+
 interface AnnualViewChartProps {
   months: Month[];
   currentYear: number;
@@ -53,13 +65,13 @@ export const AnnualViewChart = ({ months, currentYear }: AnnualViewChartProps) =
     });
   }, [months, currentYear]);
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
-      const total = payload.reduce((sum: number, entry: any) => sum + (entry.value || 0), 0);
+      const total = payload.reduce((sum: number, entry: TooltipPayloadEntry) => sum + (entry.value || 0), 0);
       return (
         <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg">
           <p className="text-sm font-medium text-foreground mb-1 capitalize">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry: TooltipPayloadEntry, index: number) => (
             entry.value > 0 && (
               <div key={index} className="flex items-center gap-2 text-xs">
                 <div

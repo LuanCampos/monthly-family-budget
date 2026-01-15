@@ -1,15 +1,61 @@
 import * as storageAdapter from '@/lib/adapters/storageAdapter';
 import { Month, CategoryKey, RecurringExpense, Subcategory } from '@/types';
 
+interface ExpensePayload {
+  month_id: string;
+  title: string;
+  category_key: CategoryKey;
+  subcategory_id?: string | null;
+  value: number;
+  due_day?: number | null;
+  is_recurring?: boolean;
+  is_pending?: boolean;
+  recurring_expense_id?: string | null;
+  installment_current?: number | null;
+  installment_total?: number | null;
+}
+
+interface RecurringPayload {
+  title: string;
+  category_key: CategoryKey;
+  subcategory_id?: string | null;
+  value: number;
+  due_day?: number | null;
+  has_installments?: boolean;
+  total_installments?: number | null;
+  start_year?: number | null;
+  start_month?: number | null;
+}
+
+interface ExpenseUpdateData {
+  title?: string;
+  category_key?: CategoryKey;
+  subcategory_id?: string | null;
+  value?: number;
+  due_day?: number | null;
+  is_recurring?: boolean;
+  is_pending?: boolean;
+}
+
+interface RecurringUpdateData {
+  title?: string;
+  category_key?: CategoryKey;
+  subcategory_id?: string | null;
+  value?: number;
+  due_day?: number | null;
+  has_installments?: boolean;
+  total_installments?: number | null;
+  start_year?: number | null;
+  start_month?: number | null;
+}
+
 export const createBudgetApi = (opts: {
   currentFamilyId: string | null;
   setMonths: (m: Month[]) => void;
   setRecurringExpenses: (r: RecurringExpense[]) => void;
   setSubcategories: (s: Subcategory[]) => void;
-  categoryPercentages: Record<CategoryKey, number>;
-  setCategoryPercentages: (g: Record<CategoryKey, number>) => void;
 }) => {
-  const { currentFamilyId, setMonths, setRecurringExpenses, setSubcategories, categoryPercentages: _categoryPercentages, setCategoryPercentages: _setCategoryPercentages } = opts;
+  const { currentFamilyId, setMonths, setRecurringExpenses, setSubcategories } = opts;
 
   // Data loading functions - delegate to storageAdapter and update state
   const loadMonths = async () => {
@@ -64,7 +110,7 @@ export const createBudgetApi = (opts: {
     },
     
     // Expense operations - delegate to storageAdapter
-    insertExpense: async (payload: any) => {
+    insertExpense: async (payload: ExpensePayload) => {
       if (!currentFamilyId) return null;
       return storageAdapter.insertExpense(currentFamilyId, payload);
     },
@@ -73,7 +119,7 @@ export const createBudgetApi = (opts: {
       return storageAdapter.updateMonthIncome(currentFamilyId, monthId, income);
     },
     
-    updateExpense: async (id: string, data: any) => {
+    updateExpense: async (id: string, data: ExpenseUpdateData) => {
       return storageAdapter.updateExpense(currentFamilyId, id, data);
     },
     
@@ -86,12 +132,12 @@ export const createBudgetApi = (opts: {
     },
     
     // Recurring expense operations - delegate to storageAdapter
-    insertRecurring: async (payload: any) => {
+    insertRecurring: async (payload: RecurringPayload) => {
       if (!currentFamilyId) return null;
       return storageAdapter.insertRecurring(currentFamilyId, payload);
     },
     
-    updateRecurring: async (id: string, data: any, updatePastExpenses?: boolean) => {
+    updateRecurring: async (id: string, data: RecurringUpdateData, updatePastExpenses?: boolean) => {
       return storageAdapter.updateRecurring(currentFamilyId, id, data, updatePastExpenses);
     },
     

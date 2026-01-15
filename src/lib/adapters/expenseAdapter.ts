@@ -18,6 +18,9 @@ import { offlineAdapter } from './offlineAdapter';
 import { logger } from '../logger';
 import type { ExpenseRow } from '@/types/database';
 
+/** Internal expense data used in adapter operations */
+type ExpenseData = ExpenseRow & { family_id?: string };
+
 /**
  * Insert a new expense
  * If the expense has a subcategory linked to a goal, create an automatic goal entry
@@ -27,7 +30,7 @@ export const insertExpense = async (familyId: string | null, payload: Partial<Ex
 
   const now = new Date().toISOString();
   
-  const offlineExpenseData = {
+  const offlineExpenseData: Partial<ExpenseData> = {
     id: offlineAdapter.generateOfflineId('exp'),
     family_id: familyId,
     month_id: payload.month_id,
@@ -47,11 +50,11 @@ export const insertExpense = async (familyId: string | null, payload: Partial<Ex
   const shouldCreateEntryOffline = !offlineExpenseData.is_pending;
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    await offlineAdapter.put('expenses', offlineExpenseData as any);
+    await offlineAdapter.put('expenses', offlineExpenseData);
     
     // Check for linked goal and create entry only if already paid
     if (shouldCreateEntryOffline) {
-      await handleGoalEntryCreation(familyId, offlineExpenseData as any);
+      await handleGoalEntryCreation(familyId, offlineExpenseData);
     }
     
     return offlineExpenseData;
@@ -63,18 +66,18 @@ export const insertExpense = async (familyId: string | null, payload: Partial<Ex
   });
   if (res.error) {
     logger.warn('expense.insert.fallback', { title: payload.title, error: res.error.message });
-    await offlineAdapter.put('expenses', offlineExpenseData as any);
+    await offlineAdapter.put('expenses', offlineExpenseData);
     // Only queue sync if it's an online family (not an offline family)
     if (!offlineAdapter.isOfflineId(familyId)) {
-      await offlineAdapter.sync.add({ type: 'expense', action: 'insert', data: offlineExpenseData, familyId });
+      await offlineAdapter.sync.add({ type: 'expense', action: 'insert', data: offlineExpenseData as Record<string, unknown>, familyId });
     }
     if (shouldCreateEntryOffline) {
-      await handleGoalEntryCreation(familyId, offlineExpenseData as any);
+      await handleGoalEntryCreation(familyId, offlineExpenseData);
     }
     return offlineExpenseData;
   }
   
-  const expenseData = res.data as any;
+  const expenseData = res.data as ExpenseData | null;
   const shouldCreateEntryOnline = expenseData && !expenseData.is_pending;
   if (expenseData && shouldCreateEntryOnline) {
     await handleGoalEntryCreation(familyId, expenseData);
@@ -91,12 +94,12 @@ export const updateExpense = async (familyId: string | null, id: string, data: P
   if (!familyId) return;
   
   // Get the old expense data before updating
-  const oldExpense = await offlineAdapter.get<any>('expenses', id);
+  const oldExpense = await offlineAdapter.get<ExpenseData>('expenses', id);
   const mergedOfflineExpense = oldExpense ? { ...oldExpense, ...data } : null;
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const expense = await offlineAdapter.get<any>('expenses', id);
-    if (expense) await offlineAdapter.put('expenses', { ...expense, ...data } as any);
+    const expense = await offlineAdapter.get<ExpenseData>('expenses', id);
+    if (expense) await offlineAdapter.put('expenses', { ...expense, ...data });
 
     if (mergedOfflineExpense) {
       await handleGoalEntryUpdate(familyId, id, oldExpense, mergedOfflineExpense);
@@ -108,18 +111,18 @@ export const updateExpense = async (familyId: string | null, id: string, data: P
   const res = await budgetService.updateExpense(id, data);
   if (res.error) {
     // Fallback to offline and queue sync if it's an online family
-    const expense = await offlineAdapter.get<any>('expenses', id);
-    if (expense) await offlineAdapter.put('expenses', { ...expense, ...data } as any);
+    const expense = await offlineAdapter.get<ExpenseData>('expenses', id);
+    if (expense) await offlineAdapter.put('expenses', { ...expense, ...data });
     // Only queue if it's an online family (created with UUID from Supabase)
     if (!offlineAdapter.isOfflineId(familyId)) {
       await offlineAdapter.sync.add({ type: 'expense', action: 'update', data: { id, ...data }, familyId });
     }
   }
   
-  const updatedExpense = (res && res.data) ? res.data as any : mergedOfflineExpense;
+  const updatedExpense = (res && res.data) ? res.data as ExpenseData : mergedOfflineExpense;
   if (updatedExpense) {
     await handleGoalEntryUpdate(familyId, id, oldExpense, updatedExpense);
-    await offlineAdapter.put('expenses', updatedExpense as any);
+    await offlineAdapter.put('expenses', updatedExpense);
   }
   
   return res;
@@ -130,9 +133,9 @@ export const updateExpense = async (familyId: string | null, id: string, data: P
  */
 export const setExpensePending = async (familyId: string | null, id: string, pending: boolean) => {
   if (!familyId) return;
-  const currentExpense = await offlineAdapter.get<any>('expenses', id);
+  const currentExpense = await offlineAdapter.get<ExpenseData>('expenses', id);
   if (!currentExpense) return;
-  const updatedExpense = { ...currentExpense, is_pending: pending } as any;
+  const updatedExpense: ExpenseData = { ...currentExpense, is_pending: pending };
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     await offlineAdapter.put('expenses', updatedExpense);
@@ -149,9 +152,9 @@ export const setExpensePending = async (familyId: string | null, id: string, pen
       await offlineAdapter.sync.add({ type: 'expense', action: 'update', data: { id, is_pending: pending }, familyId });
     }
   }
-  const persistedExpense = (res && (res as any).data) ? (res as any).data : updatedExpense;
-  await offlineAdapter.put('expenses', persistedExpense as any);
-  await handleGoalEntryUpdate(familyId, id, currentExpense, persistedExpense as any);
+  const persistedExpense = (res && res.data) ? res.data as ExpenseData : updatedExpense;
+  await offlineAdapter.put('expenses', persistedExpense);
+  await handleGoalEntryUpdate(familyId, id, currentExpense, persistedExpense);
   return res;
 };
 
@@ -163,7 +166,7 @@ export const deleteExpense = async (familyId: string | null, id: string) => {
   if (!familyId) return;
   
   // Get the expense before deleting to check for goal entry
-  const expense = await offlineAdapter.get<any>('expenses', id);
+  const expense = await offlineAdapter.get<ExpenseData>('expenses', id);
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     await offlineAdapter.delete('expenses', id);
@@ -189,7 +192,7 @@ export const deleteExpense = async (familyId: string | null, id: string) => {
 /**
  * Helper: Extract month and year from expense
  */
-const extractMonthYear = (expense: any): { month: number; year: number } => {
+const extractMonthYear = (expense: Partial<ExpenseData>): { month: number; year: number } => {
   // Try to extract from month_id (format: familyId-YYYY-MM)
   if (expense.month_id && typeof expense.month_id === 'string') {
     const parts = expense.month_id.split('-');
@@ -214,7 +217,7 @@ const extractMonthYear = (expense: any): { month: number; year: number } => {
 /**
  * Helper: Find linked goal by subcategory or category 'liberdade'
  */
-const findLinkedGoal = async (expense: any) => {
+const findLinkedGoal = async (expense: Partial<ExpenseData> | null) => {
   if (!expense) return null;
   if (expense.subcategory_id) {
     const goal = await goalAdapter.getGoalBySubcategoryId(expense.subcategory_id);
@@ -226,7 +229,7 @@ const findLinkedGoal = async (expense: any) => {
   return null;
 };
 
-const createGoalEntryFromExpense = async (familyId: string, goalId: string, expense: any) => {
+const createGoalEntryFromExpense = async (familyId: string, goalId: string, expense: Partial<ExpenseData>) => {
   const { month, year } = extractMonthYear(expense);
   await goalAdapter.createEntry(familyId, {
     goalId,
@@ -242,16 +245,18 @@ const createGoalEntryFromExpense = async (familyId: string, goalId: string, expe
 /**
  * Helper: Handle goal entry creation when expense is created or marked as paid
  */
-const handleGoalEntryCreation = async (familyId: string, expense: any) => {
+const handleGoalEntryCreation = async (familyId: string, expense: Partial<ExpenseData>) => {
   try {
     if (expense.is_pending) return;
     const linkedGoal = await findLinkedGoal(expense);
     if (!linkedGoal) return;
 
-    const existingEntry = await goalAdapter.getEntryByExpense(expense.id);
+    const existingEntry = expense.id ? await goalAdapter.getEntryByExpense(expense.id) : null;
     if (existingEntry) return;
 
-    await createGoalEntryFromExpense(familyId, linkedGoal.id, expense);
+    if (expense.id) {
+      await createGoalEntryFromExpense(familyId, linkedGoal.id, expense);
+    }
   } catch (error) {
     logger.error('expense.goal.entry.create.failed', { expenseId: expense.id, error: (error as Error).message });
   }
@@ -260,7 +265,7 @@ const handleGoalEntryCreation = async (familyId: string, expense: any) => {
 /**
  * Helper: Handle goal entry update when expense is updated or pending flag changes
  */
-const handleGoalEntryUpdate = async (familyId: string, expenseId: string, _oldExpense: any, newExpense: any) => {
+const handleGoalEntryUpdate = async (familyId: string, expenseId: string, _oldExpense: Partial<ExpenseData> | null, newExpense: Partial<ExpenseData> | null) => {
   try {
     const entry = await goalAdapter.getEntryByExpense(expenseId);
     const linkedGoal = await findLinkedGoal(newExpense);
@@ -275,7 +280,7 @@ const handleGoalEntryUpdate = async (familyId: string, expenseId: string, _oldEx
     if (!shouldHaveEntry) return;
 
     // If entry exists and goal is the same, just update it
-    if (entry && linkedGoal && entry.goalId === linkedGoal.id) {
+    if (entry && linkedGoal && entry.goalId === linkedGoal.id && newExpense) {
       const { month, year } = extractMonthYear(newExpense);
       await goalAdapter.updateEntry(familyId, entry.id, {
         value: newExpense.value || 0,
@@ -288,7 +293,7 @@ const handleGoalEntryUpdate = async (familyId: string, expenseId: string, _oldEx
     }
 
     // If no entry exists but should (e.g., expense marked as paid), create it
-    if (!entry && linkedGoal) {
+    if (!entry && linkedGoal && newExpense) {
       await createGoalEntryFromExpense(familyId, linkedGoal.id, newExpense);
     }
   } catch (error) {

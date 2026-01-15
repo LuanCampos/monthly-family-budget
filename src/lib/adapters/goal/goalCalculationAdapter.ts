@@ -9,20 +9,21 @@ import * as goalService from '../../services/goalService';
 import { offlineAdapter } from '../offlineAdapter';
 import { logger } from '../../logger';
 import type { GoalStatus } from '@/types';
+import type { GoalRow, GoalEntryRow } from '@/types/database';
 import type { MonthlySuggestionResult } from './types';
 
 /**
  * Calculate how much was contributed this month and how much is still needed
  */
-const calculateCurrentMonthProgress = (entries: any[]): { contributed: number; remaining: number } => {
+const calculateCurrentMonthProgress = (entries: GoalEntryRow[]): { contributed: number; remaining: number } => {
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
 
   const currentMonthEntries = entries.filter(
-    (entry: any) => entry.month === currentMonth && entry.year === currentYear
+    (entry) => entry.month === currentMonth && entry.year === currentYear
   );
-  const contributed = currentMonthEntries.reduce((sum: number, entry: any) => sum + Number(entry.value || 0), 0);
+  const contributed = currentMonthEntries.reduce((sum, entry) => sum + Number(entry.value || 0), 0);
 
   return { contributed, remaining: 0 }; // remaining will be calculated based on suggested monthly
 };
@@ -71,15 +72,15 @@ const calculateMonthlyPlan = (
 export const calculateMonthlySuggestion = async (goalId: string): Promise<MonthlySuggestionResult | null> => {
   if (!navigator.onLine) {
     // Offline calculation (intelligent)
-    const goal = await offlineAdapter.get<any>('goals', goalId);
+    const goal = await offlineAdapter.get<GoalRow>('goals', goalId);
     if (!goal) return null;
 
     const status: GoalStatus = (goal.status as GoalStatus | undefined) ?? 'active';
     if (status !== 'active') return null;
 
     // Calculate current value dynamically from entries
-    const entries = await offlineAdapter.getAllByIndex<any>('goal_entries', 'goal_id', goalId) || [];
-    const currentValue = entries.reduce((sum: number, entry: any) => sum + Number(entry.value || 0), 0);
+    const entries = await offlineAdapter.getAllByIndex<GoalEntryRow>('goal_entries', 'goal_id', goalId) || [];
+    const currentValue = entries.reduce((sum, entry) => sum + Number(entry.value || 0), 0);
     
     const remaining = Number(goal.target_value || 0) - currentValue;
     
@@ -121,7 +122,7 @@ export const calculateMonthlySuggestion = async (goalId: string): Promise<Monthl
     return null;
   }
 
-  const goalData = goalResult.data as any;
+  const goalData = goalResult.data;
   const status: GoalStatus = (goalData.status as GoalStatus | undefined) ?? 'active';
   if (status !== 'active') return null;
 

@@ -4,6 +4,15 @@ import * as familyService from '@/lib/services/familyService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import type { 
+  FamilyRow, 
+  SubcategoryRow, 
+  RecurringExpenseRow, 
+  MonthRow, 
+  ExpenseRow, 
+  IncomeSourceRow, 
+  CategoryLimitRow 
+} from '@/types/database';
 
 export interface SyncProgress {
   step: string;
@@ -113,23 +122,23 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       // Get offline family
-      const offlineFamily = await offlineAdapter.get<any>('families', familyId);
+      const offlineFamily = await offlineAdapter.get<FamilyRow>('families', familyId);
       if (!offlineFamily) {
         return { error: new Error('Família não encontrada') };
       }
 
       // Count total items for progress
-      const subcategories = await offlineAdapter.getAllByIndex<any>('subcategories', 'family_id', familyId);
-      const recurringExpenses = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
-      const months = await offlineAdapter.getAllByIndex<any>('months', 'family_id', familyId);
+      const subcategories = await offlineAdapter.getAllByIndex<SubcategoryRow>('subcategories', 'family_id', familyId);
+      const recurringExpenses = await offlineAdapter.getAllByIndex<RecurringExpenseRow>('recurring_expenses', 'family_id', familyId);
+      const months = await offlineAdapter.getAllByIndex<MonthRow>('months', 'family_id', familyId);
       
       let totalExpenses = 0;
       let totalIncomeSources = 0;
       let totalCategoryLimits = 0;
       for (const month of months) {
-        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
-        const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', month.id);
-        const categoryLimits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', month.id);
+        const expenses = await offlineAdapter.getAllByIndex<ExpenseRow>('expenses', 'month_id', month.id);
+        const incomeSources = await offlineAdapter.getAllByIndex<IncomeSourceRow>('income_sources', 'month_id', month.id);
+        const categoryLimits = await offlineAdapter.getAllByIndex<CategoryLimitRow>('category_limits', 'month_id', month.id);
         totalExpenses += expenses.length;
         totalIncomeSources += incomeSources.length;
         totalCategoryLimits += categoryLimits.length;
@@ -239,7 +248,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Step 5: Sync expenses
       for (const month of months) {
-        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
+        const expenses = await offlineAdapter.getAllByIndex<ExpenseRow>('expenses', 'month_id', month.id);
         for (const exp of expenses) {
           const { data, error } = await familyService.insertExpenseForSync({
             month_id: idMap[month.id],
@@ -268,7 +277,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Step 6: Sync income sources
       for (const month of months) {
-        const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', month.id);
+        const incomeSources = await offlineAdapter.getAllByIndex<IncomeSourceRow>('income_sources', 'month_id', month.id);
         for (const source of incomeSources) {
           const { data, error } = await familyService.insertIncomeSourceForSync({
             month_id: idMap[month.id],
@@ -290,7 +299,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Step 7: Sync category limits (per month)
       for (const month of months) {
-        const categoryLimits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', month.id);
+        const categoryLimits = await offlineAdapter.getAllByIndex<CategoryLimitRow>('category_limits', 'month_id', month.id);
         for (const limit of categoryLimits) {
           const { data, error } = await familyService.insertCategoryLimitForSync({
             month_id: idMap[month.id],
@@ -316,9 +325,9 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       for (const sub of subcategories) await offlineAdapter.delete('subcategories', sub.id);
       for (const rec of recurringExpenses) await offlineAdapter.delete('recurring_expenses', rec.id);
       for (const month of months) {
-        const expenses = await offlineAdapter.getAllByIndex<any>('expenses', 'month_id', month.id);
-        const incomeSources = await offlineAdapter.getAllByIndex<any>('income_sources', 'month_id', month.id);
-        const categoryLimits = await offlineAdapter.getAllByIndex<any>('category_limits', 'month_id', month.id);
+        const expenses = await offlineAdapter.getAllByIndex<ExpenseRow>('expenses', 'month_id', month.id);
+        const incomeSources = await offlineAdapter.getAllByIndex<IncomeSourceRow>('income_sources', 'month_id', month.id);
+        const categoryLimits = await offlineAdapter.getAllByIndex<CategoryLimitRow>('category_limits', 'month_id', month.id);
         for (const exp of expenses) await offlineAdapter.delete('expenses', exp.id);
         for (const source of incomeSources) await offlineAdapter.delete('income_sources', source.id);
         for (const limit of categoryLimits) await offlineAdapter.delete('category_limits', limit.id);
@@ -397,6 +406,7 @@ export const OnlineProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (isOnline && session?.user) {
       syncNow();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- syncNow is omitted to prevent infinite loop (it changes every render)
   }, [isOnline, session]);
 
   return (

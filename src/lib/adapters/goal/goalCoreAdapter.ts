@@ -24,6 +24,7 @@ import {
   UpdateGoalInputSchema
 } from './utils';
 import type { Goal, GoalStatus } from '@/types';
+import type { GoalRow, GoalEntryRow } from '@/types/database';
 import type { GoalPayload } from './types';
 
 /**
@@ -33,7 +34,7 @@ export const getGoals = async (familyId: string | null): Promise<Goal[]> => {
   if (!familyId) return [];
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const data = await offlineAdapter.getAllByIndex<any>('goals', 'family_id', familyId);
+    const data = await offlineAdapter.getAllByIndex<GoalRow>('goals', 'family_id', familyId);
     const goals = mapGoals(data || []);
     return addCurrentValueToGoals(familyId, goals);
   }
@@ -59,7 +60,7 @@ export const createGoal = async (familyId: string | null, payload: GoalPayload):
 
   const goalRow = toGoalRow(familyId, payload);
   const now = new Date().toISOString();
-  const offlineGoal = {
+  const offlineGoal: Partial<GoalRow> = {
     id: offlineAdapter.generateOfflineId('goal'),
     ...goalRow,
     created_at: now,
@@ -67,8 +68,8 @@ export const createGoal = async (familyId: string | null, payload: GoalPayload):
   };
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    await offlineAdapter.put('goals', offlineGoal as any);
-    const goal = mapGoal(offlineGoal as any);
+    await offlineAdapter.put('goals', offlineGoal);
+    const goal = mapGoal(offlineGoal as GoalRow);
     const [enriched] = await addCurrentValueToGoals(familyId, [goal]);
     return enriched;
   }
@@ -76,11 +77,11 @@ export const createGoal = async (familyId: string | null, payload: GoalPayload):
   const { data, error } = await goalService.createGoal(goalRow);
   if (error || !data) {
     logger.warn('goal.create.fallback', { familyId, error: error?.message });
-    await offlineAdapter.put('goals', offlineGoal as any);
+    await offlineAdapter.put('goals', offlineGoal);
     if (!offlineAdapter.isOfflineId(familyId)) {
-      await offlineAdapter.sync.add({ type: 'goal', action: 'insert', data: offlineGoal, familyId });
+      await offlineAdapter.sync.add({ type: 'goal', action: 'insert', data: offlineGoal as Record<string, unknown>, familyId });
     }
-    const goal = mapGoal(offlineGoal as any);
+    const goal = mapGoal(offlineGoal as GoalRow);
     const [enriched] = await addCurrentValueToGoals(familyId, [goal]);
     return enriched;
   }
@@ -96,31 +97,31 @@ export const createGoal = async (familyId: string | null, payload: GoalPayload):
 export const updateGoal = async (familyId: string | null, goalId: string, payload: Partial<GoalPayload>): Promise<void> => {
   if (!familyId) return;
 
-  let existingGoal: any = null;
+  let existingGoal: GoalRow | null = null;
   if (!payload.linkedSubcategoryId || !payload.linkedCategoryKey || !payload.status) {
     if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-      existingGoal = await offlineAdapter.get<any>('goals', goalId);
+      existingGoal = await offlineAdapter.get<GoalRow>('goals', goalId);
     } else {
       const { data } = await goalService.getGoalById(goalId);
       existingGoal = data;
     }
   }
 
-  const effectiveSubcategoryId = payload.linkedSubcategoryId ?? existingGoal?.linked_subcategory_id ?? existingGoal?.linkedSubcategoryId;
-  const effectiveCategoryKey = payload.linkedCategoryKey ?? existingGoal?.linked_category_key ?? existingGoal?.linkedCategoryKey;
-  const effectiveStatus: GoalStatus = payload.status ?? (existingGoal?.status as GoalStatus | undefined) ?? 'active';
+  const effectiveSubcategoryId = payload.linkedSubcategoryId ?? existingGoal?.linked_subcategory_id;
+  const effectiveCategoryKey = payload.linkedCategoryKey ?? existingGoal?.linked_category_key;
+  const effectiveStatus: GoalStatus = payload.status ?? existingGoal?.status ?? 'active';
 
   if (effectiveSubcategoryId || effectiveCategoryKey || payload.status) {
-    await ensureSubcategoryIsValid(familyId, effectiveSubcategoryId, effectiveCategoryKey, effectiveStatus, goalId);
+    await ensureSubcategoryIsValid(familyId, effectiveSubcategoryId ?? undefined, effectiveCategoryKey ?? undefined, effectiveStatus, goalId);
   }
 
-  const updateData: any = {
+  const updateData: Partial<GoalRow> = {
     name: payload.name,
     target_value: payload.targetValue,
-    target_month: payload.targetMonth,
-    target_year: payload.targetYear,
-    account: payload.account,
-    linked_subcategory_id: payload.linkedSubcategoryId,
+    target_month: payload.targetMonth ?? null,
+    target_year: payload.targetYear ?? null,
+    account: payload.account ?? null,
+    linked_subcategory_id: payload.linkedSubcategoryId ?? null,
   };
 
   // Só adiciona linked_category_key se estiver presente
@@ -135,9 +136,9 @@ export const updateGoal = async (familyId: string | null, goalId: string, payloa
   UpdateGoalInputSchema.parse(updateData);
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const goal = await offlineAdapter.get<any>('goals', goalId);
+    const goal = await offlineAdapter.get<GoalRow>('goals', goalId);
     if (goal) {
-      await offlineAdapter.put('goals', { ...goal, ...updateData, updated_at: new Date().toISOString() } as any);
+      await offlineAdapter.put('goals', { ...goal, ...updateData, updated_at: new Date().toISOString() });
     }
     return;
   }
@@ -145,9 +146,9 @@ export const updateGoal = async (familyId: string | null, goalId: string, payloa
   const { error } = await goalService.updateGoal(goalId, updateData);
   if (error) {
     logger.warn('goal.update.fallback', { goalId, error: error.message });
-    const goal = await offlineAdapter.get<any>('goals', goalId);
+    const goal = await offlineAdapter.get<GoalRow>('goals', goalId);
     if (goal) {
-      await offlineAdapter.put('goals', { ...goal, ...updateData, updated_at: new Date().toISOString() } as any);
+      await offlineAdapter.put('goals', { ...goal, ...updateData, updated_at: new Date().toISOString() });
     }
     if (!offlineAdapter.isOfflineId(familyId)) {
       await offlineAdapter.sync.add({ type: 'goal', action: 'update', data: { id: goalId, ...updateData }, familyId });
@@ -162,8 +163,8 @@ export const deleteGoal = async (familyId: string | null, goalId: string): Promi
   if (!familyId) return;
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const entries = await offlineAdapter.getAllByIndex<any>('goal_entries', 'goal_id', goalId);
-    await Promise.all(entries.map((entry: any) => offlineAdapter.delete('goal_entries', entry.id)));
+    const entries = await offlineAdapter.getAllByIndex<GoalEntryRow>('goal_entries', 'goal_id', goalId);
+    await Promise.all(entries.map((entry) => offlineAdapter.delete('goal_entries', entry.id)));
     await offlineAdapter.delete('goals', goalId);
     return;
   }

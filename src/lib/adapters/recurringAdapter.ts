@@ -16,7 +16,7 @@ import { offlineAdapter } from './offlineAdapter';
 import * as expenseAdapter from './expenseAdapter';
 import { logger } from '../logger';
 import type { RecurringExpense } from '@/types';
-import type { RecurringExpenseRow } from '@/types/database';
+import type { RecurringExpenseRow, ExpenseRow, MonthRow } from '@/types/database';
 import { shouldIncludeRecurringInMonth } from '../utils/monthUtils';
 import { mapRecurringExpenses } from '../mappers';
 
@@ -27,7 +27,7 @@ export const getRecurringExpenses = async (familyId: string | null) => {
   if (!familyId) return [] as RecurringExpense[];
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const data = await offlineAdapter.getAllByIndex<any>('recurring_expenses', 'family_id', familyId);
+    const data = await offlineAdapter.getAllByIndex<RecurringExpenseRow>('recurring_expenses', 'family_id', familyId);
     return mapRecurringExpenses(data || []);
   }
 
@@ -43,19 +43,19 @@ export const insertRecurring = async (familyId: string | null, payload: Partial<
   if (!familyId) return null;
   
   const offlineId = offlineAdapter.generateOfflineId('rec');
-  const offlineRecurringData = { id: offlineId, family_id: familyId, ...payload };
+  const offlineRecurringData: Partial<RecurringExpenseRow> = { id: offlineId, family_id: familyId, ...payload };
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    await offlineAdapter.put('recurring_expenses', offlineRecurringData as any);
+    await offlineAdapter.put('recurring_expenses', offlineRecurringData);
     return offlineRecurringData;
   }
   
   const res = await budgetService.insertRecurring(familyId, payload);
   if (res.error || !res.data) {
-    await offlineAdapter.put('recurring_expenses', offlineRecurringData as any);
+    await offlineAdapter.put('recurring_expenses', offlineRecurringData);
     // Only queue sync if it's an online family (not an offline family)
     if (!offlineAdapter.isOfflineId(familyId)) {
-      await offlineAdapter.sync.add({ type: 'recurring_expense', action: 'insert', data: offlineRecurringData, familyId });
+      await offlineAdapter.sync.add({ type: 'recurring_expense', action: 'insert', data: offlineRecurringData as Record<string, unknown>, familyId });
     }
   }
   return res;
@@ -71,17 +71,17 @@ export const updateRecurring = async (familyId: string | null, id: string, data:
   
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     // Update the recurring expense itself
-    const rec = await offlineAdapter.get<any>('recurring_expenses', id);
-    if (rec) await offlineAdapter.put('recurring_expenses', { ...rec, ...data } as any);
+    const rec = await offlineAdapter.get<RecurringExpenseRow>('recurring_expenses', id);
+    if (rec) await offlineAdapter.put('recurring_expenses', { ...rec, ...data });
     
     // If requested, also update all related expenses
     if (updatePastExpenses) {
       try {
         // Get all expenses (no index available for recurring_expense_id, so we need to filter)
-        const allExpenses = await offlineAdapter.getAll<any>('expenses');
+        const allExpenses = await offlineAdapter.getAll<ExpenseRow>('expenses');
         if (allExpenses && allExpenses.length > 0) {
           // Map recurring fields to expense fields
-          const expenseUpdateData: any = {};
+          const expenseUpdateData: Partial<ExpenseRow> = {};
           if (data.title) expenseUpdateData.title = data.title;
           if (data.category_key) expenseUpdateData.category_key = data.category_key;
           if (data.subcategory_id !== undefined) expenseUpdateData.subcategory_id = data.subcategory_id;
@@ -89,9 +89,9 @@ export const updateRecurring = async (familyId: string | null, id: string, data:
           if (data.due_day !== undefined) expenseUpdateData.due_day = data.due_day;
           
           // Filter and update expenses related to this recurring
-          const relatedExpenses = allExpenses.filter((exp: any) => exp.recurring_expense_id === id);
+          const relatedExpenses = allExpenses.filter((exp) => exp.recurring_expense_id === id);
           for (const expense of relatedExpenses) {
-            await offlineAdapter.put('expenses', { ...expense, ...expenseUpdateData } as any);
+            await offlineAdapter.put('expenses', { ...expense, ...expenseUpdateData });
           }
         }
       } catch (error) {
@@ -104,7 +104,7 @@ export const updateRecurring = async (familyId: string | null, id: string, data:
   const res = await budgetService.updateRecurring(id, data);
   if (updatePastExpenses) {
     // Map recurring fields to expense fields for the update
-    const expenseUpdateData: any = {};
+    const expenseUpdateData: Partial<ExpenseRow> = {};
     if (data.title) expenseUpdateData.title = data.title;
     if (data.category_key) expenseUpdateData.category_key = data.category_key;
     if (data.subcategory_id !== undefined) expenseUpdateData.subcategory_id = data.subcategory_id;
@@ -142,31 +142,31 @@ export const applyRecurringToMonth = async (familyId: string | null, recurring: 
   let targetMonth: number | undefined;
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const month = await offlineAdapter.get<any>('months', monthId);
+    const month = await offlineAdapter.get<MonthRow>('months', monthId);
     if (!month) return false;
     targetYear = month.year;
     targetMonth = month.month;
   } else {
     const m = await budgetService.getMonthById(monthId);
-    if (!m || !m.data || !m.data[0]) {
+    if (!m || !m.data) {
       const months = await budgetService.getMonths(familyId);
-      const found = (months.data || []).find((mm: any) => mm.id === monthId);
+      const found = (months.data || []).find((mm) => mm.id === monthId);
       if (!found) return false;
       targetYear = found.year;
       targetMonth = found.month;
     } else {
-      targetYear = m.data.year ?? m.data[0].year ?? undefined;
-      targetMonth = m.data.month ?? m.data[0].month ?? undefined;
+      targetYear = m.data.year;
+      targetMonth = m.data.month;
     }
   }
 
   if (targetYear === undefined || targetMonth === undefined) return false;
 
-  const result = shouldIncludeRecurringInMonth(recurring as any, targetYear, targetMonth);
+  const result = shouldIncludeRecurringInMonth(recurring, targetYear, targetMonth);
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     const now = new Date().toISOString();
-    const expenseData = {
+    const expenseData: Partial<ExpenseRow> = {
       id: offlineAdapter.generateOfflineId('exp'),
       family_id: familyId,
       month_id: monthId,
@@ -176,14 +176,14 @@ export const applyRecurringToMonth = async (familyId: string | null, recurring: 
       value: recurring.value,
       is_recurring: true,
       is_pending: true,
-      due_day: recurring.dueDay,
+      due_day: recurring.dueDay ?? null,
       recurring_expense_id: recurring.id,
       installment_current: recurring.hasInstallments ? result.installmentNumber : null,
-      installment_total: recurring.hasInstallments ? recurring.totalInstallments : null,
+      installment_total: recurring.hasInstallments ? (recurring.totalInstallments ?? null) : null,
       created_at: now,
       updated_at: now,
     };
-    await offlineAdapter.put('expenses', expenseData as any);
+    await offlineAdapter.put('expenses', expenseData);
     return true;
   }
 

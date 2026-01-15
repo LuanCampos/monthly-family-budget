@@ -17,6 +17,7 @@ import { logger } from '../../logger';
 import { mapGoalEntries, mapGoalEntry, mapExpense } from '../../mappers';
 import { toGoalEntryRow, UpdateGoalEntryInputSchema } from './utils';
 import type { GoalEntry, Expense } from '@/types';
+import type { GoalEntryRow, ExpenseRow } from '@/types/database';
 import type { GoalEntryPayload } from './types';
 
 /**
@@ -26,7 +27,7 @@ export const getEntries = async (familyId: string | null, goalId: string): Promi
   if (!familyId) return [];
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const entries = await offlineAdapter.getAllByIndex<any>('goal_entries', 'goal_id', goalId);
+    const entries = await offlineAdapter.getAllByIndex<GoalEntryRow>('goal_entries', 'goal_id', goalId);
     const mapped = mapGoalEntries(entries || []);
     // Sort by year/month descending (most recent first)
     return mapped.sort((a, b) => {
@@ -47,7 +48,7 @@ export const getEntries = async (familyId: string | null, goalId: string): Promi
  * Get entry by expense ID
  */
 export const getEntryByExpense = async (expenseId: string): Promise<GoalEntry | null> => {
-  const offlineEntries = await offlineAdapter.getAllByIndex<any>('goal_entries', 'expense_id', expenseId);
+  const offlineEntries = await offlineAdapter.getAllByIndex<GoalEntryRow>('goal_entries', 'expense_id', expenseId);
   if (offlineEntries && offlineEntries[0]) {
     return mapGoalEntry(offlineEntries[0]);
   }
@@ -66,7 +67,7 @@ export const createEntry = async (familyId: string | null, payload: GoalEntryPay
 
   const entryRow = toGoalEntryRow(payload);
   const now = new Date().toISOString();
-  const offlineEntry = {
+  const offlineEntry: Partial<GoalEntryRow> = {
     id: offlineAdapter.generateOfflineId('gentry'),
     ...entryRow,
     created_at: now,
@@ -74,18 +75,18 @@ export const createEntry = async (familyId: string | null, payload: GoalEntryPay
   };
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    await offlineAdapter.put('goal_entries', offlineEntry as any);
-    return mapGoalEntry(offlineEntry as any);
+    await offlineAdapter.put('goal_entries', offlineEntry);
+    return mapGoalEntry(offlineEntry as GoalEntryRow);
   }
 
   const { data, error } = await goalService.createEntry(entryRow);
   if (error || !data) {
     logger.warn('goal.entry.create.fallback', { goalId: payload.goalId, error: error?.message });
-    await offlineAdapter.put('goal_entries', offlineEntry as any);
+    await offlineAdapter.put('goal_entries', offlineEntry);
     if (!offlineAdapter.isOfflineId(familyId)) {
-      await offlineAdapter.sync.add({ type: 'goal_entry', action: 'insert', data: offlineEntry, familyId });
+      await offlineAdapter.sync.add({ type: 'goal_entry', action: 'insert', data: offlineEntry as Record<string, unknown>, familyId });
     }
-    return mapGoalEntry(offlineEntry as any);
+    return mapGoalEntry(offlineEntry as GoalEntryRow);
   }
 
   return mapGoalEntry(data);
@@ -111,21 +112,21 @@ export const updateEntry = async (
 ): Promise<void> => {
   if (!familyId) return;
 
-  const updateData = {
+  const updateData: Partial<GoalEntryRow> = {
     value: payload.value,
-    description: payload.description,
+    description: payload.description ?? null,
     month: payload.month,
     year: payload.year,
-  } as any;
+  };
 
   UpdateGoalEntryInputSchema.parse(updateData);
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const entry = await offlineAdapter.get<any>('goal_entries', entryId);
+    const entry = await offlineAdapter.get<GoalEntryRow>('goal_entries', entryId);
     if (!entry) return;
     // Block editing automatic entries unless explicitly allowed (e.g., from expenseAdapter)
     if (entry.expense_id && !allowAutomaticUpdate) throw new Error('Automatic entries cannot be edited');
-    await offlineAdapter.put('goal_entries', { ...entry, ...updateData, updated_at: new Date().toISOString() } as any);
+    await offlineAdapter.put('goal_entries', { ...entry, ...updateData, updated_at: new Date().toISOString() });
     return;
   }
 
@@ -137,9 +138,9 @@ export const updateEntry = async (
   const { error } = await goalService.updateEntry(entryId, updateData);
   if (error) {
     logger.warn('goal.entry.update.fallback', { entryId, error: error.message });
-    const entry = await offlineAdapter.get<any>('goal_entries', entryId);
+    const entry = await offlineAdapter.get<GoalEntryRow>('goal_entries', entryId);
     if (entry) {
-      await offlineAdapter.put('goal_entries', { ...entry, ...updateData, updated_at: new Date().toISOString() } as any);
+      await offlineAdapter.put('goal_entries', { ...entry, ...updateData, updated_at: new Date().toISOString() });
     }
     if (!offlineAdapter.isOfflineId(familyId)) {
       await offlineAdapter.sync.add({ type: 'goal_entry', action: 'update', data: { id: entryId, ...updateData }, familyId });
@@ -160,7 +161,7 @@ export const deleteEntry = async (familyId: string | null, entryId: string, allo
   if (!familyId) return;
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const entry = await offlineAdapter.get<any>('goal_entries', entryId);
+    const entry = await offlineAdapter.get<GoalEntryRow>('goal_entries', entryId);
     if (!entry) return;
     // Allow manual deletion of automatic entries - user may need to fix errors
     // Only block when called from internal operations (allowAutomaticDelete flag)
@@ -196,18 +197,18 @@ export const getHistoricalExpenses = async (familyId: string | null, subcategory
   if (!familyId) return [];
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const allExpenses = await offlineAdapter.getAll<any>('expenses');
-    const allEntries = await offlineAdapter.getAll<any>('goal_entries');
+    const allExpenses = await offlineAdapter.getAll<ExpenseRow>('expenses');
+    const allEntries = await offlineAdapter.getAll<GoalEntryRow>('goal_entries');
     
     // Create set of imported expense IDs
     const importedExpenseIds = new Set(
       (allEntries || [])
-        .map((e: any) => e.expense_id)
+        .map((e) => e.expense_id)
         .filter(Boolean)
     );
     
     // Filter by subcategory and exclude already imported
-    const filtered = (allExpenses || []).filter((e: any) => 
+    const filtered = (allExpenses || []).filter((e) => 
       e.subcategory_id === subcategoryId && !importedExpenseIds.has(e.id)
     );
     
@@ -241,14 +242,14 @@ export const importExpense = async (familyId: string | null, goalId: string, exp
   if (!familyId) return null;
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-    const expense = await offlineAdapter.get<any>('expenses', expenseId);
+    const expense = await offlineAdapter.get<ExpenseRow>('expenses', expenseId);
     if (!expense) {
       logger.error('goal.import.expense_not_found', { expenseId });
       throw new Error('Expense not found offline');
     }
 
     // Check if already imported
-    const existing = await offlineAdapter.getAllByIndex<any>('goal_entries', 'expense_id', expenseId);
+    const existing = await offlineAdapter.getAllByIndex<GoalEntryRow>('goal_entries', 'expense_id', expenseId);
     if (existing && existing.length > 0) {
       logger.warn('goal.import.already_imported', { expenseId });
       throw new Error('Expense already imported');
@@ -263,9 +264,6 @@ export const importExpense = async (familyId: string | null, goalId: string, exp
         parsedYear = Number(parts[parts.length - 2]) || parsedYear;
         parsedMonth = Number(parts[parts.length - 1]) || parsedMonth;
       }
-    } else if (typeof expense.month === 'number' && typeof expense.year === 'number') {
-      parsedYear = expense.year;
-      parsedMonth = expense.month;
     }
 
     const entry = await createEntry(familyId, {
@@ -301,5 +299,5 @@ export const importExpense = async (familyId: string | null, goalId: string, exp
   }
   
   logger.debug('goal.import.success', { goalId, expenseId });
-  return mapGoalEntry(data as any);
+  return mapGoalEntry(data);
 };

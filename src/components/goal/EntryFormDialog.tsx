@@ -5,7 +5,7 @@
  * Controls its own internal state to avoid flash on close.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,8 +43,8 @@ export const EntryFormDialog = ({
   const { currencySymbol } = useCurrency();
   
   // Use app's current month/year as default, fallback to system date
-  const getDefaultMonth = () => String(defaultMonth ?? new Date().getMonth() + 1);
-  const getDefaultYear = () => String(defaultYear ?? new Date().getFullYear());
+  const getDefaultMonth = useCallback(() => String(defaultMonth ?? new Date().getMonth() + 1), [defaultMonth]);
+  const getDefaultYear = useCallback(() => String(defaultYear ?? new Date().getFullYear()), [defaultYear]);
   
   // Internal state - all form values are controlled here
   const [isOpen, setIsOpen] = useState(false);
@@ -73,7 +73,7 @@ export const EntryFormDialog = ({
       }
       setIsOpen(true);
     }
-  }, [open, goal, entry, defaultMonth, defaultYear]);
+  }, [open, goal, entry, defaultMonth, defaultYear, getDefaultMonth, getDefaultYear]);
 
   const resetAndClose = () => {
     // Reset form and close at the same time - this prevents flash

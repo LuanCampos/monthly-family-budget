@@ -1,4 +1,4 @@
-import { offlineDB, syncQueue, generateOfflineId, isOfflineId } from '../storage/offlineStorage';
+import { offlineDB, syncQueue, generateOfflineId, isOfflineId, SyncQueueItem } from '../storage/offlineStorage';
 
 // Adapter layer to abstract the offline storage implementation. Use this when
 // interacting with local persistence or the sync queue so the rest of the code
@@ -12,7 +12,7 @@ export const offlineAdapter = {
   delete: (storeName: string, id: string) => offlineDB.delete(storeName, id),
   clear: (storeName: string) => offlineDB.clear(storeName),
   sync: {
-    add: (item: any) => syncQueue.add(item),
+    add: (item: Omit<SyncQueueItem, 'id' | 'createdAt'>) => syncQueue.add(item),
     getAll: () => syncQueue.getAll(),
     getByFamily: (familyId: string) => syncQueue.getByFamily(familyId),
     remove: (id: string) => syncQueue.remove(id),

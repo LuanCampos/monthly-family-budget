@@ -154,8 +154,8 @@ export const SettingsDialog = ({
 
     try {
       const res = await userService.upsertUserPreference(payload);
-      if ((res as any).error) {
-        throw (res as any).error;
+      if (res.error) {
+        throw res.error;
       }
     } catch (_err) {
       // Fallback: save to offline store and enqueue sync

@@ -31,7 +31,7 @@ export const ImportExpenseDialog = ({ trigger, subcategoryId, fetchExpenses, onI
       setLoading(false);
     };
     load();
-  }, [open, subcategoryId]);
+  }, [open, subcategoryId, fetchExpenses]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

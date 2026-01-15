@@ -95,7 +95,7 @@ export const PasswordSection: React.FC<PasswordSectionProps> = ({
         <DialogTrigger asChild>
           <TriggerButton 
             user={user} 
-            myPendingInvitations={myPendingInvitations as any[]} 
+            myPendingInvitations={myPendingInvitations} 
             getUserInitials={getUserInitials} 
             getDisplayName={getDisplayName} 
           />

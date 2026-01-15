@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useMemo } from 'react';
 import { useRef } from 'react';
-import { CategoryKey } from '@/types';
+import { CategoryKey, RecurringExpense } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
 import * as storageAdapter from '@/lib/adapters/storageAdapter';
 import { useFamily } from '@/contexts/FamilyContext';
@@ -9,6 +9,12 @@ import { toast } from 'sonner';
 import { useBudgetState } from './useBudgetState';
 import { createBudgetApi } from './useBudgetApi';
 import { logger } from '@/lib/logger';
+import type { 
+  SubcategoryRow, 
+  RecurringExpenseRow, 
+  MonthRow, 
+  ExpenseRow 
+} from '@/types/database';
 // Removed unused month utilities import
 
 // helpers that were unused removed or renamed to _ to satisfy lint
@@ -36,9 +42,7 @@ export const useBudget = () => {
     setMonths,
     setRecurringExpenses,
     setSubcategories,
-    categoryPercentages,
-    setCategoryPercentages,
-  }), [currentFamilyId, setMonths, setRecurringExpenses, setSubcategories, categoryPercentages, setCategoryPercentages]);
+  }), [currentFamilyId, setMonths, setRecurringExpenses, setSubcategories]);
 
   // Track a pending created month id so we can reliably select it after months refresh
   const pendingCreatedMonthIdRef = useRef<string | null>(null);
@@ -49,7 +53,7 @@ export const useBudget = () => {
 
       const monthsWithExpenses = await storageAdapter.getMonthsWithExpenses(currentFamilyId);
       setMonths(monthsWithExpenses);
-  }, [currentFamilyId]);
+  }, [currentFamilyId, setMonths]);
 
   // Load recurring expenses
   const loadRecurringExpenses = useCallback(async () => {
@@ -57,7 +61,7 @@ export const useBudget = () => {
 
     const recs = await storageAdapter.getRecurringExpenses(currentFamilyId);
     setRecurringExpenses(recs);
-  }, [currentFamilyId]);
+  }, [currentFamilyId, setRecurringExpenses]);
 
   // Load subcategories
   const loadSubcategories = useCallback(async () => {
@@ -65,7 +69,7 @@ export const useBudget = () => {
 
     const subs = await storageAdapter.getSubcategories(currentFamilyId);
     setSubcategories(subs);
-  }, [currentFamilyId]);
+  }, [currentFamilyId, setSubcategories]);
 
   // Note: loadCategoryGoals removed - limits are now loaded per-month in getMonthsWithExpenses
 
@@ -102,7 +106,7 @@ export const useBudget = () => {
     };
 
     loadData();
-  }, [currentFamilyId]);
+  }, [currentFamilyId, api, setMonths, setRecurringExpenses, setSubcategories, setCurrentMonthId, setCategoryPercentages, setLoading]);
 
   // Auto-select the most recent month after months are loaded
   useEffect(() => {
@@ -111,7 +115,7 @@ export const useBudget = () => {
       const mostRecent = months[months.length - 1];
       setCurrentMonthId(mostRecent.id);
     }
-  }, [months, currentMonthId]);
+  }, [months, currentMonthId, setCurrentMonthId]);
 
   // Set up realtime subscriptions (only for cloud families)
   useEffect(() => {
@@ -183,7 +187,7 @@ export const useBudget = () => {
     if (!res) return false;
 
     // Try to extract the new id from possible shapes: offline object, direct data, or { data, error }
-    const created = res as any;
+    const created = res as { id?: string; data?: { id?: string } };
     let newId: string | null = null;
     if (created.id) newId = created.id;
     else if (created.data && created.data.id) newId = created.data.id;
@@ -211,7 +215,7 @@ export const useBudget = () => {
       setCurrentMonthId(pendingId);
       pendingCreatedMonthIdRef.current = null;
     }
-  }, [months]);
+  }, [months, setCurrentMonthId]);
 
   const removeMonth = async (monthId: string) => {
     await storageAdapter.deleteMonthById(currentFamilyId, monthId);
@@ -316,12 +320,13 @@ export const useBudget = () => {
     // Determine created recurring id (handles offline object or Supabase response)
     let createdId: string | undefined;
     if (insertRes && typeof insertRes === 'object') {
-      if ((insertRes as any).id) createdId = (insertRes as any).id; // offline adapter returned object
-      else if ((insertRes as any).data && (insertRes as any).data.id) createdId = (insertRes as any).data.id; // supabase response
+      const typedRes = insertRes as { id?: string; data?: { id?: string } };
+      if (typedRes.id) createdId = typedRes.id; // offline adapter returned object
+      else if (typedRes.data && typedRes.data.id) createdId = typedRes.data.id; // supabase response
     }
 
     if (currentMonthId && currentMonth) {
-      const recurringObj = {
+      const recurringObj: RecurringExpense = {
         id: createdId || '',
         title,
         category,
@@ -333,7 +338,7 @@ export const useBudget = () => {
         totalInstallments,
         startYear,
         startMonth,
-      } as any;
+      };
 
       await api.applyRecurringToMonth(recurringObj, currentMonthId);
     }
@@ -378,7 +383,9 @@ export const useBudget = () => {
   };
 
   const applyRecurringToCurrentMonth = async (recurringId: string): Promise<boolean> => {
-    const result = await api.applyRecurringToMonth(recurringExpenses.find(r => r.id === recurringId) as any, currentMonthId as string);
+    const found = recurringExpenses.find(r => r.id === recurringId);
+    if (!found || !currentMonthId) return false;
+    const result = await api.applyRecurringToMonth(found, currentMonthId);
     if (result) {
       await api.loadMonths();
     }
@@ -490,7 +497,7 @@ export const useBudget = () => {
                 family_id: currentFamilyId,
                 name: sub.name,
                 category_key: sub.categoryKey
-              } as any);
+              } as Partial<SubcategoryRow>);
             }
 
             for (const rec of data.recurringExpenses) {
@@ -506,7 +513,7 @@ export const useBudget = () => {
                 total_installments: rec.totalInstallments,
                 start_year: rec.startYear,
                 start_month: rec.startMonth
-              } as any);
+              } as Partial<RecurringExpenseRow>);
             }
 
             for (const m of data.months) {
@@ -517,7 +524,7 @@ export const useBudget = () => {
                 year: m.year,
                 month: m.month,
                 income: m.income
-              } as any);
+              } as Partial<MonthRow>);
 
               for (const exp of m.expenses) {
                 const now = new Date().toISOString();
@@ -536,7 +543,7 @@ export const useBudget = () => {
                   installment_total: exp.installmentInfo?.total,
                   created_at: exp.createdAt || now,
                   updated_at: now,
-                } as any);
+                } as Partial<ExpenseRow>);
               }
             }
 
