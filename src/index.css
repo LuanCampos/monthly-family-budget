@@ -68,12 +68,8 @@
 @layer components {
   /* Dashboard Card Styles */
   .dashboard-card {
-    @apply bg-card rounded-lg border border-border transition-all duration-200;
+    @apply bg-card rounded-lg border border-border;
     box-shadow: var(--card-shadow);
-  }
-
-  .dashboard-card:hover {
-    background-color: hsl(var(--card-hover));
   }
 
   /* Goal action buttons (Detalhes/Histórico) */
