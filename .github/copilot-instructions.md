@@ -1,118 +1,85 @@
 # GitHub Copilot Instructions — Monthly Family Budget
 
-> **🚨 REGRA PRINCIPAL**: Sempre siga [`CONTRIBUTING.md`](../CONTRIBUTING.md) como fonte de verdade.
-> Este arquivo é um resumo. Em caso de dúvida, consulte CONTRIBUTING.md.
+> **🚨 OBRIGATÓRIO: Leia [`CONTRIBUTING.md`](../CONTRIBUTING.md) ANTES de qualquer alteração.**
 
-## Stack & Architecture
-**Vite + React + TypeScript + Supabase + IndexedDB** — Cloud-first, offline-capable family budget app.
+## Stack
+Vite + React 18 + TypeScript + Supabase + IndexedDB — Cloud-first, offline-capable.
 
-**Data flow**: Component → Hook → `storageAdapter` → Service (Supabase) OR `offlineAdapter` (IndexedDB)
+## Fluxo de Dados
+```
+Component → Hook → storageAdapter → Service (Supabase) | offlineAdapter (IndexedDB)
+```
 
-## Key Directories
-| Layer | Path | Purpose |
-|-------|------|---------|
-| Services | `src/lib/services/` | Thin Supabase wrappers (budgetService, familyService, goalService, userService) |
-| Adapters | `src/lib/adapters/` | Online/offline branching; `storageAdapter.ts` is the main entry point |
-| Hooks | `src/hooks/` | State orchestration; `useBudget.ts`, `useGoals.ts`, `useBudgetState.ts` |
-| Components | `src/components/{domain}/` | Domain folders: expense/, goal/, family/, recurring/, settings/, ui/ |
-| Types | `src/types/` | `budget.ts` (app types), `database.ts` (DB rows with snake_case) |
+## Diretórios Principais
+| Camada | Path |
+|--------|------|
+| Services | `src/lib/services/` |
+| Adapters | `src/lib/adapters/` |
+| Hooks | `src/hooks/` |
+| Components | `src/components/{domain}/` |
+| Types | `src/types/` |
 
-## Component Naming — MANDATORY Taxonomy
+## Sufixos de Componentes (Ver CONTRIBUTING.md para lista completa)
+| Sufixo | Uso |
+|--------|-----|
+| `*FormFields` | Campos de form (sem Dialog) |
+| `*FormDialog` | Dialog criar/editar UMA entidade |
+| `*ListDialog` | Dialog com lista + CRUD (abre FormDialog) |
+| `*Panel` | Componente autônomo complexo |
+| `*Card` | Exibição de entidade |
 
-> **⚠️ CRITICAL**: Each suffix has specific meaning. Use the correct one.
+**❌ Proibidos**: `*Manager`, `*Container`, `*Modal`, `*Form` (para dialogs)
 
-| Suffix | Purpose | Example |
-|--------|---------|---------|
-| `*FormFields` | Form fields ONLY — no Dialog, no submit | `ExpenseFormFields.tsx` |
-| `*FormDialog` | Dialog to create/edit ONE entity | `ExpenseFormDialog.tsx`, `GoalFormDialog.tsx` |
-| `*ListDialog` | Dialog with list + inline CRUD | `SubcategoryListDialog.tsx` |
-| `*SettingsDialog` | Complex dialog with tabs/sections | `FamilySettingsDialog.tsx` |
-| `*ViewDialog` | Read-only detail view | `GoalViewDialog.tsx` |
-| `*SelectDialog` | Item picker dialog | `ExpenseSelectDialog.tsx` |
-| `*Card` | Single entity display | `GoalCard.tsx` |
-| `*List` | Renderable list (NOT a Dialog) | `ExpenseList.tsx` |
-| `*Section` | Page section | `ProfileSection.tsx` |
-| `*Chart` | Data visualization | `ExpenseChart.tsx` |
-| `*Panel` | Complex autonomous component | `LimitsPanel.tsx`, `RecurringExpensesPanel.tsx` |
-| `*Input` | Custom input field | `IncomeInput.tsx` |
-| `*Selector` | Inline picker (no dialog) | `MonthSelector.tsx`, `YearSelector.tsx` |
-| `*Button` | Stateful custom button | `TriggerButton.tsx` |
-| `*Progress` | Progress indicator | `GoalProgress.tsx` |
+## Regras Críticas
 
-> **💡 Confirmations**: Use `ConfirmDialog` from `@/components/common` — generic reusable component. **DO NOT create** individual `Delete*ConfirmDialog` files.
+### Dialogs
+```tsx
+<DialogContent className="bg-card border-border sm:max-w-md flex flex-col gap-0 p-0 max-h-[90vh] overflow-hidden">
+```
+- Header: `px-6 pt-6 pb-4 border-b border-border`
+- Content: `px-6 py-4 overflow-y-auto`
+- Footer: `px-6 py-4 border-t border-border bg-secondary/30` (NÃO use DialogFooter)
 
-### ❌ FORBIDDEN Suffixes
-| Don't Use | Use Instead |
-|-----------|-------------|
-| `*Manager` | `*ListDialog` or `*SettingsDialog` |
-| `*Form` (for dialogs) | `*FormDialog` |
-| `*Modal` | `*Dialog` |
-| `*Component` | Specific suffix |
-| `*Container` | `*Section`, `*Panel`, or `*List` |
-| `*Wrapper` | Describe actual function |
-| Plural without suffix | `*List`, `*Panel`, or `*Section` |
-| `*ConfirmDialog` (individual) | Use generic `ConfirmDialog` from `/common` |
+### Inputs
+```tsx
+<Input className="h-10 bg-secondary/50 border-border" />
+```
 
-### ❌ Multi-export FORBIDDEN
-- **One component per file** — never export multiple components from same file
-- **Exception**: Index files (re-exports only), types files, internal helper components
+### Cores (NUNCA hardcode)
+| Uso | Token |
+|-----|-------|
+| Fundo cards | `bg-card` |
+| Fundo inputs | `bg-secondary/50` |
+| Texto | `text-foreground` / `text-muted-foreground` |
+| Bordas | `border-border` |
 
-## Other File Naming
+### Segurança
+- `logger.*` em vez de `console.*`
+- `import.meta.env.*` para credenciais
+- `secureStorage` em vez de `localStorage`
 
-| Type | Pattern | Location | Example |
-|------|---------|----------|---------|
-| UI primitives (shadcn) | `kebab-case.tsx` | `src/components/ui/` | `button.tsx`, `dialog.tsx` |
-| Domain hooks | `use{Domain}.ts` | `src/hooks/` | `useBudget.ts`, `useGoals.ts` |
-| UI hooks | `use-{name}.ts` | `src/hooks/ui/` | `use-mobile.ts`, `use-toast.ts` |
-| Services | `{domain}Service.ts` | `src/lib/services/` | `budgetService.ts` |
-| Adapters | `{domain}Adapter.ts` | `src/lib/adapters/` | `expenseAdapter.ts` |
-| Complex adapters | `{function}Adapter.ts` | `src/lib/adapters/{domain}/` | `goalCoreAdapter.ts` |
-| Utilities | `{name}.ts` | `src/lib/utils/` | `formatters.ts` |
-| Storage | `{name}Storage.ts` | `src/lib/storage/` | `secureStorage.ts` |
-| Core lib | `{name}.ts` | `src/lib/` | `mappers.ts`, `logger.ts` |
-| Pages | `PascalCase.tsx` | `src/pages/` | `Budget.tsx`, `Goals.tsx` |
-| Contexts | `{Name}Context.tsx` | `src/contexts/` | `AuthContext.tsx` |
-
-## Critical Patterns
-
-### Offline-safe code (adapters only)
-```typescript
+### Offline
+```tsx
 if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
-  await offlineAdapter.put('table', data);  // IndexedDB
+  // IndexedDB
 } else {
-  const res = await budgetService.operation(data);  // Supabase
-  if (res.error) {
-    await offlineAdapter.put('table', data);
-    await offlineAdapter.sync.add({ type: 'entity', action: 'insert', data, familyId });
-  }
+  // Supabase
 }
 ```
 
-### Boolean fields — avoid nullish coalescing
-```typescript
-// ❌ WRONG: installment_current: recurring.hasInstallments ?? undefined
-// ✅ RIGHT: installment_current: recurring.hasInstallments ? value : null
-```
-
-### Type mapping: DB (snake_case) → App (camelCase)
-Use mappers in `src/lib/mappers.ts`; never transform inline.
-
-## Commands
+## Comandos
 ```bash
-npm run dev       # Start dev server (localhost:8080)
-npm run build     # Production build
-npm run lint      # ESLint
+npm run dev && npm run build && npm run lint
 ```
 
-## Conventions
-- **Named exports only** — no default exports
-- **Components**: Use `src/components/ui/*` (shadcn-ui/Radix); no direct Supabase calls
-- **Adding data ops**: Service → Adapter (handle online/offline) → Export from storageAdapter → Call from hook
-- **Strict TS**: No `any`, explicit types, handle null/undefined
+## ⛔ Não Faça
+- Chamar Supabase de componentes
+- `export default`
+- Múltiplos componentes por arquivo
+- `any` (use `unknown`)
+- Cores hardcoded
+- `DialogFooter`
 
-## Don't
-- Call Supabase from components — use hooks
-- Use `navigator.onLine` alone — check `offlineAdapter.isOfflineId(familyId)` first
-- Place files in root `lib/` or `components/` — use subfolders
-- Use forbidden suffixes (`*Manager`, `*Form` for dialogs, `*Modal`)
-- Invent new suffixes — use the taxonomy from CONTRIBUTING.md
+---
+
+*Documentação completa em CONTRIBUTING.md*

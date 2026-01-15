@@ -1,25 +1,23 @@
 import { useState } from 'react';
-import { Plus, Trash2, Pencil, Tags, X, Check } from 'lucide-react';
+import { Plus, Trash2, Pencil, Tags, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { CategoryKey, Subcategory } from '@/types';
 import { CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TranslationKey } from '@/i18n/translations/pt';
 import { ConfirmDialog } from '@/components/common';
+import { SubcategoryFormDialog } from './SubcategoryFormDialog';
 
 interface SubcategoryListDialogProps {
   subcategories: Subcategory[];
@@ -36,47 +34,35 @@ export const SubcategoryListDialog = ({
 }: SubcategoryListDialogProps) => {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newCategory, setNewCategory] = useState<CategoryKey>('essenciais');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
-  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteSubId, setDeleteSubId] = useState<string | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<CategoryKey>>(
+    new Set(CATEGORIES.map((c) => c.key))
+  );
 
-  const handleAdd = async () => {
-    if (!newName.trim() || isAdding) return;
-    setIsAdding(true);
-    try {
-      await onAdd(newName.trim(), newCategory);
-      setNewName('');
-    } finally {
-      setIsAdding(false);
-    }
-  };
-
-  const startEdit = (sub: Subcategory) => {
-    setEditingId(sub.id);
-    setEditingName(sub.name);
-  };
-
-  const saveEdit = async () => {
-    if (editingId && editingName.trim() && !isSavingEdit) {
-      setIsSavingEdit(true);
-      try {
-        await onUpdate(editingId, editingName.trim());
-        setEditingId(null);
-        setEditingName('');
-      } finally {
-        setIsSavingEdit(false);
+  const toggleCategory = (key: CategoryKey) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
       }
-    }
+      return next;
+    });
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditingName('');
+  const handleAdd = async (name: string, categoryKey: CategoryKey) => {
+    await onAdd(name, categoryKey);
+  };
+
+  const handleEdit = async (name: string) => {
+    if (editingSubcategory) {
+      await onUpdate(editingSubcategory.id, name);
+      setEditingSubcategory(null);
+    }
   };
 
   const handleRemove = async (id: string) => {
@@ -88,6 +74,16 @@ export const SubcategoryListDialog = ({
       setDeletingId(null);
       setDeleteSubId(null);
     }
+  };
+
+  const openAddForm = () => {
+    setEditingSubcategory(null);
+    setIsFormOpen(true);
+  };
+
+  const openEditForm = (sub: Subcategory) => {
+    setEditingSubcategory(sub);
+    setIsFormOpen(true);
   };
 
   const groupedSubcategories = CATEGORIES.map((cat) => ({
@@ -118,121 +114,60 @@ export const SubcategoryListDialog = ({
             </DialogTitle>
           </DialogHeader>
 
-          {/* Add new form */}
-          <div className="px-6 py-4 border-b border-border bg-secondary/30">
-            <div className="flex gap-2">
-              <Input
-                placeholder={t('subcategoryName')}
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                className="h-10 bg-background border-border flex-1"
-                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-              />
-              <Select
-                value={newCategory}
-                onValueChange={(v) => setNewCategory(v as CategoryKey)}
-              >
-                <SelectTrigger className="w-36 h-10 bg-background border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat.key} value={cat.key}>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                        {t(cat.name as TranslationKey)}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={handleAdd}
-                size="icon"
-                disabled={isAdding}
-                className="h-10 w-10 bg-primary text-primary-foreground hover:bg-primary/90 flex-shrink-0"
-                aria-label={t('addSubcategory')}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
           {/* List */}
           <div className="flex-1 overflow-y-auto px-6 py-4">
-            <div className="space-y-4">
-              {groupedSubcategories.map((cat) => (
-                <div key={cat.key}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: cat.color }}
-                    />
-                    <span className="text-sm font-medium text-foreground">
-                      {cat.translatedName}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({cat.subcategories.length})
-                    </span>
-                  </div>
+            <div className="space-y-2">
+              {groupedSubcategories.map((cat) => {
+                const isExpanded = expandedCategories.has(cat.key);
+                return (
+                  <Collapsible
+                    key={cat.key}
+                    open={isExpanded}
+                    onOpenChange={() => toggleCategory(cat.key)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        <span className="text-sm font-medium text-foreground">
+                          {cat.translatedName}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          ({cat.subcategories.length})
+                        </span>
+                      </button>
+                    </CollapsibleTrigger>
 
-                  {cat.subcategories.length === 0 ? (
-                    <p className="text-xs text-muted-foreground ml-5">
-                      {t('noSubcategories')}
-                    </p>
-                  ) : (
-                    <div className="space-y-1.5 ml-5">
-                      {cat.subcategories.map((sub) => (
-                        <div
-                          key={sub.id}
-                          className="flex items-center justify-between p-2.5 bg-secondary/50 rounded-lg group"
-                        >
-                          {editingId === sub.id ? (
-                            <div className="flex items-center gap-2 flex-1">
-                              <Input
-                                value={editingName}
-                                onChange={(e) => setEditingName(e.target.value)}
-                                className="h-8 bg-background border-border text-sm"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') saveEdit();
-                                  if (e.key === 'Escape') cancelEdit();
-                                }}
-                              />
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={saveEdit}
-                                disabled={isSavingEdit}
-                                className="h-9 w-9 text-primary hover:bg-primary/10"
-                                aria-label={t('save')}
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={cancelEdit}
-                                disabled={isSavingEdit}
-                                className="h-9 w-9 text-muted-foreground hover:bg-muted"
-                                aria-label={t('cancel')}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <>
+                    <CollapsibleContent>
+                      {cat.subcategories.length === 0 ? (
+                        <p className="text-xs text-muted-foreground ml-9 py-2">
+                          {t('noSubcategories')}
+                        </p>
+                      ) : (
+                        <div className="space-y-1.5 ml-6 mt-1.5">
+                          {cat.subcategories.map((sub) => (
+                            <div
+                              key={sub.id}
+                              className="flex items-center justify-between p-2.5 bg-secondary/50 rounded-lg group"
+                            >
                               <span className="text-sm text-foreground">
                                 {sub.name}
                               </span>
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="flex items-center gap-1">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => startEdit(sub)}
+                                  onClick={() => openEditForm(sub)}
                                   className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10"
                                   aria-label={t('edit')}
                                 >
@@ -249,18 +184,36 @@ export const SubcategoryListDialog = ({
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
-                            </>
-                          )}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
             </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-border bg-secondary/30">
+            <Button
+              onClick={openAddForm}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('addSubcategory')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      <SubcategoryFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        subcategory={editingSubcategory}
+        onSave={editingSubcategory ? handleEdit : handleAdd}
+      />
 
       <ConfirmDialog
         open={!!deleteSubId}

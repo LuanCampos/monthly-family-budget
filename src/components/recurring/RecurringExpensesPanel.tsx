@@ -4,28 +4,15 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CategoryKey, Subcategory, RecurringExpense, Expense } from '@/types';
-import { getCategoryByKey, DEFAULT_CATEGORY, CATEGORIES } from '@/constants/categories';
-import { RecurringExpenseFormFields } from './RecurringExpenseFormFields';
-import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/lib/utils/formatters';
+import { getCategoryByKey, CATEGORIES } from '@/constants/categories';
+import { RecurringExpenseFormDialog } from './RecurringExpenseFormDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
 import { ConfirmDialog } from '@/components/common';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 type SortType = 'category' | 'value' | 'dueDate';
 type SortDirection = 'asc' | 'desc';
-
-type ViewMode = 'list' | 'add' | 'edit';
 
 interface RecurringExpensesPanelProps {
   expenses: RecurringExpense[];
@@ -75,141 +62,24 @@ export const RecurringExpensesPanel = ({
   const { t } = useLanguage();
   const { formatCurrency } = useCurrency();
   
-  // Use app's current month/year as default, fallback to system date
-  const getDefaultMonth = () => String(defaultMonth ?? new Date().getMonth() + 1);
-  const getDefaultYear = () => String(defaultYear ?? new Date().getFullYear());
-  
   const [isOpen, setIsOpen] = useState(false);
-  const [view, setView] = useState<ViewMode>('list');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [showUpdateDialog, setShowUpdateDialog] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<RecurringExpense | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [applyingId, setApplyingId] = useState<string | null>(null);
   
   const [sortType, setSortType] = useState<SortType>('category');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<CategoryKey>(DEFAULT_CATEGORY);
-  const [subcategoryId, setSubcategoryId] = useState('');
-  const [value, setValue] = useState('');
-  const [dueDay, setDueDay] = useState('');
-  const [hasInstallments, setHasInstallments] = useState(false);
-  const [totalInstallments, setTotalInstallments] = useState('');
-  const [startYear, setStartYear] = useState(getDefaultYear);
-  const [startMonth, setStartMonth] = useState(getDefaultMonth);
-
-  const resetForm = () => {
-    setTitle('');
-    setCategory(DEFAULT_CATEGORY);
-    setSubcategoryId('');
-    setValue('');
-    setDueDay('');
-    setHasInstallments(false);
-    setTotalInstallments('');
-    setStartYear(getDefaultYear());
-    setStartMonth(getDefaultMonth());
-    setEditingId(null);
+  const openAddForm = () => {
+    setEditingExpense(null);
+    setIsFormOpen(true);
   };
 
-  const closeDialog = () => {
-    setIsOpen(false);
-    setView('list');
-    resetForm();
-  };
-
-  const openAdd = () => {
-    resetForm();
-    setView('add');
-  };
-
-  const openEdit = (exp: RecurringExpense) => {
-    setTitle(exp.title);
-    setCategory(exp.category);
-    setSubcategoryId(exp.subcategoryId || '');
-    setValue(formatCurrencyInput(exp.value));
-    setDueDay(exp.dueDay?.toString() || '');
-    setHasInstallments(exp.hasInstallments || false);
-    setTotalInstallments(exp.totalInstallments?.toString() || '');
-    setStartYear(exp.startYear?.toString() || '');
-    setStartMonth(exp.startMonth?.toString() || '');
-    setEditingId(exp.id);
-    setView('edit');
-  };
-
-  const handleSubmit = async () => {
-    if (isSaving) return;
-    
-    const numericValue = parseCurrencyInput(value);
-    if (!title.trim() || numericValue <= 0) return;
-
-    const finalSubcategoryId = subcategoryId || undefined;
-    const finalDueDay = dueDay ? parseInt(dueDay) : undefined;
-    const finalTotalInstallments = hasInstallments && totalInstallments ? parseInt(totalInstallments) : undefined;
-    const finalStartYear = hasInstallments && startYear ? parseInt(startYear) : undefined;
-    const finalStartMonth = hasInstallments && startMonth ? parseInt(startMonth) : undefined;
-
-    if (view === 'add') {
-      setIsSaving(true);
-      try {
-        await onAdd(
-          title.trim(), 
-          category, 
-          finalSubcategoryId, 
-          numericValue,
-          finalDueDay,
-          hasInstallments,
-          finalTotalInstallments,
-          finalStartYear,
-          finalStartMonth
-        );
-      } finally {
-        setIsSaving(false);
-        // Close and reset only after all async operations complete
-        setView('list');
-        resetForm();
-      }
-    }
-
-    if (view === 'edit' && editingId !== null) {
-      setShowUpdateDialog(true);
-    }
-  };
-
-  const confirmUpdate = async (updatePast: boolean) => {
-    if (!editingId || isSaving) return;
-
-    const numericValue = parseCurrencyInput(value);
-    const finalSubcategoryId = subcategoryId || undefined;
-    const finalDueDay = dueDay ? parseInt(dueDay) : undefined;
-    const finalTotalInstallments = hasInstallments && totalInstallments ? parseInt(totalInstallments) : undefined;
-    const finalStartYear = hasInstallments && startYear ? parseInt(startYear) : undefined;
-    const finalStartMonth = hasInstallments && startMonth ? parseInt(startMonth) : undefined;
-
-    setIsSaving(true);
-    try {
-      await onUpdate(
-        editingId,
-        title.trim(),
-        category,
-        finalSubcategoryId,
-        numericValue,
-        finalDueDay,
-        hasInstallments,
-        finalTotalInstallments,
-        finalStartYear,
-        finalStartMonth,
-        updatePast
-      );
-    } finally {
-      setIsSaving(false);
-      // Close and reset only after all async operations complete
-      setShowUpdateDialog(false);
-      setView('list');
-      resetForm();
-    }
+  const openEditForm = (exp: RecurringExpense) => {
+    setEditingExpense(exp);
+    setIsFormOpen(true);
   };
 
   const getSubcategoryName = (subId?: string) => {
@@ -285,252 +155,184 @@ export const RecurringExpensesPanel = ({
         <span className="hidden xs:inline ml-1 text-muted-foreground">({expenses.length})</span>
       </Button>
 
-      <Dialog
-        open={isOpen}
-        onOpenChange={(open) => {
-          if (!open) closeDialog();
-          else setIsOpen(true);
-        }}
-      >
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="bg-card border-border sm:max-w-xl max-h-[85vh] flex flex-col gap-0 p-0">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
             <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
               <RefreshCw className="h-5 w-5 text-primary" />
-              {view === 'list'
-                ? t('recurringExpenses')
-                : view === 'add'
-                ? t('newRecurringExpense')
-                : t('editRecurringExpense')}
+              {t('recurringExpenses')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-4">
-            {view === 'list' && (
-              <div className="space-y-3">
-                {expenses.length > 0 && (
-                  <div className="flex items-center gap-1 pb-2 border-b border-border">
-                    <span className="text-xs text-muted-foreground mr-2">{t('sortBy')}:</span>
-                    <Button
-                      variant={sortType === 'category' ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => handleSort('category')}
-                      className="h-7 text-xs gap-1"
-                    >
-                      {t('sortCategory')}
-                      {getSortIcon('category')}
-                    </Button>
-                    <Button
-                      variant={sortType === 'value' ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => handleSort('value')}
-                      className="h-7 text-xs gap-1"
-                    >
-                      {t('sortValue')}
-                      {getSortIcon('value')}
-                    </Button>
-                    <Button
-                      variant={sortType === 'dueDate' ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => handleSort('dueDate')}
-                      className="h-7 text-xs gap-1"
-                    >
-                      {t('sortDueDate')}
-                      {getSortIcon('dueDate')}
-                    </Button>
-                  </div>
-                )}
-                
-                {expenses.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8 text-sm">
-                    {t('noRecurringExpenses')}
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                  {sortedExpenses.map((exp) => {
-                    const cat = getCategoryByKey(exp.category);
-                    const subName = getSubcategoryName(exp.subcategoryId);
-                    const isInCurrentMonth = currentMonthExpenses.some(
-                      e => e.recurringExpenseId === exp.id
-                    );
+            <div className="space-y-3">
+              {expenses.length > 0 && (
+                <div className="flex items-center gap-1 pb-2 border-b border-border">
+                  <span className="text-xs text-muted-foreground mr-2">{t('sortBy')}:</span>
+                  <Button
+                    variant={sortType === 'category' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleSort('category')}
+                    className="h-7 text-xs gap-1"
+                  >
+                    {t('sortCategory')}
+                    {getSortIcon('category')}
+                  </Button>
+                  <Button
+                    variant={sortType === 'value' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleSort('value')}
+                    className="h-7 text-xs gap-1"
+                  >
+                    {t('sortValue')}
+                    {getSortIcon('value')}
+                  </Button>
+                  <Button
+                    variant={sortType === 'dueDate' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={() => handleSort('dueDate')}
+                    className="h-7 text-xs gap-1"
+                  >
+                    {t('sortDueDate')}
+                    {getSortIcon('dueDate')}
+                  </Button>
+                </div>
+              )}
+              
+              {expenses.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8 text-sm">
+                  {t('noRecurringExpenses')}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                {sortedExpenses.map((exp) => {
+                  const cat = getCategoryByKey(exp.category);
+                  const subName = getSubcategoryName(exp.subcategoryId);
+                  const isInCurrentMonth = currentMonthExpenses.some(
+                    e => e.recurringExpenseId === exp.id
+                  );
 
-                    const handleApply = async () => {
-                      if (applyingId === exp.id) return;
-                      setApplyingId(exp.id);
-                      try {
-                        const success = await onApply(exp.id);
-                        if (success) {
-                          toast.success(t('applyToCurrentMonth'));
-                        } else {
-                          toast.info(t('alreadyInCurrentMonth'));
-                        }
-                      } finally {
-                        setApplyingId(null);
+                  const handleApply = async () => {
+                    if (applyingId === exp.id) return;
+                    setApplyingId(exp.id);
+                    try {
+                      const success = await onApply(exp.id);
+                      if (success) {
+                        toast.success(t('applyToCurrentMonth'));
+                      } else {
+                        toast.info(t('alreadyInCurrentMonth'));
                       }
-                    };
+                    } finally {
+                      setApplyingId(null);
+                    }
+                  };
 
-                    return (
-                      <div
-                        key={exp.id}
-                        className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg gap-3 group"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: cat.color }}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-foreground text-sm font-medium">
-                                {exp.title}
-                              </p>
-                              {exp.hasInstallments && exp.totalInstallments && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
-                                  {exp.totalInstallments}x
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap mt-0.5">
-                              <span>{t(cat.name as TranslationKey)}</span>
-                              {subName && <span>• {subName}</span>}
-                              {exp.dueDay && (
-                                <span className="inline-flex items-center gap-0.5">
-                                  <Calendar className="h-3 w-3" />
-                                  {t('day')} {exp.dueDay}
-                                </span>
-                              )}
-                            </div>
+                  return (
+                    <div
+                      key={exp.id}
+                      className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg gap-3 group"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-foreground text-sm font-medium">
+                              {exp.title}
+                            </p>
+                            {exp.hasInstallments && exp.totalInstallments && (
+                              <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
+                                {exp.totalInstallments}x
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap mt-0.5">
+                            <span>{t(cat.name as TranslationKey)}</span>
+                            {subName && <span>• {subName}</span>}
+                            {exp.dueDay && (
+                              <span className="inline-flex items-center gap-0.5">
+                                <Calendar className="h-3 w-3" />
+                                {t('day')} {exp.dueDay}
+                              </span>
+                            )}
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <span className="text-foreground text-sm font-semibold tabular-nums mr-1">
-                            {formatCurrency(exp.value)}
-                          </span>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleApply}
-                            aria-label={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
-                            disabled={isInCurrentMonth || applyingId === exp.id}
-                            title={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
-                            className={`h-9 w-9 ${
-                              isInCurrentMonth || applyingId === exp.id
-                                ? 'text-muted-foreground/40 cursor-not-allowed' 
-                                : 'text-muted-foreground hover:text-success hover:bg-success/10'
-                            }`}
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEdit(exp)}
-                            className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                            aria-label={t('edit')}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteId(exp.id)}
-                            className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            aria-label={t('delete')}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
                       </div>
-                    );
-                  })}
-                  </div>
-                )}
-              </div>
-            )}
 
-            {(view === 'add' || view === 'edit') && (
-              <RecurringExpenseFormFields
-                title={title}
-                category={category}
-                subcategoryId={subcategoryId}
-                value={value}
-                dueDay={dueDay}
-                hasInstallments={hasInstallments}
-                totalInstallments={totalInstallments}
-                startYear={startYear}
-                startMonth={startMonth}
-                subcategories={subcategories}
-                onTitleChange={setTitle}
-                onCategoryChange={setCategory}
-                onSubcategoryChange={setSubcategoryId}
-                onValueChange={(v) => setValue(sanitizeCurrencyInput(v))}
-                onDueDayChange={setDueDay}
-                onHasInstallmentsChange={setHasInstallments}
-                onTotalInstallmentsChange={setTotalInstallments}
-                onStartYearChange={setStartYear}
-                onStartMonthChange={setStartMonth}
-              />
-            )}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <span className="text-foreground text-sm font-semibold tabular-nums mr-1">
+                          {formatCurrency(exp.value)}
+                        </span>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleApply}
+                          aria-label={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
+                          disabled={isInCurrentMonth || applyingId === exp.id}
+                          title={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
+                          className={`h-9 w-9 ${
+                            isInCurrentMonth || applyingId === exp.id
+                              ? 'text-muted-foreground/40 cursor-not-allowed' 
+                              : 'text-muted-foreground hover:text-success hover:bg-success/10'
+                          }`}
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEditForm(exp)}
+                          className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                          aria-label={t('edit')}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteId(exp.id)}
+                          className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          aria-label={t('delete')}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Footer */}
           <div className="px-6 py-4 border-t border-border bg-secondary/30">
-            {view === 'list' ? (
-              <Button
-                onClick={openAdd}
-                className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {t('addRecurringExpense')}
-              </Button>
-            ) : (
-              <Button
-                onClick={handleSubmit}
-                disabled={isSaving}
-                className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {view === 'add' ? t('add') : t('save')}
-              </Button>
-            )}
+            <Button
+              onClick={openAddForm}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('addRecurringExpense')}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
-        <AlertDialogContent className="bg-card border-border sm:max-w-sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-lg font-semibold">
-              <RefreshCw className="h-5 w-5 text-primary" />
-              {t('updateRecurringTitle')}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              {t('updateRecurringDescription')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowUpdateDialog(false)} disabled={isSaving}>
-              {t('cancel')}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => confirmUpdate(true)}
-              disabled={isSaving}
-              className="bg-secondary text-foreground hover:bg-secondary/80"
-            >
-              {t('updateAll')}
-            </AlertDialogAction>
-            <AlertDialogAction
-              onClick={() => confirmUpdate(false)}
-              disabled={isSaving}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {t('updateFutureOnly')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <RecurringExpenseFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        expense={editingExpense}
+        subcategories={subcategories}
+        defaultMonth={defaultMonth}
+        defaultYear={defaultYear}
+        onAdd={onAdd}
+        onUpdate={onUpdate}
+      />
 
       <ConfirmDialog
         open={!!deleteId}

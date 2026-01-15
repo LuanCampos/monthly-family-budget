@@ -4,104 +4,188 @@
 
 ---
 
-## 📋 Checklist de Pull Request
-
-Antes de abrir um PR, verifique:
+## 📋 Checklist de PR
 
 - [ ] `npm run build` passa sem erros
 - [ ] `npm run lint` passa com **zero warnings**
 - [ ] Sem `console.*` — use `logger` de `@/lib/logger`
 - [ ] Sem credenciais hardcoded — use `import.meta.env.*`
-- [ ] Arquivos nomeados conforme taxonomia (ver seções abaixo)
-- [ ] Um componente por arquivo (exceto re-exports em `index.ts`)
-- [ ] Tipos explícitos — sem `any` (use `unknown` quando necessário)
+- [ ] Arquivos nomeados conforme taxonomia
+- [ ] Um componente por arquivo
+- [ ] Tipos explícitos — sem `any`
 
 ---
 
 ## 🏗️ Arquitetura
 
-**Stack**: Vite + React 18 + TypeScript (strict) + Supabase + IndexedDB
-
-### Fluxo de Dados
+**Stack**: Vite + React 18 + TypeScript + Supabase + IndexedDB
 
 ```
 Component → Hook → storageAdapter → Service (Supabase)
                                   ↘ offlineAdapter (IndexedDB)
 ```
 
-### Camadas
-
 | Camada | Path | Responsabilidade |
 |--------|------|------------------|
-| **Pages** | `src/pages/` | Composição de layout, roteamento |
-| **Components** | `src/components/{domain}/` | UI por domínio de negócio |
-| **Hooks** | `src/hooks/` | Orquestração de estado e side effects |
-| **Adapters** | `src/lib/adapters/` | Abstração online/offline |
-| **Services** | `src/lib/services/` | Wrappers Supabase (thin layer) |
-| **Contexts** | `src/contexts/` | Estado global (auth, theme, family) |
-
-### Princípios
-
-- **Separation of Concerns**: Componentes não acessam Supabase diretamente
-- **Offline-First**: Toda operação de dados passa por `storageAdapter`
-- **Single Source of Truth**: Estado vive em hooks, não em componentes
+| Pages | `src/pages/` | Layout, roteamento |
+| Components | `src/components/{domain}/` | UI por domínio |
+| Hooks | `src/hooks/` | Estado e side effects |
+| Adapters | `src/lib/adapters/` | Abstração online/offline |
+| Services | `src/lib/services/` | Wrappers Supabase |
+| Contexts | `src/contexts/` | Estado global |
 
 ---
 
-## 📁 Nomenclatura
+## 📁 Nomenclatura de Componentes
 
-### Componentes de Domínio (`src/components/{domain}/`)
-
-| Sufixo | Responsabilidade | Exemplo |
-|--------|------------------|---------|
-| `*FormFields` | Campos de formulário (sem Dialog, sem submit) | `ExpenseFormFields.tsx` |
-| `*FormDialog` | Dialog para criar/editar UMA entidade | `ExpenseFormDialog.tsx` |
-| `*ListDialog` | Dialog com lista + CRUD inline | `SubcategoryListDialog.tsx` |
-| `*SettingsDialog` | Dialog complexo com tabs/seções | `FamilySettingsDialog.tsx` |
-| `*ViewDialog` | Dialog read-only para detalhes | `GoalDetailsDialog.tsx` |
-| `*SelectDialog` | Dialog para seleção de item | `ImportExpenseDialog.tsx` |
-| `*Card` | Exibição compacta de uma entidade | `GoalCard.tsx` |
-| `*List` | Lista renderizável (não é Dialog) | `ExpenseList.tsx` |
+| Sufixo | Uso | Exemplo |
+|--------|-----|---------|
+| `*FormFields` | Campos de form (sem Dialog) | `ExpenseFormFields.tsx` |
+| `*FormDialog` | Dialog criar/editar entidade | `ExpenseFormDialog.tsx` |
+| `*ListDialog` | Dialog com lista + CRUD (abre FormDialog) | `SubcategoryListDialog.tsx` |
+| `*SettingsDialog` | Dialog complexo com tabs | `FamilySettingsDialog.tsx` |
+| `*ViewDialog` | Dialog read-only | `GoalDetailsDialog.tsx` |
+| `*Card` | Exibição compacta | `GoalCard.tsx` |
+| `*List` | Lista (não Dialog) | `ExpenseList.tsx` |
 | `*Section` | Seção de página | `ProfileSection.tsx` |
-| `*Chart` | Visualização de dados | `ExpenseChart.tsx` |
-| `*Panel` | Componente autônomo complexo | `RecurringExpensesPanel.tsx` |
-| `*Input` | Input customizado | `IncomeInput.tsx` |
-| `*Selector` | Picker inline (sem dialog) | `MonthSelector.tsx` |
-| `*Button` | Botão com estado/lógica própria | `TriggerButton.tsx` |
-| `*Progress` | Indicador de progresso | `GoalProgress.tsx` |
+| `*Panel` | Componente autônomo | `RecurringExpensesPanel.tsx` |
+| `*Chart` | Visualização | `ExpenseChart.tsx` |
+| `*Selector` | Picker inline | `MonthSelector.tsx` |
 
-> **💡 Confirmações**: Use `ConfirmDialog` de `@/components/common` — **NUNCA** crie dialogs de confirmação individuais como `Delete*ConfirmDialog`.
+**Confirmações**: Use `ConfirmDialog` de `@/components/common` — nunca crie `Delete*ConfirmDialog`.
 
-### Primitivos UI (`src/components/ui/`)
-
-- **Exclusivo** para componentes shadcn/radix
-- Nomenclatura: `kebab-case.tsx` (ex: `button.tsx`, `dialog.tsx`)
-- ❌ **NÃO** colocar componentes customizados aqui
+### ❌ Proibidos
+`*Manager`, `*Container`, `*Wrapper`, `*Form` (para dialogs), `*Modal`, `*Component`
 
 ### Outros Arquivos
+| Tipo | Padrão | Local |
+|------|--------|-------|
+| Domain hooks | `use{Domain}.ts` | `src/hooks/` |
+| UI hooks | `use-{name}.ts` | `src/hooks/ui/` |
+| Services | `{domain}Service.ts` | `src/lib/services/` |
+| Adapters | `{domain}Adapter.ts` | `src/lib/adapters/` |
 
-| Tipo | Padrão | Local | Exemplo |
-|------|--------|-------|---------|
-| Domain hooks | `use{Domain}.ts` | `src/hooks/` | `useBudget.ts` |
-| UI hooks | `use-{name}.ts` | `src/hooks/ui/` | `use-mobile.ts` |
-| Services | `{domain}Service.ts` | `src/lib/services/` | `budgetService.ts` |
-| Adapters | `{domain}Adapter.ts` | `src/lib/adapters/` | `expenseAdapter.ts` |
-| Pages | `PascalCase.tsx` | `src/pages/` | `Budget.tsx` |
-| Contexts | `{Name}Context.tsx` | `src/contexts/` | `AuthContext.tsx` |
-| Types | `{name}.ts` | `src/types/` | `budget.ts` |
-| Utils | `{name}.ts` | `src/lib/utils/` | `formatters.ts` |
+---
 
-### ❌ Sufixos Proibidos
+## 🪟 Padrão de Dialog (OBRIGATÓRIO)
 
-| Não Use | Use Em Vez |
-|---------|------------|
-| `*Manager` | `*ListDialog`, `*Panel`, ou `*Section` |
-| `*Container` | `*Section` ou `*Panel` |
-| `*Wrapper` | Descreva a função real |
-| `*Form` (para dialogs) | `*FormDialog` |
-| `*Modal` | `*Dialog` |
-| `*Component` | Sufixo específico da taxonomia |
-| Plural sem sufixo | `*List`, `*Panel`, ou `*Section` |
+```tsx
+<Dialog open={isOpen} onOpenChange={onClose}>
+  <DialogContent className="bg-card border-border sm:max-w-md flex flex-col gap-0 p-0 max-h-[90vh] overflow-hidden">
+    <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+      <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+        <Icon className="h-5 w-5 text-primary" />
+        {t('title')}
+      </DialogTitle>
+    </DialogHeader>
+    
+    <div className="px-6 py-4 overflow-y-auto">
+      <div className="space-y-4">{/* Campos */}</div>
+    </div>
+    
+    <div className="px-6 py-4 border-t border-border bg-secondary/30 flex gap-2 justify-end">
+      <Button variant="outline" onClick={onClose}>{t('cancel')}</Button>
+      <Button onClick={onSave}>{t('save')}</Button>
+    </div>
+  </DialogContent>
+</Dialog>
+```
+
+**❌ NUNCA use `DialogFooter`** — use div estilizada  
+**❌ NUNCA use `bg-background`** em inputs — use `bg-secondary/50`
+
+### Tamanhos
+| Uso | Classe |
+|-----|--------|
+| Confirmações | `sm:max-w-sm` |
+| **Padrão** | `sm:max-w-md` |
+| Forms complexos | `sm:max-w-lg` |
+| Listas | `sm:max-w-xl` |
+
+---
+
+## 🎨 Tokens de Cor (OBRIGATÓRIO)
+
+| Uso | Token |
+|-----|-------|
+| Fundo página | `bg-background` |
+| Fundo cards/modais | `bg-card` |
+| Fundo inputs | `bg-secondary/50` |
+| Fundo list items | `bg-secondary/30` |
+| Texto principal | `text-foreground` |
+| Texto secundário | `text-muted-foreground` |
+| Bordas | `border-border` |
+
+**❌ PROIBIDO**: `text-gray-500`, `bg-slate-100`, cores hardcoded
+
+---
+
+## 📝 Padrão de Formulário
+
+```tsx
+<div className="space-y-1.5">
+  <Label className="text-sm font-medium">{t('name')}</Label>
+  <Input className="h-10 bg-secondary/50 border-border" />
+</div>
+```
+
+**Input com moeda:**
+```tsx
+<div className="relative">
+  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{symbol}</span>
+  <Input className="h-10 pl-8 bg-secondary/50 border-border" />
+</div>
+```
+
+---
+
+## 📋 Padrão de Lista
+
+```tsx
+<div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg gap-3 group">
+  <div className="min-w-0 flex-1">
+    <p className="text-foreground text-sm font-medium truncate">{name}</p>
+  </div>
+  <div className="flex items-center gap-1 flex-shrink-0">
+    <span className="text-foreground text-sm font-semibold tabular-nums mr-1">{value}</span>
+    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10">
+      <Pencil className="h-4 w-4" />
+    </Button>
+    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+      <Trash2 className="h-4 w-4" />
+    </Button>
+  </div>
+</div>
+```
+
+---
+
+## 🔘 Botões
+
+| Ação | Variant |
+|------|---------|
+| Principal/Salvar | `default` |
+| Cancelar | `outline` |
+| Deletar | `destructive` |
+| Ícone sutil | `ghost` |
+
+**Com loading:**
+```tsx
+<Button disabled={loading}>
+  {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+  {loading ? t('saving') : t('save')}
+</Button>
+```
+
+---
+
+## 🔤 Ícones (Lucide React)
+
+| Contexto | Tamanho |
+|----------|---------|
+| Botões | `h-4 w-4` |
+| Títulos modal | `h-5 w-5 text-primary` |
+| Empty states | `h-6 w-6` |
 
 ---
 
@@ -110,226 +194,88 @@ Component → Hook → storageAdapter → Service (Supabase)
 | ❌ Proibido | ✅ Correto |
 |-------------|------------|
 | `console.log(data)` | `logger.debug('context', data)` |
-| `const apiKey = 'abc123'` | `import.meta.env.VITE_API_KEY` |
-| `.insert(req.body)` | `.insert(schema.parse(data))` via Zod |
-| `eval()`, `new Function()` | Nunca usar |
-| `dangerouslySetInnerHTML` | Evitar; se necessário, sanitizar |
+| `const key = 'abc'` | `import.meta.env.VITE_KEY` |
+| `.insert(body)` | `.insert(schema.parse(data))` |
+| `eval()` | Nunca |
+| `dangerouslySetInnerHTML` | Evitar ou sanitizar |
+| `localStorage.get(x)` | `getSecureStorageItem(x)` |
 
-> Detalhes completos: [`docs/security-instructions.md`](docs/security-instructions.md)
-
----
-
-## 🎨 Padrões de UI
-
-### Cores
-
-Sempre use tokens semânticos do tema:
-
-```tsx
-// ✅ Correto
-className="bg-background text-foreground border-border"
-className="text-muted-foreground bg-muted"
-
-// ❌ Errado
-className="bg-white text-gray-900"
-style={{ color: '#333' }}
-```
-
-### Botões
-
-| Ação | Variant | Exemplo |
-|------|---------|---------|
-| Cancelar | `outline` | `<Button variant="outline">` |
-| Confirmar/Salvar | `default` | `<Button>Salvar</Button>` |
-| Deletar/Destrutiva | `destructive` | `<Button variant="destructive">` |
-
-### Ícones
-
-- **Biblioteca**: Lucide React exclusivamente
-- **Tamanhos**: `h-4 w-4` (botões/inline) ou `h-5 w-5` (títulos/destaque)
-
-### Dialogs de Confirmação
-
-Use sempre `ConfirmDialog` de `@/components/common`:
-
-```tsx
-<ConfirmDialog
-  open={showConfirm}
-  onOpenChange={setShowConfirm}
-  title="Excluir gasto?"           // Direto, sem "Tem certeza..."
-  description="Esta ação não pode ser desfeita."
-  confirmText="Excluir"
-  variant="destructive"            // "destructive" | "warning" | "default"
-  onConfirm={handleDelete}
-/>
-```
-
-> Detalhes completos: [`docs/ui-standards.md`](docs/ui-standards.md)
+### Arquivos de Segurança
+| Arquivo | Uso |
+|---------|-----|
+| `src/lib/logger.ts` | Logger (substitui console) |
+| `src/lib/storage/secureStorage.ts` | localStorage validado |
+| `src/lib/validators.ts` | Schemas Zod inputs |
+| `src/lib/schemas.ts` | Schemas Zod DB |
 
 ---
 
-## 🧹 ESLint e TypeScript
+## 📴 Offline-First
 
-### Zero Warnings Policy
-
-O projeto mantém **zero warnings** de lint. Não introduza novos warnings.
-
-### react-hooks/exhaustive-deps
-
-Sempre inclua todas as dependências. Setters de `useState` são estáveis:
-
+**Nunca use `navigator.onLine` sozinho:**
 ```tsx
-// ✅ Correto
-const loadData = useCallback(async () => {
-  const data = await fetchData(familyId);
-  setData(data);
-}, [familyId, setData]);
-
-// ❌ Errado - dependência faltando
-const loadData = useCallback(async () => {
-  const data = await fetchData(familyId);
-  setData(data);
-}, [familyId]); // setData missing
-```
-
-**Quando usar eslint-disable**: Apenas quando omissão é INTENCIONAL para evitar loops:
-
-```tsx
-useEffect(() => {
-  if (isOnline) syncNow();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  // syncNow omitido intencionalmente para evitar loop infinito
-}, [isOnline]);
-```
-
-### no-explicit-any
-
-Nunca use `any`. Prefira tipos específicos ou `unknown`:
-
-```tsx
-// ❌ Proibido
-const handleError = (error: any) => { ... }
-
-// ✅ Correto
-const handleError = (error: unknown) => { ... }
-const handleError = (error: Error | PostgrestError) => { ... }
-```
-
----
-
-## 💬 Comentários
-
-Código deve ser auto-documentado. **Comentários explicam o "porquê", não o "quê".**
-
-| ✅ Comentar | ❌ Evitar |
-|-------------|-----------|
-| Decisões não-óbvias, workarounds | `// Set loading to true` (óbvio) |
-| `SECURITY:` para código crítico | `// Handlers` (seção genérica) |
-| `NOTE:` para contexto futuro | Comentários desatualizados |
-
----
-
-## 📴 Padrões Offline-First
-
-### Verificação de Conectividade
-
-Nunca use `navigator.onLine` sozinho:
-
-```tsx
-// ❌ Errado
-if (navigator.onLine) {
-  await supabase.from('table').insert(data);
-}
-
-// ✅ Correto
 if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
   await offlineAdapter.put('table', data);
 } else {
-  const { error } = await budgetService.insert(data);
+  const { error } = await service.insert(data);
   if (error) {
     await offlineAdapter.put('table', data);
-    await offlineAdapter.sync.add({ type: 'entity', action: 'insert', data });
+    await offlineAdapter.sync.add({ type, action: 'insert', data });
   }
 }
 ```
 
-### IDs Offline
-
-IDs offline têm prefixo `offline-`. Sempre verifique antes de operações cloud:
-
-```tsx
-if (offlineAdapter.isOfflineId(id)) {
-  // Operação local apenas
-}
-```
+IDs offline têm prefixo `offline-`.
 
 ---
 
-## ⛔ O Que NÃO Fazer
+## 🌐 i18n
 
-| ❌ Não Faça | ✅ Faça Assim |
-|-------------|---------------|
-| Chamar Supabase de componentes | Use hooks que usam `storageAdapter` |
-| `navigator.onLine` sozinho | Verifique `offlineAdapter.isOfflineId()` primeiro |
-| Arquivos na raiz de `lib/` ou `components/` | Use subpastas por domínio |
-| Inventar sufixos de componentes | Use a taxonomia documentada |
-| `export default` | Use named exports |
-| Múltiplos componentes por arquivo | Um componente por arquivo |
-| `any` em tipos | Use `unknown` ou tipos específicos |
-| `console.*` | Use `logger.*` |
+| Idioma | Arquivo |
+|--------|---------|
+| PT | `src/i18n/translations/pt.ts` |
+| EN | `src/i18n/translations/en.ts` |
+
+**Regras:**
+1. Adicione chaves em **TODOS** os idiomas
+2. Mesma ordem de chaves
+3. Chaves em camelCase
+
+---
+
+## 🧹 ESLint
+
+- **Zero warnings** — não introduza novos
+- **Todas as deps** em useEffect/useCallback
+- **Nunca `any`** — use `unknown`
+
+---
+
+## ⛔ Resumo: NÃO Faça
+
+| ❌ | ✅ |
+|---|---|
+| Chamar Supabase de componentes | Use hooks + storageAdapter |
+| `navigator.onLine` sozinho | Verifique `isOfflineId()` primeiro |
+| Arquivos na raiz | Use subpastas por domínio |
+| Inventar sufixos | Use a taxonomia |
+| `export default` | Named exports |
+| Múltiplos componentes/arquivo | Um por arquivo |
+| `any` | `unknown` ou tipo específico |
+| `console.*` | `logger.*` |
+| `DialogFooter` | Div estilizada |
+| Cores hardcoded | Tokens semânticos |
 
 ---
 
 ## 🛠️ Comandos
 
 ```bash
-npm run dev       # Dev server (localhost:8080)
-npm run build     # Build de produção
-npm run lint      # ESLint (deve passar com zero warnings)
-npm run preview   # Preview do build de produção
+npm run dev       # Dev server
+npm run build     # Build produção
+npm run lint      # ESLint (zero warnings)
 ```
 
 ---
 
-## 🌐 Internacionalização (i18n)
-
-### Arquivos de tradução
-
-| Idioma | Arquivo |
-|--------|---------|
-| Português (padrão) | `src/i18n/translations/pt.ts` |
-| Inglês | `src/i18n/translations/en.ts` |
-
-### Regras
-
-1. **Sempre adicione chaves em TODOS os idiomas** — nunca adicione só em um arquivo
-2. **Use a mesma ordem de chaves** em ambos os arquivos para facilitar comparação
-3. **Chaves em camelCase** — ex: `deleteMonthConfirm`, não `delete_month_confirm`
-4. **Agrupe por seção** — mantenha comentários `// Section Name` alinhados
-
-```tsx
-// ✅ Correto - adicionar em ambos os arquivos
-// pt.ts
-thisMonth: 'Este mês',
-
-// en.ts
-thisMonth: 'This month',
-
-// ❌ Errado - adicionar só em um idioma
-```
-
----
-
-## 🤖 Automação e CI
-
-O projeto usa GitHub Actions para CI/CD. O workflow roda automaticamente em todo push para `main`:
-
-1. **Lint** — `npm run lint` deve passar com zero warnings
-2. **Build** — `npm run build` deve completar sem erros
-3. **Deploy** — Deploya para GitHub Pages se os passos anteriores passarem
-
-> **⚠️ Bots e ferramentas automatizadas** devem rodar `npm run lint` antes de fazer commits/merges.
-
----
-
-*Se algo parecer errado ou inseguro, provavelmente é. Pergunte antes de fazer.*
+*Se parece errado ou inseguro, provavelmente é. Pergunte antes.*

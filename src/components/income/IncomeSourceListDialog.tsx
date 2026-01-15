@@ -1,15 +1,12 @@
-import { useState, useEffect, KeyboardEvent } from 'react';
+import { useState } from 'react';
 import { IncomeSource } from '@/types/budget';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Edit2, Check, X, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, DollarSign } from 'lucide-react';
 import { ConfirmDialog } from '@/components/common';
+import { IncomeSourceFormDialog } from './IncomeSourceFormDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { parseCurrencyInput, formatCurrencyInput, sanitizeCurrencyInput } from '@/lib/utils/formatters';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 
@@ -23,13 +20,6 @@ interface IncomeSourceListDialogProps {
   totalIncome: number;
 }
 
-interface EditingSource {
-  id: string;
-  name: string;
-  value: string;
-  isNew: boolean;
-}
-
 export const IncomeSourceListDialog = ({
   open,
   onOpenChange,
@@ -40,129 +30,44 @@ export const IncomeSourceListDialog = ({
   totalIncome,
 }: IncomeSourceListDialogProps) => {
   const { t } = useLanguage();
-  const { currencySymbol, formatCurrency } = useCurrency();
-  const [editingSources, setEditingSources] = useState<EditingSource[]>([]);
-  const [activeRowId, setActiveRowId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { formatCurrency } = useCurrency();
+  const [editingSource, setEditingSource] = useState<IncomeSource | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [deleteSourceId, setDeleteSourceId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Initialize editing sources when dialog opens or sources change
-  useEffect(() => {
-    if (open) {
-      setEditingSources(
-        incomeSources.map((source) => ({
-          id: source.id,
-          name: source.name,
-          value: formatCurrencyInput(source.value),
-          isNew: false,
-        }))
-      );
-      setActiveRowId(null);
-    }
-  }, [open, incomeSources]);
-
-  const addNewLine = () => {
-    const tempId = `temp-${Date.now()}`;
-    setEditingSources((prev) => ([
-      ...prev,
-      {
-        id: tempId,
-        name: '',
-        value: '',
-        isNew: true,
-      },
-    ]));
-    setActiveRowId(tempId);
-  };
-
-  const updateSource = (index: number, field: 'name' | 'value', val: string) => {
-    setEditingSources((prev) => {
-      const updated = [...prev];
-      const nextValue = (() => {
-        if (field === 'value') {
-          const sanitized = sanitizeCurrencyInput(val.replace(/\./g, ','));
-          const [integerPart, decimalPart] = sanitized.split(',');
-          if (decimalPart === undefined) {
-            return integerPart;
-          }
-          return `${integerPart},${decimalPart.slice(0, 2)}`;
-        }
-        return val;
-      })();
-      updated[index] = { ...updated[index], [field]: nextValue };
-      return updated;
-    });
-  };
-
-  const saveSource = async (index: number) => {
-    const source = editingSources[index];
-    if (!source) return;
-
-    // Don't save if empty
-    if (!source.name.trim() && !source.value.trim()) {
-      return;
-    }
-
-    if (!source.name.trim()) {
-      toast.error(t('nameRequired') || 'Nome é obrigatório');
-      return;
-    }
-
-    const value = parseCurrencyInput(source.value);
-    if (value <= 0) {
-      toast.error(t('valueRequired') || 'Valor deve ser maior que 0');
-      return;
-    }
-
-    setLoading(true);
-    let succeeded = false;
+  const handleAdd = async (name: string, value: number) => {
     try {
-      if (source.isNew) {
-        await onAdd(source.name.trim(), value);
-        toast.success(t('incomeSourceAdded') || 'Fonte de renda adicionada');
-      } else {
-        await onUpdate(source.id, source.name.trim(), value);
-        toast.success(t('incomeSourceUpdated') || 'Fonte de renda atualizada');
-      }
-      succeeded = true;
+      await onAdd(name, value);
+      toast.success(t('incomeSourceAdded'));
     } catch (error) {
-      toast.error(t('errorSaving') || 'Erro ao salvar');
-      logger.error('incomeSource.save.failed', { error });
-    } finally {
-      setLoading(false);
-      if (succeeded) {
-        setActiveRowId(null);
-      }
+      toast.error(t('errorSaving'));
+      logger.error('incomeSource.add.failed', { error });
+      throw error;
     }
   };
 
-  const deleteLine = (index: number, sourceId: string, isNew: boolean) => {
-    // For new items, remove directly
-    if (isNew) {
-      setEditingSources((prev) => prev.filter((_, i) => i !== index));
-      setActiveRowId((prev) => (prev === sourceId ? null : prev));
-      return;
+  const handleUpdate = async (name: string, value: number) => {
+    if (!editingSource) return;
+    try {
+      await onUpdate(editingSource.id, name, value);
+      toast.success(t('incomeSourceUpdated'));
+      setEditingSource(null);
+    } catch (error) {
+      toast.error(t('errorSaving'));
+      logger.error('incomeSource.update.failed', { error });
+      throw error;
     }
-
-    // For existing items, show confirmation dialog
-    setDeleteSourceId(sourceId);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDelete = async () => {
     if (!deleteSourceId) return;
-
-    // Find the index of the source to delete
-    const index = editingSources.findIndex(s => s.id === deleteSourceId);
-
     setLoading(true);
     try {
       await onDelete(deleteSourceId);
-      toast.success(t('incomeSourceDeleted') || 'Fonte de renda removida');
-      // Remove from editing sources
-      setEditingSources((prev) => prev.filter((_, i) => i !== index));
-      setActiveRowId((prev) => (prev === deleteSourceId ? null : prev));
+      toast.success(t('incomeSourceDeleted'));
     } catch (error) {
-      toast.error(t('errorDeleting') || 'Erro ao deletar');
+      toast.error(t('errorDeleting'));
       logger.error('incomeSource.delete.failed', { sourceId: deleteSourceId, error });
     } finally {
       setLoading(false);
@@ -170,202 +75,120 @@ export const IncomeSourceListDialog = ({
     }
   };
 
-  const cancelEdit = (index: number) => {
-    setEditingSources((prev) => {
-      const updated = [...prev];
-      const current = updated[index];
-      if (!current) return prev;
-
-      if (current.isNew) {
-        updated.splice(index, 1);
-        return updated;
-      }
-
-      const original = incomeSources.find((item) => item.id === current.id);
-      if (original) {
-        updated[index] = {
-          id: original.id,
-          name: original.name,
-          value: formatCurrencyInput(original.value),
-          isNew: false,
-        };
-      }
-      return updated;
-    });
-    setActiveRowId(null);
+  const openAddForm = () => {
+    setEditingSource(null);
+    setIsFormOpen(true);
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      saveSource(index);
-    }
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      cancelEdit(index);
-    }
+  const openEditForm = (source: IncomeSource) => {
+    setEditingSource(source);
+    setIsFormOpen(true);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
-          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-            <Plus className="h-5 w-5 text-primary" />
-            {t('manageIncomeSources') || 'Fontes de Renda'}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="bg-card border-border sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <DollarSign className="h-5 w-5 text-primary" />
+              {t('manageIncomeSources')}
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 flex flex-col gap-4">
-          {/* Total Income Display */}
-          <div className="rounded-lg border border-border bg-secondary/30 p-4">
-            <div className="text-sm text-muted-foreground mb-1">{t('totalIncome') || 'Renda Total'}</div>
-            <div className="text-xl font-semibold text-primary tracking-tight">
-              {formatCurrency(totalIncome)}
-            </div>
-          </div>
-
-          {/* Editable Income Sources List */}
-          <div className="flex-1 flex flex-col gap-3">
-            <ScrollArea className="flex-1">
-              <div className="space-y-2">
-                {editingSources.length === 0 ? (
-                  <div className="text-center py-8 border-2 border-dashed border-border rounded-lg bg-secondary/20">
-                    <p className="text-base font-semibold text-foreground">
-                      {t('noIncomeSources') || 'Nenhuma fonte de renda adicionada'}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {t('addIncomeSourceHint') || 'Crie sua primeira fonte para distribuir a renda do mês.'}
-                    </p>
-                  </div>
-                ) : (
-                  editingSources.map((source, index) => {
-                    const isEditing = activeRowId === source.id;
-                    return (
-                      <div
-                        key={source.id}
-                        className={`group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 p-3 ${isEditing ? 'ring-1 ring-primary/40 bg-background' : 'bg-secondary/30 hover:bg-secondary/50'} rounded-lg transition-colors`}
-                      >
-                        {isEditing ? (
-                          <div className="flex items-center gap-2 w-full">
-                            <Input
-                              placeholder={t('name') || 'Nome'}
-                              value={source.name}
-                              onChange={(e) => updateSource(index, 'name', e.target.value)}
-                              disabled={loading}
-                              autoFocus
-                              onKeyDown={(event) => handleKeyDown(event, index)}
-                              className="min-w-0 flex-1 h-10 text-sm bg-secondary/50 border-border"
-                            />
-                            <div className="relative w-28 sm:w-36 flex-shrink-0">
-                              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                                {currencySymbol}
-                              </span>
-                              <Input
-                                type="text"
-                                inputMode="decimal"
-                                placeholder="0,00"
-                                value={source.value}
-                                onChange={(e) => updateSource(index, 'value', e.target.value)}
-                                disabled={loading}
-                                className="pl-8 h-10 text-sm bg-secondary/50 border-border"
-                                onKeyDown={(event) => handleKeyDown(event, index)}
-                              />
-                            </div>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <Button
-                                size="icon"
-                                onClick={() => saveSource(index)}
-                                disabled={loading}
-                                className="h-9 w-9"
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => cancelEdit(index)}
-                                disabled={loading}
-                                className="h-9 w-9"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                              <span
-                                className="text-sm text-foreground font-medium leading-snug break-words whitespace-normal"
-                                style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-                              >
-                                {source.name || t('unnamedIncomeSource') || 'Sem nome'}
-                              </span>
-                              {source.isNew && (
-                                <Badge variant="outline" className="bg-primary/5 text-primary text-xs">
-                                  {t('draft') || 'Rascunho'}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 sm:ml-2 w-full sm:w-auto justify-between sm:justify-end">
-                              <span className="text-sm text-foreground font-semibold tabular-nums">
-                                {formatCurrency(parseFloat((source.value || '0').replace(',', '.')))}
-                              </span>
-
-                              <div className="flex items-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ml-2 sm:ml-0">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setActiveRowId(source.id)}
-                                  disabled={loading}
-                                  className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                                  title={t('edit') || 'Editar'}
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => deleteLine(index, source.id, source.isNew)}
-                                  disabled={loading}
-                                  className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                  title={t('delete') || 'Excluir'}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {/* Total Income Display */}
+            <div className="rounded-lg border border-border bg-secondary/30 p-4 mb-4">
+              <div className="text-sm text-muted-foreground mb-1">{t('totalIncome')}</div>
+              <div className="text-xl font-semibold text-primary tracking-tight">
+                {formatCurrency(totalIncome)}
               </div>
-            </ScrollArea>
-          </div>
-        </div>
+            </div>
 
-        <div className="px-6 py-4 border-t border-border bg-secondary/30">
-          <Button
-            onClick={addNewLine}
-            disabled={loading}
-            className="w-full h-10 gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            {t('addIncomeSource') || 'Adicionar Fonte'}
-          </Button>
-        </div>
-      </DialogContent>
+            {/* Income Sources List */}
+            {incomeSources.length === 0 ? (
+              <div className="text-center py-8 border-2 border-dashed border-border rounded-lg bg-secondary/20">
+                <p className="text-base font-semibold text-foreground">
+                  {t('noIncomeSources')}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('addIncomeSourceHint')}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {incomeSources.map((source) => (
+                  <div
+                    key={source.id}
+                    className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg gap-3 group"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground text-sm font-medium truncate">
+                        {source.name}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <span className="text-foreground text-sm font-semibold tabular-nums mr-1">
+                        {formatCurrency(source.value)}
+                      </span>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditForm(source)}
+                        className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                        aria-label={t('edit')}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeleteSourceId(source.id)}
+                        disabled={loading}
+                        className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        aria-label={t('delete')}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="px-6 py-4 border-t border-border bg-secondary/30">
+            <Button
+              onClick={openAddForm}
+              disabled={loading}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              {t('addIncomeSource')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <IncomeSourceFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        incomeSource={editingSource}
+        onSave={editingSource ? handleUpdate : handleAdd}
+      />
 
       <ConfirmDialog
         open={!!deleteSourceId}
         onOpenChange={(open) => !open && setDeleteSourceId(null)}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={handleDelete}
         title={t('deleteIncomeSource')}
         description={t('deleteIncomeSourceMessage')}
         variant="destructive"
+        loading={loading}
       />
-    </Dialog>
+    </>
   );
 };
