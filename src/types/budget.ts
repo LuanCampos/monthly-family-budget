@@ -1,3 +1,7 @@
+import type { GoalStatus } from './database';
+
+export type { GoalStatus };
+
 export type CategoryKey = 
   | 'essenciais' 
   | 'conforto' 
@@ -70,8 +74,6 @@ export interface Month {
   categoryLimits?: Record<CategoryKey, number>;
 }
 
-export type GoalStatus = 'active' | 'archived';
-
 export interface Goal {
   id: string;
   familyId: string;
@@ -80,7 +82,7 @@ export interface Goal {
   targetValue: number;
   targetMonth?: number;
   targetYear?: number;
-  account: string;
+  account?: string;
   linkedSubcategoryId?: string;
   linkedCategoryKey?: string;
   createdAt?: string;

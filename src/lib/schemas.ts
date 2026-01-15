@@ -171,3 +171,61 @@ export function validateIncomeSourceRow(data: unknown) {
     return { success: false, error };
   }
 }
+
+/**
+ * Goal status validation
+ */
+export const GoalStatusSchema = z.enum(['active', 'archived']);
+
+/**
+ * Goal row from database
+ */
+export const GoalRowSchema = z.object({
+  id: z.string().min(1),
+  family_id: z.string().min(1),
+  name: z.string().min(1).max(255),
+  target_value: z.number().min(0),
+  target_month: z.number().int().min(1).max(12).nullable(),
+  target_year: z.number().int().min(2000).max(2100).nullable(),
+  account: z.string().max(255).nullable(),
+  linked_subcategory_id: z.string().nullable(),
+  linked_category_key: CategoryKeySchema.nullable(),
+  status: GoalStatusSchema,
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type GoalRowValidated = z.infer<typeof GoalRowSchema>;
+
+/**
+ * Goal entry row from database
+ */
+export const GoalEntryRowSchema = z.object({
+  id: z.string().min(1),
+  goal_id: z.string().min(1),
+  expense_id: z.string().nullable(),
+  value: z.number(),
+  description: z.string().max(500).nullable(),
+  month: z.number().int().min(1).max(12),
+  year: z.number().int().min(2000).max(2100),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type GoalEntryRowValidated = z.infer<typeof GoalEntryRowSchema>;
+
+export function validateGoalRow(data: unknown) {
+  try {
+    return { success: true, data: GoalRowSchema.parse(data) };
+  } catch (error) {
+    return { success: false, error };
+  }
+}
+
+export function validateGoalEntryRow(data: unknown) {
+  try {
+    return { success: true, data: GoalEntryRowSchema.parse(data) };
+  } catch (error) {
+    return { success: false, error };
+  }
+}
