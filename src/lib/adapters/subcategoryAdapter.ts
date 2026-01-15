@@ -25,12 +25,14 @@ export const getSubcategories = async (familyId: string | null) => {
   if (!familyId) return [] as Subcategory[];
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     const data = await offlineAdapter.getAllByIndex<SubcategoryRow>('subcategories', 'family_id', familyId);
-    return mapSubcategories(data || []);
+    const mapped = mapSubcategories(data || []);
+    return mapped.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   }
 
   const { data, error } = await budgetService.getSubcategories(familyId);
   if (error) { logger.error('subcategory.load.failed', { familyId, error }); return [] as Subcategory[]; }
-  return mapSubcategories(data || []);
+  const mapped = mapSubcategories(data || []);
+  return mapped.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 };
 
 /**
