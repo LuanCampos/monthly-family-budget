@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { getSecureStorageItem, setSecureStorageItem } from '@/lib/storage/secureStorage';
 
 export type CurrencyCode = 'BRL' | 'USD';
 
@@ -26,13 +27,13 @@ const STORAGE_KEY = 'budget-app-currency';
 
 export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currency, setCurrencyState] = useState<CurrencyCode>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = getSecureStorageItem(STORAGE_KEY);
     if (stored === 'BRL' || stored === 'USD') return stored;
     return 'BRL';
   });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, currency);
+    setSecureStorageItem(STORAGE_KEY, currency);
   }, [currency]);
 
   const setCurrency = useCallback((curr: CurrencyCode) => {

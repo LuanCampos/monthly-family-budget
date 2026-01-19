@@ -212,6 +212,7 @@ export const en: Record<TranslationKey, string> = {
   // Expense List
   monthExpenses: 'Monthly expenses',
   searchExpenses: 'Search expenses...',
+  clearSearch: 'Clear search',
   noExpenses: 'No expenses recorded',
   noExpensesMatchSearch: 'No expenses found',
   addExpense: 'Add Expense',

@@ -35,18 +35,24 @@ Bem-vindo! Este documento explica o que é essa aplicação e como você pode co
 ```
 src/
 ├── components/     → Componentes visuais (botões, cards, modais)
-│   ├── common/     → Componentes usados em várias partes
+│   ├── common/     → Componentes genéricos (ConfirmDialog, LimitsPanel)
 │   ├── expense/    → Tudo sobre despesas
 │   ├── income/     → Tudo sobre receitas
 │   ├── goal/       → Tudo sobre metas
-│   └── ui/         → Componentes base (Button, Input, Dialog)
+│   ├── recurring/  → Despesas recorrentes
+│   ├── settings/   → Configurações
+│   ├── subcategory/→ Subcategorias
+│   └── ui/         → Componentes base shadcn/ui (Button, Input, Dialog)
 │
-├── hooks/          → Lógica reutilizável (ex: buscar dados)
-├── pages/          → Páginas da aplicação
-├── contexts/       → Estado global (usuário logado, tema, etc.)
+├── hooks/          → Lógica reutilizável (useBudget, useGoals)
+├── pages/          → Páginas da aplicação (Budget, Goals)
+├── contexts/       → Estado global (Auth, Theme, Language, Currency)
 ├── lib/            → Utilitários e conexão com banco
-│   ├── services/   → Funções que falam com Supabase
-│   └── adapters/   → Decide se usa online ou offline
+│   ├── services/   → Funções que falam com Supabase (baixo nível)
+│   ├── adapters/   → Decide se usa online ou offline
+│   ├── storage/    → Acesso seguro ao localStorage
+│   └── utils/      → Funções utilitárias (formatters, etc.)
+├── i18n/           → Traduções (pt.ts, en.ts)
 └── types/          → Definições de tipos TypeScript
 ```
 
@@ -75,12 +81,17 @@ Usuário clica → Componente → Hook → Adapter → Banco de dados
 
 | Nome termina em... | O que faz | Exemplo |
 |--------------------|-----------|---------|
+| `*FormFields` | Campos de form reutilizáveis | `ExpenseFormFields` |
 | `*FormDialog` | Modal para criar/editar algo | `ExpenseFormDialog` |
-| `*ListDialog` | Modal com lista de itens | `SubcategoryListDialog` |
+| `*ListDialog` | Modal com lista + ações | `SubcategoryListDialog` |
+| `*SettingsDialog` | Modal complexo com tabs | `SettingsDialog` |
 | `*Card` | Exibe informações resumidas | `GoalCard` |
 | `*List` | Lista de itens (fora de modal) | `ExpenseList` |
-| `*Panel` | Seção complexa da página | `RecurringExpensesPanel` |
-| `*Chart` | Gráfico | `ExpenseChart` |
+| `*Panel` | Seção complexa autônoma | `RecurringExpensesPanel` |
+| `*Chart` | Gráfico/visualização | `ExpenseChart` |
+| `*Selector` | Seletor inline | `YearSelector` |
+
+> **Dica:** Para confirmações de exclusão, use sempre `ConfirmDialog` de `@/components/common`.
 
 ---
 
@@ -122,6 +133,13 @@ npm run build
 <div className="bg-secondary/50 text-muted-foreground">
 ```
 
+**Tokens mais usados:**
+- `bg-card` → fundo de cards/modais
+- `bg-secondary/50` → fundo de inputs
+- `text-foreground` → texto principal
+- `text-muted-foreground` → texto secundário
+- `border-border` → todas as bordas
+
 ### Inputs sempre assim
 
 ```tsx
@@ -136,7 +154,18 @@ console.log('dados:', data);
 
 // ✅ Certo
 import { logger } from '@/lib/logger';
-logger.debug('dados:', data);
+logger.debug('expense.created', { expenseId, amount });
+```
+
+### Nunca use localStorage diretamente
+
+```tsx
+// ❌ Errado
+localStorage.getItem('key');
+
+// ✅ Certo
+import { getSecureStorageItem } from '@/lib/storage/secureStorage';
+getSecureStorageItem('key');
 ```
 
 ---
@@ -147,22 +176,38 @@ logger.debug('dados:', data);
 R: Na pasta do domínio (`expense/`, `income/`, `goal/`). Se for genérico, em `common/`.
 
 **P: Como adiciono texto traduzível?**
-R: Em `src/i18n/translations/pt.ts` e `en.ts`. Use a mesma chave nos dois.
+R: Em `src/i18n/translations/pt.ts` e `en.ts`. Use a mesma chave nos dois arquivos, na mesma ordem.
 
 **P: Posso usar `any` no TypeScript?**
-R: Não. Use `unknown` ou o tipo correto.
+R: Não. Use `unknown` ou o tipo específico.
 
 **P: Como testo se funciona offline?**
 R: No Chrome DevTools → Network → marque "Offline".
+
+**P: Posso usar `export default`?**
+R: Não. Use sempre named exports: `export const MeuComponente = ...`
+
+**P: Como faço um modal de confirmação?**
+R: Use o `ConfirmDialog` de `@/components/common`. Nunca crie um novo.
+
+**P: Posso chamar Supabase direto do componente?**
+R: Não. Use hooks (`useBudget`, `useGoals`) que acessam os adapters.
+
+**P: Como mostro mensagens de sucesso/erro?**
+R: Use `toast.success(t('mensagem'))` ou `toast.error(t('erro'))` do Sonner.
+
+**P: Preciso colocar `aria-label` em botões?**
+R: Sim, em botões que só têm ícone (sem texto visível).
 
 ---
 
 ## 📚 Próximos Passos
 
-1. Rode `npm run dev` e explore a aplicação
+1. Rode `npm run dev` e explore a aplicação em `http://localhost:8080`
 2. Leia o código de um componente simples como `GoalCard.tsx`
 3. Tente fazer uma pequena alteração visual
-4. Leia o `CONTRIBUTING.md` completo quando for criar algo novo
+4. Rode `npm run lint` para verificar se está tudo certo
+5. Leia o [`CONTRIBUTING.md`](../CONTRIBUTING.md) completo quando for criar algo novo
 
 ---
 

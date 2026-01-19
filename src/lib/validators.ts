@@ -26,7 +26,7 @@ export const CreateExpenseInputSchema = z.object({
   title: z.string().min(1).max(255),
   category_key: CategoryKeySchema,
   subcategory_id: z.string().optional().nullable(),
-  value: z.number().min(0),
+  value: z.number().finite().min(0),
   is_recurring: z.boolean().optional(),
   is_pending: z.boolean().optional(),
   due_day: z.number().int().min(1).max(31).optional().nullable(),
@@ -90,7 +90,7 @@ export type UpdateSubcategoryInput = z.infer<typeof UpdateSubcategoryInputSchema
  */
 export const CreateIncomeSourceInputSchema = z.object({
   name: z.string().min(1).max(255),
-  value: z.number().min(0),
+  value: z.number().finite().min(0),
 });
 
 export type CreateIncomeSourceInput = z.infer<typeof CreateIncomeSourceInputSchema>;
@@ -118,7 +118,7 @@ export type MonthLimits = z.infer<typeof MonthLimitsSchema>;
 export const CreateGoalInputSchema = z.object({
   family_id: z.string(),
   name: z.string(),
-  target_value: z.number(),
+  target_value: z.number().finite().min(0),
   target_month: z.number().int().optional().nullable(),
   target_year: z.number().int().optional().nullable(),
   account: z.string().optional().nullable(),

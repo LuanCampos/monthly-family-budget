@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useLayoutEffect } from 'react';
+import { getSecureStorageItem, setSecureStorageItem } from '@/lib/storage/secureStorage';
 
 export type ThemeKey = 'dark' | 'light' | 'nord' | 'dracula' | 'solarized' | 'gruvbox' | 'catppuccin' | 'solarizedLight';
 
@@ -284,7 +285,7 @@ const applyTheme = (theme: ThemeKey) => {
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<ThemeKey>(() => {
     if (typeof window === 'undefined') return 'dark';
-    const stored = localStorage.getItem(STORAGE_KEY) as ThemeKey | null;
+    const stored = getSecureStorageItem(STORAGE_KEY) as ThemeKey | null;
     if (stored && themes.some(t => t.key === stored)) return stored;
     return 'dark';
   });
@@ -292,7 +293,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Apply theme immediately on mount and when it changes
   useLayoutEffect(() => {
     applyTheme(theme);
-    localStorage.setItem(STORAGE_KEY, theme);
+    setSecureStorageItem(STORAGE_KEY, theme);
   }, [theme]);
 
   const setTheme = useCallback((newTheme: ThemeKey) => {

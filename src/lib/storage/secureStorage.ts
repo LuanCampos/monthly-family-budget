@@ -7,10 +7,28 @@
 
 import { logger } from '../logger';
 
+// Reserved words that could be used for prototype pollution attacks
+const RESERVED_WORDS = new Set([
+  '__proto__',
+  'constructor',
+  'prototype',
+  '__defineGetter__',
+  '__defineSetter__',
+  '__lookupGetter__',
+  '__lookupSetter__',
+  'hasOwnProperty',
+  'isPrototypeOf',
+  'propertyIsEnumerable',
+  'toLocaleString',
+  'toString',
+  'valueOf',
+]);
+
 // Validation patterns for different storage keys
+// Note: family-id limited to 255 chars to prevent buffer overflow attacks
 const VALIDATION_PATTERNS: Record<string, RegExp> = {
-  'current-family-id': /^[a-zA-Z0-9-_]+$/,
-  'budget-app-theme': /^(light|dark|system|[a-z-]+)$/,  // Extended for custom themes
+  'current-family-id': /^[a-zA-Z0-9-_]{1,255}$/,
+  'budget-app-theme': /^(dark|light|nord|dracula|solarized|gruvbox|catppuccin|solarizedLight)$/,
   'budget-app-language': /^(pt|en)$/,
   'budget-app-currency': /^(BRL|USD)$/,
 };
@@ -25,6 +43,13 @@ const DEFAULT_VALUES: Record<string, string | null> = {
   'budget-app-theme': 'dark',
   'budget-app-language': 'pt',
   'budget-app-currency': 'BRL',
+};
+
+/**
+ * Check if a value contains reserved words (prototype pollution prevention)
+ */
+const containsReservedWord = (value: string): boolean => {
+  return RESERVED_WORDS.has(value) || RESERVED_WORDS.has(value.toLowerCase());
 };
 
 /**
@@ -53,6 +78,13 @@ export const getSecureStorageItem = (key: string): string | null => {
     const value = localStorage.getItem(key);
     if (!value) return null;
 
+    // Check for prototype pollution attempts in ID fields
+    if (key === 'current-family-id' && containsReservedWord(value)) {
+      logger.warn('secureStorage.reservedWord', { key, value: value.substring(0, 50) });
+      localStorage.removeItem(key);
+      return null;
+    }
+
     // If we have a validation pattern for this key, validate the value
     const pattern = getValidationPattern(key);
     if (pattern && !pattern.test(value)) {
@@ -75,6 +107,12 @@ export const getSecureStorageItem = (key: string): string | null => {
  */
 export const setSecureStorageItem = (key: string, value: string): boolean => {
   try {
+    // Check for prototype pollution attempts in ID fields
+    if (key === 'current-family-id' && containsReservedWord(value)) {
+      logger.warn('secureStorage.setItem.reservedWord', { key });
+      return false;
+    }
+
     // Validate value if we have a pattern
     const pattern = getValidationPattern(key);
     if (pattern && !pattern.test(value)) {

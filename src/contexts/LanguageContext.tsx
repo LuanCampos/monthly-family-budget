@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Language, translations, TranslationKey } from '@/i18n';
+import { getSecureStorageItem, setSecureStorageItem } from '@/lib/storage/secureStorage';
 
 interface LanguageContextType {
   language: Language;
@@ -13,7 +14,7 @@ const STORAGE_KEY = 'budget-app-language';
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = getSecureStorageItem(STORAGE_KEY);
     if (stored === 'pt' || stored === 'en') return stored;
     
     // Try to detect browser language
@@ -23,7 +24,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, language);
+    setSecureStorageItem(STORAGE_KEY, language);
   }, [language]);
 
   const setLanguage = useCallback((lang: Language) => {

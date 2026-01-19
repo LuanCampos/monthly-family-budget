@@ -210,6 +210,7 @@ export const pt = {
   // Expense List
   monthExpenses: 'Gastos do mês',
   searchExpenses: 'Buscar gastos...',
+  clearSearch: 'Limpar busca',
   noExpenses: 'Nenhum gasto registrado',
   noExpensesMatchSearch: 'Nenhum gasto encontrado',
   addExpense: 'Adicionar Gasto',
