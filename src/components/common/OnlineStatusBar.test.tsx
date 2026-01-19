@@ -76,9 +76,9 @@ describe('OnlineStatusBar', () => {
     
     render(<OnlineStatusBar />);
     
-    // Should find a button (the sync button)
+    // Should find exactly one button (the sync button)
     const buttons = screen.getAllByRole('button');
-    expect(buttons.length).toBeGreaterThan(0);
+    expect(buttons).toHaveLength(1);
   });
 
   it('should not show sync button when offline', () => {

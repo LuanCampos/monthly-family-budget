@@ -123,5 +123,47 @@ describe('offlineStorage utilities', () => {
       expect(parts[1]).toMatch(/^\d+$/); // Just timestamp
       expect(parts[2]).toMatch(/^[a-z0-9]+$/); // Just random alphanumeric
     });
+
+    it('should reject XSS payloads as IDs', () => {
+      const xssPayloads = [
+        '<script>alert(1)</script>',
+        'javascript:alert(1)',
+        '<img src=x onerror=alert(1)>',
+        '"><script>alert(1)</script>',
+      ];
+
+      xssPayloads.forEach(payload => {
+        expect(isOfflineId(payload)).toBe(false);
+      });
+    });
+
+    it('should reject SQL injection payloads as IDs', () => {
+      const sqlPayloads = [
+        "'; DROP TABLE expenses; --",
+        "1' OR '1'='1",
+        "UNION SELECT * FROM users",
+      ];
+
+      sqlPayloads.forEach(payload => {
+        expect(isOfflineId(payload)).toBe(false);
+      });
+    });
+
+    it('should reject prototype pollution attempts', () => {
+      expect(isOfflineId('__proto__')).toBe(false);
+      expect(isOfflineId('constructor')).toBe(false);
+      expect(isOfflineId('prototype')).toBe(false);
+    });
+
+    it('should reject path traversal attempts', () => {
+      expect(isOfflineId('../../../etc/passwd')).toBe(false);
+      expect(isOfflineId('..\\..\\..\\windows')).toBe(false);
+      expect(isOfflineId('file:///etc/passwd')).toBe(false);
+    });
+
+    it('should handle null bytes safely', () => {
+      expect(isOfflineId('offline-123\x00-abc')).toBe(false);
+      expect(isOfflineId('\x00offline-123-abc')).toBe(false);
+    });
   });
 });

@@ -82,22 +82,26 @@ export const GoalCard = ({ goal, entries, onViewHistory, onEdit, onDelete, onFet
         <GoalProgress goal={goal} />
 
         <div className="goal-actions flex flex-wrap items-center gap-0.5 sm:gap-2 mt-4 sm:mt-5">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onViewHistory}
+            aria-label={t('entries') || 'Lançamentos'}
             className="goal-action-btn"
           >
             <List className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="leading-none">{t('entries') || 'Lançamentos'}</span>
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleEvolutionClick}
+            aria-label={t('evolution') || 'Evolução'}
             className="goal-action-btn"
           >
             <TrendingUp className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="leading-none">{t('evolution') || 'Evolução'}</span>
-          </button>
+          </Button>
           <Button size="icon" variant="ghost" onClick={onEdit} aria-label={t('edit') || 'Editar'} className="justify-center hover:text-primary !h-8 !w-8">
             <Pencil className="h-3.5 w-3.5" />
           </Button>

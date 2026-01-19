@@ -581,5 +581,73 @@ describe('useBudget', () => {
       expect(totals.totalBudget).toBe(0);
       expect(totals.usedPercentage).toBe(0);
     });
+
+    it('should handle zero budget without division by zero', async () => {
+      const monthWithZeroIncome: Month = {
+        ...mockMonth,
+        income: 0,
+        expenses: [
+          { id: 'e1', title: 'Test', category: 'essenciais', value: 100, isRecurring: false, isPending: false },
+        ],
+      };
+      (storageAdapter.getMonthsWithExpenses as Mock).mockResolvedValue([monthWithZeroIncome]);
+
+      const { result } = renderHook(() => useBudget());
+
+      await waitFor(() => {
+        expect(result.current.currentMonth).toBeTruthy();
+      });
+
+      const totals = result.current.getTotals();
+
+      expect(totals.totalSpent).toBe(100);
+      expect(totals.totalBudget).toBe(0);
+      expect(totals.usedPercentage).toBe(0); // Protected from division by zero
+      expect(Number.isFinite(totals.usedPercentage)).toBe(true);
+    });
+
+    it('should handle very large expense values', async () => {
+      const monthWithLargeValues: Month = {
+        ...mockMonth,
+        income: 999999999,
+        expenses: [
+          { id: 'e1', title: 'Big', category: 'essenciais', value: 500000000, isRecurring: false, isPending: false },
+        ],
+      };
+      (storageAdapter.getMonthsWithExpenses as Mock).mockResolvedValue([monthWithLargeValues]);
+
+      const { result } = renderHook(() => useBudget());
+
+      await waitFor(() => {
+        expect(result.current.currentMonth).toBeTruthy();
+      });
+
+      const totals = result.current.getTotals();
+
+      expect(totals.totalSpent).toBe(500000000);
+      expect(Number.isFinite(totals.usedPercentage)).toBe(true);
+    });
+
+    it('should calculate category summary with zero spending', async () => {
+      const monthWithNoExpenses: Month = {
+        ...mockMonth,
+        income: 1000,
+        expenses: [],
+      };
+      (storageAdapter.getMonthsWithExpenses as Mock).mockResolvedValue([monthWithNoExpenses]);
+
+      const { result } = renderHook(() => useBudget());
+
+      await waitFor(() => {
+        expect(result.current.currentMonth).toBeTruthy();
+      });
+
+      const summary = result.current.getCategorySummary();
+      const essenciais = summary.find(s => s.key === 'essenciais');
+
+      expect(essenciais?.spent).toBe(0);
+      expect(essenciais?.budget).toBe(550); // 55% of 1000
+      expect(essenciais?.remaining).toBe(550);
+    });
   });
 });

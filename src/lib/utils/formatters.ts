@@ -19,6 +19,10 @@ export const parseCurrencyInput = (value: string): number => {
 };
 
 export const formatCurrencyInput = (value: number): string => {
+  // Guard against Infinity, -Infinity, and NaN
+  if (!Number.isFinite(value)) {
+    return '';
+  }
   return value > 0 ? value.toFixed(2).replace('.', ',') : '';
 };
 

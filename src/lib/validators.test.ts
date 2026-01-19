@@ -210,4 +210,317 @@ describe('validators', () => {
       expect(result.error).toBeDefined();
     });
   });
+
+  describe('security - XSS prevention in string fields', () => {
+    const XSS_PAYLOADS = [
+      '<script>alert(1)</script>',
+      '<img src=x onerror=alert(1)>',
+      'javascript:alert(1)',
+      '"><script>alert(1)</script>',
+      "'; DROP TABLE expenses; --",
+    ];
+
+    it('should accept XSS payloads as valid strings (sanitization happens at render)', () => {
+      // Validators should accept these strings - XSS prevention is at rendering layer
+      XSS_PAYLOADS.forEach(payload => {
+        const result = CreateExpenseInputSchema.safeParse({
+          month_id: 'month-123',
+          title: payload,
+          category_key: 'essenciais',
+          value: 100,
+        });
+        // The validator accepts strings - React will escape them on render
+        expect(result.success).toBe(true);
+      });
+    });
+
+    it('should enforce max length to prevent large payload attacks', () => {
+      const veryLongString = 'a'.repeat(256);
+      
+      const result = CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: veryLongString,
+        category_key: 'essenciais',
+        value: 100,
+      });
+      
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('numeric edge cases', () => {
+    it('should reject Infinity and NaN for expense values', () => {
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: Infinity,
+      }).success).toBe(false);
+
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: -Infinity,
+      }).success).toBe(false);
+
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: NaN,
+      }).success).toBe(false);
+    });
+
+    it('should reject Infinity and NaN for income values', () => {
+      expect(CreateIncomeSourceInputSchema.safeParse({
+        name: 'Salary',
+        value: Infinity,
+      }).success).toBe(false);
+
+      expect(CreateIncomeSourceInputSchema.safeParse({
+        name: 'Salary',
+        value: NaN,
+      }).success).toBe(false);
+    });
+
+    it('should accept zero as valid value', () => {
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 0,
+      }).success).toBe(true);
+
+      expect(CreateIncomeSourceInputSchema.safeParse({
+        name: 'Test',
+        value: 0,
+      }).success).toBe(true);
+    });
+
+    it('should accept decimal values with precision', () => {
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 99.99,
+      }).success).toBe(true);
+
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 0.01,
+      }).success).toBe(true);
+    });
+
+    it('should handle very large but finite numbers', () => {
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 999999999.99,
+      }).success).toBe(true);
+    });
+  });
+
+  describe('boundary values', () => {
+    it('should validate month boundaries correctly', () => {
+      // Valid boundaries
+      expect(CreateMonthInputSchema.safeParse({ year: 2000, month: 1 }).success).toBe(true);
+      expect(CreateMonthInputSchema.safeParse({ year: 2100, month: 12 }).success).toBe(true);
+      
+      // Invalid boundaries
+      expect(CreateMonthInputSchema.safeParse({ year: 1999, month: 1 }).success).toBe(false);
+      expect(CreateMonthInputSchema.safeParse({ year: 2101, month: 1 }).success).toBe(false);
+      expect(CreateMonthInputSchema.safeParse({ year: 2025, month: 0 }).success).toBe(false);
+      expect(CreateMonthInputSchema.safeParse({ year: 2025, month: 13 }).success).toBe(false);
+    });
+
+    it('should validate due_day boundaries correctly', () => {
+      // Valid boundaries
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+        due_day: 1,
+      }).success).toBe(true);
+
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+        due_day: 31,
+      }).success).toBe(true);
+
+      // Invalid boundaries
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+        due_day: 0,
+      }).success).toBe(false);
+
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+        due_day: 32,
+      }).success).toBe(false);
+    });
+
+    it('should validate installment boundaries correctly', () => {
+      // Valid installments
+      expect(CreateRecurringExpenseInputSchema.safeParse({
+        title: 'TV',
+        category_key: 'conforto',
+        value: 200,
+        has_installments: true,
+        total_installments: 1, // Minimum
+      }).success).toBe(true);
+
+      expect(CreateRecurringExpenseInputSchema.safeParse({
+        title: 'Car',
+        category_key: 'conforto',
+        value: 500,
+        has_installments: true,
+        total_installments: 120, // Maximum
+      }).success).toBe(true);
+
+      // Invalid installments
+      expect(CreateRecurringExpenseInputSchema.safeParse({
+        title: 'Test',
+        category_key: 'conforto',
+        value: 100,
+        has_installments: true,
+        total_installments: 0,
+      }).success).toBe(false);
+
+      expect(CreateRecurringExpenseInputSchema.safeParse({
+        title: 'Test',
+        category_key: 'conforto',
+        value: 100,
+        has_installments: true,
+        total_installments: 121,
+      }).success).toBe(false);
+    });
+  });
+
+  describe('type coercion protection', () => {
+    it('should reject string numbers for numeric fields', () => {
+      expect(CreateMonthInputSchema.safeParse({ year: '2025', month: 6 }).success).toBe(false);
+      expect(CreateMonthInputSchema.safeParse({ year: 2025, month: '6' }).success).toBe(false);
+    });
+
+    it('should reject numeric strings for string fields', () => {
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 123, // Should be string
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+      }).success).toBe(false);
+    });
+
+    it('should reject arrays and objects for primitive fields', () => {
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: ['Test'], // Array instead of string
+        category_key: 'essenciais',
+        value: 100,
+      }).success).toBe(false);
+
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: { text: 'Test' }, // Object instead of string
+        category_key: 'essenciais',
+        value: 100,
+      }).success).toBe(false);
+    });
+  });
+
+  describe('null and undefined handling', () => {
+    it('should handle nullable optional fields correctly', () => {
+      // subcategory_id is optional and nullable
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+        subcategory_id: null,
+      }).success).toBe(true);
+
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+        subcategory_id: undefined,
+      }).success).toBe(true);
+
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+        // subcategory_id omitted entirely
+      }).success).toBe(true);
+    });
+
+    it('should reject null for required fields', () => {
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: null,
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+      }).success).toBe(false);
+
+      expect(CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: null,
+        category_key: 'essenciais',
+        value: 100,
+      }).success).toBe(false);
+    });
+  });
+
+  describe('category key validation', () => {
+    const VALID_CATEGORIES = ['essenciais', 'conforto', 'metas', 'prazeres', 'liberdade', 'conhecimento'];
+    
+    it('should accept all valid category keys', () => {
+      VALID_CATEGORIES.forEach(category => {
+        expect(CreateExpenseInputSchema.safeParse({
+          month_id: 'month-123',
+          title: 'Test',
+          category_key: category,
+          value: 100,
+        }).success).toBe(true);
+      });
+    });
+
+    it('should reject similar but invalid category keys', () => {
+      const INVALID_CATEGORIES = [
+        'Essenciais', // Capitalized
+        'ESSENCIAIS', // All caps
+        'essenciais ', // Trailing space
+        ' essenciais', // Leading space
+        'essential', // English equivalent
+        'housing', // Common budget category
+        'food', // Common budget category
+        '', // Empty
+      ];
+
+      INVALID_CATEGORIES.forEach(category => {
+        expect(CreateExpenseInputSchema.safeParse({
+          month_id: 'month-123',
+          title: 'Test',
+          category_key: category,
+          value: 100,
+        }).success).toBe(false);
+      });
+    });
+  });
 });

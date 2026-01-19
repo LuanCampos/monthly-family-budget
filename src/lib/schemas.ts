@@ -41,10 +41,10 @@ export type MonthRowValidated = z.infer<typeof MonthRowSchema>;
 export const ExpenseRowSchema = z.object({
   id: z.string().min(1),
   month_id: z.string().min(1),
-  title: z.string().min(1),
+  title: z.string().min(1).max(255),
   category_key: CategoryKeySchema,
   subcategory_id: z.string().nullable(),
-  value: z.number().min(0),
+  value: z.number().finite().min(0),
   is_recurring: z.boolean(),
   is_pending: z.boolean(),
   due_day: z.number().int().min(1).max(31).nullable(),

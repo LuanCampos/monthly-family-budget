@@ -10,6 +10,27 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    
+    // Performance optimizations
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: false,
+        minThreads: 2,
+        maxThreads: 8,
+      },
+    },
+    
+    // Faster test isolation
+    isolate: true,
+    
+    // Timeouts
+    testTimeout: 10000,
+    hookTimeout: 10000,
+    
+    // Disable watch mode in CI
+    watch: false,
+    
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

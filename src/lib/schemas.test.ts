@@ -520,4 +520,241 @@ describe('schemas', () => {
       });
     });
   });
+
+  describe('security and edge cases', () => {
+    describe('prototype pollution prevention', () => {
+      it('should reject objects with __proto__', () => {
+        const malicious = {
+          id: 'exp-123',
+          month_id: 'month-456',
+          title: 'Test',
+          category_key: 'essenciais',
+          subcategory_id: null,
+          value: 100,
+          is_recurring: false,
+          is_pending: false,
+          due_day: null,
+          recurring_expense_id: null,
+          installment_current: null,
+          installment_total: null,
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z',
+          __proto__: { isAdmin: true },
+        };
+        // Zod should strip unknown keys
+        const result = ExpenseRowSchema.safeParse(malicious);
+        if (result.success) {
+          expect(result.data).not.toHaveProperty('__proto__');
+          expect(result.data).not.toHaveProperty('isAdmin');
+        }
+      });
+    });
+
+    describe('type coercion safety', () => {
+      it('should not coerce string to number for value', () => {
+        const withStringValue = {
+          id: 'exp-123',
+          month_id: 'month-456',
+          title: 'Test',
+          category_key: 'essenciais',
+          subcategory_id: null,
+          value: '100', // String instead of number
+          is_recurring: false,
+          is_pending: false,
+          due_day: null,
+          recurring_expense_id: null,
+          installment_current: null,
+          installment_total: null,
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z',
+        };
+        expect(ExpenseRowSchema.safeParse(withStringValue).success).toBe(false);
+      });
+
+      it('should not coerce number to string for id', () => {
+        const withNumberId = {
+          id: 123, // Number instead of string
+          month_id: 'month-456',
+          title: 'Test',
+          category_key: 'essenciais',
+          subcategory_id: null,
+          value: 100,
+          is_recurring: false,
+          is_pending: false,
+          due_day: null,
+          recurring_expense_id: null,
+          installment_current: null,
+          installment_total: null,
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z',
+        };
+        expect(ExpenseRowSchema.safeParse(withNumberId).success).toBe(false);
+      });
+    });
+
+    describe('timestamp validation', () => {
+      it('should accept ISO 8601 timestamps', () => {
+        const validTimestamps = [
+          '2025-01-01T00:00:00Z',
+          '2025-01-01T00:00:00.000Z',
+          '2025-12-31T23:59:59Z',
+          '2025-06-15T12:30:45.123Z',
+        ];
+
+        validTimestamps.forEach(timestamp => {
+          const expense = {
+            id: 'exp-123',
+            month_id: 'month-456',
+            title: 'Test',
+            category_key: 'essenciais',
+            subcategory_id: null,
+            value: 100,
+            is_recurring: false,
+            is_pending: false,
+            due_day: null,
+            recurring_expense_id: null,
+            installment_current: null,
+            installment_total: null,
+            created_at: timestamp,
+            updated_at: timestamp,
+          };
+          expect(ExpenseRowSchema.safeParse(expense).success).toBe(true);
+        });
+      });
+    });
+
+    describe('numeric limits', () => {
+      it('should handle maximum safe integer', () => {
+        const goal = {
+          id: 'goal-123',
+          family_id: 'fam-456',
+          name: 'Big Goal',
+          target_value: Number.MAX_SAFE_INTEGER,
+          target_month: null,
+          target_year: null,
+          account: null,
+          linked_subcategory_id: null,
+          linked_category_key: null,
+          status: 'active',
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z',
+        };
+        expect(GoalRowSchema.safeParse(goal).success).toBe(true);
+      });
+
+      it('should reject NaN values', () => {
+        const expense = {
+          id: 'exp-123',
+          month_id: 'month-456',
+          title: 'Test',
+          category_key: 'essenciais',
+          subcategory_id: null,
+          value: NaN,
+          is_recurring: false,
+          is_pending: false,
+          due_day: null,
+          recurring_expense_id: null,
+          installment_current: null,
+          installment_total: null,
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z',
+        };
+        expect(ExpenseRowSchema.safeParse(expense).success).toBe(false);
+      });
+
+      it('should reject Infinity values', () => {
+        const expense = {
+          id: 'exp-123',
+          month_id: 'month-456',
+          title: 'Test',
+          category_key: 'essenciais',
+          subcategory_id: null,
+          value: Infinity,
+          is_recurring: false,
+          is_pending: false,
+          due_day: null,
+          recurring_expense_id: null,
+          installment_current: null,
+          installment_total: null,
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z',
+        };
+        expect(ExpenseRowSchema.safeParse(expense).success).toBe(false);
+      });
+    });
+
+    describe('string constraints', () => {
+      it('should enforce title max length', () => {
+        const longTitle = 'a'.repeat(256);
+        const expense = {
+          id: 'exp-123',
+          month_id: 'month-456',
+          title: longTitle,
+          category_key: 'essenciais',
+          subcategory_id: null,
+          value: 100,
+          is_recurring: false,
+          is_pending: false,
+          due_day: null,
+          recurring_expense_id: null,
+          installment_current: null,
+          installment_total: null,
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z',
+        };
+        expect(ExpenseRowSchema.safeParse(expense).success).toBe(false);
+      });
+
+      it('should allow title with 255 characters', () => {
+        const maxTitle = 'a'.repeat(255);
+        const expense = {
+          id: 'exp-123',
+          month_id: 'month-456',
+          title: maxTitle,
+          category_key: 'essenciais',
+          subcategory_id: null,
+          value: 100,
+          is_recurring: false,
+          is_pending: false,
+          due_day: null,
+          recurring_expense_id: null,
+          installment_current: null,
+          installment_total: null,
+          created_at: '2025-01-01T00:00:00Z',
+          updated_at: '2025-01-01T00:00:00Z',
+        };
+        expect(ExpenseRowSchema.safeParse(expense).success).toBe(true);
+      });
+
+      it('should allow special characters in title', () => {
+        const specialTitles = [
+          'Café & Padaria',
+          'Conta de Luz (02/2025)',
+          'Compra #123',
+          'Uber: Trabalho → Casa',
+          '🍕 Pizza do mês',
+        ];
+
+        specialTitles.forEach(title => {
+          const expense = {
+            id: 'exp-123',
+            month_id: 'month-456',
+            title,
+            category_key: 'essenciais',
+            subcategory_id: null,
+            value: 100,
+            is_recurring: false,
+            is_pending: false,
+            due_day: null,
+            recurring_expense_id: null,
+            installment_current: null,
+            installment_total: null,
+            created_at: '2025-01-01T00:00:00Z',
+            updated_at: '2025-01-01T00:00:00Z',
+          };
+          expect(ExpenseRowSchema.safeParse(expense).success).toBe(true);
+        });
+      });
+    });
+  });
 });

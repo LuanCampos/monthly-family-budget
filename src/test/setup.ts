@@ -47,6 +47,33 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
+// Mock ResizeObserver for Radix UI components
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  value: ResizeObserverMock,
+});
+
+// Mock Element.prototype.hasPointerCapture for Radix UI
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+}
+
+// Mock Element.prototype.setPointerCapture for Radix UI
+if (!Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = () => {};
+}
+
+// Mock Element.prototype.releasePointerCapture for Radix UI
+if (!Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = () => {};
+}
+
 // Reset mocks before each test
 beforeEach(() => {
   localStorageMock.clear();
