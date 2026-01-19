@@ -4,12 +4,27 @@
 
 ---
 
+## � Verificação Obrigatória (SEMPRE)
+
+**TODA alteração de código DEVE passar pelos três comandos abaixo antes de ser considerada completa:**
+
+```bash
+npm run test:run      # Testes devem passar
+npm run lint          # Zero warnings
+npm run build         # Build deve completar sem erros
+```
+
+> ⚠️ **Nenhum PR será aceito se qualquer um desses comandos falhar.**
+
+---
+
 ## 📋 Checklist de PR
 
 Antes de abrir um PR, verifique:
 
-- [ ] `npm run build` passa sem erros
+- [ ] `npm run test:run` passa sem falhas
 - [ ] `npm run lint` passa com **zero warnings**
+- [ ] `npm run build` passa sem erros
 - [ ] Sem `console.*` — use `logger` de `@/lib/logger`
 - [ ] Sem credenciais hardcoded — use `import.meta.env.*`
 - [ ] Arquivos nomeados conforme [Nomenclatura de Componentes](#-nomenclatura-de-componentes)
@@ -524,14 +539,14 @@ npm run test:coverage # Com relatório de cobertura
 6. **IDs Offline** — `offlineStorage.ts`, `offlineAdapter.ts`
 7. **Logger** — `logger.ts`
 8. **Segurança** — `security.test.ts` (ataques: XSS, SQL Injection, NoSQL Injection, Prototype Pollution, Path Traversal, Command Injection, LDAP Injection, ReDoS, SSRF, JSON Injection, CRLF, Template Injection, Buffer Overflow, Unicode, Polyglot)
+9. **Componentes** — Usar `@testing-library/react` para renderização e interação
+10. **Hooks** — Usar `renderHook` do Testing Library com mocks de contexto
 
 ### O que NÃO Testar (por enquanto)
 
 | Camada | Razão |
 |--------|-------|
-| **Hooks** (`useBudget`, `useGoals`) | Requerem mock complexo de React context e Supabase |
 | **Services** (`budgetService`, etc.) | Chamam Supabase diretamente, melhor para testes de integração |
-| **Components** | Extensivos, requerem `@testing-library/react` |
 
 ### Checklist para Novos Testes
 
@@ -565,15 +580,22 @@ npm run test:coverage # Com relatório de cobertura
 
 ## 🛠️ Comandos
 
+### Desenvolvimento
 ```bash
 npm run dev           # Dev server (porta 8080)
-npm run build         # Build produção
-npm run lint          # ESLint (zero warnings obrigatório)
 npm run preview       # Preview do build
 npm run test          # Testes em modo watch
-npm run test:run      # Testes (execução única)
-npm run test:coverage # Testes com cobertura
 ```
+
+### ✅ Verificação Obrigatória (rodar ANTES de todo commit/PR)
+```bash
+npm run test:run      # 1. Testes devem passar
+npm run lint          # 2. Zero warnings
+npm run build         # 3. Build sem erros
+npm run test:coverage # (opcional) Cobertura de testes
+```
+
+> **⚠️ Os três comandos de verificação (test:run, lint, build) são OBRIGATÓRIOS antes de qualquer commit.**
 
 ---
 

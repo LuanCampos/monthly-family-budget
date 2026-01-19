@@ -282,8 +282,8 @@ Arquivos de teste co-localizados com o código fonte.
 | Novo validador/schema | `validators.ts` | ✅ Escrever teste |
 | Função de segurança | `secureStorage.ts` | ✅ Escrever teste com payloads maliciosos |
 | Ataques de segurança | `security.test.ts` | ✅ XSS, SQL Injection, Prototype Pollution, etc. |
-| Novo componente | `ExpenseCard.tsx` | ⏳ Futuro |
-| Novo hook | `useBudget.ts` | ⏳ Futuro (requer mocks complexos) |
+| Novo componente | `ExpenseCard.tsx` | ✅ Escrever teste de renderização e interação |
+| Novo hook | `useBudget.ts` | ✅ Escrever teste com mocks de contexto/API |
 
 ### Convenções de Teste
 
@@ -302,10 +302,102 @@ describe('nomeDoModulo', () => {
 });
 ```
 
+### Teste de Componente
+
+```typescript
+// Arquivo: ComponentName.test.tsx (co-localizado com ComponentName.tsx)
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { ComponentName } from './ComponentName';
+
+// Mock de contextos se necessário
+vi.mock('@/contexts/LanguageContext', () => ({
+  useLanguage: () => ({ t: (key: string) => key }),
+}));
+
+vi.mock('@/contexts/CurrencyContext', () => ({
+  useCurrency: () => ({ currencySymbol: 'R$', formatCurrency: (v: number) => `R$ ${v}` }),
+}));
+
+describe('ComponentName', () => {
+  it('should render correctly', () => {
+    render(<ComponentName prop="value" />);
+    expect(screen.getByText('expectedText')).toBeInTheDocument();
+  });
+
+  it('should handle user interaction', async () => {
+    const user = userEvent.setup();
+    const onClickMock = vi.fn();
+    
+    render(<ComponentName onClick={onClickMock} />);
+    await user.click(screen.getByRole('button', { name: /submit/i }));
+    
+    expect(onClickMock).toHaveBeenCalledTimes(1);
+  });
+});
+```
+
+### Teste de Hook
+
+```typescript
+// Arquivo: useHookName.test.ts (co-localizado com useHookName.ts)
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { useHookName } from './useHookName';
+
+// Mock de dependências
+vi.mock('@/lib/adapters/storageAdapter', () => ({
+  storageAdapter: {
+    getItems: vi.fn().mockResolvedValue([]),
+    saveItem: vi.fn().mockResolvedValue({ id: '1' }),
+  },
+}));
+
+describe('useHookName', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should return initial state', () => {
+    const { result } = renderHook(() => useHookName());
+    expect(result.current.items).toEqual([]);
+    expect(result.current.loading).toBe(true);
+  });
+
+  it('should update state after action', async () => {
+    const { result } = renderHook(() => useHookName());
+    
+    await act(async () => {
+      await result.current.addItem({ name: 'Test' });
+    });
+    
+    await waitFor(() => {
+      expect(result.current.items).toHaveLength(1);
+    });
+  });
+});
+```
+
+---
+
+## 🚨 Verificação Obrigatória (SEMPRE)
+
+**TODA alteração DEVE passar pelos três comandos abaixo:**
+
+```bash
+npm run test:run      # Testes devem passar
+npm run lint          # Zero warnings
+npm run build         # Build sem erros
+```
+
+> ⚠️ **Alterações NÃO estão completas até que os três comandos passem.**
+
 ---
 
 ## Checklist Antes de Finalizar
 
+### Código
 - [ ] Um componente por arquivo
 - [ ] Named export (`export const`)
 - [ ] Sem `any` — usar `unknown` ou tipo específico
@@ -318,3 +410,8 @@ describe('nomeDoModulo', () => {
 - [ ] Operações async com try/catch + toast
 - [ ] Cálculos pesados com `useMemo`
 - [ ] Testes para novos utilitários/validadores
+
+### ✅ Verificação Final (OBRIGATÓRIO)
+- [ ] `npm run test:run` — todos os testes passam
+- [ ] `npm run lint` — zero warnings
+- [ ] `npm run build` — build completa sem erros
