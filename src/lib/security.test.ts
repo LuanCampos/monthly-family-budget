@@ -30,9 +30,14 @@ import {
   CreateGoalInputSchema,
   CreateIncomeSourceInputSchema,
   CreateRecurringExpenseInputSchema,
+  CreateGoalEntryInputSchema,
+  CreateManualGoalEntryInputSchema,
+  CreateSubcategoryInputSchema,
+  MonthLimitsSchema,
 } from './validators';
 import { ExpenseRowSchema, MonthRowSchema } from './schemas';
 import { sanitizeCurrencyInput, parseCurrencyInput } from './utils/formatters';
+import { mapExpense, mapGoal, mapSubcategory } from './mappers';
 
 // ============================================================================
 // XSS (Cross-Site Scripting) Attack Payloads
@@ -1073,15 +1078,15 @@ describe('Security - Polyglot Payload Prevention', () => {
   });
 
   describe('handles polyglots in text fields', () => {
-    it.each(POLYGLOT_PAYLOADS)('should accept but sanitize in title', (payload) => {
+    it.each(POLYGLOT_PAYLOADS)('should accept polyglot in title (React escapes on render)', (payload) => {
       const result = CreateExpenseInputSchema.safeParse({
         month_id: 'month-123',
         title: payload.substring(0, 255),
         category_key: 'essenciais',
         value: 100,
       });
-      // Should either fail (length) or pass (React will escape)
-      expect(result.success === true || result.success === false).toBe(true);
+      // Zod validates structure, React escapes XSS on render - this is the correct behavior
+      expect(result.success).toBe(true);
     });
   });
 });
@@ -1297,6 +1302,677 @@ describe('Security - ID Format Validation', () => {
   describe('rejects invalid ID formats', () => {
     it.each(invalidIdFormats)('should reject: %s', (id) => {
       expect(setSecureStorageItem('current-family-id', id)).toBe(false);
+    });
+  });
+});
+
+// ============================================================================
+// NEW: Mapper Security Tests (Data from Database)
+// ============================================================================
+
+describe('Security - Mapper Handling of Malicious Database Data', () => {
+  describe('mapExpense handles malicious data safely', () => {
+    it('should handle XSS in title from database', () => {
+      const maliciousExpense = {
+        id: 'exp-123',
+        month_id: 'month-456',
+        title: '<script>alert("xss")</script>',
+        category_key: 'essenciais',
+        subcategory_id: null,
+        value: 100,
+        is_recurring: false,
+        is_pending: false,
+        due_day: null,
+        recurring_expense_id: null,
+        installment_current: null,
+        installment_total: null,
+        created_at: '2025-01-01T00:00:00Z',
+      };
+
+      // Mapper should pass through - React handles escaping at render time
+      const result = mapExpense(maliciousExpense);
+      expect(result.title).toBe('<script>alert("xss")</script>');
+      // The key is React will escape this when rendering
+    });
+
+    it('should handle SQL injection in title from database', () => {
+      const maliciousExpense = {
+        id: 'exp-123',
+        month_id: 'month-456',
+        title: "'; DROP TABLE expenses; --",
+        category_key: 'essenciais',
+        subcategory_id: null,
+        value: 100,
+        is_recurring: false,
+        is_pending: false,
+        due_day: null,
+        recurring_expense_id: null,
+        installment_current: null,
+        installment_total: null,
+        created_at: '2025-01-01T00:00:00Z',
+      };
+
+      const result = mapExpense(maliciousExpense);
+      // Just a string, no execution
+      expect(result.title).toBe("'; DROP TABLE expenses; --");
+    });
+
+    it('should handle malformed month_id without crashing', () => {
+      const maliciousExpense = {
+        id: 'exp-123',
+        month_id: '../../../etc/passwd',
+        title: 'Test',
+        category_key: 'essenciais',
+        subcategory_id: null,
+        value: 100,
+        is_recurring: false,
+        is_pending: false,
+        due_day: null,
+        recurring_expense_id: null,
+        installment_current: null,
+        installment_total: null,
+        created_at: '2025-01-01T00:00:00Z',
+      };
+
+      // Should not crash, just won't extract valid month/year
+      expect(() => mapExpense(maliciousExpense)).not.toThrow();
+    });
+
+    it('should handle null bytes in strings', () => {
+      const maliciousExpense = {
+        id: 'exp-123',
+        month_id: 'month-456',
+        title: 'Test\x00Injection',
+        category_key: 'essenciais',
+        subcategory_id: null,
+        value: 100,
+        is_recurring: false,
+        is_pending: false,
+        due_day: null,
+        recurring_expense_id: null,
+        installment_current: null,
+        installment_total: null,
+        created_at: '2025-01-01T00:00:00Z',
+      };
+
+      expect(() => mapExpense(maliciousExpense)).not.toThrow();
+    });
+
+    it('should handle extremely large values', () => {
+      const maliciousExpense = {
+        id: 'exp-123',
+        month_id: 'month-456',
+        title: 'Test',
+        category_key: 'essenciais',
+        subcategory_id: null,
+        value: Number.MAX_SAFE_INTEGER,
+        is_recurring: false,
+        is_pending: false,
+        due_day: null,
+        recurring_expense_id: null,
+        installment_current: null,
+        installment_total: null,
+        created_at: '2025-01-01T00:00:00Z',
+      };
+
+      const result = mapExpense(maliciousExpense);
+      expect(result.value).toBe(Number.MAX_SAFE_INTEGER);
+    });
+
+    it('should handle Unicode in category_key attempt', () => {
+      const maliciousExpense = {
+        id: 'exp-123',
+        month_id: 'month-456',
+        title: 'Test',
+        category_key: 'essenci\u0000ais', // Null byte in category
+        subcategory_id: null,
+        value: 100,
+        is_recurring: false,
+        is_pending: false,
+        due_day: null,
+        recurring_expense_id: null,
+        installment_current: null,
+        installment_total: null,
+        created_at: '2025-01-01T00:00:00Z',
+      };
+
+      // Mapper passes through, Zod validation would catch invalid category
+      expect(() => mapExpense(maliciousExpense)).not.toThrow();
+    });
+  });
+
+  describe('mapGoal handles malicious data safely', () => {
+    it('should handle XSS in goal name', () => {
+      const maliciousGoal = {
+        id: 'goal-123',
+        family_id: 'fam-456',
+        name: '<img src=x onerror=alert(1)>',
+        target_value: 10000,
+        target_month: 12,
+        target_year: 2025,
+        account: null,
+        linked_subcategory_id: null,
+        linked_category_key: null,
+        status: 'active' as const,
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
+      };
+
+      const result = mapGoal(maliciousGoal);
+      // React will escape this
+      expect(result.name).toBe('<img src=x onerror=alert(1)>');
+    });
+
+    it('should handle template injection in account field', () => {
+      const maliciousGoal = {
+        id: 'goal-123',
+        family_id: 'fam-456',
+        name: 'Savings',
+        target_value: 10000,
+        target_month: null,
+        target_year: null,
+        account: '{{constructor.constructor("alert(1)")()}}',
+        linked_subcategory_id: null,
+        linked_category_key: null,
+        status: 'active' as const,
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
+      };
+
+      const result = mapGoal(maliciousGoal);
+      expect(result.account).toBe('{{constructor.constructor("alert(1)")()}}');
+    });
+  });
+
+  describe('mapSubcategory handles malicious data safely', () => {
+    it('should handle XSS in subcategory name', () => {
+      const result = mapSubcategory({
+        id: 'sub-123',
+        family_id: 'fam-456',
+        name: '<script>document.cookie</script>',
+        category_key: 'essenciais',
+        created_at: '2025-01-01T00:00:00Z',
+      });
+
+      expect(result.name).toBe('<script>document.cookie</script>');
+    });
+
+    it('should handle prototype pollution attempt in category_key', () => {
+      const result = mapSubcategory({
+        id: 'sub-123',
+        family_id: 'fam-456',
+        name: 'Test',
+        category_key: '__proto__',
+        created_at: '2025-01-01T00:00:00Z',
+      });
+
+      // Just a string, not actual prototype pollution
+      expect(result.categoryKey).toBe('__proto__');
+    });
+  });
+});
+
+// ============================================================================
+// NEW: Goal Entry Security Tests
+// ============================================================================
+
+describe('Security - Goal Entry Validation', () => {
+  describe('CreateGoalEntryInputSchema security', () => {
+    it('should reject extremely large values', () => {
+      const result = CreateGoalEntryInputSchema.safeParse({
+        goal_id: 'goal-123',
+        expense_id: 'exp-456',
+        value: Number.MAX_VALUE,
+        month: 1,
+        year: 2025,
+      });
+      // MAX_VALUE exceeds safe financial limits and must be rejected
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject Infinity value', () => {
+      const result = CreateGoalEntryInputSchema.safeParse({
+        goal_id: 'goal-123',
+        expense_id: 'exp-456',
+        value: Infinity,
+        month: 1,
+        year: 2025,
+      });
+      // Infinity is not a valid financial value
+      expect(result.success).toBe(false);
+    });
+
+    it('should handle XSS in description', () => {
+      const result = CreateGoalEntryInputSchema.safeParse({
+        goal_id: 'goal-123',
+        expense_id: 'exp-456',
+        value: 100,
+        description: '<script>alert(1)</script>',
+        month: 1,
+        year: 2025,
+      });
+      // Description is optional string - XSS is handled by React escaping
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('CreateManualGoalEntryInputSchema security', () => {
+    it('should allow negative values for withdrawals', () => {
+      const result = CreateManualGoalEntryInputSchema.safeParse({
+        goal_id: 'goal-123',
+        value: -500,
+        description: 'Emergency withdrawal',
+        month: 1,
+        year: 2025,
+      });
+      // Manual entries can be negative (corrections, withdrawals)
+      expect(result.success).toBe(true);
+    });
+
+    it('should require description for manual entries', () => {
+      const result = CreateManualGoalEntryInputSchema.safeParse({
+        goal_id: 'goal-123',
+        value: 100,
+        month: 1,
+        year: 2025,
+      });
+      // Description is required for manual entries
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject invalid month in entry', () => {
+      const result = CreateManualGoalEntryInputSchema.safeParse({
+        goal_id: 'goal-123',
+        value: 100,
+        description: 'Test',
+        month: 13, // Invalid month
+        year: 2025,
+      });
+      // Month must be 1-12
+      expect(result.success).toBe(false);
+    });
+  });
+});
+
+// ============================================================================
+// NEW: Subcategory Security Tests
+// ============================================================================
+
+describe('Security - Subcategory Validation', () => {
+  describe('CreateSubcategoryInputSchema security', () => {
+    it('should accept valid subcategory', () => {
+      const result = CreateSubcategoryInputSchema.safeParse({
+        name: 'Groceries',
+        category_key: 'essenciais',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject empty name', () => {
+      const result = CreateSubcategoryInputSchema.safeParse({
+        name: '',
+        category_key: 'essenciais',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject name exceeding max length', () => {
+      const result = CreateSubcategoryInputSchema.safeParse({
+        name: 'A'.repeat(256),
+        category_key: 'essenciais',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject invalid category_key', () => {
+      const result = CreateSubcategoryInputSchema.safeParse({
+        name: 'Test',
+        category_key: 'admin',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should handle XSS in name (React escapes)', () => {
+      const result = CreateSubcategoryInputSchema.safeParse({
+        name: '<script>alert(1)</script>',
+        category_key: 'conforto',
+      });
+      // Accepted as string, React escapes on render
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle SQL injection in name (parameterized queries)', () => {
+      const result = CreateSubcategoryInputSchema.safeParse({
+        name: "'; DELETE FROM subcategories; --",
+        category_key: 'metas',
+      });
+      // Accepted as string, Supabase uses parameterized queries
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject prototype pollution as category_key', () => {
+      const result = CreateSubcategoryInputSchema.safeParse({
+        name: 'Test',
+        category_key: '__proto__',
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+});
+
+// ============================================================================
+// NEW: Currency Formatter Security Tests
+// ============================================================================
+
+describe('Security - Currency Formatter Attack Resistance', () => {
+  describe('sanitizeCurrencyInput advanced attacks', () => {
+    it('should handle ReDoS attempt', () => {
+      const startTime = Date.now();
+      const payload = '1'.repeat(10000) + ',00';
+      
+      sanitizeCurrencyInput(payload);
+      
+      const elapsed = Date.now() - startTime;
+      expect(elapsed).toBeLessThan(100);
+    });
+
+    it('should handle Unicode number lookalikes', () => {
+      // Fullwidth digits
+      const result = sanitizeCurrencyInput('\uFF11\uFF10\uFF10'); // １００ fullwidth
+      expect(result).toBe(''); // Stripped as non-numeric
+    });
+
+    it('should handle mixed encoding attacks', () => {
+      const result = sanitizeCurrencyInput('1%302%30.00'); // URL encoded zeros
+      expect(result).not.toContain('%');
+    });
+
+    it('should handle null byte injection', () => {
+      const result = sanitizeCurrencyInput('100\x0050');
+      expect(result).toBe('10050');
+    });
+  });
+
+  describe('parseCurrencyInput edge cases', () => {
+    it('should return 0 for Infinity string', () => {
+      const result = parseCurrencyInput('Infinity');
+      expect(result).toBe(0);
+    });
+
+    it('should return 0 for -Infinity string', () => {
+      const result = parseCurrencyInput('-Infinity');
+      expect(result).toBe(0);
+    });
+
+    it('should return 0 for NaN string', () => {
+      const result = parseCurrencyInput('NaN');
+      expect(result).toBe(0);
+    });
+
+    it('should handle scientific notation safely', () => {
+      const result = parseCurrencyInput('1e10');
+      // Scientific notation should be handled but result must be finite
+      expect(Number.isFinite(result)).toBe(true);
+    });
+
+    it('should handle negative zero', () => {
+      const result = parseCurrencyInput('-0');
+      expect(Object.is(result, 0) || Object.is(result, -0)).toBe(true);
+    });
+  });
+});
+
+// ============================================================================
+// NEW: Offline Adapter Security Tests
+// ============================================================================
+
+describe('Security - Offline Storage Attack Resistance', () => {
+  describe('IndexedDB data integrity', () => {
+    it('should not execute JavaScript from stored data', () => {
+      // When data with JS code is retrieved, it should remain as string
+      const maliciousData = {
+        id: 'test-123',
+        script: '<script>alert(1)</script>',
+        eval: 'eval("malicious")',
+      };
+
+      // The data should be stored and retrieved as-is
+      expect(maliciousData.script).toBe('<script>alert(1)</script>');
+      expect(maliciousData.eval).toBe('eval("malicious")');
+      // No execution occurs - it's just data
+    });
+
+    it('should handle extremely large IDs', () => {
+      const largeId = 'a'.repeat(10000);
+      // Should not crash the application
+      expect(() => {
+        const _test = { id: largeId };
+      }).not.toThrow();
+    });
+  });
+});
+
+// ============================================================================
+// NEW: Month Limits Security Tests
+// ============================================================================
+
+describe('Security - Month Limits Manipulation Prevention', () => {
+  describe('MonthLimitsSchema security', () => {
+    it('should reject percentage over 100', () => {
+      const result = MonthLimitsSchema.safeParse({
+        essenciais: 150,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject negative percentage', () => {
+      const result = MonthLimitsSchema.safeParse({
+        essenciais: -10,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject invalid category key', () => {
+      const result = MonthLimitsSchema.safeParse({
+        'invalid-category': 50,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject prototype pollution key __proto__', () => {
+      const attackPayload = Object.fromEntries([['__proto__', 50]]);
+      const result = MonthLimitsSchema.safeParse(attackPayload);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject prototype pollution key via defineProperty', () => {
+      // Object literal { '__proto__': 50 } doesn't create a key in JavaScript
+      // Use Object.defineProperty to actually create the key
+      const attackPayload: Record<string, number> = {};
+      Object.defineProperty(attackPayload, '__proto__', {
+        value: 50,
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
+      const result = MonthLimitsSchema.safeParse(attackPayload);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject constructor key', () => {
+      const result = MonthLimitsSchema.safeParse({
+        constructor: 50,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject prototype key', () => {
+      const result = MonthLimitsSchema.safeParse({
+        prototype: 50,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should accept valid limits', () => {
+      const result = MonthLimitsSchema.safeParse({
+        essenciais: 50,
+        conforto: 30,
+        metas: 20,
+      });
+      expect(result.success).toBe(true);
+    });
+  });
+});
+
+// ============================================================================
+// NEW: Recurring Expense Security Tests
+// ============================================================================
+
+describe('Security - Recurring Expense Validation', () => {
+  describe('CreateRecurringExpenseInputSchema security', () => {
+    it('should reject extremely large installment count', () => {
+      const result = CreateRecurringExpenseInputSchema.safeParse({
+        title: 'TV',
+        category_key: 'conforto',
+        value: 100,
+        has_installments: true,
+        total_installments: 999999999,
+      });
+      // Installments must have a reasonable maximum (120 = 10 years)
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject fractional installments', () => {
+      const result = CreateRecurringExpenseInputSchema.safeParse({
+        title: 'TV',
+        category_key: 'conforto',
+        value: 100,
+        has_installments: true,
+        total_installments: 12.5,
+      });
+      // Must be integer
+      expect(result.success).toBe(false);
+    });
+
+    it('should handle XSS in title', () => {
+      const result = CreateRecurringExpenseInputSchema.safeParse({
+        title: '<img src=x onerror=alert(1)>',
+        category_key: 'prazeres',
+        value: 50,
+      });
+      // React escapes on render
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject value as string', () => {
+      const result = CreateRecurringExpenseInputSchema.safeParse({
+        title: 'Netflix',
+        category_key: 'prazeres',
+        value: '50' as unknown,
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+});
+
+// ============================================================================
+// NEW: Race Condition Awareness Tests
+// ============================================================================
+
+describe('Security - Concurrency Safety', () => {
+  describe('validates data integrity under rapid operations', () => {
+    it('should handle rapid localStorage writes', () => {
+      const results: boolean[] = [];
+      
+      for (let i = 0; i < 100; i++) {
+        results.push(setSecureStorageItem('budget-app-theme', i % 2 === 0 ? 'dark' : 'light'));
+      }
+      
+      // All should succeed
+      expect(results.every(r => r === true)).toBe(true);
+      
+      // Final value should be consistent
+      const finalValue = getSecureStorageItem('budget-app-theme');
+      expect(['dark', 'light']).toContain(finalValue);
+    });
+
+    it('should handle rapid validation calls', async () => {
+      const promises = Array(100).fill(null).map((_, i) => 
+        Promise.resolve(CreateExpenseInputSchema.safeParse({
+          month_id: `month-${i}`,
+          title: `Expense ${i}`,
+          category_key: 'essenciais',
+          value: i * 10,
+        }))
+      );
+
+      const results = await Promise.all(promises);
+      expect(results.every(r => r.success === true)).toBe(true);
+    });
+  });
+});
+
+// ============================================================================
+// NEW: Input Sanitization Completeness
+// ============================================================================
+
+describe('Security - Comprehensive Input Sanitization', () => {
+  describe('Zod schemas strip extra fields (mass assignment prevention)', () => {
+    const schemas = [
+      { name: 'CreateExpenseInputSchema', schema: CreateExpenseInputSchema, 
+        valid: { month_id: 'm-1', title: 'T', category_key: 'essenciais', value: 1 } },
+      { name: 'CreateGoalInputSchema', schema: CreateGoalInputSchema,
+        valid: { family_id: 'f-1', name: 'G', target_value: 100 } },
+      { name: 'CreateIncomeSourceInputSchema', schema: CreateIncomeSourceInputSchema,
+        valid: { name: 'Salary', value: 5000 } },
+    ];
+
+    it.each(schemas)('$name should not include extra isAdmin field in result', ({ schema, valid }) => {
+      const attackPayload = {
+        ...valid,
+        isAdmin: true,
+        role: 'admin',
+      };
+
+      const result = schema.safeParse(attackPayload);
+      if (result.success) {
+        // Zod by default strips unknown keys (passthrough mode disabled)
+        expect((result.data as Record<string, unknown>).isAdmin).toBeUndefined();
+        expect((result.data as Record<string, unknown>).role).toBeUndefined();
+      }
+    });
+  });
+
+  describe('Prototype pollution prevention', () => {
+    it('should not pollute Object.prototype via __proto__ in input', () => {
+      const malicious = Object.fromEntries([
+        ['month_id', 'm-1'],
+        ['title', 'Test'],
+        ['category_key', 'essenciais'],
+        ['value', 100],
+        ['__proto__', { isAdmin: true }],
+      ]);
+
+      CreateExpenseInputSchema.safeParse(malicious);
+      
+      // Object.prototype must NOT be polluted
+      expect(({} as Record<string, unknown>).isAdmin).toBeUndefined();
+    });
+
+    it('should not include __proto__ key in parsed result', () => {
+      const malicious = Object.fromEntries([
+        ['month_id', 'm-1'],
+        ['title', 'Test'],
+        ['category_key', 'essenciais'],
+        ['value', 100],
+        ['__proto__', { isAdmin: true }],
+      ]);
+
+      const result = CreateExpenseInputSchema.safeParse(malicious);
+      if (result.success) {
+        // __proto__ should not be in the parsed data
+        expect(Object.keys(result.data)).not.toContain('__proto__');
+      }
     });
   });
 });

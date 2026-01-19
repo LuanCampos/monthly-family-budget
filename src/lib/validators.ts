@@ -51,10 +51,10 @@ export const CreateRecurringExpenseInputSchema = z.object({
   title: z.string().min(1).max(255),
   category_key: CategoryKeySchema,
   subcategory_id: z.string().optional().nullable(),
-  value: z.number().min(0),
+  value: z.number().finite().min(0),
   due_day: z.number().int().min(1).max(31).optional().nullable(),
   has_installments: z.boolean().optional(),
-  total_installments: z.number().int().min(1).optional().nullable(),
+  total_installments: z.number().int().min(1).max(120).optional().nullable(),
   start_year: z.number().int().min(2000).max(2100).optional().nullable(),
   start_month: z.number().int().min(1).max(12).optional().nullable(),
 });
@@ -104,11 +104,26 @@ export type UpdateIncomeSourceInput = z.infer<typeof UpdateIncomeSourceInputSche
 
 /**
  * Validate month limits (category percentages)
+ * Security: Uses superRefine to reject prototype pollution keys
  */
+const PROTOTYPE_POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 export const MonthLimitsSchema = z.record(
   CategoryKeySchema,
   z.number().min(0).max(100)
-);
+).superRefine((data, ctx) => {
+  // Security: Check for prototype pollution keys in the input
+  const keys = Object.keys(data);
+  for (const key of keys) {
+    if (PROTOTYPE_POLLUTION_KEYS.has(key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid key: ${key}`,
+        path: [key],
+      });
+    }
+  }
+});
 
 export type MonthLimits = z.infer<typeof MonthLimitsSchema>;
 
@@ -142,10 +157,10 @@ export type UpdateGoalInput = z.infer<typeof UpdateGoalInputSchema>;
 export const CreateGoalEntryInputSchema = z.object({
   goal_id: z.string(),
   expense_id: z.string(),
-  value: z.number(),
+  value: z.number().finite().min(0).max(999999999999),
   description: z.string().optional().nullable(),
-  month: z.number().int(),
-  year: z.number().int(),
+  month: z.number().int().min(1).max(12),
+  year: z.number().int().min(2000).max(2100),
 });
 
 export type CreateGoalEntryInput = z.infer<typeof CreateGoalEntryInputSchema>;
@@ -156,10 +171,10 @@ export type CreateGoalEntryInput = z.infer<typeof CreateGoalEntryInputSchema>;
  */
 export const CreateManualGoalEntryInputSchema = z.object({
   goal_id: z.string(),
-  value: z.number(),
+  value: z.number().finite(),
   description: z.string(),
-  month: z.number().int(),
-  year: z.number().int(),
+  month: z.number().int().min(1).max(12),
+  year: z.number().int().min(2000).max(2100),
   expense_id: z.undefined().optional(),
 });
 

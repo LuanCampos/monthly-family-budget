@@ -10,7 +10,12 @@ export const formatPercentage = (value: number): string => {
 };
 
 export const parseCurrencyInput = (value: string): number => {
-  return parseFloat(value.replace(',', '.')) || 0;
+  const parsed = parseFloat(value.replace(',', '.'));
+  // Security: Reject Infinity, -Infinity, and NaN
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+  return parsed;
 };
 
 export const formatCurrencyInput = (value: number): string => {
