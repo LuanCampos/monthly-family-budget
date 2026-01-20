@@ -1,7 +1,38 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { offlineAdapter } from './offlineAdapter';
 
+// Mock the offlineStorage module
+vi.mock('../storage/offlineStorage', () => ({
+  offlineDB: {
+    getAll: vi.fn(),
+    getAllByIndex: vi.fn(),
+    get: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    clear: vi.fn(),
+  },
+  syncQueue: {
+    add: vi.fn(),
+    getAll: vi.fn(),
+    getByFamily: vi.fn(),
+    remove: vi.fn(),
+    clear: vi.fn(),
+  },
+  generateOfflineId: vi.fn((prefix = 'offline') => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`),
+  isOfflineId: vi.fn((id: string) => {
+    if (!id || typeof id !== 'string') return false;
+    const offlinePrefixes = ['offline-', 'family-', 'exp-', 'rec-', 'sub-', 'goal-', 'gentry-', 'month-'];
+    return offlinePrefixes.some(prefix => id.startsWith(prefix));
+  }),
+}));
+
+import { offlineDB, syncQueue } from '../storage/offlineStorage';
+
 describe('offlineAdapter', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe('generateOfflineId', () => {
     it('should generate IDs that pass isOfflineId check', () => {
       const id = offlineAdapter.generateOfflineId();
@@ -88,6 +119,185 @@ describe('offlineAdapter', () => {
     });
   });
 
-  // Note: sync queue operations require IndexedDB which is not available in unit tests.
-  // These tests are covered in integration/e2e tests.
+  describe('CRUD operations delegation', () => {
+    it('should delegate getAll to offlineDB', async () => {
+      const mockData = [{ id: '1', name: 'Test' }];
+      vi.mocked(offlineDB.getAll).mockResolvedValue(mockData);
+
+      const result = await offlineAdapter.getAll('families');
+
+      expect(offlineDB.getAll).toHaveBeenCalledWith('families');
+      expect(result).toEqual(mockData);
+    });
+
+    it('should delegate getAllByIndex to offlineDB', async () => {
+      const mockData = [{ id: 'exp-1', month_id: 'month-1' }];
+      vi.mocked(offlineDB.getAllByIndex).mockResolvedValue(mockData);
+
+      const result = await offlineAdapter.getAllByIndex('expenses', 'month_id', 'month-1');
+
+      expect(offlineDB.getAllByIndex).toHaveBeenCalledWith('expenses', 'month_id', 'month-1');
+      expect(result).toEqual(mockData);
+    });
+
+    it('should delegate get to offlineDB', async () => {
+      const mockData = { id: '1', name: 'Test Family' };
+      vi.mocked(offlineDB.get).mockResolvedValue(mockData);
+
+      const result = await offlineAdapter.get('families', '1');
+
+      expect(offlineDB.get).toHaveBeenCalledWith('families', '1');
+      expect(result).toEqual(mockData);
+    });
+
+    it('should delegate put to offlineDB', async () => {
+      const mockData = { id: '1', name: 'Test Family' };
+      vi.mocked(offlineDB.put).mockResolvedValue(undefined);
+
+      await offlineAdapter.put('families', mockData);
+
+      expect(offlineDB.put).toHaveBeenCalledWith('families', mockData);
+    });
+
+    it('should delegate delete to offlineDB', async () => {
+      vi.mocked(offlineDB.delete).mockResolvedValue(undefined);
+
+      await offlineAdapter.delete('families', '1');
+
+      expect(offlineDB.delete).toHaveBeenCalledWith('families', '1');
+    });
+
+    it('should delegate clear to offlineDB', async () => {
+      vi.mocked(offlineDB.clear).mockResolvedValue(undefined);
+
+      await offlineAdapter.clear('families');
+
+      expect(offlineDB.clear).toHaveBeenCalledWith('families');
+    });
+  });
+
+  describe('sync queue operations delegation', () => {
+    it('should delegate sync.add to syncQueue', async () => {
+      vi.mocked(syncQueue.add).mockResolvedValue(undefined);
+
+      const item = { type: 'expense' as const, action: 'insert' as const, data: {}, familyId: 'family-1' };
+      await offlineAdapter.sync.add(item);
+
+      expect(syncQueue.add).toHaveBeenCalledWith(item);
+    });
+
+    it('should delegate sync.getAll to syncQueue', async () => {
+      const mockItems = [
+        { id: 'sync-1', type: 'expense' as const, action: 'insert' as const, data: {}, createdAt: '2025-01-01', familyId: 'family-1' },
+      ];
+      vi.mocked(syncQueue.getAll).mockResolvedValue(mockItems);
+
+      const result = await offlineAdapter.sync.getAll();
+
+      expect(syncQueue.getAll).toHaveBeenCalled();
+      expect(result).toEqual(mockItems);
+    });
+
+    it('should delegate sync.getByFamily to syncQueue', async () => {
+      const mockItems = [
+        { id: 'sync-1', type: 'expense' as const, action: 'insert' as const, data: {}, createdAt: '2025-01-01', familyId: 'family-1' },
+      ];
+      vi.mocked(syncQueue.getByFamily).mockResolvedValue(mockItems);
+
+      const result = await offlineAdapter.sync.getByFamily('family-1');
+
+      expect(syncQueue.getByFamily).toHaveBeenCalledWith('family-1');
+      expect(result).toEqual(mockItems);
+    });
+
+    it('should delegate sync.remove to syncQueue', async () => {
+      vi.mocked(syncQueue.remove).mockResolvedValue(undefined);
+
+      await offlineAdapter.sync.remove('sync-1');
+
+      expect(syncQueue.remove).toHaveBeenCalledWith('sync-1');
+    });
+
+    it('should delegate sync.clear to syncQueue', async () => {
+      vi.mocked(syncQueue.clear).mockResolvedValue(undefined);
+
+      await offlineAdapter.sync.clear();
+
+      expect(syncQueue.clear).toHaveBeenCalled();
+    });
+  });
+
+  describe('offline adapter type', () => {
+    it('should expose all expected methods', () => {
+      expect(typeof offlineAdapter.getAll).toBe('function');
+      expect(typeof offlineAdapter.getAllByIndex).toBe('function');
+      expect(typeof offlineAdapter.get).toBe('function');
+      expect(typeof offlineAdapter.put).toBe('function');
+      expect(typeof offlineAdapter.delete).toBe('function');
+      expect(typeof offlineAdapter.clear).toBe('function');
+      expect(typeof offlineAdapter.generateOfflineId).toBe('function');
+      expect(typeof offlineAdapter.isOfflineId).toBe('function');
+    });
+
+    it('should expose sync namespace with all methods', () => {
+      expect(typeof offlineAdapter.sync.add).toBe('function');
+      expect(typeof offlineAdapter.sync.getAll).toBe('function');
+      expect(typeof offlineAdapter.sync.getByFamily).toBe('function');
+      expect(typeof offlineAdapter.sync.remove).toBe('function');
+      expect(typeof offlineAdapter.sync.clear).toBe('function');
+    });
+  });
+
+  describe('store name handling', () => {
+    it('should work with all supported store names', async () => {
+      const storeNames = [
+        'families',
+        'months',
+        'expenses',
+        'recurring_expenses',
+        'subcategories',
+        'income_sources',
+        'goals',
+        'goal_entries',
+        'sync_queue',
+        'user_preferences',
+        'category_limits',
+      ];
+
+      vi.mocked(offlineDB.getAll).mockResolvedValue([]);
+
+      for (const storeName of storeNames) {
+        await offlineAdapter.getAll(storeName);
+        expect(offlineDB.getAll).toHaveBeenCalledWith(storeName);
+      }
+    });
+  });
+
+  describe('error handling', () => {
+    it('should propagate errors from offlineDB.getAll', async () => {
+      const error = new Error('IndexedDB error');
+      vi.mocked(offlineDB.getAll).mockRejectedValue(error);
+
+      await expect(offlineAdapter.getAll('families')).rejects.toThrow('IndexedDB error');
+    });
+
+    it('should propagate errors from offlineDB.put', async () => {
+      const error = new Error('Write failed');
+      vi.mocked(offlineDB.put).mockRejectedValue(error);
+
+      await expect(offlineAdapter.put('families', { id: '1' })).rejects.toThrow('Write failed');
+    });
+
+    it('should propagate errors from syncQueue.add', async () => {
+      const error = new Error('Queue error');
+      vi.mocked(syncQueue.add).mockRejectedValue(error);
+
+      await expect(offlineAdapter.sync.add({
+        type: 'expense',
+        action: 'insert',
+        data: {},
+        familyId: 'family-1',
+      })).rejects.toThrow('Queue error');
+    });
+  });
 });
