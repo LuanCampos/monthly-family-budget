@@ -1,70 +1,34 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { getAppBaseUrl } from './appBaseUrl';
 
 describe('appBaseUrl', () => {
-  const originalLocation = window.location;
-
-  beforeEach(() => {
-    // Reset module cache to get fresh imports
-    vi.resetModules();
-  });
-
-  afterEach(() => {
-    // Restore original values
-    Object.defineProperty(window, 'location', {
-      value: originalLocation,
-      writable: true,
-    });
-  });
-
-  it('should return the app base URL with origin and base path', async () => {
-    // Mock window.location
-    Object.defineProperty(window, 'location', {
-      value: {
-        origin: 'https://example.com',
-        href: 'https://example.com/monthly-family-budget/',
-      },
-      writable: true,
-    });
-
-    // Import the function fresh
-    const { getAppBaseUrl } = await import('./appBaseUrl');
-    
+  it('should return a valid URL string', () => {
     const result = getAppBaseUrl();
     
     // The result should be a valid URL string
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
     expect(result).toMatch(/^https?:\/\//);
   });
 
-  it('should handle root base URL', async () => {
-    Object.defineProperty(window, 'location', {
-      value: {
-        origin: 'http://localhost:5173',
-        href: 'http://localhost:5173/',
-      },
-      writable: true,
-    });
-
-    const { getAppBaseUrl } = await import('./appBaseUrl');
-    
+  it('should return a URL based on current origin', () => {
     const result = getAppBaseUrl();
     
-    expect(result).toContain('localhost');
+    // Should contain the current location origin
+    expect(result).toContain(window.location.origin);
   });
 
-  it('should return a string ending with slash when base is a path', async () => {
-    Object.defineProperty(window, 'location', {
-      value: {
-        origin: 'https://user.github.io',
-        href: 'https://user.github.io/my-app/',
-      },
-      writable: true,
-    });
-
-    const { getAppBaseUrl } = await import('./appBaseUrl');
-    
+  it('should return a URL ending with a slash', () => {
     const result = getAppBaseUrl();
     
-    expect(typeof result).toBe('string');
-    expect(result.length).toBeGreaterThan(0);
+    // BASE_URL always ends with slash in Vite
+    expect(result.endsWith('/')).toBe(true);
+  });
+
+  it('should return consistent results on multiple calls', () => {
+    const result1 = getAppBaseUrl();
+    const result2 = getAppBaseUrl();
+    
+    expect(result1).toBe(result2);
   });
 });

@@ -11,20 +11,32 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     
-    // Performance optimizations (Vitest 4+ top-level options)
-    pool: 'threads',
-    minWorkers: 2,
-    maxWorkers: 8,
+    // Performance optimizations - vmThreads is faster for jsdom
+    pool: 'vmThreads',
+    poolOptions: {
+      vmThreads: {
+        minThreads: 4,
+        maxThreads: 8,
+        memoryLimit: '512MB',
+      },
+    },
     
-    // Faster test isolation
-    isolate: true,
+    fileParallelism: true,
     
-    // Timeouts
-    testTimeout: 10000,
-    hookTimeout: 10000,
+    // Reduced timeouts
+    testTimeout: 5000,
+    hookTimeout: 5000,
     
-    // Disable watch mode in CI
+    // Cache transforms
+    cache: {
+      dir: 'node_modules/.vitest',
+    },
+    
+    // Disable watch mode
     watch: false,
+    
+    // Faster reporter
+    reporter: 'dot',
     
     coverage: {
       provider: 'v8',
@@ -44,5 +56,13 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  // Optimize dependency pre-bundling
+  optimizeDeps: {
+    include: ['react', 'react-dom', '@testing-library/react'],
+  },
+  // Faster builds
+  esbuild: {
+    target: 'esnext',
   },
 });
