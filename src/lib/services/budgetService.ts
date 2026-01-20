@@ -37,6 +37,14 @@ export const getExpensesByMonth = async (monthId: string) => {
     .eq('month_id', monthId);
 };
 
+export const getExpenseById = async (id: string) => {
+  return supabase
+    .from('expense')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+};
+
 export const getRecurringExpenses = async (familyId: string) => {
   return supabase
     .from('recurring_expense')

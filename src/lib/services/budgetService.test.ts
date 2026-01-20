@@ -82,6 +82,19 @@ describe('budgetService', () => {
     });
   });
 
+  describe('getExpenseById', () => {
+    it('should query expense by id', async () => {
+      const mockChain = createChainMock({ data: { id: 'exp-1', title: 'Test' }, error: null });
+      (supabase.from as Mock).mockReturnValue(mockChain);
+
+      await budgetService.getExpenseById('exp-1');
+
+      expect(supabase.from).toHaveBeenCalledWith('expense');
+      expect(mockChain.eq).toHaveBeenCalledWith('id', 'exp-1');
+      expect(mockChain.maybeSingle).toHaveBeenCalled();
+    });
+  });
+
   describe('getRecurringExpenses', () => {
     it('should query recurring expenses by family_id', async () => {
       const mockChain = createChainMock({ data: [], error: null });

@@ -274,6 +274,24 @@ const handleDelete = useCallback(async (id: string) => {
 
 Arquivos de teste co-localizados com o código fonte.
 
+### Filosofia de Testes
+
+Testes não existem para "passar". Testes existem para:
+
+1. **Especificar comportamento** — O teste é a documentação executável
+2. **Prevenir regressões** — Garantir que mudanças não quebrem funcionalidades
+3. **Forçar design** — Código testável tende a ser código melhor estruturado
+4. **Dar confiança** — Permitir refatoração e evolução sem medo
+
+> **Quando um teste falha:** Se o teste está correto, **corrija a aplicação**. Se não, **corrija o teste**.
+
+| Teste Fraco ❌ | Teste Forte ✅ |
+|---------------|---------------|
+| `expect(result).toBeDefined()` | `expect(result).toBe(expectedValue)` |
+| Testa implementação interna | Testa comportamento observável |
+| Ignora edge cases | Cobre limites e casos extremos |
+| Confia em inputs sempre válidos | Testa inputs maliciosos |
+
 ### O que Testar (Prioridade)
 
 | Tipo | Exemplo | Ação |

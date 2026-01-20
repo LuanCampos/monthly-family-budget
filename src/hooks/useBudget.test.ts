@@ -252,6 +252,46 @@ describe('useBudget', () => {
       expect(storageAdapter.setExpensePending).toHaveBeenCalledWith(mockFamilyId, 'exp-1', false);
     });
 
+    it('should update expense state after confirming payment', async () => {
+      // Start with a pending expense
+      const monthWithPendingExpense: Month = {
+        ...mockMonth,
+        expenses: [
+          { id: 'exp-1', title: 'Pending Bill', category: 'essenciais', value: 100, isRecurring: false, isPending: true },
+        ],
+      };
+      const monthAfterPayment: Month = {
+        ...mockMonth,
+        expenses: [
+          { id: 'exp-1', title: 'Pending Bill', category: 'essenciais', value: 100, isRecurring: false, isPending: false },
+        ],
+      };
+
+      // First call returns pending expense, second call returns paid expense
+      (storageAdapter.getMonthsWithExpenses as Mock)
+        .mockResolvedValueOnce([monthWithPendingExpense])
+        .mockResolvedValueOnce([monthAfterPayment]);
+      (storageAdapter.setExpensePending as Mock).mockResolvedValue({});
+
+      const { result } = renderHook(() => useBudget());
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      // Verify expense starts as pending
+      expect(result.current.currentMonth?.expenses[0].isPending).toBe(true);
+
+      await act(async () => {
+        await result.current.confirmPayment('exp-1');
+      });
+
+      // Verify expense is now paid (not pending)
+      await waitFor(() => {
+        expect(result.current.currentMonth?.expenses[0].isPending).toBe(false);
+      });
+    });
+
     it('should remove an expense', async () => {
       (storageAdapter.deleteExpense as Mock).mockResolvedValue({});
 

@@ -133,28 +133,37 @@ export const updateExpense = async (familyId: string | null, id: string, data: P
  */
 export const setExpensePending = async (familyId: string | null, id: string, pending: boolean) => {
   if (!familyId) return;
-  const currentExpense = await offlineAdapter.get<ExpenseData>('expenses', id);
-  if (!currentExpense) return;
-  const updatedExpense: ExpenseData = { ...currentExpense, is_pending: pending };
   
+  // Try to get expense from IndexedDB first
+  const currentExpense = await offlineAdapter.get<ExpenseData>('expenses', id);
+  
+  // For offline mode, we need the expense in IndexedDB
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
+    if (!currentExpense) return;
+    const updatedExpense: ExpenseData = { ...currentExpense, is_pending: pending };
     await offlineAdapter.put('expenses', updatedExpense);
     await handleGoalEntryUpdate(familyId, id, currentExpense, updatedExpense);
     return;
   }
   
+  // For online mode, call Supabase directly - the expense may not be in IndexedDB cache
   const res = await budgetService.setExpensePending(id, pending);
   if (res.error) {
     // Fallback to offline and queue sync if it's an online family
-    await offlineAdapter.put('expenses', updatedExpense);
-    // Only queue if it's an online family (created with UUID from Supabase)
-    if (!offlineAdapter.isOfflineId(familyId)) {
+    if (currentExpense) {
+      const updatedExpense: ExpenseData = { ...currentExpense, is_pending: pending };
+      await offlineAdapter.put('expenses', updatedExpense);
       await offlineAdapter.sync.add({ type: 'expense', action: 'update', data: { id, is_pending: pending }, familyId });
     }
+    return;
   }
-  const persistedExpense = (res && res.data) ? res.data as ExpenseData : updatedExpense;
-  await offlineAdapter.put('expenses', persistedExpense);
-  await handleGoalEntryUpdate(familyId, id, currentExpense, persistedExpense);
+  
+  const persistedExpense = res.data as ExpenseData | null;
+  if (persistedExpense) {
+    await offlineAdapter.put('expenses', persistedExpense);
+    // For goal entry update, use persisted expense data from Supabase
+    await handleGoalEntryUpdate(familyId, id, currentExpense || persistedExpense, persistedExpense);
+  }
   return res;
 };
 

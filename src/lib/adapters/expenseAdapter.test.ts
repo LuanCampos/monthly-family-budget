@@ -293,13 +293,30 @@ describe('expenseAdapter', () => {
       expect(offlineAdapter.get).not.toHaveBeenCalled();
     });
 
-    it('should do nothing if expense not found', async () => {
+    it('should do nothing offline if expense not found in IndexedDB', async () => {
+      Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
       (offlineAdapter.get as Mock).mockResolvedValue(null);
 
       await setExpensePending(mockFamilyId, mockExpenseId, false);
 
       expect(budgetService.setExpensePending).not.toHaveBeenCalled();
       expect(offlineAdapter.put).not.toHaveBeenCalled();
+    });
+
+    it('should call Supabase directly when online even if expense not in IndexedDB', async () => {
+      (offlineAdapter.get as Mock).mockResolvedValue(null);
+      (budgetService.setExpensePending as Mock).mockResolvedValue({
+        data: { ...mockExpense, is_pending: false },
+        error: null,
+      });
+
+      await setExpensePending(mockFamilyId, mockExpenseId, false);
+
+      expect(budgetService.setExpensePending).toHaveBeenCalledWith(mockExpenseId, false);
+      expect(offlineAdapter.put).toHaveBeenCalledWith('expenses', expect.objectContaining({
+        id: mockExpenseId,
+        is_pending: false,
+      }));
     });
 
     it('should set pending status online successfully', async () => {

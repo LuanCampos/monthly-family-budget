@@ -513,6 +513,28 @@ const handleLocalClick = useCallback(() => setOpen(true), []); // Desnecessário
 
 O projeto usa **Vitest** + **Testing Library** para testes automatizados.
 
+### Filosofia de Testes
+
+Testes não existem para "passar". Testes existem para:
+
+1. **Especificar comportamento** — O teste é a documentação executável do que a aplicação deve fazer
+2. **Prevenir regressões** — Garantir que mudanças não quebrem funcionalidades existentes
+3. **Forçar design** — Código testável tende a ser código melhor estruturado
+4. **Dar confiança** — Permitir refatoração e evolução sem medo
+
+> **Princípio Fundamental:** Quando um teste falha, a primeira pergunta é: "O teste está correto?"
+> - Se **SIM**: A aplicação tem um bug. **Corrija a aplicação.**
+> - Se **NÃO**: A expectativa do teste está errada. **Corrija o teste.**
+
+| Teste Fraco ❌ | Teste Forte ✅ |
+|---------------|---------------|
+| `expect(result).toBeDefined()` | `expect(result).toBe(expectedValue)` |
+| `expect(fn).not.toThrow()` | `expect(fn()).toEqual({ ... })` |
+| Testa implementação interna | Testa comportamento observável |
+| Depende de ordem de execução | Isolado e independente |
+| Ignora edge cases | Cobre limites e casos extremos |
+| Confia em inputs sempre válidos | Testa inputs maliciosos |
+
 ### Comandos
 
 ```bash

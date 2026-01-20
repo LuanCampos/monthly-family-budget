@@ -5,6 +5,8 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  // Cache directory (Vitest 4+ uses Vite's cacheDir)
+  cacheDir: 'node_modules/.vitest',
   test: {
     globals: true,
     environment: 'jsdom',
@@ -12,25 +14,16 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     
     // Performance optimizations - vmThreads is faster for jsdom
+    // Vitest 4+: poolOptions are now top-level under test
     pool: 'vmThreads',
-    poolOptions: {
-      vmThreads: {
-        minThreads: 4,
-        maxThreads: 8,
-        memoryLimit: '512MB',
-      },
-    },
+    minWorkers: 4,
+    maxWorkers: 8,
     
     fileParallelism: true,
     
     // Reduced timeouts
     testTimeout: 5000,
     hookTimeout: 5000,
-    
-    // Cache transforms
-    cache: {
-      dir: 'node_modules/.vitest',
-    },
     
     // Disable watch mode
     watch: false,

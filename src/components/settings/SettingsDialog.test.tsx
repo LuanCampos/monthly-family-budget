@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { forwardRef } from 'react';
 import { SettingsDialog } from './SettingsDialog';
 
 // Mock all required contexts and dependencies
@@ -164,8 +165,10 @@ vi.mock('./sections', () => ({
 }));
 
 vi.mock('@/components/common', () => ({
-  TriggerButton: ({ onClick, children }: { onClick: () => void; children: React.ReactNode }) => (
-    <button onClick={onClick} data-testid="trigger-button">{children}</button>
+  TriggerButton: forwardRef<HTMLButtonElement, { onClick?: () => void; children: React.ReactNode }>(
+    ({ onClick, children, ...props }, ref) => (
+      <button ref={ref} onClick={onClick} data-testid="trigger-button" {...props}>{children}</button>
+    )
   ),
   ConfirmDialog: () => <div data-testid="confirm-dialog" />,
 }));

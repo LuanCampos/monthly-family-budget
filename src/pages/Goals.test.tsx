@@ -100,7 +100,7 @@ describe('Goals Page', () => {
   const renderGoals = () => {
     const user = userEvent.setup();
     const utils = render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Goals />
       </MemoryRouter>
     );

@@ -19,7 +19,7 @@ import { logger } from '@/lib/logger';
 describe('NotFound', () => {
   it('should render 404 page', () => {
     render(
-      <MemoryRouter initialEntries={['/non-existent-page']}>
+      <MemoryRouter initialEntries={['/non-existent-page']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <NotFound />
       </MemoryRouter>
     );
@@ -30,7 +30,7 @@ describe('NotFound', () => {
 
   it('should render return to home link', () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <NotFound />
       </MemoryRouter>
     );
@@ -42,7 +42,7 @@ describe('NotFound', () => {
 
   it('should log navigation warning', () => {
     render(
-      <MemoryRouter initialEntries={['/unknown-path']}>
+      <MemoryRouter initialEntries={['/unknown-path']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <NotFound />
       </MemoryRouter>
     );

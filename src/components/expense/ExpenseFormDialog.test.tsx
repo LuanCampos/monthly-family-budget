@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { forwardRef } from 'react';
 import { ExpenseFormDialog } from './ExpenseFormDialog';
 
 // Mock dependencies
@@ -39,13 +40,13 @@ vi.mock('@/components/ui/checkbox', () => ({
 }));
 
 vi.mock('./ExpenseFormFields', () => ({
-  ExpenseFormFields: ({ title, value, onTitleChange, onValueChange }: { 
-    title: string; 
-    value: string; 
-    onTitleChange: (v: string) => void; 
+  ExpenseFormFields: forwardRef<HTMLDivElement, {
+    title: string;
+    value: string;
+    onTitleChange: (v: string) => void;
     onValueChange: (v: string) => void;
-  }) => (
-    <div data-testid="expense-form-fields">
+  }>(({ title, value, onTitleChange, onValueChange }, ref) => (
+    <div data-testid="expense-form-fields" ref={ref}>
       <input 
         data-testid="title-input" 
         value={title} 
@@ -59,7 +60,7 @@ vi.mock('./ExpenseFormFields', () => ({
         placeholder="value"
       />
     </div>
-  ),
+  )),
 }));
 
 describe('ExpenseFormDialog', () => {

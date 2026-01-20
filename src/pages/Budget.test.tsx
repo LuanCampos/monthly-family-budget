@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { forwardRef } from 'react';
 import { createMockMonth, createMockExpense } from '@/test/mocks';
 
 // Mock all dependencies
@@ -76,11 +77,15 @@ vi.mock('@/components/ui/dialog', () => ({
 }));
 
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, ...props }: { children: React.ReactNode }) => <button {...props}>{children}</button>,
+  Button: forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement> & { children: React.ReactNode }>(
+    ({ children, ...props }, ref) => <button ref={ref} {...props}>{children}</button>
+  ),
 }));
 
 vi.mock('@/components/ui/input', () => ({
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  Input: forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+    (props, ref) => <input ref={ref} {...props} />
+  ),
 }));
 
 vi.mock('@/components/ui/dropdown-menu', () => ({
@@ -143,7 +148,7 @@ describe('Budget Page', () => {
   const renderBudget = () => {
     const user = userEvent.setup();
     const utils = render(
-      <MemoryRouter>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Budget />
       </MemoryRouter>
     );
