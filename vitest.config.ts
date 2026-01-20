@@ -11,15 +11,10 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     
-    // Performance optimizations
+    // Performance optimizations (Vitest 4+ top-level options)
     pool: 'threads',
-    poolOptions: {
-      threads: {
-        singleThread: false,
-        minThreads: 2,
-        maxThreads: 8,
-      },
-    },
+    minWorkers: 2,
+    maxWorkers: 8,
     
     // Faster test isolation
     isolate: true,
