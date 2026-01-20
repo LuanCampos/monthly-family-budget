@@ -61,6 +61,8 @@ export const SubcategoryFormDialog = ({
     try {
       await onSave(name.trim(), categoryKey);
       onOpenChange(false);
+    } catch {
+      // Error handling is done by the parent component via onSave
     } finally {
       setIsSaving(false);
     }

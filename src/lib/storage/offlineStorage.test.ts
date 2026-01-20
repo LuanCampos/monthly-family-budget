@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateOfflineId, isOfflineId } from './offlineStorage';
+import { generateOfflineId, isOfflineId, type SyncQueueItem } from './offlineStorage';
 
 describe('offlineStorage utilities', () => {
   describe('generateOfflineId', () => {
@@ -164,6 +164,107 @@ describe('offlineStorage utilities', () => {
     it('should handle null bytes safely', () => {
       expect(isOfflineId('offline-123\x00-abc')).toBe(false);
       expect(isOfflineId('\x00offline-123-abc')).toBe(false);
+    });
+  });
+
+  describe('SyncQueueItem type', () => {
+    it('should accept valid sync queue item types', () => {
+      const validTypes: SyncQueueItem['type'][] = [
+        'family',
+        'month',
+        'expense',
+        'recurring_expense',
+        'subcategory',
+        'category_limit',
+        'family_member',
+        'income_source',
+        'goal',
+        'goal_entry',
+      ];
+
+      validTypes.forEach((type) => {
+        const item: Partial<SyncQueueItem> = {
+          id: 'sync-123',
+          type,
+          action: 'insert',
+          data: {},
+          createdAt: new Date().toISOString(),
+          familyId: 'family-123',
+        };
+        expect(item.type).toBe(type);
+      });
+    });
+
+    it('should accept valid action types', () => {
+      const validActions: SyncQueueItem['action'][] = ['insert', 'update', 'delete'];
+
+      validActions.forEach((action) => {
+        const item: Partial<SyncQueueItem> = {
+          id: 'sync-123',
+          type: 'expense',
+          action,
+          data: {},
+          createdAt: new Date().toISOString(),
+          familyId: 'family-123',
+        };
+        expect(item.action).toBe(action);
+      });
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle empty string prefix in generateOfflineId', () => {
+      const id = generateOfflineId('');
+      expect(id).toMatch(/^-\d+-[a-z0-9]+$/);
+    });
+
+    it('should handle very long prefix in generateOfflineId', () => {
+      const longPrefix = 'a'.repeat(100);
+      const id = generateOfflineId(longPrefix);
+      expect(id.startsWith(longPrefix + '-')).toBe(true);
+    });
+
+    it('should handle special characters in prefix', () => {
+      // This is allowed by the function but isOfflineId won't recognize it
+      const id = generateOfflineId('test-prefix');
+      expect(id.startsWith('test-prefix-')).toBe(true);
+      // But it won't be recognized as offline ID since prefix contains hyphen
+      expect(isOfflineId(id)).toBe(false);
+    });
+
+    it('should handle isOfflineId with month- prefix', () => {
+      expect(isOfflineId('month-1234567890-abc')).toBe(true);
+    });
+
+    it('should handle null/undefined gracefully', () => {
+      expect(isOfflineId(null as unknown as string)).toBe(false);
+      expect(isOfflineId(undefined as unknown as string)).toBe(false);
+    });
+
+    it('should handle non-string values', () => {
+      expect(isOfflineId(123 as unknown as string)).toBe(false);
+      expect(isOfflineId({} as unknown as string)).toBe(false);
+      expect(isOfflineId([] as unknown as string)).toBe(false);
+    });
+
+    it('should reject control characters', () => {
+      expect(isOfflineId('offline-\t123-abc')).toBe(false);
+      expect(isOfflineId('offline-\n123-abc')).toBe(false);
+      expect(isOfflineId('offline-\r123-abc')).toBe(false);
+      expect(isOfflineId('offline-\x1f123-abc')).toBe(false);
+      expect(isOfflineId('offline-\x7f123-abc')).toBe(false);
+    });
+
+    it('should handle very short IDs', () => {
+      expect(isOfflineId('a')).toBe(false);
+      expect(isOfflineId('of')).toBe(false);
+      expect(isOfflineId('offline')).toBe(false);
+      expect(isOfflineId('offline-')).toBe(true); // Starts with valid prefix
+    });
+
+    it('should handle IDs with only prefix', () => {
+      expect(isOfflineId('exp-')).toBe(true);
+      expect(isOfflineId('family-')).toBe(true);
     });
   });
 });
