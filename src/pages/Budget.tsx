@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useBudget } from '@/hooks/useBudget';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFamily } from '@/contexts/FamilyContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +18,7 @@ import type { SortType, SortDirection } from '@/components/expense';
 import type { Expense, CategoryKey } from '@/types/budget';
 import type { TranslationKey } from '@/i18n/translations/pt';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, Loader2, Settings as SettingsIcon, Search, X } from 'lucide-react';
+import { PieChart, Target, ListTodo, Wallet, ArrowUpDown, ArrowUp, ArrowDown, DollarSign, Receipt, Calendar, Loader2, Settings as SettingsIcon, Search, X, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -32,6 +33,7 @@ const BudgetContent = () => {
   const { t } = useLanguage();
   const { currentFamilyId, myPendingInvitations } = useFamily();
   const { user } = useAuth();
+  const { canInstall, installApp } = usePWAInstall();
   
   const {
     months,
@@ -258,6 +260,12 @@ const BudgetContent = () => {
                     <SettingsIcon className="h-4 w-4 text-primary" />
                     {t('settings') ?? 'Configurações'}
                   </DropdownMenuItem>
+                  {canInstall && (
+                    <DropdownMenuItem onClick={installApp} className="flex items-center gap-2 cursor-pointer">
+                      <Download className="h-4 w-4 text-primary" />
+                      {t('installApp')}
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

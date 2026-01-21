@@ -474,4 +474,8 @@ export const en: Record<TranslationKey, string> = {
   verificationEmailResent: 'Verification email resent!',
   checkSpamFolder: "Didn't find it? Check your spam folder.",
   emailConfirmedSuccess: 'Email confirmed! You can use the app now.',
+  
+  // PWA
+  installApp: 'Install App',
+  installAppDescription: 'Install the app on your device for quick access',
 };

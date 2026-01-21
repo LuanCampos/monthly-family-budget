@@ -11,19 +11,21 @@ import {
 import { ConfirmDialog } from '@/components/common';
 import { useGoals } from '@/hooks/useGoals';
 import { useBudget } from '@/hooks/useBudget';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFamily } from '@/contexts/FamilyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Goal, GoalEntry, GoalStatus } from '@/types';
 import { SettingsDialog } from '@/components/settings';
 import { FamilySetup } from '@/components/family';
-import { Loader2, Target, Settings as SettingsIcon, Wallet, Plus } from 'lucide-react';
+import { Loader2, Target, Settings as SettingsIcon, Wallet, Plus, Download } from 'lucide-react';
 
 // Inner component that uses useGoals - will be remounted when family changes via key
 const GoalsContent = () => {
   const { t } = useLanguage();
   const { myPendingInvitations } = useFamily();
   const { user } = useAuth();
+  const { canInstall, installApp } = usePWAInstall();
   const { subcategories, currentMonth } = useBudget();
   const {
     goals,
@@ -218,6 +220,12 @@ const GoalsContent = () => {
                     <SettingsIcon className="h-4 w-4 text-primary" />
                     {t('settings') ?? 'Configurações'}
                   </DropdownMenuItem>
+                  {canInstall && (
+                    <DropdownMenuItem onClick={installApp} className="flex items-center gap-2 cursor-pointer">
+                      <Download className="h-4 w-4 text-primary" />
+                      {t('installApp')}
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

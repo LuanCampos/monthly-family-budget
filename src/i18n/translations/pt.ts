@@ -472,6 +472,10 @@ export const pt = {
   verificationEmailResent: 'E-mail de verificação reenviado!',
   checkSpamFolder: 'Não encontrou? Verifique sua pasta de spam.',
   emailConfirmedSuccess: 'E-mail confirmado! Você já pode entrar.',
+  
+  // PWA
+  installApp: 'Instalar App',
+  installAppDescription: 'Instale o app no seu dispositivo para acesso rápido',
 };
 
 export type TranslationKey = keyof typeof pt;
