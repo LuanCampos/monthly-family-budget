@@ -20,9 +20,9 @@ export default defineConfig(() => ({
       manifest: {
         id: "/",
         name: "Orçamento Familiar",
-        short_name: "Budget",
+        short_name: "Orçamento",
         description: "Gerencie seu orçamento familiar com metas personalizadas, gastos recorrentes e visualizações por categoria.",
-        theme_color: "#3b82f6",
+        theme_color: "#181614",
         background_color: "#181614",
         display: "standalone",
         orientation: "portrait",

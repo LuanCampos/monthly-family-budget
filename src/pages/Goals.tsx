@@ -192,7 +192,7 @@ const GoalsContent = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 sm:h-10 sm:w-10 rounded-full p-0 relative"
+                    className="h-9 w-9 sm:h-10 sm:w-10 rounded-full p-0 relative !bg-transparent hover:!bg-transparent focus:!ring-0 focus-visible:!ring-0 focus:!ring-offset-0 focus-visible:!ring-offset-0 focus:!outline-none data-[state=open]:!bg-muted/50"
                     aria-label="Settings menu"
                   >
                     {user ? (

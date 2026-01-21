@@ -150,7 +150,7 @@ export const MonthSelector = ({
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline" 
-            className="h-9 sm:h-10 px-2 sm:px-4 bg-secondary/50 border-border hover:bg-secondary text-foreground font-medium text-xs sm:text-sm w-full sm:w-auto justify-between sm:justify-start"
+            className="h-9 sm:h-10 px-2 sm:px-4 bg-secondary/50 border-border hover:bg-secondary text-foreground font-medium text-xs sm:text-sm w-full sm:w-auto justify-between sm:justify-start focus:!ring-0 focus-visible:!ring-0 focus:!ring-offset-0 focus-visible:!ring-offset-0 focus:!outline-none"
           >
             <div className="flex items-center min-w-0">
               <Calendar className="h-4 w-4 mr-1 sm:mr-2 text-primary flex-shrink-0" />

@@ -206,4 +206,18 @@
       @apply min-h-[44px] min-w-[44px];
     }
   }
+
+  /* Fix for sticky hover states on touch devices */
+  @media (hover: none) and (pointer: coarse) {
+    /* Reset hover on ghost buttons when not being actively touched */
+    button[data-state="closed"]:not(:active),
+    [role="menuitem"]:not(:active) {
+      background-color: transparent !important;
+    }
+  }
+  
+  /* Reset dropdown trigger background when closed (all devices) */
+  [data-radix-collection-item][data-state="closed"]:not(:hover):not(:focus-visible):not(:active) {
+    background-color: transparent !important;
+  }
 }

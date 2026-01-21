@@ -179,6 +179,8 @@ describe('usePWAInstall', () => {
 
     await act(async () => {
       await result.current.installApp();
+      // Simulate appinstalled event that browser fires after successful install
+      window.dispatchEvent(new Event('appinstalled'));
     });
 
     expect(result.current.canInstall).toBe(false);

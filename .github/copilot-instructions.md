@@ -25,6 +25,19 @@ src/types/                    → Tipos TypeScript
 
 ---
 
+## Antes de Implementar
+
+**SEMPRE esclareça dúvidas ANTES de fazer alterações:**
+
+1. **Entenda o problema primeiro** — Pergunte sobre sintomas específicos (cor, posição, timing, comportamento)
+2. **Evite suposições** — Se o usuário relata um bug visual, pergunte: "É uma cor de fundo, borda, sombra ou outline?"
+3. **Confirme o escopo** — "Isso afeta só este componente ou outros também?"
+4. **Valide a solução** — Antes de implementar, descreva a abordagem: "Vou adicionar X ao Y. Está correto?"
+
+> ⚠️ **Múltiplas iterações para resolver um problema simples indicam falta de clarificação inicial.**
+
+---
+
 ## Regras Absolutas
 
 ```tsx
