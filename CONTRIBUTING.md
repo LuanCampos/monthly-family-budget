@@ -107,6 +107,7 @@ import { ConfirmDialog } from '@/components/common';
 | Tipo | Padrão | Local |
 |------|--------|-------|
 | Domain hooks | `use{Domain}.ts` (camelCase) | `src/hooks/` |
+| PWA hooks | `usePWAInstall.ts` | `src/hooks/` |
 | UI hooks | `use-{name}.ts` (kebab-case) | `src/hooks/ui/` |
 | Services | `{domain}Service.ts` | `src/lib/services/` |
 | Adapters | `{domain}Adapter.ts` | `src/lib/adapters/` |
