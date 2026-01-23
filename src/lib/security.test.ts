@@ -1326,6 +1326,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
       const maliciousExpense = {
         id: 'exp-123',
         month_id: 'month-456',
+        family_id: 'fam-789',
         title: '<script>alert("xss")</script>',
         category_key: 'essenciais',
         subcategory_id: null,
@@ -1337,6 +1338,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
         installment_current: null,
         installment_total: null,
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       };
 
       // Mapper should pass through - React handles escaping at render time
@@ -1349,6 +1351,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
       const maliciousExpense = {
         id: 'exp-123',
         month_id: 'month-456',
+        family_id: 'fam-789',
         title: "'; DROP TABLE expenses; --",
         category_key: 'essenciais',
         subcategory_id: null,
@@ -1360,6 +1363,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
         installment_current: null,
         installment_total: null,
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       };
 
       const result = mapExpense(maliciousExpense);
@@ -1371,6 +1375,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
       const maliciousExpense = {
         id: 'exp-123',
         month_id: '../../../etc/passwd',
+        family_id: 'fam-789',
         title: 'Test',
         category_key: 'essenciais',
         subcategory_id: null,
@@ -1382,6 +1387,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
         installment_current: null,
         installment_total: null,
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       };
 
       // Should not crash, just won't extract valid month/year
@@ -1392,6 +1398,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
       const maliciousExpense = {
         id: 'exp-123',
         month_id: 'month-456',
+        family_id: 'fam-789',
         title: 'Test\x00Injection',
         category_key: 'essenciais',
         subcategory_id: null,
@@ -1403,6 +1410,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
         installment_current: null,
         installment_total: null,
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       };
 
       expect(() => mapExpense(maliciousExpense)).not.toThrow();
@@ -1412,6 +1420,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
       const maliciousExpense = {
         id: 'exp-123',
         month_id: 'month-456',
+        family_id: 'fam-789',
         title: 'Test',
         category_key: 'essenciais',
         subcategory_id: null,
@@ -1423,6 +1432,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
         installment_current: null,
         installment_total: null,
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       };
 
       const result = mapExpense(maliciousExpense);
@@ -1433,6 +1443,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
       const maliciousExpense = {
         id: 'exp-123',
         month_id: 'month-456',
+        family_id: 'fam-789',
         title: 'Test',
         category_key: 'essenci\u0000ais', // Null byte in category
         subcategory_id: null,
@@ -1444,6 +1455,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
         installment_current: null,
         installment_total: null,
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       };
 
       // Mapper passes through, Zod validation would catch invalid category
@@ -1502,6 +1514,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
         name: '<script>document.cookie</script>',
         category_key: 'essenciais',
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       });
 
       expect(result.name).toBe('<script>document.cookie</script>');
@@ -1514,6 +1527,7 @@ describe('Security - Mapper Handling of Malicious Database Data', () => {
         name: 'Test',
         category_key: '__proto__',
         created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-01T00:00:00Z',
       });
 
       // Just a string, not actual prototype pollution
