@@ -1862,7 +1862,7 @@ describe('Security - Offline Storage Attack Resistance', () => {
       
       // Verify no prototype pollution occurred
       expect(({} as Record<string, unknown>).month_id).toBeUndefined();
-      expect(Object.hasOwn(Object.prototype, 'title')).toBe(false);
+      expect(Object.prototype.hasOwnProperty.call(Object.prototype, 'title')).toBe(false);
     });
 
     it('should enforce max ID length via secureStorage', () => {
