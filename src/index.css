@@ -209,8 +209,8 @@
 
   /* Fix for sticky hover states on touch devices */
   @media (hover: none) and (pointer: coarse) {
-    /* Reset hover on ghost buttons when not being actively touched */
-    button[data-state="closed"]:not(:active),
+    /* Reset hover on ghost/outline buttons when not being actively touched */
+    /* Only target buttons that should have transparent backgrounds */
     [role="menuitem"]:not(:active) {
       background-color: transparent !important;
     }
