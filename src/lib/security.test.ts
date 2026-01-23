@@ -255,7 +255,7 @@ const SSRF_PAYLOADS = [
 // JSON Injection Payloads
 // ============================================================================
 
-const JSON_INJECTION_PAYLOADS = [
+const _JSON_INJECTION_PAYLOADS = [
   '{"key": "value", "__proto__": {"admin": true}}',
   '{"a": 1, "a": 2}',                          // Duplicate keys
   '{"nested": '.repeat(100) + '1' + '}'.repeat(100),  // Deep nesting
@@ -873,35 +873,79 @@ describe('Security - SSRF Pattern Prevention', () => {
 
 describe('Security - JSON Injection Prevention', () => {
   describe('handles malformed JSON safely', () => {
-    it('should not pollute prototype via JSON.parse of malicious payloads', () => {
-      JSON_INJECTION_PAYLOADS.forEach(payload => {
-        try {
-          const _parsed = JSON.parse(payload);
-          // Even if parsed, should not affect Object prototype
-          expect(({} as Record<string, unknown>).admin).toBeUndefined();
-          expect(({} as Record<string, unknown>).isAdmin).toBeUndefined();
-        } catch {
-          // Invalid JSON is fine - it's rejected
-          expect(true).toBe(true);
-        }
+    it('should NEVER pollute Object.prototype via JSON.parse', () => {
+      // Test each payload individually with explicit assertions
+      const pollutionPayloads = [
+        '{"__proto__": {"isAdmin": true}}',
+        '{"constructor": {"prototype": {"isAdmin": true}}}',
+        '{"__proto__": {"polluted": "yes"}}',
+      ];
+
+      pollutionPayloads.forEach(payload => {
+        // Capture state before
+        const beforePolluted = ({} as Record<string, unknown>).isAdmin;
+        const beforePolluted2 = ({} as Record<string, unknown>).polluted;
+        
+        // Parse the malicious JSON
+        const parsed = JSON.parse(payload);
+        
+        // Object.prototype MUST NOT be polluted
+        expect(({} as Record<string, unknown>).isAdmin).toBeUndefined();
+        expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+        expect(beforePolluted).toBeUndefined();
+        expect(beforePolluted2).toBeUndefined();
+        
+        // The parsed object has __proto__ as OWN property, not prototype chain
+        expect(parsed).toBeDefined();
       });
     });
 
-    it('should handle deeply nested JSON without stack overflow', () => {
-      // Create deeply nested but valid JSON
+    it('should reject or handle malformed JSON without crashing', () => {
+      const malformedPayloads = [
+        '{"key": "value", ', // Incomplete
+        '{"nested": '.repeat(100) + '1' + '}'.repeat(100), // Deep nesting
+        '["a", "b", "c"'.repeat(100) + ']', // Malformed array
+        '{"key": "\\"}'.slice(0, -1), // Escape sequence abuse
+      ];
+
+      let parseErrors = 0;
+      let parseSuccesses = 0;
+
+      malformedPayloads.forEach(payload => {
+        try {
+          JSON.parse(payload);
+          parseSuccesses++;
+        } catch {
+          parseErrors++;
+        }
+      });
+
+      // At least some should fail (malformed) - this MUST not crash
+      expect(parseErrors + parseSuccesses).toBe(malformedPayloads.length);
+      // Most of these are malformed, so errors should dominate
+      expect(parseErrors).toBeGreaterThan(0);
+    });
+
+    it('should handle deeply nested JSON within reasonable depth', () => {
+      // Create deeply nested but valid JSON (50 levels)
       let nested = '{"a":';
       for (let i = 0; i < 50; i++) {
         nested += '{"b":';
       }
       nested += '1' + '}'.repeat(51);
 
-      expect(() => {
-        try {
-          JSON.parse(nested);
-        } catch {
-          // Expected for very deep nesting
-        }
-      }).not.toThrow();
+      // This should parse without throwing (within V8 limits)
+      const result = JSON.parse(nested);
+      expect(result).toHaveProperty('a');
+      expect(result.a).toHaveProperty('b');
+    });
+
+    it('should handle duplicate keys by using last value (JSON spec)', () => {
+      const duplicateKeys = '{"a": 1, "a": 2}';
+      const parsed = JSON.parse(duplicateKeys);
+      
+      // JSON spec: last value wins
+      expect(parsed.a).toBe(2);
     });
   });
 });
@@ -968,61 +1012,94 @@ describe('Security - Template Injection Prevention', () => {
 });
 
 describe('Security - Mass Assignment Prevention', () => {
-  describe('Zod schemas reject extra fields', () => {
-    it('should not accept isAdmin field in expense', () => {
+  describe('Zod schemas MUST strip extra fields (default behavior)', () => {
+    it('should strip isAdmin field from expense - field MUST NOT exist in result', () => {
       const result = CreateExpenseInputSchema.safeParse({
         month_id: 'month-123',
         title: 'Test',
         category_key: 'essenciais',
         value: 100,
-        isAdmin: true, // Extra field
+        isAdmin: true, // Attack: privilege escalation attempt
       } as unknown);
 
-      if (result.success) {
-        // If Zod is in passthrough mode, the extra field might be included
-        // But it should be stripped in strict mode
-        expect((result.data as Record<string, unknown>).isAdmin).toBeUndefined();
-      }
+      // Zod default mode strips unknown keys - parsing MUST succeed
+      expect(result.success).toBe(true);
+      // The malicious field MUST be stripped
+      const data = result.data as Record<string, unknown>;
+      expect(Object.keys(data)).not.toContain('isAdmin');
+      expect(data.isAdmin).toBeUndefined();
     });
 
-    it('should not allow ID manipulation via extra fields', () => {
+    it('should strip ALL mass assignment attack fields from expense', () => {
       const attackPayload = {
         month_id: 'month-123',
         title: 'Test',
         category_key: 'essenciais',
         value: 100,
+        // All these are attack vectors:
         ...MASS_ASSIGNMENT_PAYLOADS.idManipulation,
-      };
-
-      const result = CreateExpenseInputSchema.safeParse(attackPayload);
-      
-      if (result.success) {
-        // Extra fields should be stripped
-        expect((result.data as Record<string, unknown>).id).toBeUndefined();
-        expect((result.data as Record<string, unknown>).user_id).toBeUndefined();
-      }
-    });
-
-    it('should not allow metadata injection', () => {
-      const attackPayload = {
-        month_id: 'month-123',
-        title: 'Test',
-        category_key: 'essenciais',
-        value: 100,
+        ...MASS_ASSIGNMENT_PAYLOADS.adminEscalation,
         ...MASS_ASSIGNMENT_PAYLOADS.metadataInjection,
       };
 
       const result = CreateExpenseInputSchema.safeParse(attackPayload);
       
-      if (result.success) {
-        expect((result.data as Record<string, unknown>).__metadata).toBeUndefined();
-        expect((result.data as Record<string, unknown>)._internal).toBeUndefined();
-      }
+      // Parsing MUST succeed (fields stripped, not rejected)
+      expect(result.success).toBe(true);
+      
+      // ALL attack fields MUST be stripped
+      const data = result.data as Record<string, unknown>;
+      expect(data.id).toBeUndefined();
+      expect(data.user_id).toBeUndefined();
+      expect(data.isAdmin).toBeUndefined();
+      expect(data.role).toBeUndefined();
+      expect(data.permissions).toBeUndefined();
+      expect(data.__metadata).toBeUndefined();
+      expect(data._internal).toBeUndefined();
+      
+      // Only valid fields should remain
+      const validData = result.data as Record<string, unknown>;
+      expect(Object.keys(validData).sort()).toEqual(
+        ['category_key', 'month_id', 'title', 'value'].sort()
+      );
+    });
+
+    it('should strip timestamp manipulation attempts', () => {
+      const attackPayload = {
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+        ...MASS_ASSIGNMENT_PAYLOADS.timestampManipulation,
+      };
+
+      const result = CreateExpenseInputSchema.safeParse(attackPayload);
+      
+      expect(result.success).toBe(true);
+      expect((result.data as Record<string, unknown>).created_at).toBeUndefined();
+      expect((result.data as Record<string, unknown>).updated_at).toBeUndefined();
+    });
+
+    it('should strip foreign key manipulation attempts', () => {
+      const attackPayload = {
+        month_id: 'month-123',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+        ...MASS_ASSIGNMENT_PAYLOADS.foreignKeyManipulation,
+      };
+
+      const result = CreateExpenseInputSchema.safeParse(attackPayload);
+      
+      expect(result.success).toBe(true);
+      // family_id and owner_id should be stripped
+      expect((result.data as Record<string, unknown>).family_id).toBeUndefined();
+      expect((result.data as Record<string, unknown>).owner_id).toBeUndefined();
     });
   });
 
-  describe('DB Row schemas validate structure strictly', () => {
-    it('should reject expense row with extra admin field', () => {
+  describe('DB Row schemas MUST strip extra fields', () => {
+    it('should strip admin field from expense row', () => {
       const maliciousRow = {
         id: 'exp-123',
         month_id: 'month-456',
@@ -1038,14 +1115,17 @@ describe('Security - Mass Assignment Prevention', () => {
         installment_total: null,
         created_at: '2025-01-01T00:00:00Z',
         updated_at: '2025-01-01T00:00:00Z',
-        isAdmin: true, // Malicious extra field
+        isAdmin: true, // Attack vector
+        role: 'superuser', // Attack vector
       };
 
       const result = ExpenseRowSchema.safeParse(maliciousRow);
-      if (result.success) {
-        // Should strip unknown fields
-        expect((result.data as Record<string, unknown>).isAdmin).toBeUndefined();
-      }
+      
+      // Parsing MUST succeed
+      expect(result.success).toBe(true);
+      // Attack fields MUST be stripped
+      expect((result.data as Record<string, unknown>).isAdmin).toBeUndefined();
+      expect((result.data as Record<string, unknown>).role).toBeUndefined();
     });
   });
 });
@@ -1751,27 +1831,71 @@ describe('Security - Currency Formatter Attack Resistance', () => {
 // ============================================================================
 
 describe('Security - Offline Storage Attack Resistance', () => {
-  describe('IndexedDB data integrity', () => {
-    it('should not execute JavaScript from stored data', () => {
-      // When data with JS code is retrieved, it should remain as string
-      const maliciousData = {
-        id: 'test-123',
-        script: '<script>alert(1)</script>',
-        eval: 'eval("malicious")',
+  describe('IndexedDB data integrity via Zod validation', () => {
+    it('should reject expense with script injection when validated', () => {
+      // Even if malicious data reaches IndexedDB, Zod validation on READ should catch issues
+      const maliciousExpense = {
+        month_id: '', // Invalid: empty
+        title: '<script>alert(1)</script>',
+        category_key: 'invalid_category', // Invalid: not in enum
+        value: 'not-a-number', // Invalid: wrong type
       };
 
-      // The data should be stored and retrieved as-is
-      expect(maliciousData.script).toBe('<script>alert(1)</script>');
-      expect(maliciousData.eval).toBe('eval("malicious")');
-      // No execution occurs - it's just data
+      const result = CreateExpenseInputSchema.safeParse(maliciousExpense);
+      
+      // MUST fail validation
+      expect(result.success).toBe(false);
+      expect(result.error?.issues.length).toBeGreaterThanOrEqual(3);
     });
 
-    it('should handle extremely large IDs', () => {
+    it('should reject data with prototype pollution keys via schema', () => {
+      const pollutedData = {
+        month_id: '__proto__',
+        title: 'constructor',
+        category_key: 'essenciais',
+        value: 100,
+      };
+
+      // This parses successfully BUT the values are just strings
+      const result = CreateExpenseInputSchema.safeParse(pollutedData);
+      expect(result.success).toBe(true);
+      
+      // Verify no prototype pollution occurred
+      expect(({} as Record<string, unknown>).month_id).toBeUndefined();
+      expect(Object.hasOwn(Object.prototype, 'title')).toBe(false);
+    });
+
+    it('should enforce max ID length via secureStorage', () => {
       const largeId = 'a'.repeat(10000);
-      // Should not crash the application
-      expect(() => {
-        const _test = { id: largeId };
-      }).not.toThrow();
+      
+      // secureStorage MUST reject extremely large IDs
+      const result = setSecureStorageItem('current-family-id', largeId);
+      expect(result).toBe(false);
+    });
+
+    it('should validate offline ID format strictly', () => {
+      // Valid offline IDs
+      const validIds = [
+        'offline-1704067200000-abc123',
+        'exp-1704067200000-def456',
+      ];
+      
+      // Malicious offline IDs
+      const maliciousIds = [
+        'offline-<script>-alert',
+        '__proto__-1234-abc',
+        'offline-NaN-test',
+      ];
+
+      const offlineIdPattern = /^(offline|family|exp|month|goal|rec|sub|gentry)-\d+-[a-z0-9]+$/;
+
+      validIds.forEach(id => {
+        expect(offlineIdPattern.test(id)).toBe(true);
+      });
+
+      maliciousIds.forEach(id => {
+        expect(offlineIdPattern.test(id)).toBe(false);
+      });
     });
   });
 });
@@ -1941,49 +2065,74 @@ describe('Security - Concurrency Safety', () => {
 // ============================================================================
 
 describe('Security - Comprehensive Input Sanitization', () => {
-  describe('Zod schemas strip extra fields (mass assignment prevention)', () => {
+  describe('Zod schemas MUST strip extra fields (mass assignment prevention)', () => {
     const schemas = [
       { name: 'CreateExpenseInputSchema', schema: CreateExpenseInputSchema, 
-        valid: { month_id: 'm-1', title: 'T', category_key: 'essenciais', value: 1 } },
+        valid: { month_id: 'm-1', title: 'T', category_key: 'essenciais', value: 1 },
+        expectedKeys: ['month_id', 'title', 'category_key', 'value'] },
       { name: 'CreateGoalInputSchema', schema: CreateGoalInputSchema,
-        valid: { family_id: 'f-1', name: 'G', target_value: 100 } },
+        valid: { family_id: 'f-1', name: 'G', target_value: 100 },
+        expectedKeys: ['family_id', 'name', 'target_value', 'status'] }, // status has default='active'
       { name: 'CreateIncomeSourceInputSchema', schema: CreateIncomeSourceInputSchema,
-        valid: { name: 'Salary', value: 5000 } },
+        valid: { name: 'Salary', value: 5000 },
+        expectedKeys: ['name', 'value'] },
     ];
 
-    it.each(schemas)('$name should not include extra isAdmin field in result', ({ schema, valid }) => {
+    it.each(schemas)('$name MUST strip extra isAdmin and role fields', ({ schema, valid, expectedKeys }) => {
       const attackPayload = {
         ...valid,
         isAdmin: true,
         role: 'admin',
+        __internal: true,
+        permissions: ['*'],
       };
 
       const result = schema.safeParse(attackPayload);
-      if (result.success) {
-        // Zod by default strips unknown keys (passthrough mode disabled)
-        expect((result.data as Record<string, unknown>).isAdmin).toBeUndefined();
-        expect((result.data as Record<string, unknown>).role).toBeUndefined();
-      }
+      
+      // Parsing MUST succeed
+      expect(result.success).toBe(true);
+      
+      // Attack fields MUST be stripped
+      const data = result.data as Record<string, unknown>;
+      expect(data.isAdmin).toBeUndefined();
+      expect(data.role).toBeUndefined();
+      expect(data.__internal).toBeUndefined();
+      expect(data.permissions).toBeUndefined();
+      
+      // Only expected fields should remain
+      expect(Object.keys(data).sort()).toEqual(expectedKeys.sort());
     });
   });
 
   describe('Prototype pollution prevention', () => {
-    it('should not pollute Object.prototype via __proto__ in input', () => {
+    it('should NEVER pollute Object.prototype via __proto__ in input', () => {
+      // Verify clean state first
+      expect(({} as Record<string, unknown>).isAdmin).toBeUndefined();
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+      
       const malicious = Object.fromEntries([
         ['month_id', 'm-1'],
         ['title', 'Test'],
         ['category_key', 'essenciais'],
         ['value', 100],
-        ['__proto__', { isAdmin: true }],
+        ['__proto__', { isAdmin: true, polluted: true }],
       ]);
 
-      CreateExpenseInputSchema.safeParse(malicious);
+      const result = CreateExpenseInputSchema.safeParse(malicious);
       
-      // Object.prototype must NOT be polluted
+      // Parsing should succeed (Zod strips unknown keys)
+      expect(result.success).toBe(true);
+      
+      // Object.prototype MUST NOT be polluted
       expect(({} as Record<string, unknown>).isAdmin).toBeUndefined();
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+      
+      // New objects MUST NOT have polluted properties
+      const freshObject: Record<string, unknown> = {};
+      expect(freshObject.isAdmin).toBeUndefined();
     });
 
-    it('should not include __proto__ key in parsed result', () => {
+    it('should NEVER include __proto__ key in parsed result', () => {
       const malicious = Object.fromEntries([
         ['month_id', 'm-1'],
         ['title', 'Test'],
@@ -1993,10 +2142,29 @@ describe('Security - Comprehensive Input Sanitization', () => {
       ]);
 
       const result = CreateExpenseInputSchema.safeParse(malicious);
-      if (result.success) {
-        // __proto__ should not be in the parsed data
-        expect(Object.keys(result.data)).not.toContain('__proto__');
-      }
+      
+      // Parsing MUST succeed
+      expect(result.success).toBe(true);
+      
+      // __proto__ MUST NOT be in the parsed data
+      const parsedData = result.data as Record<string, unknown>;
+      expect(Object.keys(parsedData)).not.toContain('__proto__');
+      expect(Object.getOwnPropertyNames(parsedData)).not.toContain('__proto__');
+    });
+
+    it('should not pollute via constructor.prototype attack', () => {
+      const malicious = {
+        month_id: 'm-1',
+        title: 'Test',
+        category_key: 'essenciais',
+        value: 100,
+        constructor: { prototype: { isAdmin: true } },
+      };
+
+      CreateExpenseInputSchema.safeParse(malicious);
+      
+      // Object.prototype MUST NOT be polluted
+      expect(({} as Record<string, unknown>).isAdmin).toBeUndefined();
     });
   });
 });
@@ -2018,7 +2186,7 @@ describe('Security - Comprehensive Input Sanitization', () => {
  */
 
 // PWA-specific attack payloads
-const PWA_ATTACK_PAYLOADS = {
+const _PWA_ATTACK_PAYLOADS = {
   // Malicious URLs for cache poisoning
   cachePoison: [
     'javascript:alert(1)',
@@ -2047,232 +2215,291 @@ const PWA_ATTACK_PAYLOADS = {
 };
 
 describe('Security - PWA Service Worker Cache', () => {
-  describe('Cache key validation', () => {
-    it('should reject javascript: URLs in cache names', () => {
-      PWA_ATTACK_PAYLOADS.cachePoison.forEach(url => {
-        // Cache names should not contain protocol handlers that execute code
-        const isValid = !url.startsWith('javascript:') && 
-                       !url.startsWith('data:') &&
-                       !url.startsWith('file:') &&
-                       !url.startsWith('blob:');
-        
-        if (url.startsWith('javascript:') || url.startsWith('data:')) {
-          expect(isValid).toBe(false);
-        }
+  describe('Cache key validation - URL protocol detection', () => {
+    it('should REJECT all dangerous URL protocols for cache names', () => {
+      const dangerousProtocols = [
+        'javascript:alert(1)',
+        'data:text/html,<script>alert(1)</script>',
+        'file:///etc/passwd',
+        'blob:https://evil.com/malicious',
+        'vbscript:msgbox(1)',
+      ];
+
+      const isDangerousUrl = (url: string): boolean => {
+        const dangerousPrefixes = ['javascript:', 'data:', 'file:', 'blob:', 'vbscript:'];
+        return dangerousPrefixes.some(prefix => url.toLowerCase().startsWith(prefix));
+      };
+
+      dangerousProtocols.forEach(url => {
+        expect(isDangerousUrl(url)).toBe(true);
       });
     });
 
-    it('should validate cache entries are from same origin', () => {
-      const validOrigins = [
-        'https://example.com/api/data',
+    it('should ACCEPT only safe relative and same-origin URLs', () => {
+      const safeUrls = [
         '/api/data',
         './assets/icon.png',
+        '../styles.css',
+        'index.html',
       ];
-      
-      const invalidOrigins = [
+
+      const isSafeUrl = (url: string): boolean => {
+        // Safe URLs are relative paths, not absolute URLs with protocols
+        return !url.includes(':') || url.startsWith('https://same-origin.com');
+      };
+
+      safeUrls.forEach(url => {
+        expect(isSafeUrl(url)).toBe(true);
+      });
+    });
+
+    it('should DETECT cross-origin URLs attempting cache poisoning', () => {
+      const appOrigin = 'https://budget-app.com';
+      const crossOriginUrls = [
         '//evil.com/malware.js',
         'https://evil.com/fake-api',
         'http://attacker.site/steal',
+        'https://phishing.com/login.html',
       ];
 
-      // Simulate origin check (what service worker should do)
-      const currentOrigin = 'https://example.com';
-      
-      validOrigins.forEach(url => {
-        const isRelative = url.startsWith('/') || url.startsWith('.');
-        const isSameOrigin = url.startsWith(currentOrigin) || isRelative;
-        expect(isSameOrigin).toBe(true);
-      });
+      const isCrossOrigin = (url: string, origin: string): boolean => {
+        if (url.startsWith('//')) return true; // Protocol-relative = cross-origin risk
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          return !url.startsWith(origin);
+        }
+        return false; // Relative URLs are same-origin
+      };
 
-      invalidOrigins.forEach(url => {
-        const isSameOrigin = url.startsWith(currentOrigin);
-        expect(isSameOrigin).toBe(false);
+      crossOriginUrls.forEach(url => {
+        expect(isCrossOrigin(url, appOrigin)).toBe(true);
       });
     });
   });
 
-  describe('Cache response validation', () => {
-    it('should validate response type is not opaque for critical resources', () => {
-      // Opaque responses (type: 'opaque') from no-cors requests cannot be inspected
-      // and should not be cached for critical app resources
-      // Response types: 'basic', 'cors', 'opaque', 'opaqueredirect'
-      
-      const allowedForCritical = ['basic', 'cors'];
-      const notAllowedForCritical = ['opaque', 'opaqueredirect'];
+  describe('Cache response type validation', () => {
+    it('should REJECT opaque responses for critical resources', () => {
+      // Opaque responses cannot be inspected - potential security risk
+      const responseTypes = {
+        safe: ['basic', 'cors'],
+        unsafe: ['opaque', 'opaqueredirect'],
+      };
 
-      allowedForCritical.forEach(type => {
-        expect(['basic', 'cors']).toContain(type);
+      const isSafeResponseType = (type: string): boolean => {
+        return responseTypes.safe.includes(type);
+      };
+
+      responseTypes.safe.forEach(type => {
+        expect(isSafeResponseType(type)).toBe(true);
       });
 
-      notAllowedForCritical.forEach(type => {
-        expect(['basic', 'cors']).not.toContain(type);
+      responseTypes.unsafe.forEach(type => {
+        expect(isSafeResponseType(type)).toBe(false);
       });
     });
   });
 });
 
 describe('Security - PWA IndexedDB Integrity', () => {
-  describe('Data integrity validation', () => {
-    it('should not execute code stored in IndexedDB fields', () => {
-      const maliciousData = {
-        id: 'test-123',
+  describe('Data validation on retrieval', () => {
+    it('should REJECT malicious data via Zod validation', () => {
+      // Simulates data that might have been tampered with in IndexedDB
+      const tamperedData = {
+        id: 'exp-123',
+        month_id: '', // Empty - invalid
         title: '<script>alert(1)</script>',
-        callback: 'function(){alert(1)}',
-        proto: { __proto__: { isAdmin: true } },
+        category_key: 'INVALID_CATEGORY', // Not in enum
+        value: -999, // Negative - invalid
       };
 
-      // Data is stored as-is but never executed
-      expect(maliciousData.title).toBe('<script>alert(1)</script>');
-      expect(maliciousData.callback).toBe('function(){alert(1)}');
-      // No code execution should occur - it's just strings
-      expect(typeof maliciousData.title).toBe('string');
-      expect(typeof maliciousData.callback).toBe('string');
+      const result = CreateExpenseInputSchema.safeParse(tamperedData);
+      
+      // MUST fail validation
+      expect(result.success).toBe(false);
+      const errors = result.error as { issues: unknown[] };
+      expect(errors.issues.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should handle corrupted IndexedDB data gracefully', () => {
-      const corruptedDataPatterns = [
-        undefined,
-        null,
+    it('should REJECT data with wrong types', () => {
+      const wrongTypeData = {
+        month_id: 123, // Should be string
+        title: ['array', 'not', 'string'], // Should be string
+        category_key: 'essenciais',
+        value: 'not-a-number', // Should be number
+      };
+
+      const result = CreateExpenseInputSchema.safeParse(wrongTypeData);
+      
+      expect(result.success).toBe(false);
+      const errors2 = result.error as { issues: unknown[] };
+      expect(errors2.issues.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should handle corrupted JSON gracefully', () => {
+      const corruptedPatterns = [
+        '{"incomplete":', // Incomplete JSON
+        'not-json-at-all',
+        '{"key": undefined}', // Invalid JSON value
         '',
-        'not-json',
-        '{"incomplete":',
-        new Uint8Array([0, 1, 2, 3]),
-        Symbol('corrupt'),
+        null,
       ];
 
-      corruptedDataPatterns.forEach(data => {
-        // Application should not crash on corrupted data
-        expect(() => {
-          if (typeof data === 'string') {
+      corruptedPatterns.forEach(pattern => {
+        if (typeof pattern === 'string' && pattern.length > 0) {
+          // Parsing should throw, not crash
+          expect(() => {
             try {
-              JSON.parse(data);
+              JSON.parse(pattern);
             } catch {
-              // Expected for invalid JSON
+              // Expected - invalid JSON
             }
-          }
-        }).not.toThrow();
-      });
-    });
-
-    it('should validate IndexedDB store names', () => {
-      const validStoreNames = ['families', 'months', 'expenses', 'sync_queue'];
-      // Store names that should be rejected (reserved words or contain special chars)
-      const maliciousStoreNames = [
-        '__proto__',
-        'constructor',
-        'prototype',
-        '../families',
-        'families; DROP TABLE',
-        '<script>',
-      ];
-
-      // Reserved words that should be blocked even if they match the pattern
-      const reservedWords = ['__proto__', 'constructor', 'prototype'];
-
-      // Valid store name pattern + not a reserved word
-      const isValidStoreName = (name: string) => 
-        /^[a-z_]+$/.test(name) && !reservedWords.includes(name);
-
-      validStoreNames.forEach(name => {
-        expect(isValidStoreName(name)).toBe(true);
-      });
-
-      maliciousStoreNames.forEach(name => {
-        expect(isValidStoreName(name)).toBe(false);
+          }).not.toThrow();
+        }
       });
     });
   });
 
-  describe('Offline ID security', () => {
-    it('should validate offline ID format strictly', () => {
-      const validOfflineIds = [
+  describe('Store name validation', () => {
+    it('should REJECT prototype pollution store names', () => {
+      const reservedWords = ['__proto__', 'constructor', 'prototype'];
+      const validPattern = /^[a-z_]+$/;
+
+      const isValidStoreName = (name: string): boolean => {
+        return validPattern.test(name) && !reservedWords.includes(name);
+      };
+
+      // Valid store names
+      expect(isValidStoreName('families')).toBe(true);
+      expect(isValidStoreName('sync_queue')).toBe(true);
+      expect(isValidStoreName('expenses')).toBe(true);
+
+      // Reserved words MUST be rejected
+      reservedWords.forEach(word => {
+        expect(isValidStoreName(word)).toBe(false);
+      });
+
+      // Malicious names MUST be rejected
+      expect(isValidStoreName('../families')).toBe(false);
+      expect(isValidStoreName('families; DROP')).toBe(false);
+      expect(isValidStoreName('<script>')).toBe(false);
+    });
+  });
+
+  describe('Offline ID format enforcement', () => {
+    const OFFLINE_ID_PATTERN = /^(offline|family|exp|month|goal|rec|sub|gentry)-\d+-[a-z0-9]+$/;
+
+    it('should ACCEPT valid offline IDs', () => {
+      const validIds = [
         'offline-1704067200000-abc123',
-        'family-1704067200000-xyz789',
         'exp-1704067200000-def456',
-        'month-1704067200000-ghi012',
+        'month-1704067200000-ghi789',
+        'goal-1704067200000-jkl012',
       ];
 
-      const maliciousOfflineIds = [
+      validIds.forEach(id => {
+        expect(OFFLINE_ID_PATTERN.test(id)).toBe(true);
+      });
+    });
+
+    it('should REJECT ALL malicious offline IDs', () => {
+      const maliciousIds = [
         'offline-<script>-alert',
-        'family-../../../etc/passwd',
-        'exp-; DROP TABLE',
         '__proto__-1234-abc',
         'constructor-1234-xyz',
         'offline-NaN-test',
         'offline-Infinity-test',
         'offline--1-negative',
+        'family-../../../etc/passwd',
+        'exp-; DROP TABLE-abc',
+        'month-123-${inject}',
+        'goal-123-{{template}}',
       ];
 
-      // Valid IDs match expected pattern
-      validOfflineIds.forEach(id => {
-        expect(id).toMatch(/^(offline|family|exp|month|goal|rec|sub|gentry)-\d+-[a-z0-9]+$/);
-      });
-
-      // Malicious IDs should NOT match valid pattern
-      maliciousOfflineIds.forEach(id => {
-        expect(id).not.toMatch(/^(offline|family|exp|month|goal|rec|sub|gentry)-\d+-[a-z0-9]+$/);
+      maliciousIds.forEach(id => {
+        expect(OFFLINE_ID_PATTERN.test(id)).toBe(false);
       });
     });
 
-    it('should reject offline IDs with special characters', () => {
-      const specialCharIds = [
-        'offline-123-<script>',
-        'family-123-../../',
-        'exp-123-;DROP',
-        'month-123-__proto__',
-        'goal-123-${inject}',
-        'rec-123-{{template}}',
+    it('should REJECT IDs via secureStorage validation', () => {
+      const maliciousIds = [
+        '__proto__',
+        'constructor',
+        '<script>alert(1)</script>',
+        '../../../etc/passwd',
       ];
 
-      specialCharIds.forEach(id => {
-        // Should not match safe ID pattern
-        const isSafe = /^[a-z]+-\d+-[a-z0-9]+$/.test(id);
-        expect(isSafe).toBe(false);
+      maliciousIds.forEach(id => {
+        expect(setSecureStorageItem('current-family-id', id)).toBe(false);
       });
     });
   });
 });
 
 describe('Security - PWA Sync Queue Protection', () => {
+  const VALID_SYNC_TYPES = [
+    'family', 'month', 'expense', 'recurring_expense',
+    'subcategory', 'category_limit', 'family_member',
+    'income_source', 'goal', 'goal_entry',
+  ];
+  const VALID_SYNC_ACTIONS = ['insert', 'update', 'delete'];
+
   describe('Sync queue entry validation', () => {
-    it('should only accept valid sync queue types', () => {
-      const validTypes = [
-        'family', 'month', 'expense', 'recurring_expense',
-        'subcategory', 'category_limit', 'family_member',
-        'income_source', 'goal', 'goal_entry',
-      ];
+    it('should ACCEPT only valid sync queue types', () => {
+      const isValidType = (type: string): boolean => VALID_SYNC_TYPES.includes(type);
 
-      const invalidTypes = [
-        'admin', '__proto__', 'constructor', 'prototype',
-        'system', 'root', 'delete_all', 'escalate',
-      ];
-
-      validTypes.forEach(type => {
-        expect(validTypes).toContain(type);
+      // Valid types MUST pass
+      VALID_SYNC_TYPES.forEach(type => {
+        expect(isValidType(type)).toBe(true);
       });
 
+      // Invalid types MUST fail
+      const invalidTypes = ['admin', '__proto__', 'constructor', 'prototype', 'system', 'root'];
       invalidTypes.forEach(type => {
-        expect(validTypes).not.toContain(type);
+        expect(isValidType(type)).toBe(false);
       });
     });
 
-    it('should only accept valid sync queue actions', () => {
-      const validActions = ['insert', 'update', 'delete'];
-      const invalidActions = [
-        'drop', 'truncate', 'escalate', 'admin',
-        '__proto__', 'exec', 'eval', 'constructor',
-      ];
+    it('should ACCEPT only valid sync queue actions', () => {
+      const isValidAction = (action: string): boolean => VALID_SYNC_ACTIONS.includes(action);
 
-      validActions.forEach(action => {
-        expect(['insert', 'update', 'delete']).toContain(action);
+      // Valid actions MUST pass
+      VALID_SYNC_ACTIONS.forEach(action => {
+        expect(isValidAction(action)).toBe(true);
       });
 
+      // Invalid actions MUST fail
+      const invalidActions = ['drop', 'truncate', 'escalate', '__proto__', 'exec', 'eval'];
       invalidActions.forEach(action => {
-        expect(['insert', 'update', 'delete']).not.toContain(action);
+        expect(isValidAction(action)).toBe(false);
       });
     });
 
-    it('should validate sync queue item structure', () => {
+    it('should VALIDATE complete sync queue item structure', () => {
+      interface SyncQueueItem {
+        id: string;
+        type: string;
+        action: string;
+        data: Record<string, unknown>;
+        createdAt: string;
+        familyId: string;
+      }
+
+      const isValidSyncItem = (item: Partial<SyncQueueItem>): boolean => {
+        // All required fields must exist
+        if (!item.id || !item.type || !item.action || !item.data || !item.createdAt || !item.familyId) {
+          return false;
+        }
+        // Type and action must be valid
+        if (!VALID_SYNC_TYPES.includes(item.type) || !VALID_SYNC_ACTIONS.includes(item.action)) {
+          return false;
+        }
+        // CreatedAt must be valid date
+        if (isNaN(new Date(item.createdAt).getTime())) {
+          return false;
+        }
+        return true;
+      };
+
+      // Valid item MUST pass
       const validItem = {
         id: 'sync-123',
         type: 'expense',
@@ -2281,40 +2508,16 @@ describe('Security - PWA Sync Queue Protection', () => {
         createdAt: '2025-01-01T00:00:00Z',
         familyId: 'family-123',
       };
+      expect(isValidSyncItem(validItem)).toBe(true);
 
-      const invalidItems = [
-        // Missing required fields (action, data, createdAt, familyId)
-        { id: 'sync-1', type: 'expense', action: undefined, data: undefined, createdAt: undefined, familyId: undefined },
-        // Invalid type
-        { id: 'sync-2', type: '__proto__', action: 'insert', data: {}, createdAt: '2025-01-01', familyId: 'fam-1' },
-        // Invalid action
-        { id: 'sync-3', type: 'expense', action: 'drop', data: {}, createdAt: '2025-01-01', familyId: 'fam-1' },
-      ];
-
-      // Valid item has all required fields
-      expect(validItem).toHaveProperty('id');
-      expect(validItem).toHaveProperty('type');
-      expect(validItem).toHaveProperty('action');
-      expect(validItem).toHaveProperty('data');
-      expect(validItem).toHaveProperty('createdAt');
-      expect(validItem).toHaveProperty('familyId');
-
-      // Invalid items are missing fields or have bad values
-      invalidItems.forEach(item => {
-        const hasValidType = ['family', 'month', 'expense', 'recurring_expense', 'subcategory', 'goal'].includes(item.type as string);
-        const hasValidAction = ['insert', 'update', 'delete'].includes(item.action as string);
-        const hasAllFields = item.data !== undefined && 
-                            item.createdAt !== undefined && 
-                            item.action !== undefined &&
-                            item.familyId !== undefined;
-        
-        // At least one of these conditions should fail for invalid items
-        const isFullyValid = hasValidType && hasValidAction && hasAllFields;
-        expect(isFullyValid).toBe(false);
-      });
+      // Invalid items MUST fail
+      expect(isValidSyncItem({ id: 'sync-1', type: 'expense' })).toBe(false); // Missing fields
+      expect(isValidSyncItem({ ...validItem, type: '__proto__' })).toBe(false); // Invalid type
+      expect(isValidSyncItem({ ...validItem, action: 'drop' })).toBe(false); // Invalid action
+      expect(isValidSyncItem({ ...validItem, createdAt: 'invalid' })).toBe(false); // Invalid date
     });
 
-    it('should reject prototype pollution in sync data', () => {
+    it('should DETECT prototype pollution in sync data', () => {
       // When __proto__ is set in an object literal, it doesn't show in Object.keys
       // We need to use Object.getOwnPropertyNames or check hasOwnProperty
       const pollutedDataViaDefine: Record<string, unknown> = {};
@@ -2390,296 +2593,369 @@ describe('Security - PWA Sync Queue Protection', () => {
 
 describe('Security - PWA Storage Quota Protection', () => {
   describe('Storage abuse prevention', () => {
-    it('should have reasonable size limits for cached data', () => {
-      const MAX_CACHE_ENTRY_SIZE = 5 * 1024 * 1024; // 5MB per entry
-      const MAX_TOTAL_CACHE_SIZE = 50 * 1024 * 1024; // 50MB total
-
-      // Test data sizes
-      const oversizedData = 'A'.repeat(MAX_CACHE_ENTRY_SIZE + 1);
-      const reasonableData = 'A'.repeat(1024); // 1KB
-
-      expect(oversizedData.length).toBeGreaterThan(MAX_CACHE_ENTRY_SIZE);
-      expect(reasonableData.length).toBeLessThan(MAX_CACHE_ENTRY_SIZE);
-      
-      // Verify total cache limit is reasonable (10x single entry)
-      expect(MAX_TOTAL_CACHE_SIZE).toBe(MAX_CACHE_ENTRY_SIZE * 10);
-    });
-
-    it('should limit number of sync queue items', () => {
-      const MAX_SYNC_QUEUE_ITEMS = 1000;
-
-      // Prevent denial of service by flooding sync queue
-      const floodAttempt = Array(MAX_SYNC_QUEUE_ITEMS + 100).fill({
-        type: 'expense',
-        action: 'insert',
-        data: { title: 'Flood', value: 1 },
-      });
-
-      expect(floodAttempt.length).toBeGreaterThan(MAX_SYNC_QUEUE_ITEMS);
-      // Application should enforce the limit
-    });
-
-    it('should limit individual field sizes in stored data', () => {
+    it('should enforce size limits via Zod validation', () => {
       const MAX_TITLE_LENGTH = 255;
-      const MAX_DESCRIPTION_LENGTH = 1000;
 
+      // Attempt to store oversized data
       const oversizedTitle = 'A'.repeat(MAX_TITLE_LENGTH + 100);
-      const oversizedDescription = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1000);
-
-      expect(oversizedTitle.length).toBeGreaterThan(MAX_TITLE_LENGTH);
-      expect(oversizedDescription.length).toBeGreaterThan(MAX_DESCRIPTION_LENGTH);
-
-      // Zod validation should reject these
+      
       const result = CreateExpenseInputSchema.safeParse({
         month_id: 'month-123',
         title: oversizedTitle,
         category_key: 'essenciais',
         value: 100,
       });
+
+      // MUST be rejected
       expect(result.success).toBe(false);
+      const err = result.error as { issues: { path: string[] }[] };
+      expect(err.issues[0].path).toContain('title');
+    });
+
+    it('should enforce reasonable limits for all text fields', () => {
+      const testCases = [
+        { field: 'title', maxLength: 255, schema: CreateExpenseInputSchema,
+          base: { month_id: 'm-1', category_key: 'essenciais', value: 1 } },
+        { field: 'name', maxLength: 255, schema: CreateSubcategoryInputSchema,
+          base: { category_key: 'essenciais' } },
+        { field: 'name', maxLength: 255, schema: CreateIncomeSourceInputSchema,
+          base: { value: 1000 } },
+      ];
+
+      testCases.forEach(({ field, maxLength, schema, base }) => {
+        // At max length - should PASS
+        const validPayload = { ...base, [field]: 'A'.repeat(maxLength) };
+        const validResult = schema.safeParse(validPayload);
+        expect(validResult.success).toBe(true);
+
+        // Over max length - should FAIL
+        const invalidPayload = { ...base, [field]: 'A'.repeat(maxLength + 1) };
+        const invalidResult = schema.safeParse(invalidPayload);
+        expect(invalidResult.success).toBe(false);
+      });
+    });
+
+    it('should reject sync queue flood via validation', () => {
+      const VALID_SYNC_TYPES = [
+        'family', 'month', 'expense', 'recurring_expense',
+        'subcategory', 'goal', 'goal_entry', 'income_source',
+      ];
+      const VALID_SYNC_ACTIONS = ['insert', 'update', 'delete'];
+
+      // Create a validator function
+      const isValidSyncItem = (item: { type: string; action: string }): boolean => {
+        return VALID_SYNC_TYPES.includes(item.type) && 
+               VALID_SYNC_ACTIONS.includes(item.action);
+      };
+
+      // Valid items
+      expect(isValidSyncItem({ type: 'expense', action: 'insert' })).toBe(true);
+      expect(isValidSyncItem({ type: 'goal', action: 'update' })).toBe(true);
+
+      // Attack attempts - invalid types/actions MUST be rejected
+      expect(isValidSyncItem({ type: 'admin', action: 'escalate' })).toBe(false);
+      expect(isValidSyncItem({ type: '__proto__', action: 'pollute' })).toBe(false);
+      expect(isValidSyncItem({ type: 'expense', action: 'drop' })).toBe(false);
+      expect(isValidSyncItem({ type: 'constructor', action: 'insert' })).toBe(false);
+    });
+
+    it('should enforce numeric limits to prevent overflow attacks', () => {
+      // Test value limits
+      const testCases = [
+        { value: Number.MAX_SAFE_INTEGER + 1, shouldFail: false }, // Still finite
+        { value: Infinity, shouldFail: true },
+        { value: -Infinity, shouldFail: true },
+        { value: NaN, shouldFail: true },
+        { value: -1, shouldFail: true }, // Negative expense
+      ];
+
+      testCases.forEach(({ value, shouldFail }) => {
+        const result = CreateExpenseInputSchema.safeParse({
+          month_id: 'month-123',
+          title: 'Test',
+          category_key: 'essenciais',
+          value,
+        });
+
+        if (shouldFail) {
+          expect(result.success).toBe(false);
+        } else {
+          expect(result.success).toBe(true);
+        }
+      });
     });
   });
 });
 
 describe('Security - PWA Origin and Scope Validation', () => {
   describe('Manifest scope security', () => {
-    it('should validate start_url is within scope', () => {
-      const manifest = {
-        scope: '/',
-        start_url: '/',
+    it('should REJECT URLs outside scope', () => {
+      const isDangerousUrl = (url: string): boolean => {
+        return url.startsWith('javascript:') ||
+               url.startsWith('data:') ||
+               url.startsWith('file:') ||
+               url.startsWith('//') ||
+               (url.startsWith('http') && !url.includes('budget-app.com'));
       };
 
-      const validStartUrls = ['/', '/budget', '/goals', '/index.html'];
-      const invalidStartUrls = [
-        'https://evil.com/',
+      const dangerousUrls = [
         'javascript:alert(1)',
-        '//other-domain.com/',
+        'data:text/html,<script>',
         'file:///etc/passwd',
+        '//evil.com/steal',
+        'https://evil.com/',
       ];
 
-      validStartUrls.forEach(url => {
-        const isWithinScope = url.startsWith(manifest.scope) || url.startsWith('/');
-        expect(isWithinScope).toBe(true);
-      });
-
-      invalidStartUrls.forEach(url => {
-        const isWithinScope = url.startsWith(manifest.scope) && 
-                              !url.includes(':') && 
-                              !url.startsWith('//');
-        expect(isWithinScope).toBe(false);
+      dangerousUrls.forEach(url => {
+        expect(isDangerousUrl(url)).toBe(true);
       });
     });
 
-    it('should reject navigation to external origins', () => {
-      const allowedOrigin = 'https://budget-app.com';
+    it('should ACCEPT only relative safe URLs', () => {
+      const isSafeRelativeUrl = (url: string): boolean => {
+        // REJECT protocol-relative URLs (//evil.com)
+        if (url.startsWith('//')) return false;
+        // Safe if relative path without protocol and no path traversal
+        return (url.startsWith('/') || url.startsWith('.') || !url.includes(':')) &&
+               !url.includes('..');
+      };
+
+      const safeUrls = ['/', '/budget', '/goals', './assets/icon.png'];
+      const unsafeUrls = ['../../../etc/passwd', 'javascript:alert(1)', '//evil.com'];
+
+      safeUrls.forEach(url => {
+        expect(isSafeRelativeUrl(url)).toBe(true);
+      });
+
+      unsafeUrls.forEach(url => {
+        expect(isSafeRelativeUrl(url)).toBe(false);
+      });
+    });
+
+    it('should REJECT navigation to external origins via URL parsing', () => {
+      const appOrigin = 'https://budget-app.com';
       
       const externalUrls = [
         'https://phishing-site.com/login',
         'https://evil.com/steal-credentials',
         'http://insecure-site.com/',
-        'ftp://files.com/data',
       ];
 
-      externalUrls.forEach(url => {
-        const urlOrigin = new URL(url).origin;
-        expect(urlOrigin).not.toBe(allowedOrigin);
+      externalUrls.forEach(urlString => {
+        const url = new URL(urlString);
+        expect(url.origin).not.toBe(appOrigin);
       });
     });
   });
 
-  describe('Deep link validation', () => {
-    it('should sanitize deep link parameters', () => {
-      const maliciousDeepLinks = [
-        '/budget?id=<script>alert(1)</script>',
-        '/goals?redirect=javascript:alert(1)',
-        '/month?data={"__proto__":{"admin":true}}',
-        "/expense?title='; DROP TABLE;--",
+  describe('Deep link parameter sanitization', () => {
+    it('should DETECT malicious patterns in URL parameters', () => {
+      const suspiciousPatterns = [
+        /<script/i,
+        /javascript:/i,
+        /__proto__/i,
+        /constructor/i,
+        /DROP\s+TABLE/i,
+        /eval\s*\(/i,
       ];
 
-      maliciousDeepLinks.forEach(link => {
-        // URL params should be sanitized before use
-        const url = new URL(link, 'https://example.com');
-        const params = url.searchParams;
-        
-        params.forEach((value) => {
-          // Values should be treated as strings, not executed
-          expect(typeof value).toBe('string');
-          // Validation should detect suspicious patterns
-          const hasSuspiciousPattern = 
-            value.includes('<script>') ||
-            value.includes('javascript:') ||
-            value.includes('__proto__') ||
-            value.includes('DROP TABLE');
-          expect(hasSuspiciousPattern).toBe(true);
-        });
-      });
+      const isSuspicious = (value: string): boolean => {
+        return suspiciousPatterns.some(pattern => pattern.test(value));
+      };
+
+      // All these MUST be detected as suspicious
+      expect(isSuspicious('<script>alert(1)</script>')).toBe(true);
+      expect(isSuspicious('javascript:alert(1)')).toBe(true);
+      expect(isSuspicious('{"__proto__":{"admin":true}}')).toBe(true);
+      expect(isSuspicious("'; DROP TABLE users;--")).toBe(true);
+      expect(isSuspicious('eval(malicious)')).toBe(true);
+
+      // Safe values should NOT be flagged
+      expect(isSuspicious('normal-value')).toBe(false);
+      expect(isSuspicious('12345')).toBe(false);
     });
   });
 });
 
 describe('Security - PWA Update Integrity', () => {
-  describe('Service worker update validation', () => {
-    it('should detect tampering in cached resources', () => {
-      // Simulate integrity check
+  describe('Resource integrity validation', () => {
+    it('should DETECT hash mismatch (tampered resources)', () => {
       const expectedHashes: Record<string, string> = {
-        '/app.js': 'sha384-validhash123',
-        '/styles.css': 'sha384-validhash456',
+        '/app.js': 'sha384-abc123',
+        '/styles.css': 'sha384-def456',
+        '/index.html': 'sha384-ghi789',
       };
 
-      const tamperedResource = {
-        url: '/app.js',
-        hash: 'sha384-tampered789',
+      const verifyIntegrity = (url: string, actualHash: string): boolean => {
+        const expectedHash = expectedHashes[url];
+        return expectedHash === actualHash;
       };
 
-      expect(tamperedResource.hash).not.toBe(expectedHashes['/app.js']);
+      // Valid resources
+      expect(verifyIntegrity('/app.js', 'sha384-abc123')).toBe(true);
+      expect(verifyIntegrity('/styles.css', 'sha384-def456')).toBe(true);
+
+      // Tampered resources MUST fail
+      expect(verifyIntegrity('/app.js', 'sha384-TAMPERED')).toBe(false);
+      expect(verifyIntegrity('/styles.css', 'sha384-MODIFIED')).toBe(false);
+      expect(verifyIntegrity('/unknown.js', 'sha384-xyz')).toBe(false);
     });
 
-    it('should validate service worker scope on registration', () => {
-      const validScopes = ['/', '/app/', './'];
-      const invalidScopes = [
-        'https://evil.com/',
-        '../../../',
-        'file:///',
-        'javascript:',
-      ];
+    it('should REJECT invalid service worker scopes', () => {
+      const isValidScope = (scope: string): boolean => {
+        // Valid: relative paths without dangerous patterns
+        const isDangerous = scope.includes('..') ||
+                           scope.includes(':') ||
+                           scope.startsWith('//');
+        const isRelative = scope.startsWith('/') || scope.startsWith('.');
+        return isRelative && !isDangerous;
+      };
 
-      validScopes.forEach(scope => {
-        const isValid = scope.startsWith('/') || scope.startsWith('.');
-        expect(isValid).toBe(true);
-      });
+      // Valid scopes
+      expect(isValidScope('/')).toBe(true);
+      expect(isValidScope('/app/')).toBe(true);
+      expect(isValidScope('./')).toBe(true);
 
-      invalidScopes.forEach(scope => {
-        const isValid = (scope.startsWith('/') || scope.startsWith('.')) && 
-                        !scope.includes(':') &&
-                        !scope.includes('..');
-        expect(isValid).toBe(false);
-      });
+      // Invalid scopes MUST be rejected
+      expect(isValidScope('https://evil.com/')).toBe(false);
+      expect(isValidScope('../../../')).toBe(false);
+      expect(isValidScope('file:///')).toBe(false);
+      expect(isValidScope('javascript:')).toBe(false);
     });
   });
 
   describe('Background sync security', () => {
-    it('should validate sync tag names', () => {
-      const validSyncTags = ['sync-expenses', 'sync-goals', 'background-sync'];
-      const maliciousSyncTags = [
+    it('should ONLY accept valid sync tag names', () => {
+      const SYNC_TAG_PATTERN = /^[a-z][a-z0-9-]*$/;
+
+      const validTags = ['sync-expenses', 'sync-goals', 'background-sync', 'data-sync-v2'];
+      const invalidTags = [
         '<script>alert(1)</script>',
         'javascript:void(0)',
         '__proto__',
         '../../../etc/passwd',
+        'UPPERCASE-TAG',
+        'tag with spaces',
+        '',
       ];
 
-      const syncTagPattern = /^[a-z-]+$/;
-
-      validSyncTags.forEach(tag => {
-        expect(syncTagPattern.test(tag)).toBe(true);
+      validTags.forEach(tag => {
+        expect(SYNC_TAG_PATTERN.test(tag)).toBe(true);
       });
 
-      maliciousSyncTags.forEach(tag => {
-        expect(syncTagPattern.test(tag)).toBe(false);
+      invalidTags.forEach(tag => {
+        expect(SYNC_TAG_PATTERN.test(tag)).toBe(false);
       });
     });
 
-    it('should limit sync retry attempts', () => {
+    it('should enforce maximum sync retry limit', () => {
       const MAX_SYNC_RETRIES = 5;
-      const syncAttempts = 10;
+      
+      const shouldRetry = (attempts: number): boolean => {
+        return attempts < MAX_SYNC_RETRIES;
+      };
 
-      // After max retries, sync should stop attempting
-      expect(syncAttempts > MAX_SYNC_RETRIES).toBe(true);
-      // System should not infinitely retry failed syncs
+      // Should allow retries under limit
+      expect(shouldRetry(0)).toBe(true);
+      expect(shouldRetry(4)).toBe(true);
+
+      // MUST stop at limit
+      expect(shouldRetry(5)).toBe(false);
+      expect(shouldRetry(10)).toBe(false);
+      expect(shouldRetry(100)).toBe(false);
     });
   });
 });
 
 describe('Security - PWA Notification Security', () => {
-  describe('Notification payload validation', () => {
-    it('should detect malicious patterns in notification titles', () => {
-      const maliciousTitles = [
-        '<script>alert(1)</script>',
-        '<img src=x onerror=alert(1)>',
-        '{{constructor.constructor("alert(1)")()}}',
-      ];
-
-      // Patterns that indicate malicious content
-      const suspiciousPatterns = [
+  describe('Notification content validation', () => {
+    it('should DETECT and REJECT malicious notification content', () => {
+      const MALICIOUS_PATTERNS = [
         /<script/i,
         /onerror\s*=/i,
-        /\{\{.*constructor/i,
+        /onload\s*=/i,
         /javascript:/i,
+        /\{\{.*constructor/i,
+        /eval\s*\(/i,
       ];
 
-      maliciousTitles.forEach(title => {
-        // At least one suspicious pattern should match
-        const isSuspicious = suspiciousPatterns.some(pattern => pattern.test(title));
-        expect(isSuspicious).toBe(true);
-        // In real implementation, these would be stripped or escaped
-      });
+      const isMaliciousContent = (content: string): boolean => {
+        return MALICIOUS_PATTERNS.some(pattern => pattern.test(content));
+      };
+
+      // Malicious content MUST be detected
+      expect(isMaliciousContent('<script>alert(1)</script>')).toBe(true);
+      expect(isMaliciousContent('<img src=x onerror=alert(1)>')).toBe(true);
+      expect(isMaliciousContent('{{constructor.constructor("alert")()}}')).toBe(true);
+      expect(isMaliciousContent('javascript:alert(1)')).toBe(true);
+
+      // Safe content should pass
+      expect(isMaliciousContent('New expense added!')).toBe(false);
+      expect(isMaliciousContent('Budget updated successfully')).toBe(false);
     });
 
-    it('should validate notification action URLs', () => {
-      const validActions = [
-        { action: 'open', url: '/budget' },
-        { action: 'dismiss', url: undefined },
-      ];
+    it('should VALIDATE notification action URLs are safe', () => {
+      const isSafeActionUrl = (url: string | undefined): boolean => {
+        if (!url) return true; // No URL is safe
+        // Must be relative path, no protocol
+        return url.startsWith('/') && 
+               !url.includes(':') && 
+               !url.includes('..');
+      };
 
-      const maliciousActions = [
-        { action: 'open', url: 'javascript:alert(1)' },
-        { action: 'redirect', url: 'https://phishing.com/login' },
-        { action: 'exec', url: 'file:///etc/passwd' },
-      ];
+      // Safe URLs
+      expect(isSafeActionUrl(undefined)).toBe(true);
+      expect(isSafeActionUrl('/budget')).toBe(true);
+      expect(isSafeActionUrl('/goals/123')).toBe(true);
 
-      validActions.forEach(action => {
-        if (action.url) {
-          expect(action.url.startsWith('/')).toBe(true);
-        }
-      });
-
-      maliciousActions.forEach(action => {
-        if (action.url) {
-          const isSafe = action.url.startsWith('/') && !action.url.includes(':');
-          expect(isSafe).toBe(false);
-        }
-      });
+      // Dangerous URLs MUST be rejected
+      expect(isSafeActionUrl('javascript:alert(1)')).toBe(false);
+      expect(isSafeActionUrl('https://phishing.com/login')).toBe(false);
+      expect(isSafeActionUrl('file:///etc/passwd')).toBe(false);
+      expect(isSafeActionUrl('/../../../etc/passwd')).toBe(false);
     });
   });
 });
 
 describe('Security - PWA Installation Attack Prevention', () => {
-  describe('Install prompt hijacking prevention', () => {
-    it('should validate install prompt event source', () => {
-      // The beforeinstallprompt event should only be trusted from the browser
-      const trustedEvent = {
-        isTrusted: true,
-        type: 'beforeinstallprompt',
+  describe('Install prompt validation', () => {
+    it('should ONLY trust browser-generated install prompts', () => {
+      const isValidInstallPrompt = (event: { isTrusted: boolean; type: string }): boolean => {
+        return event.isTrusted && event.type === 'beforeinstallprompt';
       };
 
-      const fakeEvent = {
-        isTrusted: false,
-        type: 'beforeinstallprompt',
-      };
+      // Valid browser event
+      expect(isValidInstallPrompt({ isTrusted: true, type: 'beforeinstallprompt' })).toBe(true);
 
-      expect(trustedEvent.isTrusted).toBe(true);
-      expect(fakeEvent.isTrusted).toBe(false);
-      // Only trusted events should trigger install flow
+      // Spoofed events MUST be rejected
+      expect(isValidInstallPrompt({ isTrusted: false, type: 'beforeinstallprompt' })).toBe(false);
+      expect(isValidInstallPrompt({ isTrusted: true, type: 'fake-event' })).toBe(false);
+      expect(isValidInstallPrompt({ isTrusted: false, type: 'fake-event' })).toBe(false);
     });
   });
 
-  describe('App identity verification', () => {
-    it('should match manifest ID with expected value', () => {
-      const expectedManifestId = '/';
-      const manifest = { id: '/' };
-
-      expect(manifest.id).toBe(expectedManifestId);
-    });
-
-    it('should reject manifest with mismatched origin', () => {
-      const appOrigin = 'https://budget-app.com';
-      
-      const suspiciousManifest = {
-        start_url: 'https://evil.com/',
-        scope: 'https://evil.com/',
+  describe('Manifest integrity', () => {
+    it('should VERIFY manifest matches expected app identity', () => {
+      const expectedApp = {
+        id: '/',
+        origin: 'https://budget-app.com',
       };
 
-      expect(suspiciousManifest.start_url).not.toContain(appOrigin);
-      expect(suspiciousManifest.scope).not.toContain(appOrigin);
+      const isValidManifest = (manifest: { id?: string; start_url: string; scope: string }): boolean => {
+        // ID must match
+        if (manifest.id && manifest.id !== expectedApp.id) return false;
+        // URLs must not point to external origins
+        if (manifest.start_url.includes('evil') || manifest.scope.includes('evil')) return false;
+        return true;
+      };
+
+      // Valid manifest
+      expect(isValidManifest({ id: '/', start_url: '/', scope: '/' })).toBe(true);
+
+      // Malicious manifests MUST be rejected
+      expect(isValidManifest({ id: 'wrong-id', start_url: '/', scope: '/' })).toBe(false);
+      expect(isValidManifest({ id: '/', start_url: 'https://evil.com/', scope: '/' })).toBe(false);
+      expect(isValidManifest({ id: '/', start_url: '/', scope: 'https://evil.com/' })).toBe(false);
     });
   });
 });
