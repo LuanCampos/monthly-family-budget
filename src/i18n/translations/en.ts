@@ -32,7 +32,6 @@ export const en: Record<TranslationKey, string> = {
   details: 'Details',
   history: 'History',
   evolution: 'Evolution',
-  thisMonth: 'This month',
   
   // Month Selector
   selectMonth: 'Select a month',
@@ -130,6 +129,7 @@ export const en: Record<TranslationKey, string> = {
   setTargetDateForSuggestion: 'Set a target date to see the suggested monthly contribution',
   thisMonthRemaining: 'Need this month',
   thisMonthComplete: 'This month done',
+  thisMonth: 'This month',
   contributed: 'Logged this month',
   goal: 'goal',
   editEntry: 'Edit entry',

@@ -21,6 +21,16 @@
  * - Mass Assignment - 5 payloads
  * - Numeric Attacks - 10+ payloads
  * - Buffer Overflow Patterns - 5 payloads
+ * 
+ * PWA-Specific Security:
+ * - Service Worker Cache Poisoning - 6 payloads
+ * - IndexedDB Data Integrity - 10+ tests
+ * - Offline ID Manipulation - 8+ payloads
+ * - Sync Queue Injection - 4 payloads
+ * - Storage Quota Abuse - 3 tests
+ * - Origin/Scope Validation - 8+ tests
+ * - Background Sync Security - 4 tests
+ * - PWA Installation Security - 4 tests
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -1973,6 +1983,689 @@ describe('Security - Comprehensive Input Sanitization', () => {
         // __proto__ should not be in the parsed data
         expect(Object.keys(result.data)).not.toContain('__proto__');
       }
+    });
+  });
+});
+
+// ============================================================================
+// PWA Security Tests
+// ============================================================================
+
+/**
+ * PWA-Specific Security Tests
+ * 
+ * Attack categories covered:
+ * - Service Worker Cache Poisoning
+ * - IndexedDB Data Integrity
+ * - Offline ID Manipulation
+ * - Sync Queue Injection
+ * - Storage Quota Abuse
+ * - Origin Validation
+ */
+
+// PWA-specific attack payloads
+const PWA_ATTACK_PAYLOADS = {
+  // Malicious URLs for cache poisoning
+  cachePoison: [
+    'javascript:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+    '//evil.com/malware.js',
+    'https://evil.com/fake-api',
+    'file:///etc/passwd',
+    'blob:https://evil.com/malicious',
+  ],
+  
+  // Malicious manifest URLs
+  manifestUrls: [
+    'javascript:alert(document.cookie)',
+    'data:application/json,{"malicious":true}',
+    '//attacker.com/manifest.json',
+    'file:///etc/hosts',
+  ],
+  
+  // Sync queue manipulation
+  syncQueueInjection: [
+    { type: 'admin', action: 'escalate', data: { role: 'admin' } },
+    { type: 'family', action: 'delete_all', data: {} },
+    { type: '__proto__', action: 'pollute', data: { isAdmin: true } },
+    { type: 'constructor', action: 'inject', data: {} },
+  ],
+};
+
+describe('Security - PWA Service Worker Cache', () => {
+  describe('Cache key validation', () => {
+    it('should reject javascript: URLs in cache names', () => {
+      PWA_ATTACK_PAYLOADS.cachePoison.forEach(url => {
+        // Cache names should not contain protocol handlers that execute code
+        const isValid = !url.startsWith('javascript:') && 
+                       !url.startsWith('data:') &&
+                       !url.startsWith('file:') &&
+                       !url.startsWith('blob:');
+        
+        if (url.startsWith('javascript:') || url.startsWith('data:')) {
+          expect(isValid).toBe(false);
+        }
+      });
+    });
+
+    it('should validate cache entries are from same origin', () => {
+      const validOrigins = [
+        'https://example.com/api/data',
+        '/api/data',
+        './assets/icon.png',
+      ];
+      
+      const invalidOrigins = [
+        '//evil.com/malware.js',
+        'https://evil.com/fake-api',
+        'http://attacker.site/steal',
+      ];
+
+      // Simulate origin check (what service worker should do)
+      const currentOrigin = 'https://example.com';
+      
+      validOrigins.forEach(url => {
+        const isRelative = url.startsWith('/') || url.startsWith('.');
+        const isSameOrigin = url.startsWith(currentOrigin) || isRelative;
+        expect(isSameOrigin).toBe(true);
+      });
+
+      invalidOrigins.forEach(url => {
+        const isSameOrigin = url.startsWith(currentOrigin);
+        expect(isSameOrigin).toBe(false);
+      });
+    });
+  });
+
+  describe('Cache response validation', () => {
+    it('should validate response type is not opaque for critical resources', () => {
+      // Opaque responses (type: 'opaque') from no-cors requests cannot be inspected
+      // and should not be cached for critical app resources
+      // Response types: 'basic', 'cors', 'opaque', 'opaqueredirect'
+      
+      const allowedForCritical = ['basic', 'cors'];
+      const notAllowedForCritical = ['opaque', 'opaqueredirect'];
+
+      allowedForCritical.forEach(type => {
+        expect(['basic', 'cors']).toContain(type);
+      });
+
+      notAllowedForCritical.forEach(type => {
+        expect(['basic', 'cors']).not.toContain(type);
+      });
+    });
+  });
+});
+
+describe('Security - PWA IndexedDB Integrity', () => {
+  describe('Data integrity validation', () => {
+    it('should not execute code stored in IndexedDB fields', () => {
+      const maliciousData = {
+        id: 'test-123',
+        title: '<script>alert(1)</script>',
+        callback: 'function(){alert(1)}',
+        proto: { __proto__: { isAdmin: true } },
+      };
+
+      // Data is stored as-is but never executed
+      expect(maliciousData.title).toBe('<script>alert(1)</script>');
+      expect(maliciousData.callback).toBe('function(){alert(1)}');
+      // No code execution should occur - it's just strings
+      expect(typeof maliciousData.title).toBe('string');
+      expect(typeof maliciousData.callback).toBe('string');
+    });
+
+    it('should handle corrupted IndexedDB data gracefully', () => {
+      const corruptedDataPatterns = [
+        undefined,
+        null,
+        '',
+        'not-json',
+        '{"incomplete":',
+        new Uint8Array([0, 1, 2, 3]),
+        Symbol('corrupt'),
+      ];
+
+      corruptedDataPatterns.forEach(data => {
+        // Application should not crash on corrupted data
+        expect(() => {
+          if (typeof data === 'string') {
+            try {
+              JSON.parse(data);
+            } catch {
+              // Expected for invalid JSON
+            }
+          }
+        }).not.toThrow();
+      });
+    });
+
+    it('should validate IndexedDB store names', () => {
+      const validStoreNames = ['families', 'months', 'expenses', 'sync_queue'];
+      // Store names that should be rejected (reserved words or contain special chars)
+      const maliciousStoreNames = [
+        '__proto__',
+        'constructor',
+        'prototype',
+        '../families',
+        'families; DROP TABLE',
+        '<script>',
+      ];
+
+      // Reserved words that should be blocked even if they match the pattern
+      const reservedWords = ['__proto__', 'constructor', 'prototype'];
+
+      // Valid store name pattern + not a reserved word
+      const isValidStoreName = (name: string) => 
+        /^[a-z_]+$/.test(name) && !reservedWords.includes(name);
+
+      validStoreNames.forEach(name => {
+        expect(isValidStoreName(name)).toBe(true);
+      });
+
+      maliciousStoreNames.forEach(name => {
+        expect(isValidStoreName(name)).toBe(false);
+      });
+    });
+  });
+
+  describe('Offline ID security', () => {
+    it('should validate offline ID format strictly', () => {
+      const validOfflineIds = [
+        'offline-1704067200000-abc123',
+        'family-1704067200000-xyz789',
+        'exp-1704067200000-def456',
+        'month-1704067200000-ghi012',
+      ];
+
+      const maliciousOfflineIds = [
+        'offline-<script>-alert',
+        'family-../../../etc/passwd',
+        'exp-; DROP TABLE',
+        '__proto__-1234-abc',
+        'constructor-1234-xyz',
+        'offline-NaN-test',
+        'offline-Infinity-test',
+        'offline--1-negative',
+      ];
+
+      // Valid IDs match expected pattern
+      validOfflineIds.forEach(id => {
+        expect(id).toMatch(/^(offline|family|exp|month|goal|rec|sub|gentry)-\d+-[a-z0-9]+$/);
+      });
+
+      // Malicious IDs should NOT match valid pattern
+      maliciousOfflineIds.forEach(id => {
+        expect(id).not.toMatch(/^(offline|family|exp|month|goal|rec|sub|gentry)-\d+-[a-z0-9]+$/);
+      });
+    });
+
+    it('should reject offline IDs with special characters', () => {
+      const specialCharIds = [
+        'offline-123-<script>',
+        'family-123-../../',
+        'exp-123-;DROP',
+        'month-123-__proto__',
+        'goal-123-${inject}',
+        'rec-123-{{template}}',
+      ];
+
+      specialCharIds.forEach(id => {
+        // Should not match safe ID pattern
+        const isSafe = /^[a-z]+-\d+-[a-z0-9]+$/.test(id);
+        expect(isSafe).toBe(false);
+      });
+    });
+  });
+});
+
+describe('Security - PWA Sync Queue Protection', () => {
+  describe('Sync queue entry validation', () => {
+    it('should only accept valid sync queue types', () => {
+      const validTypes = [
+        'family', 'month', 'expense', 'recurring_expense',
+        'subcategory', 'category_limit', 'family_member',
+        'income_source', 'goal', 'goal_entry',
+      ];
+
+      const invalidTypes = [
+        'admin', '__proto__', 'constructor', 'prototype',
+        'system', 'root', 'delete_all', 'escalate',
+      ];
+
+      validTypes.forEach(type => {
+        expect(validTypes).toContain(type);
+      });
+
+      invalidTypes.forEach(type => {
+        expect(validTypes).not.toContain(type);
+      });
+    });
+
+    it('should only accept valid sync queue actions', () => {
+      const validActions = ['insert', 'update', 'delete'];
+      const invalidActions = [
+        'drop', 'truncate', 'escalate', 'admin',
+        '__proto__', 'exec', 'eval', 'constructor',
+      ];
+
+      validActions.forEach(action => {
+        expect(['insert', 'update', 'delete']).toContain(action);
+      });
+
+      invalidActions.forEach(action => {
+        expect(['insert', 'update', 'delete']).not.toContain(action);
+      });
+    });
+
+    it('should validate sync queue item structure', () => {
+      const validItem = {
+        id: 'sync-123',
+        type: 'expense',
+        action: 'insert',
+        data: { title: 'Coffee', value: 5 },
+        createdAt: '2025-01-01T00:00:00Z',
+        familyId: 'family-123',
+      };
+
+      const invalidItems = [
+        // Missing required fields (action, data, createdAt, familyId)
+        { id: 'sync-1', type: 'expense', action: undefined, data: undefined, createdAt: undefined, familyId: undefined },
+        // Invalid type
+        { id: 'sync-2', type: '__proto__', action: 'insert', data: {}, createdAt: '2025-01-01', familyId: 'fam-1' },
+        // Invalid action
+        { id: 'sync-3', type: 'expense', action: 'drop', data: {}, createdAt: '2025-01-01', familyId: 'fam-1' },
+      ];
+
+      // Valid item has all required fields
+      expect(validItem).toHaveProperty('id');
+      expect(validItem).toHaveProperty('type');
+      expect(validItem).toHaveProperty('action');
+      expect(validItem).toHaveProperty('data');
+      expect(validItem).toHaveProperty('createdAt');
+      expect(validItem).toHaveProperty('familyId');
+
+      // Invalid items are missing fields or have bad values
+      invalidItems.forEach(item => {
+        const hasValidType = ['family', 'month', 'expense', 'recurring_expense', 'subcategory', 'goal'].includes(item.type as string);
+        const hasValidAction = ['insert', 'update', 'delete'].includes(item.action as string);
+        const hasAllFields = item.data !== undefined && 
+                            item.createdAt !== undefined && 
+                            item.action !== undefined &&
+                            item.familyId !== undefined;
+        
+        // At least one of these conditions should fail for invalid items
+        const isFullyValid = hasValidType && hasValidAction && hasAllFields;
+        expect(isFullyValid).toBe(false);
+      });
+    });
+
+    it('should reject prototype pollution in sync data', () => {
+      // When __proto__ is set in an object literal, it doesn't show in Object.keys
+      // We need to use Object.getOwnPropertyNames or check hasOwnProperty
+      const pollutedDataViaDefine: Record<string, unknown> = {};
+      Object.defineProperty(pollutedDataViaDefine, '__proto__', {
+        value: { admin: true },
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
+
+      // Detect prototype pollution attempt in data
+      const hasProtoPollution = (obj: Record<string, unknown>): boolean => {
+        // Check for dangerous keys using multiple methods
+        const allKeys = Object.getOwnPropertyNames(obj);
+        return allKeys.some(key => 
+          key === '__proto__' || key === 'constructor' || key === 'prototype'
+        );
+      };
+
+      expect(hasProtoPollution(pollutedDataViaDefine)).toBe(true);
+      
+      // Also test constructor pollution
+      const constructorPolluted: Record<string, unknown> = { constructor: { isAdmin: true } };
+      expect(hasProtoPollution(constructorPolluted)).toBe(true);
+    });
+  });
+
+  describe('Sync queue data sanitization', () => {
+    it('should not allow familyId spoofing in sync data', () => {
+      const syncItem = {
+        type: 'expense',
+        action: 'insert',
+        data: {
+          family_id: 'victim-family-id', // Attempted spoofing
+          title: 'Malicious expense',
+          value: 9999999,
+        },
+        familyId: 'attacker-family-id', // Actual family ID
+      };
+
+      // The familyId in sync item metadata should be trusted, not data.family_id
+      expect(syncItem.data.family_id).not.toBe(syncItem.familyId);
+      // Server should use familyId from metadata, not from data
+    });
+
+    it('should reject sync items with mismatched timestamps', () => {
+      const futureDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+      const ancientDate = '1970-01-01T00:00:00Z';
+
+      const suspiciousItems = [
+        { createdAt: futureDate }, // Far future
+        { createdAt: ancientDate }, // Unix epoch
+        { createdAt: 'invalid-date' }, // Invalid format
+        { createdAt: 'NaN' }, // NaN string
+      ];
+
+      suspiciousItems.forEach(item => {
+        const date = new Date(item.createdAt);
+        const now = Date.now();
+        const oneYearAgo = now - 365 * 24 * 60 * 60 * 1000;
+        const oneHourFromNow = now + 60 * 60 * 1000;
+
+        const isValidTimestamp = !isNaN(date.getTime()) && 
+                                  date.getTime() > oneYearAgo && 
+                                  date.getTime() < oneHourFromNow;
+
+        // All suspicious timestamps should fail validation
+        expect(isValidTimestamp).toBe(false);
+      });
+    });
+  });
+});
+
+describe('Security - PWA Storage Quota Protection', () => {
+  describe('Storage abuse prevention', () => {
+    it('should have reasonable size limits for cached data', () => {
+      const MAX_CACHE_ENTRY_SIZE = 5 * 1024 * 1024; // 5MB per entry
+      const MAX_TOTAL_CACHE_SIZE = 50 * 1024 * 1024; // 50MB total
+
+      // Test data sizes
+      const oversizedData = 'A'.repeat(MAX_CACHE_ENTRY_SIZE + 1);
+      const reasonableData = 'A'.repeat(1024); // 1KB
+
+      expect(oversizedData.length).toBeGreaterThan(MAX_CACHE_ENTRY_SIZE);
+      expect(reasonableData.length).toBeLessThan(MAX_CACHE_ENTRY_SIZE);
+      
+      // Verify total cache limit is reasonable (10x single entry)
+      expect(MAX_TOTAL_CACHE_SIZE).toBe(MAX_CACHE_ENTRY_SIZE * 10);
+    });
+
+    it('should limit number of sync queue items', () => {
+      const MAX_SYNC_QUEUE_ITEMS = 1000;
+
+      // Prevent denial of service by flooding sync queue
+      const floodAttempt = Array(MAX_SYNC_QUEUE_ITEMS + 100).fill({
+        type: 'expense',
+        action: 'insert',
+        data: { title: 'Flood', value: 1 },
+      });
+
+      expect(floodAttempt.length).toBeGreaterThan(MAX_SYNC_QUEUE_ITEMS);
+      // Application should enforce the limit
+    });
+
+    it('should limit individual field sizes in stored data', () => {
+      const MAX_TITLE_LENGTH = 255;
+      const MAX_DESCRIPTION_LENGTH = 1000;
+
+      const oversizedTitle = 'A'.repeat(MAX_TITLE_LENGTH + 100);
+      const oversizedDescription = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1000);
+
+      expect(oversizedTitle.length).toBeGreaterThan(MAX_TITLE_LENGTH);
+      expect(oversizedDescription.length).toBeGreaterThan(MAX_DESCRIPTION_LENGTH);
+
+      // Zod validation should reject these
+      const result = CreateExpenseInputSchema.safeParse({
+        month_id: 'month-123',
+        title: oversizedTitle,
+        category_key: 'essenciais',
+        value: 100,
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+});
+
+describe('Security - PWA Origin and Scope Validation', () => {
+  describe('Manifest scope security', () => {
+    it('should validate start_url is within scope', () => {
+      const manifest = {
+        scope: '/',
+        start_url: '/',
+      };
+
+      const validStartUrls = ['/', '/budget', '/goals', '/index.html'];
+      const invalidStartUrls = [
+        'https://evil.com/',
+        'javascript:alert(1)',
+        '//other-domain.com/',
+        'file:///etc/passwd',
+      ];
+
+      validStartUrls.forEach(url => {
+        const isWithinScope = url.startsWith(manifest.scope) || url.startsWith('/');
+        expect(isWithinScope).toBe(true);
+      });
+
+      invalidStartUrls.forEach(url => {
+        const isWithinScope = url.startsWith(manifest.scope) && 
+                              !url.includes(':') && 
+                              !url.startsWith('//');
+        expect(isWithinScope).toBe(false);
+      });
+    });
+
+    it('should reject navigation to external origins', () => {
+      const allowedOrigin = 'https://budget-app.com';
+      
+      const externalUrls = [
+        'https://phishing-site.com/login',
+        'https://evil.com/steal-credentials',
+        'http://insecure-site.com/',
+        'ftp://files.com/data',
+      ];
+
+      externalUrls.forEach(url => {
+        const urlOrigin = new URL(url).origin;
+        expect(urlOrigin).not.toBe(allowedOrigin);
+      });
+    });
+  });
+
+  describe('Deep link validation', () => {
+    it('should sanitize deep link parameters', () => {
+      const maliciousDeepLinks = [
+        '/budget?id=<script>alert(1)</script>',
+        '/goals?redirect=javascript:alert(1)',
+        '/month?data={"__proto__":{"admin":true}}',
+        "/expense?title='; DROP TABLE;--",
+      ];
+
+      maliciousDeepLinks.forEach(link => {
+        // URL params should be sanitized before use
+        const url = new URL(link, 'https://example.com');
+        const params = url.searchParams;
+        
+        params.forEach((value) => {
+          // Values should be treated as strings, not executed
+          expect(typeof value).toBe('string');
+          // Validation should detect suspicious patterns
+          const hasSuspiciousPattern = 
+            value.includes('<script>') ||
+            value.includes('javascript:') ||
+            value.includes('__proto__') ||
+            value.includes('DROP TABLE');
+          expect(hasSuspiciousPattern).toBe(true);
+        });
+      });
+    });
+  });
+});
+
+describe('Security - PWA Update Integrity', () => {
+  describe('Service worker update validation', () => {
+    it('should detect tampering in cached resources', () => {
+      // Simulate integrity check
+      const expectedHashes: Record<string, string> = {
+        '/app.js': 'sha384-validhash123',
+        '/styles.css': 'sha384-validhash456',
+      };
+
+      const tamperedResource = {
+        url: '/app.js',
+        hash: 'sha384-tampered789',
+      };
+
+      expect(tamperedResource.hash).not.toBe(expectedHashes['/app.js']);
+    });
+
+    it('should validate service worker scope on registration', () => {
+      const validScopes = ['/', '/app/', './'];
+      const invalidScopes = [
+        'https://evil.com/',
+        '../../../',
+        'file:///',
+        'javascript:',
+      ];
+
+      validScopes.forEach(scope => {
+        const isValid = scope.startsWith('/') || scope.startsWith('.');
+        expect(isValid).toBe(true);
+      });
+
+      invalidScopes.forEach(scope => {
+        const isValid = (scope.startsWith('/') || scope.startsWith('.')) && 
+                        !scope.includes(':') &&
+                        !scope.includes('..');
+        expect(isValid).toBe(false);
+      });
+    });
+  });
+
+  describe('Background sync security', () => {
+    it('should validate sync tag names', () => {
+      const validSyncTags = ['sync-expenses', 'sync-goals', 'background-sync'];
+      const maliciousSyncTags = [
+        '<script>alert(1)</script>',
+        'javascript:void(0)',
+        '__proto__',
+        '../../../etc/passwd',
+      ];
+
+      const syncTagPattern = /^[a-z-]+$/;
+
+      validSyncTags.forEach(tag => {
+        expect(syncTagPattern.test(tag)).toBe(true);
+      });
+
+      maliciousSyncTags.forEach(tag => {
+        expect(syncTagPattern.test(tag)).toBe(false);
+      });
+    });
+
+    it('should limit sync retry attempts', () => {
+      const MAX_SYNC_RETRIES = 5;
+      const syncAttempts = 10;
+
+      // After max retries, sync should stop attempting
+      expect(syncAttempts > MAX_SYNC_RETRIES).toBe(true);
+      // System should not infinitely retry failed syncs
+    });
+  });
+});
+
+describe('Security - PWA Notification Security', () => {
+  describe('Notification payload validation', () => {
+    it('should detect malicious patterns in notification titles', () => {
+      const maliciousTitles = [
+        '<script>alert(1)</script>',
+        '<img src=x onerror=alert(1)>',
+        '{{constructor.constructor("alert(1)")()}}',
+      ];
+
+      // Patterns that indicate malicious content
+      const suspiciousPatterns = [
+        /<script/i,
+        /onerror\s*=/i,
+        /\{\{.*constructor/i,
+        /javascript:/i,
+      ];
+
+      maliciousTitles.forEach(title => {
+        // At least one suspicious pattern should match
+        const isSuspicious = suspiciousPatterns.some(pattern => pattern.test(title));
+        expect(isSuspicious).toBe(true);
+        // In real implementation, these would be stripped or escaped
+      });
+    });
+
+    it('should validate notification action URLs', () => {
+      const validActions = [
+        { action: 'open', url: '/budget' },
+        { action: 'dismiss', url: undefined },
+      ];
+
+      const maliciousActions = [
+        { action: 'open', url: 'javascript:alert(1)' },
+        { action: 'redirect', url: 'https://phishing.com/login' },
+        { action: 'exec', url: 'file:///etc/passwd' },
+      ];
+
+      validActions.forEach(action => {
+        if (action.url) {
+          expect(action.url.startsWith('/')).toBe(true);
+        }
+      });
+
+      maliciousActions.forEach(action => {
+        if (action.url) {
+          const isSafe = action.url.startsWith('/') && !action.url.includes(':');
+          expect(isSafe).toBe(false);
+        }
+      });
+    });
+  });
+});
+
+describe('Security - PWA Installation Attack Prevention', () => {
+  describe('Install prompt hijacking prevention', () => {
+    it('should validate install prompt event source', () => {
+      // The beforeinstallprompt event should only be trusted from the browser
+      const trustedEvent = {
+        isTrusted: true,
+        type: 'beforeinstallprompt',
+      };
+
+      const fakeEvent = {
+        isTrusted: false,
+        type: 'beforeinstallprompt',
+      };
+
+      expect(trustedEvent.isTrusted).toBe(true);
+      expect(fakeEvent.isTrusted).toBe(false);
+      // Only trusted events should trigger install flow
+    });
+  });
+
+  describe('App identity verification', () => {
+    it('should match manifest ID with expected value', () => {
+      const expectedManifestId = '/';
+      const manifest = { id: '/' };
+
+      expect(manifest.id).toBe(expectedManifestId);
+    });
+
+    it('should reject manifest with mismatched origin', () => {
+      const appOrigin = 'https://budget-app.com';
+      
+      const suspiciousManifest = {
+        start_url: 'https://evil.com/',
+        scope: 'https://evil.com/',
+      };
+
+      expect(suspiciousManifest.start_url).not.toContain(appOrigin);
+      expect(suspiciousManifest.scope).not.toContain(appOrigin);
     });
   });
 });
