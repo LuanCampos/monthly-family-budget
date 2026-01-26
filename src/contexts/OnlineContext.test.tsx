@@ -190,5 +190,195 @@ describe('OnlineContext', () => {
       const response = await act(async () => result.current.syncFamily('offline-family-123'));
       expect(response.error?.message).toContain('não encontrada');
     });
+
+    it('should return error when user is not authenticated', async () => {
+      vi.mocked(useAuth).mockReturnValue({ session: null } as ReturnType<typeof useAuth>);
+      const { result } = renderHook(() => useOnline(), { wrapper });
+      const response = await act(async () => result.current.syncFamily('offline-family-123'));
+      expect(response.error?.message).toContain('logado');
+      vi.mocked(useAuth).mockReturnValue({ session: { user: { id: 'user-123' } } } as unknown as ReturnType<typeof useAuth>);
+    });
+
+    it('should sync family successfully when all conditions are met', async () => {
+      const mockFamily = { id: 'offline-family-123', name: 'Test Family', isOffline: true };
+      vi.mocked(offlineAdapter.get).mockResolvedValue(mockFamily);
+      vi.mocked(offlineAdapter.getAllByIndex).mockResolvedValue([]);
+      vi.mocked(offlineAdapter.sync.getByFamily).mockResolvedValue([]);
+      vi.mocked(familyService.insertFamily).mockResolvedValue({ 
+        data: { id: 'new-cloud-family-id' }, 
+        error: null 
+      } as never);
+      vi.mocked(familyService.insertFamilyMember).mockResolvedValue({ error: null } as never);
+
+      const { result } = renderHook(() => useOnline(), { wrapper });
+      const response = await act(async () => result.current.syncFamily('offline-family-123'));
+      
+      expect(response.newFamilyId).toBe('new-cloud-family-id');
+      expect(response.error).toBeUndefined();
+    });
+
+    it('should handle family creation error', async () => {
+      const mockFamily = { id: 'offline-family-123', name: 'Test Family', isOffline: true };
+      vi.mocked(offlineAdapter.get).mockResolvedValue(mockFamily);
+      vi.mocked(offlineAdapter.getAllByIndex).mockResolvedValue([]);
+      vi.mocked(familyService.insertFamily).mockResolvedValue({ 
+        data: null, 
+        error: { message: 'Database error' } 
+      } as never);
+
+      const { result } = renderHook(() => useOnline(), { wrapper });
+      const response = await act(async () => result.current.syncFamily('offline-family-123'));
+      
+      expect(response.error).toBeDefined();
+      expect(response.error?.message).toContain('Erro ao criar família');
+    });
+
+    it('should handle member creation error and rollback', async () => {
+      const mockFamily = { id: 'offline-family-123', name: 'Test Family', isOffline: true };
+      vi.mocked(offlineAdapter.get).mockResolvedValue(mockFamily);
+      vi.mocked(offlineAdapter.getAllByIndex).mockResolvedValue([]);
+      vi.mocked(familyService.insertFamily).mockResolvedValue({ 
+        data: { id: 'new-cloud-family-id' }, 
+        error: null 
+      } as never);
+      vi.mocked(familyService.insertFamilyMember).mockResolvedValue({ 
+        error: { message: 'Member error' } 
+      } as never);
+
+      const { result } = renderHook(() => useOnline(), { wrapper });
+      const response = await act(async () => result.current.syncFamily('offline-family-123'));
+      
+      expect(response.error).toBeDefined();
+      expect(response.error?.message).toContain('Erro ao criar membro');
+      // Verify rollback was attempted
+      expect(familyService.deleteMembersByFamily).toHaveBeenCalled();
+      expect(familyService.deleteFamily).toHaveBeenCalled();
+    });
+  });
+
+  describe('syncNow edge cases', () => {
+    it('should sync insert operations for non-offline families', async () => {
+      vi.mocked(offlineAdapter.sync.getAll).mockResolvedValue([
+        { 
+          id: 'sync-1', 
+          action: 'insert', 
+          type: 'expense', 
+          familyId: 'real-cloud-family-123', // Not an offline ID
+          data: { title: 'Test Expense', value: 100 }, 
+          createdAt: '2025-01-01' 
+        },
+      ]);
+      
+      const { result } = renderHook(() => useOnline(), { wrapper });
+      await act(async () => {
+        await result.current.syncNow();
+      });
+      
+      expect(familyService.insertToTable).toHaveBeenCalledWith('expense', expect.objectContaining({ title: 'Test Expense' }));
+    });
+
+    it('should sync update operations', async () => {
+      vi.mocked(offlineAdapter.sync.getAll).mockResolvedValue([
+        { 
+          id: 'sync-1', 
+          action: 'update', 
+          type: 'expense', 
+          familyId: 'real-cloud-family-123',
+          data: { id: 'exp-123', title: 'Updated Expense', value: 200 }, 
+          createdAt: '2025-01-01' 
+        },
+      ]);
+      
+      const { result } = renderHook(() => useOnline(), { wrapper });
+      await act(async () => {
+        await result.current.syncNow();
+      });
+      
+      expect(familyService.updateInTable).toHaveBeenCalledWith('expense', 'exp-123', expect.objectContaining({ title: 'Updated Expense' }));
+    });
+
+    it('should sync delete operations', async () => {
+      vi.mocked(offlineAdapter.sync.getAll).mockResolvedValue([
+        { 
+          id: 'sync-1', 
+          action: 'delete', 
+          type: 'expense', 
+          familyId: 'real-cloud-family-123',
+          data: { id: 'exp-123' }, 
+          createdAt: '2025-01-01' 
+        },
+      ]);
+      
+      const { result } = renderHook(() => useOnline(), { wrapper });
+      await act(async () => {
+        await result.current.syncNow();
+      });
+      
+      expect(familyService.deleteByIdFromTable).toHaveBeenCalledWith('expense', 'exp-123');
+    });
+
+    it('should remove synced items from queue', async () => {
+      vi.mocked(offlineAdapter.sync.getAll).mockResolvedValue([
+        { 
+          id: 'sync-1', 
+          action: 'insert', 
+          type: 'expense', 
+          familyId: 'real-cloud-family-123',
+          data: { title: 'Test' }, 
+          createdAt: '2025-01-01' 
+        },
+      ]);
+      
+      const { result } = renderHook(() => useOnline(), { wrapper });
+      await act(async () => {
+        await result.current.syncNow();
+      });
+      
+      expect(offlineAdapter.sync.remove).toHaveBeenCalledWith('sync-1');
+    });
+
+    it('should show success toast when items are synced', async () => {
+      vi.mocked(offlineAdapter.sync.getAll).mockResolvedValue([
+        { 
+          id: 'sync-1', 
+          action: 'insert', 
+          type: 'expense', 
+          familyId: 'real-cloud-family-123',
+          data: { title: 'Test' }, 
+          createdAt: '2025-01-01' 
+        },
+      ]);
+      
+      const { result } = renderHook(() => useOnline(), { wrapper });
+      await act(async () => {
+        await result.current.syncNow();
+      });
+      
+      expect(toast.success).toHaveBeenCalledWith('Dados sincronizados!');
+    });
+
+    it('should handle sync item errors gracefully', async () => {
+      vi.mocked(offlineAdapter.sync.getAll).mockResolvedValue([
+        { 
+          id: 'sync-1', 
+          action: 'insert', 
+          type: 'expense', 
+          familyId: 'real-cloud-family-123',
+          data: { title: 'Test' }, 
+          createdAt: '2025-01-01' 
+        },
+      ]);
+      vi.mocked(familyService.insertToTable).mockRejectedValue(new Error('Network error'));
+      
+      const { result } = renderHook(() => useOnline(), { wrapper });
+      
+      // Should not throw
+      await act(async () => {
+        await result.current.syncNow();
+      });
+      
+      // Item should not be removed from queue on error
+      expect(offlineAdapter.sync.remove).not.toHaveBeenCalled();
+    });
   });
 });

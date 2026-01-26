@@ -347,4 +347,140 @@ describe('FamilyContext', () => {
       expect(result.current.isCurrentFamilyOffline).toBe(false);
     });
   });
+
+  describe('selectFamily', () => {
+    it('should call selectFamily function', async () => {
+      const { result } = renderHook(() => useFamily(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      // Just verify selectFamily is a function that can be called
+      await act(async () => {
+        await result.current.selectFamily('test-family-id');
+      });
+      
+      // Function should complete without error
+      expect(result.current.selectFamily).toBeDefined();
+    });
+  });
+
+  describe('acceptInvitation', () => {
+    it('should return error when not authenticated', async () => {
+      vi.mocked(useAuth).mockReturnValue({
+        user: null,
+        loading: false,
+      } as ReturnType<typeof useAuth>);
+
+      const { result } = renderHook(() => useFamily(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await act(async () => {
+        const response = await result.current.acceptInvitation('inv-123');
+        expect(response.error).toBeInstanceOf(Error);
+        expect(response.error?.message).toBe('Not authenticated');
+      });
+    });
+  });
+
+  describe('rejectInvitation', () => {
+    it('should reject an invitation successfully', async () => {
+      vi.mocked(familyService.updateInvitationStatus).mockResolvedValue({ error: null });
+
+      const { result } = renderHook(() => useFamily(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await act(async () => {
+        const response = await result.current.rejectInvitation('inv-123');
+        expect(response.error).toBeNull();
+      });
+
+      expect(familyService.updateInvitationStatus).toHaveBeenCalledWith('inv-123', 'rejected');
+    });
+  });
+
+  describe('cancelInvitation', () => {
+    it('should cancel an invitation successfully', async () => {
+      vi.mocked(familyService.deleteInvitation).mockResolvedValue({ error: null });
+
+      const { result } = renderHook(() => useFamily(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await act(async () => {
+        const response = await result.current.cancelInvitation('inv-123');
+        expect(response.error).toBeNull();
+      });
+
+      expect(familyService.deleteInvitation).toHaveBeenCalledWith('inv-123');
+    });
+  });
+
+  describe('updateMemberRole', () => {
+    it('should update member role successfully', async () => {
+      vi.mocked(familyService.updateMemberRole).mockResolvedValue({ error: null });
+
+      const { result } = renderHook(() => useFamily(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await act(async () => {
+        const response = await result.current.updateMemberRole('member-123', 'admin');
+        expect(response.error).toBeNull();
+      });
+
+      expect(familyService.updateMemberRole).toHaveBeenCalledWith('member-123', 'admin');
+    });
+  });
+
+  describe('removeMember', () => {
+    it('should remove member successfully', async () => {
+      vi.mocked(familyService.deleteMember).mockResolvedValue({ error: null });
+
+      const { result } = renderHook(() => useFamily(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await act(async () => {
+        const response = await result.current.removeMember('member-123');
+        expect(response.error).toBeNull();
+      });
+
+      expect(familyService.deleteMember).toHaveBeenCalledWith('member-123');
+    });
+  });
+
+  describe('inviteMember with no family selected', () => {
+    it('should return error when no family is selected', async () => {
+      vi.mocked(useAuth).mockReturnValue({
+        user: { id: 'user-123', email: 'test@example.com' },
+        loading: false,
+      } as ReturnType<typeof useAuth>);
+
+      const { result } = renderHook(() => useFamily(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      await act(async () => {
+        const response = await result.current.inviteMember('test@example.com');
+        expect(response.error).toBeInstanceOf(Error);
+        expect(response.error?.message).toContain('no family selected');
+      });
+    });
+  });
 });

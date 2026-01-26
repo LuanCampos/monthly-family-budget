@@ -110,14 +110,14 @@ export const ExpenseFormFields = forwardRef<ExpenseFormFieldsRef, ExpenseFormFie
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label className="text-sm font-medium">
+          <Label htmlFor="category" className="text-sm font-medium">
             {t('expenseCategory')}
           </Label>
           <Select
             value={category}
             onValueChange={(v) => handleCategoryChange(v as CategoryKey)}
           >
-            <SelectTrigger className="h-10 bg-secondary/50 border-border">
+            <SelectTrigger id="category" className="h-10 bg-secondary/50 border-border" aria-label={t('expenseCategory')}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
@@ -137,14 +137,14 @@ export const ExpenseFormFields = forwardRef<ExpenseFormFieldsRef, ExpenseFormFie
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">
+          <Label htmlFor="subcategory" className="text-sm font-medium">
             {t('expenseSubcategory')}
           </Label>
           <Select
             value={subcategoryId || 'none'}
             onValueChange={(v) => onSubcategoryChange(v === 'none' ? '' : v)}
           >
-            <SelectTrigger className="h-10 bg-secondary/50 border-border">
+            <SelectTrigger id="subcategory" className="h-10 bg-secondary/50 border-border" aria-label={t('expenseSubcategory')}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
@@ -186,6 +186,7 @@ export const ExpenseFormFields = forwardRef<ExpenseFormFieldsRef, ExpenseFormFie
               size="icon"
               className="h-10 w-10 shrink-0"
               onClick={() => setShowAdder(true)}
+              aria-label={t('add')}
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -216,6 +217,7 @@ export const ExpenseFormFields = forwardRef<ExpenseFormFieldsRef, ExpenseFormFie
               size="icon"
               className="h-10 w-10 shrink-0"
               onClick={handleSum}
+              aria-label={t('confirm')}
             >
               <Equal className="h-4 w-4" />
             </Button>
@@ -228,6 +230,7 @@ export const ExpenseFormFields = forwardRef<ExpenseFormFieldsRef, ExpenseFormFie
                 setShowAdder(false);
                 setAddValue('');
               }}
+              aria-label={t('cancel')}
             >
               <X className="h-4 w-4" />
             </Button>

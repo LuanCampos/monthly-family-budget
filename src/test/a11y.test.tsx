@@ -153,11 +153,7 @@ describe('Accessibility Tests', () => {
       onValueChange: vi.fn(),
     };
 
-    // Skip: This test reveals real a11y issues in ExpenseFormFields:
-    // - Select buttons lack aria-label (button-name violation)
-    // - Add value button lacks aria-label  
-    // TODO: Fix these components and enable this test
-    it.skip('should have no accessibility violations', async () => {
+    it('should have no accessibility violations', async () => {
       const { container } = render(<ExpenseFormFields {...defaultProps} />);
       await checkA11y(container);
     });
@@ -316,38 +312,6 @@ describe('Accessibility Tests', () => {
       
       // Should wrap around
       expect(document.activeElement).not.toBe(document.body);
-    });
-
-    // Skip: Radix UI Select uses scrollIntoView which is not implemented in jsdom
-    // This test would work in a real browser but not in the test environment
-    it.skip('should support arrow key navigation in selects', async () => {
-      const user = userEvent.setup();
-      
-      render(
-        <ExpenseFormFields
-          title=""
-          category="essenciais"
-          subcategoryId=""
-          value=""
-          subcategories={[]}
-          onTitleChange={vi.fn()}
-          onCategoryChange={vi.fn()}
-          onSubcategoryChange={vi.fn()}
-          onValueChange={vi.fn()}
-        />
-      );
-      
-      // Find and click category select (first combobox is category)
-      const comboboxes = screen.getAllByRole('combobox');
-      const categoryCombobox = comboboxes[0];
-      await user.click(categoryCombobox);
-      
-      // Arrow keys should navigate options
-      await user.keyboard('{ArrowDown}');
-      await user.keyboard('{ArrowUp}');
-      
-      // Should not throw
-      expect(true).toBe(true);
     });
   });
 

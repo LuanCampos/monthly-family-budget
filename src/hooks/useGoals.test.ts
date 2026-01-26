@@ -331,4 +331,161 @@ describe('useGoals', () => {
     );
     expect(mockToast).toHaveBeenCalledWith({ title: 'Expense imported' });
   });
+
+  it('should handle already imported expense error', async () => {
+    mockedStorageAdapter.importGoalExpense.mockRejectedValueOnce(new Error('already imported'));
+
+    const { result } = renderHook(() => useGoals());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.importExpense('goal-1', 'expense-1');
+    });
+
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Already imported',
+      variant: 'destructive',
+    });
+  });
+
+  it('should handle expense not found error', async () => {
+    mockedStorageAdapter.importGoalExpense.mockRejectedValueOnce(new Error('not found'));
+
+    const { result } = renderHook(() => useGoals());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.importExpense('goal-1', 'expense-1');
+    });
+
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Error saving',
+      description: 'Despesa não encontrada',
+      variant: 'destructive',
+    });
+  });
+
+  it('should handle generic import expense error', async () => {
+    mockedStorageAdapter.importGoalExpense.mockRejectedValueOnce(new Error('Network error'));
+
+    const { result } = renderHook(() => useGoals());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.importExpense('goal-1', 'expense-1');
+    });
+
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Error saving',
+      description: 'Network error',
+      variant: 'destructive',
+    });
+  });
+
+  it('should handle error when updating goal fails', async () => {
+    mockedStorageAdapter.updateGoal.mockRejectedValueOnce(new Error('Update failed'));
+
+    const { result } = renderHook(() => useGoals());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.updateGoal('goal-1', { name: 'Updated' });
+    });
+
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Error saving',
+      description: 'Update failed',
+      variant: 'destructive',
+    });
+  });
+
+  it('should handle error when adding manual entry fails', async () => {
+    mockedStorageAdapter.createManualGoalEntry.mockRejectedValueOnce(new Error('Entry failed'));
+
+    const { result } = renderHook(() => useGoals());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.addManualEntry({
+        goalId: 'goal-1',
+        value: 100,
+        description: 'Test',
+        month: 1,
+        year: 2025,
+      });
+    });
+
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Error saving',
+      description: 'Entry failed',
+      variant: 'destructive',
+    });
+  });
+
+  it('should handle error when deleting entry fails', async () => {
+    mockedStorageAdapter.deleteGoalEntry.mockRejectedValueOnce(new Error('Delete entry failed'));
+
+    const { result } = renderHook(() => useGoals());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.deleteEntry('entry-1', 'goal-1');
+    });
+
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Error deleting',
+      description: 'Delete entry failed',
+      variant: 'destructive',
+    });
+  });
+
+  it('should refresh entries for a goal', async () => {
+    const { result } = renderHook(() => useGoals());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.refreshEntries('goal-1');
+    });
+
+    expect(mockedStorageAdapter.getGoalEntries).toHaveBeenCalledWith('family-123', 'goal-1');
+  });
+
+  it('should update entry', async () => {
+    const { result } = renderHook(() => useGoals());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.updateEntry('entry-1', 'goal-1', { description: 'Updated' });
+    });
+
+    expect(mockedStorageAdapter.updateGoalEntry).toHaveBeenCalledWith(
+      'family-123',
+      'entry-1',
+      { description: 'Updated' }
+    );
+  });
 });

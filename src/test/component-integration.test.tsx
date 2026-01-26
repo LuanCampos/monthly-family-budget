@@ -302,23 +302,6 @@ describe('Component Integration Tests', () => {
 
       expect(screen.getByText('R$')).toBeInTheDocument();
     });
-
-    // Skip: Radix UI Select uses scrollIntoView which is not implemented in jsdom
-    // This causes an error when trying to open the select dropdown in tests
-    it.skip('should handle all category options', async () => {
-      const user = userEvent.setup();
-
-      render(<ExpenseFormFields {...defaultProps} />);
-
-      // First combobox is the category selector
-      const comboboxes = screen.getAllByRole('combobox');
-      await user.click(comboboxes[0]);
-
-      // All categories should be available
-      await waitFor(() => {
-        expect(screen.getByText('Essenciais')).toBeInTheDocument();
-      });
-    });
   });
 
   describe('Form Validation Patterns', () => {

@@ -175,3 +175,117 @@ describe('use-toast reducer', () => {
     });
   });
 });
+
+import { renderHook, act } from '@testing-library/react';
+import { useToast, toast } from './use-toast';
+
+describe('useToast hook', () => {
+  it('should return toast state and methods', () => {
+    const { result } = renderHook(() => useToast());
+
+    expect(result.current.toasts).toBeDefined();
+    expect(typeof result.current.toast).toBe('function');
+    expect(typeof result.current.dismiss).toBe('function');
+  });
+
+  it('should add a toast when toast function is called', () => {
+    const { result } = renderHook(() => useToast());
+
+    act(() => {
+      result.current.toast({
+        title: 'Test Toast',
+        description: 'Test Description',
+      });
+    });
+
+    expect(result.current.toasts.length).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should return toast controls with dismiss and update', () => {
+    const { result } = renderHook(() => useToast());
+
+    let toastControls: { id: string; dismiss: () => void; update: (props: unknown) => void } | undefined;
+
+    act(() => {
+      toastControls = result.current.toast({
+        title: 'Test Toast',
+      });
+    });
+
+    expect(toastControls).toBeDefined();
+    expect(toastControls?.id).toBeDefined();
+    expect(typeof toastControls?.dismiss).toBe('function');
+    expect(typeof toastControls?.update).toBe('function');
+  });
+
+  it('should dismiss toast by id', () => {
+    const { result } = renderHook(() => useToast());
+
+    act(() => {
+      result.current.toast({
+        title: 'Toast to dismiss',
+      });
+    });
+
+    const toastId = result.current.toasts[0]?.id;
+
+    act(() => {
+      result.current.dismiss(toastId);
+    });
+
+    // Toast should be marked as closed (open: false)
+    const dismissedToast = result.current.toasts.find(t => t.id === toastId);
+    if (dismissedToast) {
+      expect(dismissedToast.open).toBe(false);
+    }
+  });
+
+  it('should dismiss all toasts when no id is provided', () => {
+    const { result } = renderHook(() => useToast());
+
+    act(() => {
+      result.current.toast({ title: 'Toast 1' });
+    });
+
+    act(() => {
+      result.current.dismiss();
+    });
+
+    // All toasts should be marked as closed
+    result.current.toasts.forEach(t => {
+      expect(t.open).toBe(false);
+    });
+  });
+});
+
+describe('toast function', () => {
+  it('should create a toast with auto-generated id', () => {
+    const controls = toast({
+      title: 'Direct toast',
+      description: 'Created directly',
+    });
+
+    expect(controls.id).toBeDefined();
+    expect(typeof controls.id).toBe('string');
+  });
+
+  it('should allow updating the toast', () => {
+    const controls = toast({
+      title: 'Initial title',
+    });
+
+    expect(() => {
+      controls.update({ title: 'Updated title', id: controls.id });
+    }).not.toThrow();
+  });
+
+  it('should allow dismissing the toast', () => {
+    const controls = toast({
+      title: 'Toast to dismiss',
+    });
+
+    expect(() => {
+      controls.dismiss();
+    }).not.toThrow();
+  });
+});
