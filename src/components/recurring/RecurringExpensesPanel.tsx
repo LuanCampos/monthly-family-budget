@@ -16,6 +16,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
 import { ConfirmDialog } from '@/components/common';
+import { shouldIncludeRecurringInMonth } from '@/lib/utils/monthUtils';
 
 type SortType = 'createdAt' | 'category' | 'value' | 'dueDate';
 type SortDirection = 'asc' | 'desc';
@@ -239,6 +240,12 @@ export const RecurringExpensesPanel = ({
                   const isInCurrentMonth = currentMonthExpenses.some(
                     e => e.recurringExpenseId === exp.id
                   );
+                  
+                  // Check if this recurring expense should be included in the current month
+                  // (e.g., installments that haven't started yet should not be applicable)
+                  const canApplyToCurrentMonth = defaultYear && defaultMonth
+                    ? shouldIncludeRecurringInMonth(exp, defaultYear, defaultMonth).include
+                    : true;
 
                   const handleApply = async () => {
                     if (applyingId === exp.id) return;
@@ -314,11 +321,11 @@ export const RecurringExpensesPanel = ({
                             variant="ghost"
                             size="icon"
                             onClick={handleApply}
-                            aria-label={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
-                            disabled={isInCurrentMonth || applyingId === exp.id}
-                            title={isInCurrentMonth ? t('alreadyInCurrentMonth') : t('applyToCurrentMonth')}
+                            aria-label={isInCurrentMonth ? t('alreadyInCurrentMonth') : !canApplyToCurrentMonth ? t('notApplicableToMonth') : t('applyToCurrentMonth')}
+                            disabled={isInCurrentMonth || !canApplyToCurrentMonth || applyingId === exp.id}
+                            title={isInCurrentMonth ? t('alreadyInCurrentMonth') : !canApplyToCurrentMonth ? t('notApplicableToMonth') : t('applyToCurrentMonth')}
                             className={`h-9 w-9 ${
-                              isInCurrentMonth || applyingId === exp.id
+                              isInCurrentMonth || !canApplyToCurrentMonth || applyingId === exp.id
                                 ? 'text-muted-foreground/40 cursor-not-allowed' 
                                 : 'text-muted-foreground hover:text-success hover:bg-success/10'
                             }`}

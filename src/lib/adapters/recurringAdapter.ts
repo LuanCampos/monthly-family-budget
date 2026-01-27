@@ -163,6 +163,10 @@ export const applyRecurringToMonth = async (familyId: string | null, recurring: 
   if (targetYear === undefined || targetMonth === undefined) return false;
 
   const result = shouldIncludeRecurringInMonth(recurring, targetYear, targetMonth);
+  
+  // Don't apply if the recurring expense should not be included in this month
+  // (e.g., installments that haven't started yet or have already ended)
+  if (!result.include) return false;
 
   if (offlineAdapter.isOfflineId(familyId) || !navigator.onLine) {
     const now = new Date().toISOString();
