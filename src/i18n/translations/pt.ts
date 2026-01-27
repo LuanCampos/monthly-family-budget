@@ -242,6 +242,7 @@ export const pt = {
   installmentOf: 'de',
   applyToCurrentMonth: 'Aplicar ao mês atual',
   alreadyInCurrentMonth: 'Já existe neste mês',
+  notApplicableToMonth: 'Não aplicável a este mês',
   
   // Pending Payment
   pendingPayment: 'Pagamento Pendente',
