@@ -1,6 +1,6 @@
 # Guia para Iniciantes — Monthly Family Budget
 
-Bem-vindo! Este documento explica **o que é essa aplicação**, **como ela funciona por dentro** e **como você pode começar a contribuir**. Foi escrito para que mesmo programadores iniciantes possam entender o projeto de verdade.
+Bem-vindo! Este documento explica **o que é essa aplicação**, **como ela funciona por dentro** e **como você pode começar a contribuir**.
 
 ---
 

@@ -207,7 +207,7 @@ describe('RecurringExpensesPanel', () => {
       
       await user.click(screen.getByText('Recurring'));
       
-      expect(screen.getByText('• Electricity')).toBeInTheDocument();
+      expect(screen.getByText('Electricity')).toBeInTheDocument();
     });
   });
 
@@ -216,25 +216,30 @@ describe('RecurringExpensesPanel', () => {
       const user = userEvent.setup();
       render(<RecurringExpensesPanel {...defaultProps} />);
       
-      await user.click(screen.getByText('Recurring'));
+        await user.click(screen.getByText('Recurring'));
+        const sortTrigger = screen.getByRole('button', { name: /Sort by/i });
+        await user.click(sortTrigger);
       
-      expect(screen.getByText('Category')).toBeInTheDocument();
-      expect(screen.getByText('Value')).toBeInTheDocument();
-      expect(screen.getByText('Due date')).toBeInTheDocument();
+        expect(screen.getByText('Category')).toBeInTheDocument();
+        expect(screen.getByText('Value')).toBeInTheDocument();
+        expect(screen.getByText('Due date')).toBeInTheDocument();
     });
 
     it('should toggle sort direction when clicking same sort button', async () => {
       const user = userEvent.setup();
       render(<RecurringExpensesPanel {...defaultProps} />);
       
-      await user.click(screen.getByText('Recurring'));
-      
-      const valueButton = screen.getByRole('button', { name: /Value/i });
-      await user.click(valueButton);
-      await user.click(valueButton);
-      
-      // Button should still be active (we can't easily test direction visually)
-      expect(valueButton).toBeInTheDocument();
+        await user.click(screen.getByText('Recurring'));
+        const sortTrigger2 = screen.getByRole('button', { name: /Sort by/i });
+        await user.click(sortTrigger2);
+        const valueItem = screen.getByText('Value');
+        expect(valueItem).toBeInTheDocument();
+        await user.click(valueItem);
+
+        // Menu closes after selection
+        await waitFor(() => {
+          expect(screen.queryByText('Value')).not.toBeInTheDocument();
+        });
     });
   });
 
