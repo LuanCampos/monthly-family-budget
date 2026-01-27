@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { SummaryTable } from './SummaryTable';
+import type { CategoryKey } from '@/types/budget';
 
 // Mock contexts
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -10,8 +11,8 @@ vi.mock('@/contexts/LanguageContext', () => ({
         totalSpent: 'Total Spent',
         totalRemaining: 'Total Remaining',
         used: 'used',
-        'custos-fixos': 'Fixed Costs',
-        'conforto': 'Comfort',
+        essenciais: 'Essentials',
+        conforto: 'Comfort',
       };
       return translations[key] || key;
     },
@@ -33,10 +34,18 @@ vi.mock('@/constants/categories', () => ({
 }));
 
 describe('SummaryTable', () => {
-  const mockCategories = [
+  const mockCategories: Array<{
+    key: CategoryKey;
+    name: string;
+    percentage: number;
+    budget: number;
+    spent: number;
+    remaining: number;
+    usedPercentage: number;
+  }> = [
     {
-      key: 'custos-fixos' as const,
-      name: 'Custos Fixos',
+      key: 'essenciais',
+      name: 'Essenciais',
       percentage: 50,
       budget: 1000,
       spent: 500,
@@ -44,7 +53,7 @@ describe('SummaryTable', () => {
       usedPercentage: 50,
     },
     {
-      key: 'conforto' as const,
+      key: 'conforto',
       name: 'Conforto',
       percentage: 30,
       budget: 600,
@@ -64,7 +73,7 @@ describe('SummaryTable', () => {
   it('should render all categories', () => {
     render(<SummaryTable {...defaultProps} />);
 
-    expect(screen.getByText('Fixed Costs')).toBeInTheDocument();
+    expect(screen.getByText('Essentials')).toBeInTheDocument();
     expect(screen.getByText('Comfort')).toBeInTheDocument();
   });
 
@@ -153,7 +162,7 @@ describe('SummaryTable', () => {
     expect(screen.getByText('Total Spent')).toBeInTheDocument();
     expect(screen.getByText('Total Remaining')).toBeInTheDocument();
     // Should not render any category rows
-    expect(screen.queryByText('Fixed Costs')).not.toBeInTheDocument();
+    expect(screen.queryByText('Essentials')).not.toBeInTheDocument();
   });
 
   it('should cap progress bar width at 100%', () => {

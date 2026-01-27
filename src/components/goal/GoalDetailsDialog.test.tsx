@@ -29,35 +29,34 @@ vi.mock('./GoalTimelineChart', () => ({
 
 const mockGoal: Goal = {
   id: 'goal-1',
+  familyId: 'family-1',
   name: 'Emergency Fund',
-  target_value: 10000,
   targetValue: 10000,
-  current_value: 2500,
   currentValue: 2500,
-  target_date: '2025-12-31',
-  family_id: 'family-1',
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
+  targetMonth: 12,
+  targetYear: 2025,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
 };
 
 const mockEntries: GoalEntry[] = [
   {
     id: 'entry-1',
-    goal_id: 'goal-1',
+    goalId: 'goal-1',
     value: 1000,
     description: 'First deposit',
     month: 1,
     year: 2025,
-    created_at: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
   },
   {
     id: 'entry-2',
-    goal_id: 'goal-1',
+    goalId: 'goal-1',
     value: 1500,
     description: 'Second deposit',
     month: 2,
     year: 2025,
-    created_at: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
   },
 ];
 

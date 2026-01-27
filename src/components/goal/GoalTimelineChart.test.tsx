@@ -29,30 +29,30 @@ vi.mock('recharts', () => ({
 const mockEntries: GoalEntry[] = [
   {
     id: 'entry-1',
-    goal_id: 'goal-1',
+    goalId: 'goal-1',
     value: 500,
     description: 'First deposit',
     month: 1,
     year: 2025,
-    created_at: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
   },
   {
     id: 'entry-2',
-    goal_id: 'goal-1',
+    goalId: 'goal-1',
     value: 750,
     description: 'Second deposit',
     month: 2,
     year: 2025,
-    created_at: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
   },
   {
     id: 'entry-3',
-    goal_id: 'goal-1',
+    goalId: 'goal-1',
     value: 1000,
     description: 'Third deposit',
     month: 3,
     year: 2025,
-    created_at: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
   },
 ];
 

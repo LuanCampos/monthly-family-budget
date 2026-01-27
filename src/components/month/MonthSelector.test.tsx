@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MonthSelector } from './MonthSelector';
-import type { Month } from '@/types/budget';
+import type { Month, CategoryKey } from '@/types/budget';
 
 // Mock contexts
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -42,30 +42,33 @@ describe('MonthSelector', () => {
   const mockMonths: Month[] = [
     {
       id: 'month-1',
+      label: '01/2026',
       year: 2026,
       month: 1,
       income: 5000,
+      incomeSources: [],
       expenses: [],
-      limits: {},
-      createdAt: new Date().toISOString(),
+      categoryLimits: {} as Record<CategoryKey, number>,
     },
     {
       id: 'month-2',
+      label: '02/2026',
       year: 2026,
       month: 2,
       income: 5000,
+      incomeSources: [],
       expenses: [],
-      limits: {},
-      createdAt: new Date().toISOString(),
+      categoryLimits: {} as Record<CategoryKey, number>,
     },
     {
       id: 'month-3',
+      label: '12/2025',
       year: 2025,
       month: 12,
       income: 4500,
+      incomeSources: [],
       expenses: [],
-      limits: {},
-      createdAt: new Date().toISOString(),
+      categoryLimits: {} as Record<CategoryKey, number>,
     },
   ];
 
