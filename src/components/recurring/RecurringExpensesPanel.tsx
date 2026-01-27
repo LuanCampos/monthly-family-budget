@@ -113,11 +113,6 @@ export const RecurringExpensesPanel = ({
     }
   };
 
-  const getSortIcon = (type: SortType) => {
-    if (sortType !== type) return <ArrowUpDown className="h-3.5 w-3.5" />;
-    return sortDirection === 'asc' ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />;
-  };
-
   const sortedExpenses = [...expenses].sort((a, b) => {
     let result = 0;
     
