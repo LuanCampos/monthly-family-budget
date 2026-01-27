@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { forwardRef } from 'react';
 import { ExpenseFormDialog } from './ExpenseFormDialog';
+import type { CategoryKey } from '@/types/budget';
 
 // Mock dependencies
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -73,7 +74,7 @@ describe('ExpenseFormDialog', () => {
       const initialData = {
         id: 'expense-1',
         title: 'Test Expense',
-        category: 'housing' as const,
+        category: 'essenciais' as CategoryKey,
         value: 100,
         isPending: false,
       };
@@ -94,7 +95,7 @@ describe('ExpenseFormDialog', () => {
       const initialData = {
         id: 'expense-1',
         title: 'Test Expense',
-        category: 'housing' as const,
+        category: 'essenciais' as CategoryKey,
         value: 100,
         isPending: true,
       };
@@ -115,7 +116,7 @@ describe('ExpenseFormDialog', () => {
       const initialData = {
         id: 'expense-1',
         title: 'Test Expense',
-        category: 'housing' as const,
+        category: 'essenciais' as CategoryKey,
         value: 100,
         isRecurring: true,
         isPending: true,

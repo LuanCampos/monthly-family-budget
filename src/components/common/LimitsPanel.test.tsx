@@ -13,12 +13,12 @@ vi.mock('@/contexts/LanguageContext', () => ({
         editLimits: 'Edit Limits',
         save: 'Save',
         saving: 'Saving...',
-        'custos-fixos': 'Fixed Costs',
-        'conforto': 'Comfort',
-        'metas': 'Goals',
-        'prazeres': 'Pleasures',
-        'liberdade': 'Freedom',
-        'conhecimento': 'Knowledge',
+        essenciais: 'Essentials',
+        conforto: 'Comfort',
+        metas: 'Goals',
+        prazeres: 'Pleasures',
+        liberdade: 'Freedom',
+        conhecimento: 'Knowledge',
       };
       return translations[key] || key;
     },
@@ -27,7 +27,7 @@ vi.mock('@/contexts/LanguageContext', () => ({
 
 vi.mock('@/constants/categories', () => ({
   CATEGORIES: [
-    { key: 'custos-fixos', color: '#FF0000', name: 'Fixed Costs' },
+    { key: 'essenciais', color: '#FF0000', name: 'Essentials' },
     { key: 'conforto', color: '#00FF00', name: 'Comfort' },
     { key: 'metas', color: '#0000FF', name: 'Goals' },
     { key: 'prazeres', color: '#FFFF00', name: 'Pleasures' },
@@ -38,12 +38,12 @@ vi.mock('@/constants/categories', () => ({
 
 describe('LimitsPanel', () => {
   const mockPercentages: Record<CategoryKey, number> = {
-    'custos-fixos': 50,
-    'conforto': 20,
-    'metas': 10,
-    'prazeres': 10,
-    'liberdade': 5,
-    'conhecimento': 5,
+    essenciais: 50,
+    conforto: 20,
+    metas: 10,
+    prazeres: 10,
+    liberdade: 5,
+    conhecimento: 5,
   };
 
   const defaultProps = {
@@ -58,7 +58,7 @@ describe('LimitsPanel', () => {
   it('should render all categories with percentages', () => {
     render(<LimitsPanel {...defaultProps} />);
 
-    expect(screen.getByText('Fixed Costs')).toBeInTheDocument();
+    expect(screen.getByText('Essentials')).toBeInTheDocument();
     expect(screen.getByText('Comfort')).toBeInTheDocument();
     expect(screen.getByText('50%')).toBeInTheDocument();
     expect(screen.getByText('20%')).toBeInTheDocument();
@@ -147,7 +147,7 @@ describe('LimitsPanel', () => {
     
     const unbalancedPercentages: Record<CategoryKey, number> = {
       ...mockPercentages,
-      'custos-fixos': 40, // Total now 90%
+      essenciais: 40, // Total now 90%
     };
     
     render(<LimitsPanel percentages={unbalancedPercentages} onEdit={vi.fn()} />);

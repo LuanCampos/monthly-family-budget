@@ -47,8 +47,8 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 const mockIncomeSources: IncomeSource[] = [
-  { id: 'inc1', name: 'Salary', value: 5000 },
-  { id: 'inc2', name: 'Freelance', value: 2000 },
+  { id: 'inc1', monthId: 'month-1', name: 'Salary', value: 5000 },
+  { id: 'inc2', monthId: 'month-1', name: 'Freelance', value: 2000 },
 ];
 
 describe('IncomeSourceListDialog', () => {

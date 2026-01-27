@@ -29,23 +29,24 @@ vi.mock('@/components/common', () => ({
 
 const mockGoal: Goal = {
   id: 'goal-1',
+  familyId: 'family-1',
   name: 'Test Goal',
-  target_value: 10000,
-  current_value: 500,
-  target_date: '2025-12-31',
-  family_id: 'family-1',
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
+  targetValue: 10000,
+  currentValue: 500,
+  targetMonth: 12,
+  targetYear: 2025,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
 };
 
 const mockEntry: GoalEntry = {
   id: 'entry-1',
-  goal_id: 'goal-1',
+  goalId: 'goal-1',
   value: 100,
   description: 'Test Entry',
   month: 3,
   year: 2025,
-  created_at: new Date().toISOString(),
+  createdAt: new Date().toISOString(),
 };
 
 const createDefaultProps = () => ({

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GoalFormDialog } from './GoalFormDialog';
-import type { Goal, Subcategory } from '@/types';
+import type { Goal, Subcategory, CategoryKey } from '@/types';
 
 // Mock contexts
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -55,9 +55,9 @@ describe('GoalFormDialog', () => {
   const mockOnOpenChange = vi.fn();
 
   const mockSubcategories: Subcategory[] = [
-    { id: 'sub-1', name: 'Reserva de Emergência', categoryKey: 'metas', familyId: 'family-123' },
-    { id: 'sub-2', name: 'Viagem', categoryKey: 'metas', familyId: 'family-123' },
-    { id: 'sub-3', name: 'Educação', categoryKey: 'conhecimento', familyId: 'family-123' },
+    { id: 'sub-1', name: 'Reserva de Emergência', categoryKey: 'metas' as CategoryKey },
+    { id: 'sub-2', name: 'Viagem', categoryKey: 'metas' as CategoryKey },
+    { id: 'sub-3', name: 'Educação', categoryKey: 'conhecimento' as CategoryKey },
   ];
 
   const defaultProps = {
@@ -96,11 +96,11 @@ describe('GoalFormDialog', () => {
     it('should show edit title when editing existing goal', () => {
       const existingGoal: Goal = {
         id: 'goal-123',
+        familyId: 'family-123',
         name: 'Existing Goal',
         targetValue: 5000,
         currentValue: 1000,
         status: 'active',
-        familyId: 'family-123',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -122,6 +122,7 @@ describe('GoalFormDialog', () => {
     it('should populate form with goal data when editing', async () => {
       const existingGoal: Goal = {
         id: 'goal-123',
+        familyId: 'family-123',
         name: 'My Savings Goal',
         targetValue: 10000,
         currentValue: 2500,
@@ -129,7 +130,6 @@ describe('GoalFormDialog', () => {
         targetYear: 2026,
         account: 'Nubank',
         status: 'active',
-        familyId: 'family-123',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

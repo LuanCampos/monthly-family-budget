@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ExpenseFormFields, ExpenseFormFieldsRef } from './ExpenseFormFields';
 import { createRef } from 'react';
-import type { Subcategory } from '@/types/budget';
+import type { Subcategory, CategoryKey } from '@/types/budget';
 
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
@@ -18,18 +18,12 @@ vi.mock('@/contexts/LanguageContext', () => ({
         noSubcategory: 'No subcategory',
         selectCategory: 'Select category',
         selectSubcategory: 'Select subcategory',
-        housing: 'Housing',
-        food: 'Food',
-        transportation: 'Transportation',
-        utilities: 'Utilities',
-        healthcare: 'Healthcare',
-        entertainment: 'Entertainment',
-        education: 'Education',
-        clothing: 'Clothing',
-        personal: 'Personal',
-        savings: 'Savings',
+        essenciais: 'Essentials',
+        conforto: 'Comfort',
+        metas: 'Goals',
+        prazeres: 'Pleasures',
         liberdade: 'Financial Freedom',
-        other: 'Other',
+        conhecimento: 'Knowledge',
       };
       return translations[key] || key;
     },
@@ -43,14 +37,14 @@ vi.mock('@/contexts/CurrencyContext', () => ({
 }));
 
 const mockSubcategories: Subcategory[] = [
-  { id: 'sub1', name: 'Rent', categoryKey: 'housing' },
-  { id: 'sub2', name: 'Groceries', categoryKey: 'food' },
+  { id: 'sub1', name: 'Rent', categoryKey: 'essenciais' },
+  { id: 'sub2', name: 'Groceries', categoryKey: 'essenciais' },
 ];
 
 describe('ExpenseFormFields', () => {
   const defaultProps = {
     title: '',
-    category: 'housing' as const,
+    category: 'essenciais' as CategoryKey,
     subcategoryId: '',
     value: '',
     subcategories: mockSubcategories,

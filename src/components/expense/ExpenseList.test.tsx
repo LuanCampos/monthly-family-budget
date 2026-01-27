@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ExpenseList } from './ExpenseList';
-import type { Expense } from '@/types';
+import type { Expense, CategoryKey } from '@/types';
 
 // Mock dependencies
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -58,18 +58,16 @@ describe('ExpenseList', () => {
         {
           id: 'expense-1',
           title: 'Rent',
-          categoryKey: 'housing',
+          category: 'essenciais' as CategoryKey,
           value: 1500,
-          monthId: 'month-1',
           isRecurring: false,
           isPending: false,
         },
         {
           id: 'expense-2',
           title: 'Groceries',
-          categoryKey: 'food',
+          category: 'essenciais' as CategoryKey,
           value: 500,
-          monthId: 'month-1',
           isRecurring: false,
           isPending: false,
         },
@@ -86,9 +84,8 @@ describe('ExpenseList', () => {
         {
           id: 'expense-1',
           title: 'Rent',
-          categoryKey: 'housing',
+          category: 'essenciais' as CategoryKey,
           value: 1500,
-          monthId: 'month-1',
           isRecurring: false,
           isPending: false,
         },
@@ -104,9 +101,8 @@ describe('ExpenseList', () => {
         {
           id: 'expense-1',
           title: 'Pending Bill',
-          categoryKey: 'utilities',
+          category: 'essenciais' as CategoryKey,
           value: 200,
-          monthId: 'month-1',
           isRecurring: true,
           isPending: true,
         },
@@ -126,18 +122,16 @@ describe('ExpenseList', () => {
         {
           id: 'expense-1',
           title: 'Rent',
-          categoryKey: 'housing',
+          category: 'essenciais' as CategoryKey,
           value: 1500,
-          monthId: 'month-1',
           isRecurring: false,
           isPending: false,
         },
         {
           id: 'expense-2',
           title: 'Groceries',
-          categoryKey: 'food',
+          category: 'essenciais' as CategoryKey,
           value: 500,
-          monthId: 'month-1',
           isRecurring: false,
           isPending: false,
         },

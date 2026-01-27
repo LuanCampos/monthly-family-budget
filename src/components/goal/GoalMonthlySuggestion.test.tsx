@@ -44,7 +44,8 @@ const mockGoal: Goal = {
   name: 'Vacation',
   targetValue: 5000,
   currentValue: 2000,
-  targetDate: '2025-12-31',
+  targetMonth: 12,
+  targetYear: 2025,
   createdAt: '2024-01-01T00:00:00Z',
 };
 

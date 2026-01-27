@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { AnnualViewChart } from './AnnualViewChart';
-import type { Month } from '@/types/budget';
+import type { Month, CategoryKey } from '@/types/budget';
 
 // Mock ResizeObserver for Recharts
 class MockResizeObserver {
@@ -16,18 +16,12 @@ vi.mock('@/contexts/LanguageContext', () => ({
     t: (key: string) => {
       const translations: Record<string, string> = {
         noExpenses: 'No expenses',
-        housing: 'Housing',
-        food: 'Food',
-        transportation: 'Transportation',
-        utilities: 'Utilities',
-        healthcare: 'Healthcare',
-        entertainment: 'Entertainment',
-        education: 'Education',
-        clothing: 'Clothing',
-        personal: 'Personal',
-        savings: 'Savings',
+        essenciais: 'Essentials',
+        conforto: 'Comfort',
+        metas: 'Goals',
+        prazeres: 'Pleasures',
         liberdade: 'Financial Freedom',
-        other: 'Other',
+        conhecimento: 'Knowledge',
       };
       return translations[key] || key;
     },
@@ -41,19 +35,20 @@ vi.mock('@/contexts/CurrencyContext', () => ({
   }),
 }));
 
-const createMonth = (year: number, month: number, expenses: Array<{ categoryKey: string; value: number }>): Month => ({
+const createMonth = (year: number, month: number, expenses: Array<{ categoryKey: CategoryKey; value: number }>): Month => ({
   id: `month-${year}-${month}`,
+  label: `${String(month).padStart(2, '0')}/${year}`,
   year,
   month,
+  income: 5000,
   expenses: expenses.map((exp, idx) => ({
     id: `exp-${idx}`,
-    description: 'Test expense',
-    categoryKey: exp.categoryKey as 'housing' | 'food' | 'transportation',
+    title: 'Test expense',
+    category: exp.categoryKey,
     value: exp.value,
-    date: `${year}-${String(month).padStart(2, '0')}-15`,
+    isRecurring: false,
   })),
   incomeSources: [],
-  limits: [],
 });
 
 describe('AnnualViewChart', () => {
@@ -70,7 +65,7 @@ describe('AnnualViewChart', () => {
     });
 
     it('should show empty when year has no data', () => {
-      const months2023 = [createMonth(2023, 1, [{ categoryKey: 'housing', value: 1000 }])];
+      const months2023 = [createMonth(2023, 1, [{ categoryKey: 'essenciais', value: 1000 }])];
       render(<AnnualViewChart months={months2023} currentYear={2024} />);
       expect(screen.getByText('No expenses')).toBeInTheDocument();
     });

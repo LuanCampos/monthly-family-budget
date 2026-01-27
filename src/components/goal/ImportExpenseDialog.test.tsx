@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ImportExpenseDialog } from './ImportExpenseDialog';
-import type { Expense } from '@/types';
+import type { Expense, CategoryKey } from '@/types';
 
 // Mock dependencies
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -19,26 +19,24 @@ const mockExpenses: Expense[] = [
   {
     id: 'expense-1',
     title: 'Gym subscription',
+    category: 'metas' as CategoryKey,
     value: 100,
-    paid: true,
+    isRecurring: false,
+    isPending: false,
     month: 1,
     year: 2025,
-    subcategory_id: 'subcat-1',
-    family_id: 'family-1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    subcategoryId: 'subcat-1',
   },
   {
     id: 'expense-2',
     title: 'Gym annual fee',
+    category: 'metas' as CategoryKey,
     value: 250,
-    paid: true,
+    isRecurring: false,
+    isPending: false,
     month: 2,
     year: 2025,
-    subcategory_id: 'subcat-1',
-    family_id: 'family-1',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    subcategoryId: 'subcat-1',
   },
 ];
 
