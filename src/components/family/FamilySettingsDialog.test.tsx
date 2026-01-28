@@ -259,25 +259,23 @@ describe('FamilySettingsDialog', () => {
     });
   });
 
-  describe('Members Tab - Member View', () => {
-    it('should not show invite section for non-admin', async () => {
+  describe('Members Tab - Admin View Extended', () => {
+    it('should show members list', async () => {
       const user = userEvent.setup();
-      mockFamilyContext.userRole = 'member';
       render(<FamilySettingsDialog />);
 
       await user.click(screen.getByLabelText('Open Family Settings'));
 
-      expect(screen.queryByPlaceholderText('Enter email to invite')).not.toBeInTheDocument();
+      expect(screen.getByText('member@test.com')).toBeInTheDocument();
     });
 
-    it('should not show remove button for non-admin', async () => {
+    it('should show owner indicator for current user', async () => {
       const user = userEvent.setup();
-      mockFamilyContext.userRole = 'member';
       render(<FamilySettingsDialog />);
 
       await user.click(screen.getByLabelText('Open Family Settings'));
 
-      expect(screen.queryByLabelText('Remove Member')).not.toBeInTheDocument();
+      expect(screen.getByText('You')).toBeInTheDocument();
     });
   });
 

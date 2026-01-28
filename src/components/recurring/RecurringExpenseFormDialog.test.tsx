@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RecurringExpenseFormDialog } from './RecurringExpenseFormDialog';
-import type { RecurringExpense, Subcategory } from '@/types';
+import type { RecurringExpense, Subcategory, CategoryKey } from '@/types';
 
 // Mock dependencies
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -52,25 +52,19 @@ const mockSubcategories: Subcategory[] = [
   {
     id: 'subcat-1',
     name: 'Test Subcategory',
-    category: 'housing',
-    family_id: 'family-1',
-    is_default: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    categoryKey: 'essenciais' as CategoryKey,
   },
 ];
 
 const mockExpense: RecurringExpense = {
   id: 'recurring-1',
   title: 'Monthly Rent',
-  category: 'housing',
+  category: 'essenciais' as CategoryKey,
   subcategoryId: 'subcat-1',
   value: 1500,
   dueDay: 5,
   hasInstallments: false,
-  family_id: 'family-1',
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
+  isRecurring: true,
 };
 
 const createDefaultProps = () => ({

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RecurringExpenseFormFields } from './RecurringExpenseFormFields';
-import type { Subcategory } from '@/types/budget';
+import type { Subcategory, CategoryKey } from '@/types/budget';
 
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
@@ -17,18 +17,12 @@ vi.mock('@/contexts/LanguageContext', () => ({
         noSubcategory: 'No subcategory',
         selectCategory: 'Select category',
         selectSubcategory: 'Select subcategory',
-        housing: 'Housing',
-        food: 'Food',
-        transportation: 'Transportation',
-        utilities: 'Utilities',
-        healthcare: 'Healthcare',
-        entertainment: 'Entertainment',
-        education: 'Education',
-        clothing: 'Clothing',
-        personal: 'Personal',
-        savings: 'Savings',
+        essenciais: 'Essentials',
+        conforto: 'Comfort',
+        metas: 'Goals',
+        prazeres: 'Pleasures',
         liberdade: 'Financial Freedom',
-        other: 'Other',
+        conhecimento: 'Knowledge',
         hasInstallments: 'Installments',
         totalInstallments: 'Total installments',
         startMonth: 'Start month',
@@ -47,14 +41,14 @@ vi.mock('@/contexts/CurrencyContext', () => ({
 }));
 
 const mockSubcategories: Subcategory[] = [
-  { id: 'sub1', name: 'Rent', categoryKey: 'housing' },
-  { id: 'sub2', name: 'Groceries', categoryKey: 'food' },
+  { id: 'sub1', name: 'Rent', categoryKey: 'essenciais' },
+  { id: 'sub2', name: 'Groceries', categoryKey: 'essenciais' },
 ];
 
 describe('RecurringExpenseFormFields', () => {
   const defaultProps = {
     title: '',
-    category: 'housing' as const,
+    category: 'essenciais' as CategoryKey,
     subcategoryId: '',
     value: '',
     subcategories: mockSubcategories,
@@ -62,12 +56,16 @@ describe('RecurringExpenseFormFields', () => {
     onCategoryChange: vi.fn(),
     onSubcategoryChange: vi.fn(),
     onValueChange: vi.fn(),
-    isInstallment: false,
-    onIsInstallmentChange: vi.fn(),
-    totalInstallments: 1,
+    hasInstallments: false,
+    onHasInstallmentsChange: vi.fn(),
+    totalInstallments: '1',
     onTotalInstallmentsChange: vi.fn(),
-    startMonth: 1,
+    startMonth: '1',
     onStartMonthChange: vi.fn(),
+    startYear: '2026',
+    onStartYearChange: vi.fn(),
+    dueDay: '1',
+    onDueDayChange: vi.fn(),
   };
 
   beforeEach(() => {
@@ -115,8 +113,8 @@ describe('RecurringExpenseFormFields', () => {
       expect(screen.getByRole('checkbox')).toBeInTheDocument();
     });
 
-    it('should not show installment fields when isInstallment is false', () => {
-      render(<RecurringExpenseFormFields {...defaultProps} isInstallment={false} />);
+    it('should not show installment fields when hasInstallments is false', () => {
+      render(<RecurringExpenseFormFields {...defaultProps} hasInstallments={false} />);
       
       expect(screen.queryByText('totalInstallments')).not.toBeInTheDocument();
     });

@@ -110,7 +110,6 @@ describe('SubcategoryFormDialog', () => {
       id: 'sub-1',
       name: 'Electricity',
       categoryKey: 'essenciais',
-      familyId: 'family-1',
     };
 
     it('should show "Edit Subcategory" title when editing', () => {
@@ -228,7 +227,7 @@ describe('SubcategoryFormDialog', () => {
   describe('saving state', () => {
     it('should disable save button while saving', async () => {
       const user = userEvent.setup();
-      const slowSave = vi.fn(() => new Promise(resolve => setTimeout(resolve, 100)));
+      const slowSave = vi.fn((): Promise<void> => new Promise(resolve => setTimeout(resolve, 100)));
       render(<SubcategoryFormDialog {...defaultProps} onSave={slowSave} />);
       
       await user.type(screen.getByLabelText('Name'), 'Test');
@@ -239,7 +238,7 @@ describe('SubcategoryFormDialog', () => {
 
     it('should disable cancel button while saving', async () => {
       const user = userEvent.setup();
-      const slowSave = vi.fn(() => new Promise(resolve => setTimeout(resolve, 100)));
+      const slowSave = vi.fn((): Promise<void> => new Promise(resolve => setTimeout(resolve, 100)));
       render(<SubcategoryFormDialog {...defaultProps} onSave={slowSave} />);
       
       await user.type(screen.getByLabelText('Name'), 'Test');

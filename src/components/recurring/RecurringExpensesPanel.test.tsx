@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RecurringExpensesPanel } from './RecurringExpensesPanel';
-import { RecurringExpense, Subcategory, Expense } from '@/types';
+import { RecurringExpense, Subcategory, Expense, CategoryKey } from '@/types';
 
 // Mock contexts
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -72,37 +72,37 @@ vi.mock('@/components/common', () => ({
 
 describe('RecurringExpensesPanel', () => {
   const mockSubcategories: Subcategory[] = [
-    { id: 'sub-1', name: 'Electricity', categoryKey: 'essenciais', familyId: 'family-1' },
-    { id: 'sub-2', name: 'Internet', categoryKey: 'conforto', familyId: 'family-1' },
+    { id: 'sub-1', name: 'Electricity', categoryKey: 'essenciais' as CategoryKey },
+    { id: 'sub-2', name: 'Internet', categoryKey: 'conforto' as CategoryKey },
   ];
 
   const mockExpenses: RecurringExpense[] = [
     {
       id: 'rec-1',
       title: 'Light Bill',
-      category: 'essenciais',
+      category: 'essenciais' as CategoryKey,
       subcategoryId: 'sub-1',
       value: 150.00,
       dueDay: 10,
-      familyId: 'family-1',
+      isRecurring: true,
     },
     {
       id: 'rec-2',
       title: 'Netflix',
-      category: 'conforto',
+      category: 'conforto' as CategoryKey,
       value: 45.90,
       dueDay: 5,
-      familyId: 'family-1',
       hasInstallments: false,
+      isRecurring: true,
     },
     {
       id: 'rec-3',
       title: 'Gym',
-      category: 'metas',
+      category: 'metas' as CategoryKey,
       value: 99.00,
-      familyId: 'family-1',
       hasInstallments: true,
       totalInstallments: 12,
+      isRecurring: true,
     },
   ];
 
@@ -110,10 +110,10 @@ describe('RecurringExpensesPanel', () => {
     {
       id: 'exp-1',
       title: 'Light Bill',
-      category: 'essenciais',
+      category: 'essenciais' as CategoryKey,
       value: 150.00,
-      pending: false,
-      monthId: 'month-1',
+      isPending: false,
+      isRecurring: false,
       recurringExpenseId: 'rec-1',
     },
   ];
@@ -336,7 +336,7 @@ describe('RecurringExpensesPanel', () => {
 
     it('should handle expense without subcategoryId', async () => {
       const user = userEvent.setup();
-      const expensesWithoutSub = [
+      const expensesWithoutSub: RecurringExpense[] = [
         { ...mockExpenses[1], subcategoryId: undefined },
       ];
       render(<RecurringExpensesPanel {...defaultProps} expenses={expensesWithoutSub} />);
@@ -348,7 +348,7 @@ describe('RecurringExpensesPanel', () => {
 
     it('should handle expense without dueDay', async () => {
       const user = userEvent.setup();
-      const expensesWithoutDueDay = [
+      const expensesWithoutDueDay: RecurringExpense[] = [
         { ...mockExpenses[2], dueDay: undefined },
       ];
       render(<RecurringExpensesPanel {...defaultProps} expenses={expensesWithoutDueDay} />);
