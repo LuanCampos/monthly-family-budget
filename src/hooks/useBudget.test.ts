@@ -31,10 +31,12 @@ describe('useBudget', () => {
   
   const mockMonth: Month = {
     id: 'family-123-2026-01',
+    label: 'Janeiro 2026',
     year: 2026,
     month: 1,
     income: 5000,
     expenses: [],
+    incomeSources: [],
     categoryLimits: {
       essenciais: 55,
       conforto: 10,

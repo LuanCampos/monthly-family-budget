@@ -11,9 +11,12 @@ vi.mock('@/contexts/LanguageContext', () => ({
         back: 'Back',
         noSubcategoryExpenses: 'No expenses in this category',
         notSpecified: 'Not Specified',
-        housing: 'Housing',
-        transportation: 'Transportation',
-        food: 'Food',
+        essenciais: 'Essentials',
+        conforto: 'Comfort',
+        metas: 'Goals',
+        prazeres: 'Pleasures',
+        liberdade: 'Financial Freedom',
+        conhecimento: 'Knowledge',
       };
       return translations[key] || key;
     },
@@ -41,9 +44,9 @@ vi.mock('recharts', () => ({
 }));
 
 const mockSubcategories: Subcategory[] = [
-  { id: 'sub1', name: 'Rent', categoryKey: 'housing' },
-  { id: 'sub2', name: 'Internet', categoryKey: 'housing' },
-  { id: 'sub3', name: 'Gas', categoryKey: 'transportation' },
+  { id: 'sub1', name: 'Rent', categoryKey: 'essenciais' },
+  { id: 'sub2', name: 'Internet', categoryKey: 'essenciais' },
+  { id: 'sub3', name: 'Gas', categoryKey: 'conforto' },
 ];
 
 const createMockExpense = (id: string, category: CategoryKey, value: number, subcategoryId?: string): Expense => ({
@@ -51,13 +54,13 @@ const createMockExpense = (id: string, category: CategoryKey, value: number, sub
   title: `Expense ${id}`,
   category,
   value,
-  date: '2024-01-01',
   subcategoryId,
+  isRecurring: false,
 });
 
 describe('SubcategoryChart', () => {
   const defaultProps = {
-    categoryKey: 'housing' as CategoryKey,
+    categoryKey: 'essenciais' as CategoryKey,
     expenses: [] as Expense[],
     subcategories: mockSubcategories,
     onBack: vi.fn(),
@@ -87,7 +90,7 @@ describe('SubcategoryChart', () => {
     it('should display category name', () => {
       render(<SubcategoryChart {...defaultProps} />);
 
-      expect(screen.getByText('Housing')).toBeInTheDocument();
+      expect(screen.getByText('Essentials')).toBeInTheDocument();
     });
 
     it('should display category color indicator', () => {
@@ -107,7 +110,7 @@ describe('SubcategoryChart', () => {
 
     it('should show empty message when category has no expenses', () => {
       const expenses = [
-        createMockExpense('1', 'transportation', 100),
+        createMockExpense('1', 'conforto', 100),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -118,7 +121,7 @@ describe('SubcategoryChart', () => {
   describe('Chart Rendering', () => {
     it('should render pie chart when there are expenses', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000, 'sub1'),
+        createMockExpense('1', 'essenciais', 1000, 'sub1'),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -127,7 +130,7 @@ describe('SubcategoryChart', () => {
 
     it('should render responsive container', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000, 'sub1'),
+        createMockExpense('1', 'essenciais', 1000, 'sub1'),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -136,7 +139,7 @@ describe('SubcategoryChart', () => {
 
     it('should render tooltip', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000, 'sub1'),
+        createMockExpense('1', 'essenciais', 1000, 'sub1'),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -147,9 +150,9 @@ describe('SubcategoryChart', () => {
   describe('Data Processing', () => {
     it('should group expenses by subcategory', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000, 'sub1'),
-        createMockExpense('2', 'housing', 500, 'sub1'),
-        createMockExpense('3', 'housing', 300, 'sub2'),
+        createMockExpense('1', 'essenciais', 1000, 'sub1'),
+        createMockExpense('2', 'essenciais', 500, 'sub1'),
+        createMockExpense('3', 'essenciais', 300, 'sub2'),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -159,7 +162,7 @@ describe('SubcategoryChart', () => {
 
     it('should show formatted values in legend', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1500, 'sub1'),
+        createMockExpense('1', 'essenciais', 1500, 'sub1'),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -168,8 +171,8 @@ describe('SubcategoryChart', () => {
 
     it('should group uncategorized expenses', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000),
-        createMockExpense('2', 'housing', 500),
+        createMockExpense('1', 'essenciais', 1000),
+        createMockExpense('2', 'essenciais', 500),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -178,7 +181,7 @@ describe('SubcategoryChart', () => {
 
     it('should handle missing subcategory reference', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000, 'non-existent-sub'),
+        createMockExpense('1', 'essenciais', 1000, 'non-existent-sub'),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -189,8 +192,8 @@ describe('SubcategoryChart', () => {
   describe('Legend Display', () => {
     it('should display all subcategories in legend', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000, 'sub1'),
-        createMockExpense('2', 'housing', 500, 'sub2'),
+        createMockExpense('1', 'essenciais', 1000, 'sub1'),
+        createMockExpense('2', 'essenciais', 500, 'sub2'),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -200,7 +203,7 @@ describe('SubcategoryChart', () => {
 
     it('should show color indicators in legend', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000, 'sub1'),
+        createMockExpense('1', 'essenciais', 1000, 'sub1'),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -212,21 +215,21 @@ describe('SubcategoryChart', () => {
   describe('Different Categories', () => {
     it('should filter expenses by category', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000, 'sub1'),
-        createMockExpense('2', 'transportation', 500, 'sub3'),
+        createMockExpense('1', 'essenciais', 1000, 'sub1'),
+        createMockExpense('2', 'conforto', 500, 'sub3'),
       ];
-      render(<SubcategoryChart {...defaultProps} expenses={expenses} categoryKey="transportation" />);
+      render(<SubcategoryChart {...defaultProps} expenses={expenses} categoryKey="conforto" />);
 
-      expect(screen.getByText('Transportation')).toBeInTheDocument();
+      expect(screen.getByText('Comfort')).toBeInTheDocument();
     });
   });
 
   describe('Edge Cases', () => {
     it('should handle large number of subcategories', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000, 'sub1'),
-        createMockExpense('2', 'housing', 500, 'sub2'),
-        createMockExpense('3', 'housing', 300),
+        createMockExpense('1', 'essenciais', 1000, 'sub1'),
+        createMockExpense('2', 'essenciais', 500, 'sub2'),
+        createMockExpense('3', 'essenciais', 300),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -235,7 +238,7 @@ describe('SubcategoryChart', () => {
 
     it('should handle very large values', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000000, 'sub1'),
+        createMockExpense('1', 'essenciais', 1000000, 'sub1'),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -244,7 +247,7 @@ describe('SubcategoryChart', () => {
 
     it('should handle very small values', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 0.01, 'sub1'),
+        createMockExpense('1', 'essenciais', 0.01, 'sub1'),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} />);
 
@@ -253,7 +256,7 @@ describe('SubcategoryChart', () => {
 
     it('should handle empty subcategories list', () => {
       const expenses = [
-        createMockExpense('1', 'housing', 1000),
+        createMockExpense('1', 'essenciais', 1000),
       ];
       render(<SubcategoryChart {...defaultProps} expenses={expenses} subcategories={[]} />);
 

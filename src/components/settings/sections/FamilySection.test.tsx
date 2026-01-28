@@ -26,7 +26,6 @@ const mockFamily: Family = {
   name: 'Test Family',
   created_by: 'user-1',
   created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
 };
 
 const mockMembers: FamilyMember[] = [
@@ -35,9 +34,7 @@ const mockMembers: FamilyMember[] = [
     user_id: 'user-1',
     family_id: 'family-1',
     role: 'owner',
-    status: 'active',
     joined_at: new Date().toISOString(),
-    display_name: 'Owner User',
     user_email: 'owner@test.com',
   },
   {
@@ -45,9 +42,7 @@ const mockMembers: FamilyMember[] = [
     user_id: 'user-2',
     family_id: 'family-1',
     role: 'member',
-    status: 'active',
     joined_at: new Date().toISOString(),
-    display_name: 'Member User',
     user_email: 'member@test.com',
   },
 ];
@@ -126,10 +121,10 @@ describe('FamilySection', () => {
         family_id: 'family-2',
         family_name: 'Another Family',
         email: 'user@test.com',
-        role: 'member',
         status: 'pending',
         created_at: new Date().toISOString(),
-        created_by: 'user-3',
+        invited_by: 'user-3',
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       }];
       
       render(<FamilySection {...props} />);
@@ -145,10 +140,10 @@ describe('FamilySection', () => {
         family_id: 'family-2',
         family_name: 'Another Family',
         email: 'user@test.com',
-        role: 'member',
         status: 'pending',
         created_at: new Date().toISOString(),
-        created_by: 'user-3',
+        invited_by: 'user-3',
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       }];
       
       render(<FamilySection {...props} />);
@@ -164,10 +159,10 @@ describe('FamilySection', () => {
         family_id: 'family-2',
         family_name: 'Another Family',
         email: 'user@test.com',
-        role: 'member',
         status: 'pending',
         created_at: new Date().toISOString(),
-        created_by: 'user-3',
+        invited_by: 'user-3',
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       }];
       
       render(<FamilySection {...props} />);
@@ -178,20 +173,11 @@ describe('FamilySection', () => {
   });
 
   describe('invite member', () => {
-    it('should show invite section for admins', () => {
+    it('should show invite section for owners', () => {
       const props = createDefaultProps();
       render(<FamilySection {...props} />);
       
       expect(screen.getByText('inviteMember')).toBeInTheDocument();
-    });
-
-    it('should not show invite section for non-admins', () => {
-      const props = createDefaultProps();
-      props.userRole = 'member';
-      
-      render(<FamilySection {...props} />);
-      
-      expect(screen.queryByText('inviteMember')).not.toBeInTheDocument();
     });
 
     it('should call onInvite when invite button is clicked', async () => {

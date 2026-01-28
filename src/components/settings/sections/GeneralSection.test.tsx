@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GeneralSection } from './GeneralSection';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { ThemeKey } from '@/contexts/ThemeContext';
 
 describe('GeneralSection', () => {
   const mockT = (key: string) => key;
@@ -18,7 +19,7 @@ describe('GeneralSection', () => {
   const defaultProps = {
     user: mockUser,
     language: 'pt' as const,
-    theme: 'system' as const,
+    theme: 'dark' as ThemeKey,
     currency: 'BRL' as const,
     currentMonthLabel: 'Janeiro 2025',
     processingAction: null,
