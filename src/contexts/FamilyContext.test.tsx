@@ -2,6 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { FamilyProvider, useFamily } from './FamilyContext';
 
+// Helper to create proper PostgrestSingleResponse - must match discriminated union
+const createSuccessResponse = <T,>(data: T) => ({
+  data,
+  error: null,
+  count: null,
+  status: 200,
+  statusText: 'OK',
+});
+
+// For success responses only - error responses don't need proper typing in mocks
+
 // Mock dependencies
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: vi.fn(() => ({
@@ -148,8 +159,8 @@ describe('FamilyContext', () => {
 
     it('should create cloud family when online and authenticated', async () => {
       const mockFamily = { id: 'cloud-family-123', name: 'Cloud Family', created_by: 'user-123', created_at: new Date().toISOString() };
-      vi.mocked(familyService.insertFamily).mockResolvedValue({ data: mockFamily, error: null });
-      vi.mocked(familyService.insertFamilyMember).mockResolvedValue({ data: {}, error: null });
+      vi.mocked(familyService.insertFamily).mockResolvedValue(createSuccessResponse(mockFamily));
+      vi.mocked(familyService.insertFamilyMember).mockResolvedValue(createSuccessResponse(null));
       
       Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
 
@@ -207,7 +218,7 @@ describe('FamilyContext', () => {
     });
 
     it('should update cloud family name', async () => {
-      vi.mocked(familyService.updateFamilyName).mockResolvedValue({ error: null });
+      vi.mocked(familyService.updateFamilyName).mockResolvedValue(createSuccessResponse(null));
 
       const { result } = renderHook(() => useFamily(), { wrapper });
 
@@ -243,7 +254,7 @@ describe('FamilyContext', () => {
     });
 
     it('should delete cloud family', async () => {
-      vi.mocked(familyService.deleteFamily).mockResolvedValue({ error: null });
+      vi.mocked(familyService.deleteFamily).mockResolvedValue(createSuccessResponse(null));
 
       const { result } = renderHook(() => useFamily(), { wrapper });
 
@@ -389,7 +400,7 @@ describe('FamilyContext', () => {
 
   describe('rejectInvitation', () => {
     it('should reject an invitation successfully', async () => {
-      vi.mocked(familyService.updateInvitationStatus).mockResolvedValue({ error: null });
+      vi.mocked(familyService.updateInvitationStatus).mockResolvedValue(createSuccessResponse(null));
 
       const { result } = renderHook(() => useFamily(), { wrapper });
 
@@ -408,7 +419,7 @@ describe('FamilyContext', () => {
 
   describe('cancelInvitation', () => {
     it('should cancel an invitation successfully', async () => {
-      vi.mocked(familyService.deleteInvitation).mockResolvedValue({ error: null });
+      vi.mocked(familyService.deleteInvitation).mockResolvedValue(createSuccessResponse(null));
 
       const { result } = renderHook(() => useFamily(), { wrapper });
 
@@ -427,7 +438,7 @@ describe('FamilyContext', () => {
 
   describe('updateMemberRole', () => {
     it('should update member role successfully', async () => {
-      vi.mocked(familyService.updateMemberRole).mockResolvedValue({ error: null });
+      vi.mocked(familyService.updateMemberRole).mockResolvedValue(createSuccessResponse(null));
 
       const { result } = renderHook(() => useFamily(), { wrapper });
 
@@ -446,7 +457,7 @@ describe('FamilyContext', () => {
 
   describe('removeMember', () => {
     it('should remove member successfully', async () => {
-      vi.mocked(familyService.deleteMember).mockResolvedValue({ error: null });
+      vi.mocked(familyService.deleteMember).mockResolvedValue(createSuccessResponse(null));
 
       const { result } = renderHook(() => useFamily(), { wrapper });
 

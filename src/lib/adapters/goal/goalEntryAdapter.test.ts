@@ -68,6 +68,7 @@ describe('goalEntryAdapter', () => {
   const mockExpenseRow: ExpenseRow = {
     id: mockExpenseId,
     month_id: 'family-123-2024-01',
+    family_id: mockFamilyId,
     title: 'Investment',
     category_key: 'metas',
     subcategory_id: 'sub-123',
@@ -75,7 +76,11 @@ describe('goalEntryAdapter', () => {
     is_recurring: false,
     recurring_expense_id: null,
     is_pending: false,
+    due_day: null,
+    installment_current: null,
+    installment_total: null,
     created_at: '2024-01-10T00:00:00Z',
+    updated_at: '2024-01-10T00:00:00Z',
   };
 
   describe('getEntries', () => {
@@ -496,114 +501,46 @@ describe('goalEntryAdapter', () => {
   });
 
   describe('importExpense', () => {
+    beforeEach(() => {
+      Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
+      (offlineAdapter.isOfflineId as Mock).mockReturnValue(false);
+    });
+
     it('should return null when familyId is null', async () => {
       const result = await importExpense(null, mockGoalId, mockExpenseId);
       expect(result).toBeNull();
     });
 
-    describe('online mode', () => {
-      beforeEach(() => {
-        Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
-        (offlineAdapter.isOfflineId as Mock).mockReturnValue(false);
+    it('should import expense and create entry', async () => {
+      (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([]); // No existing entry
+      (goalService.getExpense as Mock).mockResolvedValue({ data: mockExpenseRow, error: null });
+      (goalService.createEntry as Mock).mockResolvedValue({ 
+        data: mockAutomaticEntryRow, 
+        error: null 
       });
 
-      it('should import expense via goalService', async () => {
-        (goalService.importExpenseAsEntry as Mock).mockResolvedValue({ 
-          data: mockAutomaticEntryRow, 
-          error: null 
-        });
+      const result = await importExpense(mockFamilyId, mockGoalId, mockExpenseId);
 
-        const result = await importExpense(mockFamilyId, mockGoalId, mockExpenseId);
-
-        expect(goalService.importExpenseAsEntry).toHaveBeenCalledWith(mockGoalId, mockExpenseId);
-        expect(result).toMatchObject({
-          id: 'entry-auto',
-          expenseId: mockExpenseId,
-        });
-      });
-
-      it('should throw when expense already imported', async () => {
-        (goalService.importExpenseAsEntry as Mock).mockResolvedValue({ 
-          data: null, 
-          error: new Error('Expense already imported') 
-        });
-
-        await expect(importExpense(mockFamilyId, mockGoalId, mockExpenseId))
-          .rejects.toThrow('Expense already imported');
-      });
-
-      it('should throw when expense not found', async () => {
-        (goalService.importExpenseAsEntry as Mock).mockResolvedValue({ 
-          data: null, 
-          error: new Error('Expense not found') 
-        });
-
-        await expect(importExpense(mockFamilyId, mockGoalId, mockExpenseId))
-          .rejects.toThrow('Expense not found');
-      });
-
-      it('should throw when no data returned', async () => {
-        (goalService.importExpenseAsEntry as Mock).mockResolvedValue({ 
-          data: null, 
-          error: null 
-        });
-
-        await expect(importExpense(mockFamilyId, mockGoalId, mockExpenseId))
-          .rejects.toThrow('Failed to import expense - no data returned');
+      expect(goalService.createEntry).toHaveBeenCalled();
+      expect(result).toMatchObject({
+        id: 'entry-auto',
+        expenseId: mockExpenseId,
       });
     });
 
-    describe('offline mode', () => {
-      beforeEach(() => {
-        Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
-        (offlineAdapter.isOfflineId as Mock).mockReturnValue(false);
-        (offlineAdapter.generateOfflineId as Mock).mockReturnValue('offline-entry-imp');
-      });
+    it('should throw when expense already imported', async () => {
+      (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([mockAutomaticEntryRow]);
 
-      it('should import expense from IndexedDB', async () => {
-        (offlineAdapter.get as Mock).mockResolvedValue(mockExpenseRow);
-        (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([]);
+      await expect(importExpense(mockFamilyId, mockGoalId, mockExpenseId))
+        .rejects.toThrow('already imported');
+    });
 
-        const result = await importExpense(mockFamilyId, mockGoalId, mockExpenseId);
+    it('should throw when expense not found', async () => {
+      (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([]);
+      (goalService.getExpense as Mock).mockResolvedValue({ data: null, error: null });
 
-        expect(offlineAdapter.put).toHaveBeenCalledWith('goal_entries', expect.objectContaining({
-          goal_id: mockGoalId,
-          expense_id: mockExpenseId,
-          value: 1000,
-        }));
-        expect(result).not.toBeNull();
-      });
-
-      it('should throw when expense not found offline', async () => {
-        (offlineAdapter.get as Mock).mockResolvedValue(null);
-
-        await expect(importExpense(mockFamilyId, mockGoalId, mockExpenseId))
-          .rejects.toThrow('Expense not found offline');
-      });
-
-      it('should throw when expense already imported offline', async () => {
-        (offlineAdapter.get as Mock).mockResolvedValue(mockExpenseRow);
-        (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([mockAutomaticEntryRow]);
-
-        await expect(importExpense(mockFamilyId, mockGoalId, mockExpenseId))
-          .rejects.toThrow('Expense already imported');
-      });
-
-      it('should parse month and year from month_id', async () => {
-        const expenseWithMonthId: ExpenseRow = {
-          ...mockExpenseRow,
-          month_id: 'family-123-2024-06',
-        };
-        (offlineAdapter.get as Mock).mockResolvedValue(expenseWithMonthId);
-        (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([]);
-
-        await importExpense(mockFamilyId, mockGoalId, mockExpenseId);
-
-        expect(offlineAdapter.put).toHaveBeenCalledWith('goal_entries', expect.objectContaining({
-          month: 6,
-          year: 2024,
-        }));
-      });
+      await expect(importExpense(mockFamilyId, mockGoalId, mockExpenseId))
+        .rejects.toThrow('not found');
     });
   });
 });

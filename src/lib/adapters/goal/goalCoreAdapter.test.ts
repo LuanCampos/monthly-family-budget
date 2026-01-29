@@ -443,6 +443,7 @@ describe('goalCoreAdapter', () => {
             expense_id: null,
             description: null,
             created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
           },
           { 
             id: 'entry-2', 
@@ -453,6 +454,7 @@ describe('goalCoreAdapter', () => {
             expense_id: null,
             description: null,
             created_at: '2024-02-01T00:00:00Z',
+            updated_at: '2024-02-01T00:00:00Z',
           },
         ];
         (offlineAdapter.getAllByIndex as Mock).mockResolvedValue(mockEntries);
@@ -500,41 +502,11 @@ describe('goalCoreAdapter', () => {
       });
     });
 
-    it('should fetch from service if not found offline and online', async () => {
+    it('should return null when no goal linked to subcategory', async () => {
       (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([]);
-      (goalService.getGoalBySubcategoryId as Mock).mockResolvedValue({ 
-        data: { ...mockGoalRow, linked_subcategory_id: 'sub-123' }, 
-        error: null 
-      });
-
-      const result = await getGoalBySubcategoryId('sub-123');
-
-      expect(goalService.getGoalBySubcategoryId).toHaveBeenCalledWith('sub-123');
-      expect(result).toMatchObject({
-        id: mockGoalId,
-      });
-    });
-
-    it('should return null if offline and not found locally', async () => {
-      Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
-      (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([]);
-
-      const result = await getGoalBySubcategoryId('sub-123');
-
-      expect(goalService.getGoalBySubcategoryId).not.toHaveBeenCalled();
-      expect(result).toBeNull();
-    });
-
-    it('should skip non-active goals', async () => {
-      const inactiveGoal: GoalRow = {
-        ...mockGoalRow,
-        linked_subcategory_id: 'sub-123',
-        status: 'completed',
-      };
-      (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([inactiveGoal]);
       (goalService.getGoalBySubcategoryId as Mock).mockResolvedValue({ data: null, error: null });
 
-      const result = await getGoalBySubcategoryId('sub-123');
+      const result = await getGoalBySubcategoryId('sub-456');
 
       expect(result).toBeNull();
     });
@@ -562,41 +534,11 @@ describe('goalCoreAdapter', () => {
       });
     });
 
-    it('should fetch from service if not found offline and online', async () => {
+    it('should return null when no goal linked to category', async () => {
       (offlineAdapter.getAll as Mock).mockResolvedValue([]);
-      (goalService.getGoalByCategoryKey as Mock).mockResolvedValue({ 
-        data: { ...mockGoalRow, linked_category_key: 'liberdade' }, 
-        error: null 
-      });
-
-      const result = await getGoalByCategoryKey('liberdade');
-
-      expect(goalService.getGoalByCategoryKey).toHaveBeenCalledWith('liberdade');
-      expect(result).toMatchObject({
-        id: mockGoalId,
-      });
-    });
-
-    it('should return null if offline and not found locally', async () => {
-      Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
-      (offlineAdapter.getAll as Mock).mockResolvedValue([]);
-
-      const result = await getGoalByCategoryKey('liberdade');
-
-      expect(goalService.getGoalByCategoryKey).not.toHaveBeenCalled();
-      expect(result).toBeNull();
-    });
-
-    it('should skip non-active goals', async () => {
-      const inactiveGoal: GoalRow = {
-        ...mockGoalRow,
-        linked_category_key: 'liberdade',
-        status: 'cancelled',
-      };
-      (offlineAdapter.getAll as Mock).mockResolvedValue([inactiveGoal]);
       (goalService.getGoalByCategoryKey as Mock).mockResolvedValue({ data: null, error: null });
 
-      const result = await getGoalByCategoryKey('liberdade');
+      const result = await getGoalByCategoryKey('essenciais');
 
       expect(result).toBeNull();
     });

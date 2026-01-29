@@ -13,7 +13,7 @@ import * as budgetService from '../services/budgetService';
 import { offlineAdapter } from './offlineAdapter';
 import * as expenseAdapter from './expenseAdapter';
 import type { MonthRow, IncomeSourceRow } from '@/types/database';
-import type { Month, RecurringExpense } from '@/types';
+import type { Month, RecurringExpense, CategoryKey } from '@/types';
 
 // Mock dependencies
 vi.mock('../services/budgetService');
@@ -54,7 +54,8 @@ describe('monthAdapter', () => {
           year: 2024,
           month: 6,
           income: 0,
-          created_at: '2024-06-01'
+          created_at: '2024-06-01',
+          updated_at: '2024-06-01',
         };
 
         (budgetService.insertMonth as Mock).mockResolvedValue({ data: mockMonth, error: null });
@@ -73,7 +74,8 @@ describe('monthAdapter', () => {
           year: 2024,
           month: 1,
           income: 0,
-          created_at: '2024-01-01'
+          created_at: '2024-01-01',
+          updated_at: '2024-01-01',
         };
 
         mockGetMonthsWithExpenses.mockResolvedValue([]);
@@ -94,7 +96,14 @@ describe('monthAdapter', () => {
           month: 12,
           income: 5000,
           incomeSources: [],
-          categoryLimits: { housing: 30, food: 20, transportation: 15, health: 10, education: 5, leisure: 5, clothing: 5, debts: 5, investments: 5, others: 0 },
+          categoryLimits: { 
+            essenciais: 55, 
+            conforto: 10, 
+            metas: 10, 
+            prazeres: 10, 
+            liberdade: 10, 
+            conhecimento: 5 
+          } as Record<CategoryKey, number>,
           expenses: []
         };
         const newMonth: MonthRow = {
@@ -103,7 +112,8 @@ describe('monthAdapter', () => {
           year: 2024,
           month: 1,
           income: 0,
-          created_at: '2024-01-01'
+          created_at: '2024-01-01',
+          updated_at: '2024-01-01',
         };
 
         mockGetMonthsWithExpenses.mockResolvedValue([existingMonth]);
@@ -114,7 +124,7 @@ describe('monthAdapter', () => {
 
         // Should copy limits from previous month
         expect(budgetService.insertMonthLimit).toHaveBeenCalledWith(
-          expect.objectContaining({ month_id: 'month-1', category_key: 'housing', percentage: 30 })
+          expect.objectContaining({ month_id: 'month-1', category_key: 'essenciais', percentage: 55 })
         );
       });
 
@@ -125,19 +135,17 @@ describe('monthAdapter', () => {
           year: 2024,
           month: 3,
           income: 0,
-          created_at: '2024-03-01'
+          created_at: '2024-03-01',
+          updated_at: '2024-03-01',
         };
 
         const mockRecurring: RecurringExpense = {
           id: 'recurring-1',
-          familyId: mockFamilyId,
           title: 'Rent',
-          category: 'housing',
+          category: 'essenciais',
           value: 1500,
           dueDay: 5,
-          isActive: true,
-          startDate: '2024-01-01',
-          hasInstallments: false
+          isRecurring: true,
         };
 
         mockGetRecurringExpenses.mockResolvedValue([mockRecurring]);
@@ -152,7 +160,7 @@ describe('monthAdapter', () => {
           expect.objectContaining({
             month_id: 'month-1',
             title: 'Rent',
-            category_key: 'housing',
+            category_key: 'essenciais',
             value: 1500,
             is_recurring: true,
             is_pending: true
@@ -238,27 +246,23 @@ describe('monthAdapter', () => {
 
   describe('updateMonthLimits', () => {
     const validLimits = {
-      housing: 30,
-      food: 20,
-      transportation: 15,
-      health: 10,
-      education: 5,
-      leisure: 5,
-      clothing: 5,
-      debts: 5,
-      investments: 5,
-      others: 0
-    } as Record<string, number>;
+      essenciais: 55,
+      conforto: 10,
+      metas: 10,
+      prazeres: 10,
+      liberdade: 10,
+      conhecimento: 5,
+    } as Record<CategoryKey, number>;
 
     it('should return early when familyId is null', async () => {
-      await updateMonthLimits(null, 'month-1', validLimits as never);
+      await updateMonthLimits(null, 'month-1', validLimits);
       expect(budgetService.updateMonthLimit).not.toHaveBeenCalled();
     });
 
     it('should throw error when limits do not sum to 100', async () => {
-      const invalidLimits = { ...validLimits, housing: 50 }; // Total: 120%
+      const invalidLimits = { ...validLimits, essenciais: 75 }; // Total: 120%
 
-      await expect(updateMonthLimits('family-123', 'month-1', invalidLimits as never))
+      await expect(updateMonthLimits('family-123', 'month-1', invalidLimits as Record<CategoryKey, number>))
         .rejects.toThrow(/must sum to 100%/);
     });
 
@@ -266,7 +270,7 @@ describe('monthAdapter', () => {
       (offlineAdapter.isOfflineId as Mock).mockReturnValue(false);
       (budgetService.updateMonthLimit as Mock).mockResolvedValue({ error: null });
 
-      await updateMonthLimits('family-123', 'month-1', validLimits as never);
+      await updateMonthLimits('family-123', 'month-1', validLimits);
 
       expect(budgetService.updateMonthLimit).toHaveBeenCalled();
     });
@@ -277,7 +281,7 @@ describe('monthAdapter', () => {
       (offlineAdapter.get as Mock).mockResolvedValue(null);
       (offlineAdapter.put as Mock).mockResolvedValue(undefined);
 
-      await updateMonthLimits('family-123', 'month-1', validLimits as never);
+      await updateMonthLimits('family-123', 'month-1', validLimits);
 
       expect(offlineAdapter.put).toHaveBeenCalledWith('category_limits', expect.any(Object));
     });
@@ -321,7 +325,7 @@ describe('monthAdapter', () => {
   describe('getIncomeSourcesByMonth', () => {
     it('should fetch income sources via budgetService', async () => {
       const mockSources: IncomeSourceRow[] = [
-        { id: 'source-1', month_id: 'month-1', name: 'Salary', value: 5000, created_at: '2024-01-01' }
+        { id: 'source-1', month_id: 'month-1', name: 'Salary', value: 5000, created_at: '2024-01-01', updated_at: '2024-01-01' }
       ];
       (budgetService.getIncomeSourcesByMonth as Mock).mockResolvedValue({ data: mockSources, error: null });
 
