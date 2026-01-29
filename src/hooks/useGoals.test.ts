@@ -1,16 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useGoals } from './useGoals';
+import type { GoalEntry, Goal } from '@/types';
+
+interface MonthlySuggestionResult {
+  suggestedAmount: number;
+  monthsRemaining: number;
+  isOnTrack: boolean;
+}
 
 // Mock dependencies
-const mockGoals = [
+const mockGoals: Goal[] = [
   {
     id: 'goal-1',
     familyId: 'family-123',
     name: 'Emergency Fund',
     targetValue: 10000,
     currentValue: 2500,
-    status: 'active' as const,
+    status: 'active',
   },
   {
     id: 'goal-2',
@@ -18,14 +25,20 @@ const mockGoals = [
     name: 'Vacation',
     targetValue: 5000,
     currentValue: 1000,
-    status: 'active' as const,
+    status: 'active',
   },
 ];
 
-const mockEntries = [
-  { id: 'entry-1', goalId: 'goal-1', value: 500, description: 'Initial deposit' },
-  { id: 'entry-2', goalId: 'goal-1', value: 2000, description: 'Bonus' },
+const mockEntries: GoalEntry[] = [
+  { id: 'entry-1', goalId: 'goal-1', value: 500, description: 'Initial deposit', month: 1, year: 2025 },
+  { id: 'entry-2', goalId: 'goal-1', value: 2000, description: 'Bonus', month: 2, year: 2025 },
 ];
+
+const mockMonthlySuggestion: MonthlySuggestionResult = {
+  suggestedAmount: 500,
+  monthsRemaining: 12,
+  isOnTrack: true,
+};
 
 vi.mock('@/contexts/FamilyContext', () => ({
   useFamily: () => ({
@@ -105,7 +118,7 @@ describe('useGoals', () => {
     mockedStorageAdapter.getGoalEntries.mockResolvedValue(mockEntries);
     mockedStorageAdapter.createManualGoalEntry.mockResolvedValue(mockEntries[0]);
     mockedStorageAdapter.importGoalExpense.mockResolvedValue(mockEntries[0]);
-    mockedStorageAdapter.calculateGoalMonthlySuggestion.mockResolvedValue(500);
+    mockedStorageAdapter.calculateGoalMonthlySuggestion.mockResolvedValue(mockMonthlySuggestion);
     mockedStorageAdapter.getGoalHistoricalExpenses.mockResolvedValue([]);
   });
 
@@ -292,7 +305,7 @@ describe('useGoals', () => {
       suggestion = await result.current.getMonthlySuggestion('goal-1');
     });
 
-    expect(suggestion).toBe(500);
+    expect(suggestion).toEqual(mockMonthlySuggestion);
     expect(mockedStorageAdapter.calculateGoalMonthlySuggestion).toHaveBeenCalledWith('goal-1');
   });
 

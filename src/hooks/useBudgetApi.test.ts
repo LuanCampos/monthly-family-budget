@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { createBudgetApi } from './useBudgetApi';
 import * as storageAdapter from '@/lib/adapters/storageAdapter';
+import type { RecurringExpense } from '@/types';
 
 // Mock the storage adapter
 vi.mock('@/lib/adapters/storageAdapter');
@@ -315,10 +316,10 @@ describe('useBudgetApi', () => {
     it('should apply recurring to month via storageAdapter', async () => {
       (storageAdapter.applyRecurringToMonth as Mock).mockResolvedValue(true);
 
-      const recurring = {
+      const recurring: RecurringExpense = {
         id: 'rec-1',
         title: 'Rent',
-        category: 'essenciais' as const,
+        category: 'essenciais',
         value: 1000,
         isRecurring: true,
       };
@@ -337,10 +338,15 @@ describe('useBudgetApi', () => {
         setSubcategories: mockSetSubcategories,
       });
 
-      const result = await apiNoFamily.applyRecurringToMonth(
-        { id: 'rec-1', title: 'Test', category: 'essenciais', value: 100, isRecurring: true },
-        'month-1'
-      );
+      const recurring: RecurringExpense = {
+        id: 'rec-1',
+        title: 'Test',
+        category: 'essenciais',
+        value: 100,
+        isRecurring: true,
+      };
+
+      const result = await apiNoFamily.applyRecurringToMonth(recurring, 'month-1');
 
       expect(result).toBe(false);
     });
