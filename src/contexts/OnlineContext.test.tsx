@@ -1,3 +1,6 @@
+import { makeMockPendingSyncItem } from '@/test/mocks/domain/makeMockPendingSyncItem';
+import { makeMockFamily } from '@/test/mocks/domain/makeMockFamily';
+import { makeMockExpense } from '@/test/mocks/domain/makeMockExpense';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { OnlineProvider, useOnline } from './OnlineContext';
@@ -125,8 +128,8 @@ describe('OnlineContext', () => {
   describe('pendingSyncCount', () => {
     it('should count pending sync items', async () => {
       vi.mocked(offlineAdapter.sync.getAll).mockResolvedValue([
-        { id: '1', action: 'insert', type: 'expense', familyId: 'family-1', data: {}, createdAt: '2025-01-01' },
-        { id: '2', action: 'update', type: 'expense', familyId: 'family-1', data: {}, createdAt: '2025-01-01' },
+        makeMockPendingSyncItem({ id: '1', action: 'insert', type: 'expense', familyId: 'family-1', data: {}, createdAt: '2025-01-01' }),
+        makeMockPendingSyncItem({ id: '2', action: 'update', type: 'expense', familyId: 'family-1', data: {}, createdAt: '2025-01-01' }),
       ]);
       const { result } = renderHook(() => useOnline(), { wrapper });
       await waitFor(() => {
@@ -200,7 +203,7 @@ describe('OnlineContext', () => {
     });
 
     it('should sync family successfully when all conditions are met', async () => {
-      const mockFamily = { id: 'offline-family-123', name: 'Test Family', isOffline: true };
+      const mockFamily = makeMockFamily({ id: 'offline-family-123', name: 'Test Family', isOffline: true });
       vi.mocked(offlineAdapter.get).mockResolvedValue(mockFamily);
       vi.mocked(offlineAdapter.getAllByIndex).mockResolvedValue([]);
       vi.mocked(offlineAdapter.sync.getByFamily).mockResolvedValue([]);
@@ -218,7 +221,7 @@ describe('OnlineContext', () => {
     });
 
     it('should handle family creation error', async () => {
-      const mockFamily = { id: 'offline-family-123', name: 'Test Family', isOffline: true };
+      const mockFamily = makeMockFamily({ id: 'offline-family-123', name: 'Test Family', isOffline: true });
       vi.mocked(offlineAdapter.get).mockResolvedValue(mockFamily);
       vi.mocked(offlineAdapter.getAllByIndex).mockResolvedValue([]);
       vi.mocked(familyService.insertFamily).mockResolvedValue({ 
@@ -234,7 +237,7 @@ describe('OnlineContext', () => {
     });
 
     it('should handle member creation error and rollback', async () => {
-      const mockFamily = { id: 'offline-family-123', name: 'Test Family', isOffline: true };
+      const mockFamily = makeMockFamily({ id: 'offline-family-123', name: 'Test Family', isOffline: true });
       vi.mocked(offlineAdapter.get).mockResolvedValue(mockFamily);
       vi.mocked(offlineAdapter.getAllByIndex).mockResolvedValue([]);
       vi.mocked(familyService.insertFamily).mockResolvedValue({ 
@@ -259,14 +262,14 @@ describe('OnlineContext', () => {
   describe('syncNow edge cases', () => {
     it('should sync insert operations for non-offline families', async () => {
       vi.mocked(offlineAdapter.sync.getAll).mockResolvedValue([
-        { 
-          id: 'sync-1', 
-          action: 'insert', 
-          type: 'expense', 
-          familyId: 'real-cloud-family-123', // Not an offline ID
-          data: { title: 'Test Expense', value: 100 }, 
-          createdAt: '2025-01-01' 
-        },
+        makeMockPendingSyncItem({
+          id: 'sync-1',
+          action: 'insert',
+          type: 'expense',
+          familyId: 'real-cloud-family-123',
+          data: makeMockExpense({ title: 'Test Expense', value: 100 }),
+          createdAt: '2025-01-01',
+        }),
       ]);
       
       const { result } = renderHook(() => useOnline(), { wrapper });
@@ -279,14 +282,14 @@ describe('OnlineContext', () => {
 
     it('should sync update operations', async () => {
       vi.mocked(offlineAdapter.sync.getAll).mockResolvedValue([
-        { 
-          id: 'sync-1', 
-          action: 'update', 
-          type: 'expense', 
+        makeMockPendingSyncItem({
+          id: 'sync-1',
+          action: 'update',
+          type: 'expense',
           familyId: 'real-cloud-family-123',
-          data: { id: 'exp-123', title: 'Updated Expense', value: 200 }, 
-          createdAt: '2025-01-01' 
-        },
+          data: makeMockExpense({ id: 'exp-123', title: 'Updated Expense', value: 200 }),
+          createdAt: '2025-01-01',
+        }),
       ]);
       
       const { result } = renderHook(() => useOnline(), { wrapper });
@@ -299,14 +302,14 @@ describe('OnlineContext', () => {
 
     it('should sync delete operations', async () => {
       vi.mocked(offlineAdapter.sync.getAll).mockResolvedValue([
-        { 
-          id: 'sync-1', 
-          action: 'delete', 
-          type: 'expense', 
+        makeMockPendingSyncItem({
+          id: 'sync-1',
+          action: 'delete',
+          type: 'expense',
           familyId: 'real-cloud-family-123',
-          data: { id: 'exp-123' }, 
-          createdAt: '2025-01-01' 
-        },
+          data: { id: 'exp-123' },
+          createdAt: '2025-01-01',
+        }),
       ]);
       
       const { result } = renderHook(() => useOnline(), { wrapper });

@@ -24,7 +24,7 @@ describe('ThemeContext', () => {
   describe('useTheme', () => {
     it('should throw error when used outside provider', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       expect(() => {
         renderHook(() => useTheme());
       }).toThrow('useTheme must be used within a ThemeProvider');

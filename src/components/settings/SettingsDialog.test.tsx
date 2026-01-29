@@ -2,9 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { forwardRef } from 'react';
+
 import { SettingsDialog } from './SettingsDialog';
 
-// Mock all required contexts and dependencies
+// Centralized context/domain mocks
+import { makeMockUser } from '@/test/mocks/domain/makeMockUser';
+import { makeMockFamilyContext } from '@/test/mocks/context/makeMockFamilyContext';
+import { makeMockOnlineContext } from '@/test/mocks/context/makeMockOnlineContext';
+
 vi.mock('@/contexts/LanguageContext', () => ({
   useLanguage: () => ({
     language: 'pt',
@@ -57,57 +62,19 @@ vi.mock('@/contexts/CurrencyContext', () => ({
   }),
 }));
 
-const mockUser = {
-  id: 'user-1',
-  email: 'test@example.com',
-  user_metadata: { display_name: 'Test User' },
-};
-
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: mockUser,
+    user: makeMockUser({ id: 'user-1', email: 'test@example.com' }),
     signOut: vi.fn().mockResolvedValue(undefined),
   }),
 }));
 
-const mockCurrentFamily = {
-  id: 'family-1',
-  name: 'Test Family',
-  isOffline: false,
-};
-
 vi.mock('@/contexts/FamilyContext', () => ({
-  useFamily: () => ({
-    currentFamily: mockCurrentFamily,
-    families: [mockCurrentFamily],
-    selectFamily: vi.fn(),
-    createFamily: vi.fn().mockResolvedValue({ error: null }),
-    members: [
-      { id: 'member-1', userId: 'user-1', role: 'owner', email: 'test@example.com', displayName: 'Test User' },
-    ],
-    pendingInvitations: [],
-    myPendingInvitations: [],
-    userRole: 'owner',
-    inviteMember: vi.fn().mockResolvedValue({ error: null }),
-    cancelInvitation: vi.fn().mockResolvedValue({ error: null }),
-    acceptInvitation: vi.fn().mockResolvedValue({ error: null }),
-    rejectInvitation: vi.fn().mockResolvedValue({ error: null }),
-    updateMemberRole: vi.fn().mockResolvedValue({ error: null }),
-    removeMember: vi.fn().mockResolvedValue({ error: null }),
-    updateFamilyName: vi.fn().mockResolvedValue({ error: null }),
-    deleteFamily: vi.fn().mockResolvedValue({ error: null }),
-    leaveFamily: vi.fn().mockResolvedValue({ error: null }),
-    refreshFamilies: vi.fn().mockResolvedValue(undefined),
-  }),
+  useFamily: () => makeMockFamilyContext(),
 }));
 
 vi.mock('@/contexts/OnlineContext', () => ({
-  useOnline: () => ({
-    syncFamily: vi.fn().mockResolvedValue({ newFamilyId: null, error: null }),
-    isSyncing: false,
-    syncProgress: null,
-    isOnline: true,
-  }),
+  useOnline: () => makeMockOnlineContext(),
 }));
 
 vi.mock('@/lib/adapters/offlineAdapter', () => ({

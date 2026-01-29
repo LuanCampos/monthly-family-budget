@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { forwardRef } from 'react';
 import { ExpenseFormDialog } from './ExpenseFormDialog';
 import type { CategoryKey } from '@/types/budget';
+import { makeMockExpense } from '@/test/mocks/expense/makeMockExpense';
 
 // Mock dependencies
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -92,13 +93,12 @@ describe('ExpenseFormDialog', () => {
     });
 
     it('should render form fields in edit mode', () => {
-      const initialData = {
+      const initialData = makeMockExpense({
         id: 'expense-1',
         title: 'Test Expense',
-        category: 'essenciais' as CategoryKey,
         value: 100,
         isPending: true,
-      };
+      });
 
       render(
         <ExpenseFormDialog 
@@ -113,14 +113,13 @@ describe('ExpenseFormDialog', () => {
     });
 
     it('should show pending checkbox in edit mode for recurring expenses', () => {
-      const initialData = {
+      const initialData = makeMockExpense({
         id: 'expense-1',
         title: 'Test Expense',
-        category: 'essenciais' as CategoryKey,
         value: 100,
         isRecurring: true,
         isPending: true,
-      };
+      });
 
       render(
         <ExpenseFormDialog 

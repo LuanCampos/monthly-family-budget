@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ExpenseList } from './ExpenseList';
-import type { Expense, CategoryKey } from '@/types';
+import type { Expense } from '@/types';
+import { makeMockExpense } from '@/test/mocks/expense/makeMockExpense';
 
 // Mock dependencies
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -53,26 +54,12 @@ describe('ExpenseList', () => {
   });
 
   describe('with expenses', () => {
-    it('should render expense items', () => {
-      const expenses: Expense[] = [
-        {
-          id: 'expense-1',
-          title: 'Rent',
-          category: 'essenciais' as CategoryKey,
-          value: 1500,
-          isRecurring: false,
-          isPending: false,
-        },
-        {
-          id: 'expense-2',
-          title: 'Groceries',
-          category: 'essenciais' as CategoryKey,
-          value: 500,
-          isRecurring: false,
-          isPending: false,
-        },
-      ];
+    const expenses = [
+      makeMockExpense({ id: 'expense-1', title: 'Rent', value: 1500 }),
+      makeMockExpense({ id: 'expense-2', title: 'Groceries', value: 500 }),
+    ];
 
+    it('should render expense items', () => {
       render(<ExpenseList {...defaultProps} expenses={expenses} />);
       
       expect(screen.getByText('Rent')).toBeInTheDocument();
@@ -80,35 +67,19 @@ describe('ExpenseList', () => {
     });
 
     it('should render expense values', () => {
-      const expenses: Expense[] = [
-        {
-          id: 'expense-1',
-          title: 'Rent',
-          category: 'essenciais' as CategoryKey,
-          value: 1500,
-          isRecurring: false,
-          isPending: false,
-        },
-      ];
+      const singleExpense = [makeMockExpense({ id: 'expense-1', title: 'Rent', value: 1500 })];
 
-      render(<ExpenseList {...defaultProps} expenses={expenses} />);
+      render(<ExpenseList {...defaultProps} expenses={singleExpense} />);
       
       expect(screen.getByText('R$ 1500.00')).toBeInTheDocument();
     });
 
     it('should show pending indicator for pending expenses', () => {
-      const expenses: Expense[] = [
-        {
-          id: 'expense-1',
-          title: 'Pending Bill',
-          category: 'essenciais' as CategoryKey,
-          value: 200,
-          isRecurring: true,
-          isPending: true,
-        },
+      const pendingExpense = [
+        makeMockExpense({ id: 'expense-1', title: 'Pending Bill', value: 200, isRecurring: true, isPending: true }),
       ];
 
-      render(<ExpenseList {...defaultProps} expenses={expenses} />);
+      render(<ExpenseList {...defaultProps} expenses={pendingExpense} />);
       
       expect(screen.getByText('Pending Bill')).toBeInTheDocument();
       // Check for pending indicator (button with title)
@@ -118,23 +89,9 @@ describe('ExpenseList', () => {
 
   describe('search filter', () => {
     it('should filter expenses by search term', () => {
-      const expenses: Expense[] = [
-        {
-          id: 'expense-1',
-          title: 'Rent',
-          category: 'essenciais' as CategoryKey,
-          value: 1500,
-          isRecurring: false,
-          isPending: false,
-        },
-        {
-          id: 'expense-2',
-          title: 'Groceries',
-          category: 'essenciais' as CategoryKey,
-          value: 500,
-          isRecurring: false,
-          isPending: false,
-        },
+      const expenses = [
+        makeMockExpense({ id: 'expense-1', title: 'Rent', value: 1500 }),
+        makeMockExpense({ id: 'expense-2', title: 'Groceries', value: 500 }),
       ];
 
       render(<ExpenseList {...defaultProps} expenses={expenses} searchTerm="Rent" />);

@@ -5,20 +5,32 @@ import * as storageAdapter from '@/lib/adapters/storageAdapter';
 import { offlineAdapter } from '@/lib/adapters/offlineAdapter';
 import { useFamily } from '@/contexts/FamilyContext';
 import type { Month } from '@/types';
+import { makeMockFamily } from '@/test/mocks/domain/makeMockFamily';
+import { makeMockOfflineAdapter } from '@/test/mocks/services/makeMockServices';
+import { makeMockExpense } from '@/test/mocks/domain/makeMockExpense';
+import { makeMockRecurringExpense } from '@/test/mocks/domain/makeMockRecurringExpense';
 
 // Mock dependencies
 vi.mock('@/lib/adapters/storageAdapter');
+// O factory do vi.mock precisa ser inline para evitar ReferenceError
 vi.mock('@/lib/adapters/offlineAdapter', () => ({
   offlineAdapter: {
-    isOfflineId: vi.fn(),
-    generateOfflineId: vi.fn(),
-    get: vi.fn(),
+    isOfflineId: vi.fn().mockReturnValue(false),
+    generateOfflineId: vi.fn().mockReturnValue('offline-id-1'),
+    getPendingChanges: vi.fn().mockResolvedValue([]),
+    syncPendingChanges: vi.fn().mockResolvedValue([]),
+    clearPendingChanges: vi.fn().mockResolvedValue(undefined),
     put: vi.fn(),
+    get: vi.fn(),
     delete: vi.fn(),
     sync: { add: vi.fn() },
   },
 }));
-vi.mock('@/contexts/FamilyContext');
+vi.mock('@/contexts/FamilyContext', () => ({
+  useFamily: vi.fn(() => ({
+    currentFamilyId: makeMockFamily().id,
+  })),
+}));
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
@@ -27,10 +39,10 @@ vi.mock('sonner', () => ({
 }));
 
 describe('useBudget', () => {
-  const mockFamilyId = 'family-123';
+  const mockFamilyId = makeMockFamily().id;
   
   const mockMonth: Month = {
-    id: 'family-123-2026-01',
+    id: `${mockFamilyId}-2026-01`,
     label: 'Janeiro 2026',
     year: 2026,
     month: 1,
@@ -52,7 +64,7 @@ describe('useBudget', () => {
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true });
     
     (useFamily as Mock).mockReturnValue({
-      currentFamilyId: mockFamilyId,
+      currentFamilyId: makeMockFamily().id,
     });
     
     (offlineAdapter.isOfflineId as Mock).mockReturnValue(false);
@@ -163,10 +175,10 @@ describe('useBudget', () => {
       });
 
       await act(async () => {
-        await result.current.removeMonth('family-123-2026-01');
+        await result.current.removeMonth(`${mockFamilyId}-2026-01`);
       });
 
-      expect(storageAdapter.deleteMonthById).toHaveBeenCalledWith(mockFamilyId, 'family-123-2026-01');
+      expect(storageAdapter.deleteMonthById).toHaveBeenCalledWith(mockFamilyId, `${mockFamilyId}-2026-01`);
     });
 
     it('should select a different month', async () => {
@@ -259,13 +271,13 @@ describe('useBudget', () => {
       const monthWithPendingExpense: Month = {
         ...mockMonth,
         expenses: [
-          { id: 'exp-1', title: 'Pending Bill', category: 'essenciais', value: 100, isRecurring: false, isPending: true },
+          makeMockExpense({ id: 'exp-1', title: 'Pending Bill', category: 'essenciais', value: 100, isRecurring: false, isPending: true }),
         ],
       };
       const monthAfterPayment: Month = {
         ...mockMonth,
         expenses: [
-          { id: 'exp-1', title: 'Pending Bill', category: 'essenciais', value: 100, isRecurring: false, isPending: false },
+          makeMockExpense({ id: 'exp-1', title: 'Pending Bill', category: 'essenciais', value: 100, isRecurring: false, isPending: false }),
         ],
       };
 
@@ -378,13 +390,7 @@ describe('useBudget', () => {
     });
 
     it('should apply recurring to current month', async () => {
-      const mockRecurring = {
-        id: 'rec-1',
-        title: 'Rent',
-        category: 'essenciais' as const,
-        value: 1000,
-        isRecurring: true,
-      };
+      const mockRecurring = makeMockRecurringExpense({ id: 'rec-1', title: 'Rent', category: 'essenciais', value: 1000, isRecurring: true });
       (storageAdapter.getRecurringExpenses as Mock).mockResolvedValue([mockRecurring]);
       (storageAdapter.applyRecurringToMonth as Mock).mockResolvedValue(true);
 
@@ -563,8 +569,8 @@ describe('useBudget', () => {
         ...mockMonth,
         income: 1000,
         expenses: [
-          { id: 'e1', title: 'Rent', category: 'essenciais', value: 300, isRecurring: false, isPending: false },
-          { id: 'e2', title: 'Food', category: 'essenciais', value: 200, isRecurring: false, isPending: false },
+          makeMockExpense({ id: 'e1', title: 'Rent', category: 'essenciais', value: 300, isRecurring: false, isPending: false }),
+          makeMockExpense({ id: 'e2', title: 'Food', category: 'essenciais', value: 200, isRecurring: false, isPending: false }),
         ],
       };
       (storageAdapter.getMonthsWithExpenses as Mock).mockResolvedValue([monthWithExpenses]);
@@ -589,8 +595,8 @@ describe('useBudget', () => {
         ...mockMonth,
         income: 1000,
         expenses: [
-          { id: 'e1', title: 'Rent', category: 'essenciais', value: 300, isRecurring: false, isPending: false },
-          { id: 'e2', title: 'Fun', category: 'prazeres', value: 100, isRecurring: false, isPending: false },
+          makeMockExpense({ id: 'e1', title: 'Rent', category: 'essenciais', value: 300, isRecurring: false, isPending: false }),
+          makeMockExpense({ id: 'e2', title: 'Fun', category: 'prazeres', value: 100, isRecurring: false, isPending: false }),
         ],
       };
       (storageAdapter.getMonthsWithExpenses as Mock).mockResolvedValue([monthWithExpenses]);
@@ -629,7 +635,7 @@ describe('useBudget', () => {
         ...mockMonth,
         income: 0,
         expenses: [
-          { id: 'e1', title: 'Test', category: 'essenciais', value: 100, isRecurring: false, isPending: false },
+          makeMockExpense({ id: 'e1', title: 'Test', category: 'essenciais', value: 100, isRecurring: false, isPending: false }),
         ],
       };
       (storageAdapter.getMonthsWithExpenses as Mock).mockResolvedValue([monthWithZeroIncome]);
@@ -691,5 +697,12 @@ describe('useBudget', () => {
       expect(essenciais?.budget).toBe(550); // 55% of 1000
       expect(essenciais?.remaining).toBe(550);
     });
+  });
+  // Sobrescreve métodos do offlineAdapter com mocks centralizados, se necessário
+  const offline = offlineAdapter as unknown as Record<string, unknown>;
+  const central = makeMockOfflineAdapter();
+  Object.keys(central).forEach((key) => {
+    // sobrescrevendo mocks
+    offline[key] = central[key];
   });
 });

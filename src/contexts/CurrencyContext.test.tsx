@@ -21,9 +21,8 @@ describe('CurrencyContext', () => {
 
   describe('useCurrency', () => {
     it('should throw error when used outside provider', () => {
-      // Suppress console.error for this test
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       expect(() => {
         renderHook(() => useCurrency());
       }).toThrow('useCurrency must be used within a CurrencyProvider');

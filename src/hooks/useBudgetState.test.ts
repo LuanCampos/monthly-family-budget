@@ -2,15 +2,19 @@ import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useBudgetState } from './useBudgetState';
 
-// Mock categories
+import { makeMockMonth } from '@/test/mocks/domain/makeMockMonth';
+import { makeMockRecurringExpense } from '@/test/mocks/domain/makeMockRecurringExpense';
+import { makeMockSubcategory } from '@/test/mocks/domain/makeMockSubcategory';
+
+// O factory do vi.mock precisa ser inline para evitar ReferenceError
 vi.mock('@/constants/categories', () => ({
   CATEGORIES: [
-    { key: 'essenciais', color: '#22c55e', percentage: 55 },
-    { key: 'conforto', color: '#3b82f6', percentage: 10 },
-    { key: 'metas', color: '#a855f7', percentage: 10 },
-    { key: 'prazeres', color: '#f97316', percentage: 10 },
-    { key: 'liberdade', color: '#eab308', percentage: 10 },
-    { key: 'conhecimento', color: '#06b6d4', percentage: 5 },
+    { key: 'essenciais', name: 'Essenciais', percentage: 55, color: 'hsl(187, 85%, 53%)' },
+    { key: 'conforto', name: 'Conforto', percentage: 10, color: 'hsl(160, 84%, 39%)' },
+    { key: 'metas', name: 'Metas', percentage: 10, color: 'hsl(48, 96%, 53%)' },
+    { key: 'prazeres', name: 'Prazeres', percentage: 10, color: 'hsl(291, 64%, 42%)' },
+    { key: 'liberdade', name: 'Liberdade', percentage: 10, color: 'hsl(217, 91%, 60%)' },
+    { key: 'conhecimento', name: 'Conhecimento', percentage: 5, color: 'hsl(25, 95%, 53%)' },
   ],
 }));
 
@@ -44,8 +48,8 @@ describe('useBudgetState', () => {
     const { result } = renderHook(() => useBudgetState());
 
     const mockMonths = [
-      { id: 'month-1', year: 2025, month: 1, income: 5000, expenses: [] },
-      { id: 'month-2', year: 2025, month: 2, income: 5500, expenses: [] },
+      makeMockMonth({ id: 'month-1', year: 2025, month: 1, income: 5000, expenses: [] }),
+      makeMockMonth({ id: 'month-2', year: 2025, month: 2, income: 5500, expenses: [] }),
     ];
 
     act(() => {
@@ -69,8 +73,8 @@ describe('useBudgetState', () => {
     const { result } = renderHook(() => useBudgetState());
 
     const mockMonths = [
-      { id: 'month-1', year: 2025, month: 1, income: 5000, expenses: [] },
-      { id: 'month-2', year: 2025, month: 2, income: 5500, expenses: [] },
+      makeMockMonth({ id: 'month-1', year: 2025, month: 1, income: 5000, expenses: [] }),
+      makeMockMonth({ id: 'month-2', year: 2025, month: 2, income: 5500, expenses: [] }),
     ];
 
     act(() => {
@@ -85,7 +89,7 @@ describe('useBudgetState', () => {
     const { result } = renderHook(() => useBudgetState());
 
     const mockMonths = [
-      { id: 'month-1', year: 2025, month: 1, income: 5000, expenses: [] },
+      makeMockMonth({ id: 'month-1', year: 2025, month: 1, income: 5000, expenses: [] }),
     ];
 
     act(() => {
@@ -100,8 +104,8 @@ describe('useBudgetState', () => {
     const { result } = renderHook(() => useBudgetState());
 
     const mockRecurring = [
-      { id: 'rec-1', title: 'Netflix', value: 45 },
-      { id: 'rec-2', title: 'Spotify', value: 20 },
+      makeMockRecurringExpense({ id: 'rec-1', title: 'Netflix', value: 45 }),
+      makeMockRecurringExpense({ id: 'rec-2', title: 'Spotify', value: 20 }),
     ];
 
     act(() => {
@@ -115,8 +119,8 @@ describe('useBudgetState', () => {
     const { result } = renderHook(() => useBudgetState());
 
     const mockSubcategories = [
-      { id: 'sub-1', name: 'Groceries', categoryKey: 'essenciais' },
-      { id: 'sub-2', name: 'Entertainment', categoryKey: 'prazeres' },
+      makeMockSubcategory({ id: 'sub-1', name: 'Groceries', categoryKey: 'essenciais' }),
+      makeMockSubcategory({ id: 'sub-2', name: 'Entertainment', categoryKey: 'prazeres' }),
     ];
 
     act(() => {

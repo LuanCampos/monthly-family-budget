@@ -4,6 +4,10 @@ import * as budgetService from '../services/budgetService';
 import * as goalAdapter from './goal';
 import { offlineAdapter } from './offlineAdapter';
 
+import { makeMockExpense } from '@/test/mocks/domain/makeMockExpense';
+import { makeMockGoal } from '@/test/mocks/domain/makeMockGoal';
+import { makeMockEntry } from '@/test/mocks/domain/makeMockEntry';
+
 // Mock dependencies
 vi.mock('../services/budgetService');
 vi.mock('./goal');
@@ -71,11 +75,26 @@ describe('expenseAdapter', () => {
       const result = await insertExpense(mockFamilyId, basePayload);
 
       expect(budgetService.insertExpense).not.toHaveBeenCalled();
-      expect(offlineAdapter.put).toHaveBeenCalledWith('expenses', expect.objectContaining({
-        id: 'offline-exp-1',
-        family_id: mockFamilyId,
-        title: 'Test Expense',
-      }));
+      expect(offlineAdapter.put).toHaveBeenCalledWith(
+        'expenses',
+        expect.objectContaining({
+          id: 'offline-exp-1',
+          family_id: mockFamilyId,
+          month_id: mockMonthId,
+          title: 'Test Expense',
+          category_key: 'essenciais',
+          value: 100,
+          is_recurring: false,
+          is_pending: false,
+          due_day: null,
+          recurring_expense_id: null,
+          installment_current: null,
+          installment_total: null,
+          subcategory_id: null,
+          created_at: expect.any(String),
+          updated_at: expect.any(String),
+        })
+      );
       expect(result).toMatchObject({
         id: 'offline-exp-1',
         family_id: mockFamilyId,
@@ -100,12 +119,33 @@ describe('expenseAdapter', () => {
 
       const result = await insertExpense(mockFamilyId, basePayload);
 
-      expect(offlineAdapter.put).toHaveBeenCalledWith('expenses', expect.any(Object));
-      expect(offlineAdapter.sync.add).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'expense',
-        action: 'insert',
-        familyId: mockFamilyId,
-      }));
+      expect(offlineAdapter.put).toHaveBeenCalledWith(
+        'expenses',
+        expect.objectContaining({
+          id: 'offline-exp-1',
+          family_id: mockFamilyId,
+          month_id: mockMonthId,
+          title: 'Test Expense',
+          category_key: 'essenciais',
+          value: 100,
+          is_recurring: false,
+          is_pending: false,
+          due_day: null,
+          recurring_expense_id: null,
+          installment_current: null,
+          installment_total: null,
+          subcategory_id: null,
+          created_at: expect.any(String),
+          updated_at: expect.any(String),
+        })
+      );
+      expect(offlineAdapter.sync.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'expense',
+          action: 'insert',
+          familyId: mockFamilyId,
+        })
+      );
       expect(result).toMatchObject({ id: 'offline-exp-1' });
     });
 
@@ -122,7 +162,7 @@ describe('expenseAdapter', () => {
     });
 
     it('should create goal entry when expense has linked goal via subcategory', async () => {
-      const mockGoal = { id: 'goal-1', name: 'Test Goal' };
+      const mockGoal = makeMockGoal({ id: 'goal-1', name: 'Test Goal' });
       (goalAdapter.getGoalBySubcategoryId as Mock).mockResolvedValue(mockGoal);
       (budgetService.insertExpense as Mock).mockResolvedValue({
         data: { id: mockExpenseId, ...basePayload, subcategory_id: 'sub-1', is_pending: false },
@@ -138,7 +178,7 @@ describe('expenseAdapter', () => {
     });
 
     it('should create goal entry for liberdade category', async () => {
-      const mockGoal = { id: 'goal-liberdade', name: 'Liberdade Goal' };
+      const mockGoal = makeMockGoal({ id: 'goal-liberdade', name: 'Liberdade Goal' });
       (goalAdapter.getGoalByCategoryKey as Mock).mockResolvedValue(mockGoal);
       (budgetService.insertExpense as Mock).mockResolvedValue({
         data: { id: mockExpenseId, ...basePayload, category_key: 'liberdade', is_pending: false },
@@ -152,7 +192,7 @@ describe('expenseAdapter', () => {
     });
 
     it('should NOT create goal entry when expense is pending', async () => {
-      const mockGoal = { id: 'goal-1', name: 'Test Goal' };
+      const mockGoal = makeMockGoal({ id: 'goal-liberdade', name: 'Liberdade Goal' });
       (goalAdapter.getGoalBySubcategoryId as Mock).mockResolvedValue(mockGoal);
       (budgetService.insertExpense as Mock).mockResolvedValue({
         data: { id: mockExpenseId, ...basePayload, subcategory_id: 'sub-1', is_pending: true },
@@ -183,15 +223,13 @@ describe('expenseAdapter', () => {
   });
 
   describe('updateExpense', () => {
-    const mockExistingExpense = {
+    const mockExistingExpense = makeMockExpense({
       id: mockExpenseId,
-      family_id: mockFamilyId,
-      month_id: mockMonthId,
       title: 'Old Title',
-      category_key: 'essenciais',
+      category: 'essenciais',
       value: 100,
-      is_pending: false,
-    };
+      isPending: false,
+    });
 
     beforeEach(() => {
       (offlineAdapter.get as Mock).mockResolvedValue(mockExistingExpense);
@@ -244,16 +282,22 @@ describe('expenseAdapter', () => {
       await updateExpense(mockFamilyId, mockExpenseId, { title: 'New Title' });
 
       expect(offlineAdapter.put).toHaveBeenCalled();
-      expect(offlineAdapter.sync.add).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'expense',
-        action: 'update',
-        data: { id: mockExpenseId, title: 'New Title' },
-      }));
+      expect(offlineAdapter.sync.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'expense',
+          action: 'update',
+          data: expect.objectContaining({
+            id: mockExpenseId,
+            title: 'New Title',
+          }),
+          familyId: mockFamilyId,
+        })
+      );
     });
 
     it('should update goal entry when expense value changes', async () => {
-      const mockEntry = { id: 'entry-1', goalId: 'goal-1', expenseId: mockExpenseId };
-      const mockGoal = { id: 'goal-1', name: 'Test Goal' };
+      const mockEntry = makeMockEntry({ id: 'entry-1', goalId: 'goal-1', expenseId: mockExpenseId });
+      const mockGoal = makeMockGoal({ id: 'goal-1', name: 'Test Goal' });
       (goalAdapter.getEntryByExpense as Mock).mockResolvedValue(mockEntry);
       (goalAdapter.getGoalBySubcategoryId as Mock).mockResolvedValue(mockGoal);
       (offlineAdapter.get as Mock).mockResolvedValue({ ...mockExistingExpense, subcategory_id: 'sub-1' });
@@ -274,15 +318,13 @@ describe('expenseAdapter', () => {
   });
 
   describe('setExpensePending', () => {
-    const mockExpense = {
+    const mockExpense = makeMockExpense({
       id: mockExpenseId,
-      family_id: mockFamilyId,
-      month_id: mockMonthId,
       title: 'Test Expense',
-      category_key: 'essenciais',
+      category: 'essenciais',
       value: 100,
-      is_pending: true,
-    };
+      isPending: true,
+    });
 
     beforeEach(() => {
       (offlineAdapter.get as Mock).mockResolvedValue(mockExpense);
@@ -344,7 +386,7 @@ describe('expenseAdapter', () => {
 
     it('should create goal entry when expense is marked as paid (pending: false)', async () => {
       Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
-      const mockGoal = { id: 'goal-1', name: 'Test Goal' };
+      const mockGoal = makeMockGoal({ id: 'goal-1', name: 'Test Goal' });
       (offlineAdapter.get as Mock).mockResolvedValue({ ...mockExpense, subcategory_id: 'sub-1' });
       (goalAdapter.getGoalBySubcategoryId as Mock).mockResolvedValue(mockGoal);
 
@@ -371,14 +413,12 @@ describe('expenseAdapter', () => {
   });
 
   describe('deleteExpense', () => {
-    const mockExpense = {
+    const mockExpense = makeMockExpense({
       id: mockExpenseId,
-      family_id: mockFamilyId,
-      month_id: mockMonthId,
       title: 'Test Expense',
-      category_key: 'essenciais',
+      category: 'essenciais',
       value: 100,
-    };
+    });
 
     beforeEach(() => {
       (offlineAdapter.get as Mock).mockResolvedValue(mockExpense);
@@ -421,7 +461,7 @@ describe('expenseAdapter', () => {
 
     it('should delete goal entry when expense has one', async () => {
       Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
-      const mockEntry = { id: 'entry-1', goalId: 'goal-1', expenseId: mockExpenseId };
+      const mockEntry = makeMockEntry({ id: 'entry-1', goalId: 'goal-1', expenseId: mockExpenseId });
       (goalAdapter.getEntryByExpense as Mock).mockResolvedValue(mockEntry);
 
       await deleteExpense(mockFamilyId, mockExpenseId);
@@ -430,7 +470,7 @@ describe('expenseAdapter', () => {
     });
 
     it('should delete goal entry on successful online delete', async () => {
-      const mockEntry = { id: 'entry-1', goalId: 'goal-1', expenseId: mockExpenseId };
+      const mockEntry = makeMockEntry({ id: 'entry-1', goalId: 'goal-1', expenseId: mockExpenseId });
       (goalAdapter.getEntryByExpense as Mock).mockResolvedValue(mockEntry);
       (budgetService.deleteExpenseById as Mock).mockResolvedValue({
         data: null,
@@ -443,7 +483,7 @@ describe('expenseAdapter', () => {
     });
 
     it('should NOT delete goal entry on service error', async () => {
-      const mockEntry = { id: 'entry-1', goalId: 'goal-1', expenseId: mockExpenseId };
+      const mockEntry = makeMockEntry({ id: 'entry-1', goalId: 'goal-1', expenseId: mockExpenseId });
       (goalAdapter.getEntryByExpense as Mock).mockResolvedValue(mockEntry);
       (budgetService.deleteExpenseById as Mock).mockResolvedValue({
         data: null,

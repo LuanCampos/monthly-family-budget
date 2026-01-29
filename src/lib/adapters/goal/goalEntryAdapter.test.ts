@@ -14,6 +14,7 @@ import { offlineAdapter } from '../offlineAdapter';
 
 import type { GoalEntryRow, ExpenseRow } from '@/types/database';
 import type { GoalEntryPayload } from './types';
+import { createMockExpense } from '@/test/mocks/domain/makeMockDomain';
 
 // Mock dependencies
 vi.mock('../../services/goalService');
@@ -65,23 +66,7 @@ describe('goalEntryAdapter', () => {
     year: 2024,
   };
 
-  const mockExpenseRow: ExpenseRow = {
-    id: mockExpenseId,
-    month_id: 'family-123-2024-01',
-    family_id: mockFamilyId,
-    title: 'Investment',
-    category_key: 'metas',
-    subcategory_id: 'sub-123',
-    value: 1000,
-    is_recurring: false,
-    recurring_expense_id: null,
-    is_pending: false,
-    due_day: null,
-    installment_current: null,
-    installment_total: null,
-    created_at: '2024-01-10T00:00:00Z',
-    updated_at: '2024-01-10T00:00:00Z',
-  };
+  const mockExpenseRow: ExpenseRow = createMockExpense({ id: mockExpenseId, family_id: mockFamilyId });
 
   describe('getEntries', () => {
     it('should return empty array when familyId is null', async () => {
@@ -511,25 +496,26 @@ describe('goalEntryAdapter', () => {
       expect(result).toBeNull();
     });
 
+
     it('should import expense and create entry', async () => {
       (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([]); // No existing entry
-      (goalService.getExpense as Mock).mockResolvedValue({ data: mockExpenseRow, error: null });
-      (goalService.createEntry as Mock).mockResolvedValue({ 
-        data: mockAutomaticEntryRow, 
-        error: null 
-      });
+      // No need to mock getEntryByExpense for online
+      vi.spyOn(goalService, 'importExpenseAsEntry').mockResolvedValue({ data: mockAutomaticEntryRow, error: null });
 
       const result = await importExpense(mockFamilyId, mockGoalId, mockExpenseId);
 
-      expect(goalService.createEntry).toHaveBeenCalled();
+      expect(goalService.importExpenseAsEntry).toHaveBeenCalledWith(mockGoalId, mockExpenseId);
       expect(result).toMatchObject({
         id: 'entry-auto',
         expenseId: mockExpenseId,
       });
     });
 
+
     it('should throw when expense already imported', async () => {
-      (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([mockAutomaticEntryRow]);
+      (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([]);
+      // Simula erro de já importado
+      vi.spyOn(goalService, 'importExpenseAsEntry').mockResolvedValue({ data: null, error: { message: 'already imported' } });
 
       await expect(importExpense(mockFamilyId, mockGoalId, mockExpenseId))
         .rejects.toThrow('already imported');
@@ -537,7 +523,8 @@ describe('goalEntryAdapter', () => {
 
     it('should throw when expense not found', async () => {
       (offlineAdapter.getAllByIndex as Mock).mockResolvedValue([]);
-      (goalService.getExpense as Mock).mockResolvedValue({ data: null, error: null });
+      // Simula erro de not found
+      vi.spyOn(goalService, 'importExpenseAsEntry').mockResolvedValue({ data: null, error: { message: 'not found' } });
 
       await expect(importExpense(mockFamilyId, mockGoalId, mockExpenseId))
         .rejects.toThrow('not found');

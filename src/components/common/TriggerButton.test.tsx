@@ -2,19 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TriggerButton } from './TriggerButton';
-import type { User } from '@supabase/supabase-js';
+import { makeMockUser } from '@/test/mocks/common/makeMockUser';
 
 describe('TriggerButton', () => {
-  const mockUser: User = {
-    id: 'user-123',
-    email: 'test@example.com',
-    user_metadata: {
-      avatar_url: 'https://example.com/avatar.jpg',
-    },
-    app_metadata: {},
-    aud: 'authenticated',
-    created_at: '2024-01-01T00:00:00.000Z',
-  };
+  const mockUser = makeMockUser();
 
   it('should render settings icon when no user', () => {
     render(<TriggerButton />);
@@ -41,7 +32,7 @@ describe('TriggerButton', () => {
   });
 
   it('should show fallback initials when no avatar', () => {
-    const userWithoutAvatar: User = {
+    const userWithoutAvatar = {
       ...mockUser,
       user_metadata: {},
     };
@@ -58,7 +49,7 @@ describe('TriggerButton', () => {
   });
 
   it('should show question mark when no getUserInitials provided', () => {
-    const userWithoutAvatar: User = {
+    const userWithoutAvatar = {
       ...mockUser,
       user_metadata: {},
     };

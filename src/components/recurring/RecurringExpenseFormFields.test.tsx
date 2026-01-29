@@ -40,9 +40,11 @@ vi.mock('@/contexts/CurrencyContext', () => ({
   }),
 }));
 
+import { makeMockSubcategory } from '@/test/mocks/domain/makeMockSubcategory';
+
 const mockSubcategories: Subcategory[] = [
-  { id: 'sub1', name: 'Rent', categoryKey: 'essenciais' },
-  { id: 'sub2', name: 'Groceries', categoryKey: 'essenciais' },
+  makeMockSubcategory({ id: 'sub1', name: 'Rent' }),
+  makeMockSubcategory({ id: 'sub2', name: 'Groceries' }),
 ];
 
 describe('RecurringExpenseFormFields', () => {

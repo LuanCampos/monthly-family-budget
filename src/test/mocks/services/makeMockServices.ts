@@ -38,13 +38,26 @@ export const mockStorageAdapter = {
   deleteIncomeSource: vi.fn().mockResolvedValue(undefined),
 };
 
-export const mockOfflineAdapter = {
-  isOfflineId: vi.fn().mockReturnValue(false),
-  generateOfflineId: vi.fn().mockReturnValue('offline-123'),
-  getPendingChanges: vi.fn().mockResolvedValue([]),
-  syncPendingChanges: vi.fn().mockResolvedValue([]),
-  clearPendingChanges: vi.fn().mockResolvedValue(undefined),
-};
+
+export function makeMockOfflineAdapter() {
+  return {
+    isOfflineId: vi.fn().mockReturnValue(false),
+    generateOfflineId: vi.fn().mockReturnValue('offline-id-1'),
+    getPendingChanges: vi.fn().mockResolvedValue([]),
+    syncPendingChanges: vi.fn().mockResolvedValue([]),
+    clearPendingChanges: vi.fn().mockResolvedValue(undefined),
+    put: vi.fn(),
+    get: vi.fn(),
+    delete: vi.fn(),
+    getAllByIndex: vi.fn().mockResolvedValue([]),
+    sync: {
+      add: vi.fn(),
+      getAll: vi.fn().mockResolvedValue([]),
+      getByFamily: vi.fn().mockResolvedValue([]),
+      remove: vi.fn(),
+    },
+  };
+}
 
 // ============================================================================
 // Budget Service Mocks
@@ -105,14 +118,22 @@ export const mockFamilyService = {
   createFamily: vi.fn().mockImplementation((data) => Promise.resolve({ id: 'family-123', ...data })),
   updateFamily: vi.fn().mockResolvedValue({ id: 'family-123' }),
   deleteFamily: vi.fn().mockResolvedValue(undefined),
-  
+
   getFamilyMembers: vi.fn().mockResolvedValue([]),
   inviteMember: vi.fn().mockResolvedValue({ id: 'invite-123' }),
   removeMember: vi.fn().mockResolvedValue(undefined),
-  
+
   getInvitations: vi.fn().mockResolvedValue([]),
   acceptInvitation: vi.fn().mockResolvedValue(undefined),
   declineInvitation: vi.fn().mockResolvedValue(undefined),
+
+  // Métodos extras usados em OnlineContext.test.tsx
+  insertToTable: vi.fn(),
+  insertFamily: vi.fn(),
+  insertFamilyMember: vi.fn(),
+  deleteMembersByFamily: vi.fn(),
+  updateInTable: vi.fn(),
+  deleteByIdFromTable: vi.fn(),
 };
 
 // ============================================================================
@@ -189,7 +210,7 @@ export const createFreshServiceMocks = () => ({
     // ... (add other fresh mocks as needed)
   },
   offlineAdapter: {
-    ...mockOfflineAdapter,
+    ...makeMockOfflineAdapter,
     isOfflineId: vi.fn().mockReturnValue(false),
   },
   budgetService: {

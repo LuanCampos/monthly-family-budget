@@ -24,7 +24,7 @@ describe('LanguageContext', () => {
   describe('useLanguage', () => {
     it('should throw error when used outside provider', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       expect(() => {
         renderHook(() => useLanguage());
       }).toThrow('useLanguage must be used within a LanguageProvider');

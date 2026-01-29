@@ -1,10 +1,34 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { createBudgetApi } from './useBudgetApi';
 import * as storageAdapter from '@/lib/adapters/storageAdapter';
-import type { RecurringExpense } from '@/types';
+import { makeMockRecurringExpense } from '@/test/mocks/domain/makeMockRecurringExpense';
+import { makeMockMonth } from '@/test/mocks/domain/makeMockMonth';
+import { makeMockExpense } from '@/test/mocks/domain/makeMockExpense';
+import { makeMockSubcategory } from '@/test/mocks/domain/makeMockSubcategory';
+import type { RecurringExpense } from '@/types/budget';
 
 // Mock the storage adapter
-vi.mock('@/lib/adapters/storageAdapter');
+vi.mock('@/lib/adapters/storageAdapter', () => ({
+  getMonthsWithExpenses: vi.fn(() => Promise.resolve([makeMockMonth()])),
+  getRecurringExpenses: vi.fn(() => Promise.resolve([makeMockRecurringExpense()])),
+  getSubcategories: vi.fn(() => Promise.resolve([])),
+  addSubcategory: vi.fn(() => Promise.resolve({})),
+  updateSubcategory: vi.fn(() => Promise.resolve({})),
+  removeSubcategory: vi.fn(() => Promise.resolve({})),
+  insertMonth: vi.fn(() => Promise.resolve({ id: 'month-1', year: 2026, month: 1 })),
+  insertExpense: vi.fn(() => Promise.resolve({ id: 'exp-1' })),
+  updateMonthIncome: vi.fn(() => Promise.resolve({})),
+  updateExpense: vi.fn(() => Promise.resolve({})),
+  setExpensePending: vi.fn(() => Promise.resolve({})),
+  deleteExpense: vi.fn(() => Promise.resolve({})),
+  insertRecurring: vi.fn(() => Promise.resolve({ id: 'rec-1' })),
+  updateRecurring: vi.fn(() => Promise.resolve({})),
+  deleteRecurring: vi.fn(() => Promise.resolve({})),
+  applyRecurringToMonth: vi.fn(() => Promise.resolve(true)),
+  insertIncomeSource: vi.fn(() => Promise.resolve({ id: 'income-1' })),
+  updateIncomeSource: vi.fn(() => Promise.resolve({})),
+  deleteIncomeSource: vi.fn(() => Promise.resolve({})),
+}));
 
 describe('useBudgetApi', () => {
   const mockFamilyId = 'family-123';
@@ -26,7 +50,7 @@ describe('useBudgetApi', () => {
 
   describe('loadMonths', () => {
     it('should load months and call setMonths', async () => {
-      const mockMonths = [{ id: 'month-1', year: 2026, month: 1 }];
+      const mockMonths = [makeMockMonth({ id: 'month-1', year: 2026, month: 1 })];
       (storageAdapter.getMonthsWithExpenses as Mock).mockResolvedValue(mockMonths);
 
       await api.loadMonths();
@@ -52,7 +76,7 @@ describe('useBudgetApi', () => {
 
   describe('loadRecurringExpenses', () => {
     it('should load recurring expenses and call setRecurringExpenses', async () => {
-      const mockRecurring = [{ id: 'rec-1', title: 'Rent' }];
+      const mockRecurring = [makeMockRecurringExpense({ id: 'rec-1', title: 'Rent' })];
       (storageAdapter.getRecurringExpenses as Mock).mockResolvedValue(mockRecurring);
 
       await api.loadRecurringExpenses();
@@ -77,7 +101,7 @@ describe('useBudgetApi', () => {
 
   describe('loadSubcategories', () => {
     it('should load subcategories and call setSubcategories', async () => {
-      const mockSubs = [{ id: 'sub-1', name: 'Electricity' }];
+      const mockSubs = [makeMockSubcategory({ id: 'sub-1', name: 'Electricity' })];
       (storageAdapter.getSubcategories as Mock).mockResolvedValue(mockSubs);
 
       await api.loadSubcategories();
@@ -151,7 +175,7 @@ describe('useBudgetApi', () => {
 
   describe('insertMonth', () => {
     it('should insert month via storageAdapter', async () => {
-      const mockResult = { id: 'month-1', year: 2026, month: 1 };
+      const mockResult = makeMockMonth({ id: 'month-1', year: 2026, month: 1 });
       (storageAdapter.insertMonth as Mock).mockResolvedValue(mockResult);
 
       const result = await api.insertMonth(2026, 1);
@@ -177,7 +201,7 @@ describe('useBudgetApi', () => {
 
   describe('insertExpense', () => {
     it('should insert expense via storageAdapter', async () => {
-      const mockResult = { id: 'exp-1' };
+      const mockResult = makeMockExpense({ id: 'exp-1' });
       (storageAdapter.insertExpense as Mock).mockResolvedValue(mockResult);
 
       const payload = {
@@ -254,7 +278,7 @@ describe('useBudgetApi', () => {
 
   describe('insertRecurring', () => {
     it('should insert recurring expense via storageAdapter', async () => {
-      const mockResult = { id: 'rec-1' };
+      const mockResult = makeMockRecurringExpense({ id: 'rec-1' });
       (storageAdapter.insertRecurring as Mock).mockResolvedValue(mockResult);
 
       const payload = {
@@ -303,18 +327,24 @@ describe('useBudgetApi', () => {
   });
 
   describe('deleteRecurring', () => {
-    it('should delete recurring expense via storageAdapter', async () => {
-      (storageAdapter.deleteRecurring as Mock).mockResolvedValue({});
+    it('should insert recurring expense via storageAdapter', async () => {
+      const mockResult = makeMockRecurringExpense({ id: 'rec-1' });
+      (storageAdapter.insertRecurring as Mock).mockResolvedValue(mockResult);
 
-      await api.deleteRecurring('rec-1');
+      const payload = {
+        title: 'Gym',
+        category_key: 'conforto' as const,
+        value: 120,
+      };
+      const result = await api.insertRecurring(payload);
 
-      expect(storageAdapter.deleteRecurring).toHaveBeenCalledWith(mockFamilyId, 'rec-1');
+      expect(storageAdapter.insertRecurring).toHaveBeenCalledWith(mockFamilyId, payload);
+      expect(result).toEqual(mockResult);
     });
   });
 
   describe('applyRecurringToMonth', () => {
-    it('should apply recurring to month via storageAdapter', async () => {
-      (storageAdapter.applyRecurringToMonth as Mock).mockResolvedValue(true);
+    it('should apply recurring expense to month via storageAdapter', async () => {
 
       const recurring: RecurringExpense = {
         id: 'rec-1',

@@ -582,6 +582,30 @@ npm run test:coverage # Com relatório de cobertura
 
 ---
 
+### Mocks Centralizados
+
+**Mocks de domínio (Expense, Goal, Entry, Month, RecurringExpense, Subcategory, etc) DEVEM SEMPRE ser criados usando as fábricas centralizadas em `src/test/mocks/domain/` e NUNCA como objetos literais inline.**
+
+Essas fábricas garantem que todos os campos obrigatórios estejam presentes e facilitam a manutenção dos testes.
+
+#### Exemplo Correto
+```typescript
+import { makeMockExpense } from '@/test/mocks/domain/makeMockExpense';
+const expense = makeMockExpense({ title: 'Padaria', value: 25 });
+```
+
+#### Exemplo Proibido
+```typescript
+// ❌ NÃO FAÇA:
+const mockExpense = { id: '1', title: 'Padaria', value: 25 };
+```
+
+#### Diretrizes
+- **Nunca crie mocks inline de objetos de domínio**: Use sempre as fábricas centralizadas.
+- **Se precisar de um novo tipo de mock, crie a fábrica em `src/test/mocks/domain/`**.
+
+---
+
 ## ⛔ Resumo: NÃO Faça
 
 | ❌ Errado | ✅ Correto |

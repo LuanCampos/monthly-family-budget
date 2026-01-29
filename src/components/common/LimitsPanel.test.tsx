@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LimitsPanel } from './LimitsPanel';
 import type { CategoryKey } from '@/types/budget';
+import { makeMockPercentages } from '@/test/mocks/common/makeMockPercentages';
 
 // Mock contexts
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -37,14 +38,7 @@ vi.mock('@/constants/categories', () => ({
 }));
 
 describe('LimitsPanel', () => {
-  const mockPercentages: Record<CategoryKey, number> = {
-    essenciais: 50,
-    conforto: 20,
-    metas: 10,
-    prazeres: 10,
-    liberdade: 5,
-    conhecimento: 5,
-  };
+  const mockPercentages = makeMockPercentages();
 
   const defaultProps = {
     percentages: mockPercentages,

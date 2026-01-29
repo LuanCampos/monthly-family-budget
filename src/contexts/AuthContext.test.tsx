@@ -1,3 +1,4 @@
+import { makeMockSession } from '@/test/mocks/domain/makeMockSession';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from './AuthContext';
@@ -127,19 +128,12 @@ describe('AuthContext', () => {
     });
 
     it('should restore existing session on mount', async () => {
-      const mockSession = {
-        user: { id: 'user-123', email: 'test@example.com' },
-        access_token: 'mock-token',
-      };
-      
+      const mockSession = makeMockSession({ access_token: 'mock-token' });
       mockGetSession.mockResolvedValue({ data: { session: mockSession } });
-      
       const { result } = renderHook(() => useAuth(), { wrapper });
-      
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
       });
-      
       expect(result.current.user).toEqual(mockSession.user);
       expect(result.current.session).toEqual(mockSession);
     });

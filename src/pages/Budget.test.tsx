@@ -3,14 +3,16 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { forwardRef } from 'react';
-import { createMockMonth, createMockExpense } from '@/test/mocks';
+import { makeMockMonth } from '@/test/mocks/domain/makeMockMonth';
+import { makeMockExpense } from '@/test/mocks/domain/makeMockExpense';
+import { makeMockFamily } from '@/test/mocks/domain/makeMockFamily';
 
 // Mock all dependencies
 vi.mock('@/hooks/useBudget', () => ({
   useBudget: vi.fn(() => ({
-    months: [],
-    currentMonth: null,
-    currentMonthId: null,
+    months: [makeMockMonth()],
+    currentMonth: makeMockMonth(),
+    currentMonthId: makeMockMonth().id,
     recurringExpenses: [],
     subcategories: [],
     loading: false,
@@ -49,8 +51,8 @@ vi.mock('@/contexts/LanguageContext', () => ({
 
 vi.mock('@/contexts/FamilyContext', () => ({
   useFamily: vi.fn(() => ({
-    currentFamilyId: 'family-123',
-    currentFamily: { id: 'family-123', name: 'Test Family' },
+    currentFamilyId: makeMockFamily().id,
+    currentFamily: makeMockFamily(),
     myPendingInvitations: [],
     loading: false,
   })),
@@ -155,12 +157,12 @@ describe('Budget Page', () => {
     return { user, ...utils };
   };
 
-  const mockMonthWithExpenses = createMockMonth({
+  const mockMonthWithExpenses = makeMockMonth({
     id: 'month-123',
     expenses: [
-      createMockExpense({ id: 'exp-1', title: 'Aluguel', category: 'essenciais', value: 1500, isPending: false }),
-      createMockExpense({ id: 'exp-2', title: 'Netflix', category: 'prazeres', value: 45, isPending: true }),
-      createMockExpense({ id: 'exp-3', title: 'Supermercado', category: 'essenciais', value: 800, isPending: false }),
+      makeMockExpense({ id: 'exp-1', title: 'Aluguel', category: 'essenciais', value: 1500, isPending: false }),
+      makeMockExpense({ id: 'exp-2', title: 'Netflix', category: 'prazeres', value: 45, isPending: true }),
+      makeMockExpense({ id: 'exp-3', title: 'Supermercado', category: 'essenciais', value: 800, isPending: false }),
     ],
   });
 
@@ -211,19 +213,12 @@ describe('Budget Page', () => {
 
   describe('main content', () => {
     it('should render main budget content when month exists', () => {
-      const mockMonth = {
-        id: 'month-123',
-        month: 1,
-        year: 2026,
-        income: 5000,
-        expenses: [],
-        incomeSources: [],
-      };
+
 
       vi.mocked(useBudget).mockReturnValue({
         ...vi.mocked(useBudget)(),
-        months: [mockMonth],
-        currentMonth: mockMonth,
+        months: [makeMockMonth()],
+        currentMonth: makeMockMonth(),
         currentMonthId: 'month-123',
         loading: false,
         hasInitialized: true,
@@ -252,8 +247,26 @@ describe('Budget Page', () => {
         loading: false,
         hasInitialized: true,
         getCategorySummary: () => [
-          { category: 'essenciais', total: 2300, limit: 55, percentage: 46 },
-          { category: 'prazeres', total: 45, limit: 10, percentage: 0.9 },
+          {
+            key: 'essenciais',
+            name: 'essenciais',
+            percentage: 46,
+            budget: 2300,
+            spent: 2300,
+            remaining: 0,
+            usedPercentage: 100,
+            color: 'hsl(187, 85%, 53%)',
+          },
+          {
+            key: 'prazeres',
+            name: 'prazeres',
+            percentage: 0.9,
+            budget: 45,
+            spent: 45,
+            remaining: 0,
+            usedPercentage: 100,
+            color: 'hsl(291, 64%, 42%)',
+          },
         ],
         getTotals: () => ({ totalSpent: 2345, totalBudget: 5000, usedPercentage: 46.9 }),
       });
@@ -406,11 +419,11 @@ describe('Budget Page', () => {
 
   describe('waiting for month auto-selection', () => {
     it('should show loading spinner when months exist but currentMonthId not set', () => {
-      const mockMonth = createMockMonth();
+
 
       vi.mocked(useBudget).mockReturnValue({
         ...vi.mocked(useBudget)(),
-        months: [mockMonth],
+        months: [makeMockMonth()],
         currentMonth: null,
         currentMonthId: null,
         loading: false,

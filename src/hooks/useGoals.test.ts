@@ -2,12 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useGoals } from './useGoals';
 import type { GoalEntry, Goal } from '@/types';
-
-interface MonthlySuggestionResult {
-  suggestedAmount: number;
-  monthsRemaining: number;
-  isOnTrack: boolean;
-}
+import type { MonthlySuggestionResult } from '@/lib/adapters/goal/types';
 
 // Mock dependencies
 const mockGoals: Goal[] = [
@@ -35,9 +30,11 @@ const mockEntries: GoalEntry[] = [
 ];
 
 const mockMonthlySuggestion: MonthlySuggestionResult = {
-  suggestedAmount: 500,
+  remainingValue: 5000,
   monthsRemaining: 12,
-  isOnTrack: true,
+  suggestedMonthly: 500,
+  monthlyContributed: 200,
+  monthlyRemaining: 300,
 };
 
 vi.mock('@/contexts/FamilyContext', () => ({

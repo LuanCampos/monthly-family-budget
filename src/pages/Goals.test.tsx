@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { createMockGoal } from '@/test/mocks';
+import { createMockGoal } from '@/test/mocks/domain/makeMockDomain';
 
 // Mock all dependencies
 vi.mock('@/hooks/useGoals', () => ({

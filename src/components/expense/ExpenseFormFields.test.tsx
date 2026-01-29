@@ -3,7 +3,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ExpenseFormFields, ExpenseFormFieldsRef } from './ExpenseFormFields';
 import { createRef } from 'react';
-import type { Subcategory, CategoryKey } from '@/types/budget';
+import type { CategoryKey } from '@/types/budget';
+import { makeMockSubcategories } from '@/test/mocks/expense/makeMockSubcategories';
 
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
@@ -36,10 +37,8 @@ vi.mock('@/contexts/CurrencyContext', () => ({
   }),
 }));
 
-const mockSubcategories: Subcategory[] = [
-  { id: 'sub1', name: 'Rent', categoryKey: 'essenciais' },
-  { id: 'sub2', name: 'Groceries', categoryKey: 'essenciais' },
-];
+// Replace inline subcategory mocks
+const mockSubcategories = makeMockSubcategories();
 
 describe('ExpenseFormFields', () => {
   const defaultProps = {

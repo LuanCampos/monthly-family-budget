@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ExpenseChart } from './ExpenseChart';
-import type { CategoryKey } from '@/types/budget';
+// ...existing code...
 
 // Mock contexts
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -32,13 +32,20 @@ vi.mock('recharts', () => ({
   Tooltip: () => <div data-testid="tooltip" />,
 }));
 
-describe('ExpenseChart', () => {
-  const mockData = [
-    { key: 'custos-fixos' as CategoryKey, name: 'Fixed Costs', spent: 500, color: '#FF0000' },
-    { key: 'conforto' as CategoryKey, name: 'Comfort', spent: 300, color: '#00FF00' },
-    { key: 'metas' as CategoryKey, name: 'Goals', spent: 0, color: '#0000FF' },
-  ];
+// CategorySummary mocks (com tipos corretos)
+import type { CategorySummary } from './ExpenseChart';
 
+const mockData: CategorySummary[] = [
+  { key: 'essenciais', name: 'Fixed Costs', spent: 500, color: '#FF0000' },
+  { key: 'conforto', name: 'Comfort', spent: 300, color: '#00FF00' },
+];
+
+const testData: CategorySummary[] = [
+  { key: 'essenciais', name: 'Fixed', spent: 100, color: '#F00' },
+  { key: 'conforto', name: 'Comfort', spent: 200, color: '#0F0' },
+];
+
+describe('ExpenseChart', () => {
   const defaultProps = {
     data: mockData,
     hasExpenses: true,
@@ -58,9 +65,7 @@ describe('ExpenseChart', () => {
 
   it('should show empty message when all data is zero', () => {
     const zeroData = mockData.map(d => ({ ...d, spent: 0 }));
-    
     render(<ExpenseChart {...defaultProps} data={zeroData} hasExpenses={true} />);
-
     expect(screen.getByText('No expenses yet')).toBeInTheDocument();
   });
 
@@ -86,9 +91,7 @@ describe('ExpenseChart', () => {
 
   it('should handle single category data', () => {
     const singleData = [mockData[0]];
-    
     render(<ExpenseChart {...defaultProps} data={singleData} />);
-
     const pie = screen.getByTestId('pie');
     expect(pie).toHaveAttribute('data-count', '1');
   });
@@ -106,11 +109,6 @@ describe('ExpenseChart', () => {
   });
 
   it('should correctly calculate chart data from input', () => {
-    const testData = [
-      { key: 'custos-fixos' as CategoryKey, name: 'Fixed', spent: 100, color: '#F00' },
-      { key: 'conforto' as CategoryKey, name: 'Comfort', spent: 200, color: '#0F0' },
-    ];
-    
     render(<ExpenseChart data={testData} hasExpenses={true} />);
 
     const pie = screen.getByTestId('pie');
