@@ -134,14 +134,14 @@ describe('Component Integration Tests', () => {
     ];
 
     const mockSubcategories: Subcategory[] = [
-      { id: 'sub-1', familyId: 'fam-1', name: 'Moradia', categoryKey: 'essenciais' },
-      { id: 'sub-2', familyId: 'fam-1', name: 'Alimentação', categoryKey: 'essenciais' },
-      { id: 'sub-3', familyId: 'fam-1', name: 'Streaming', categoryKey: 'prazeres' },
+      { id: 'sub-1', name: 'Moradia', categoryKey: 'essenciais' },
+      { id: 'sub-2', name: 'Alimentação', categoryKey: 'essenciais' },
+      { id: 'sub-3', name: 'Streaming', categoryKey: 'prazeres' },
     ];
 
     const mockRecurring: RecurringExpense[] = [
-      { id: 'rec-1', familyId: 'fam-1', title: 'Aluguel', category: 'essenciais', value: 1500 },
-      { id: 'rec-2', familyId: 'fam-1', title: 'Netflix', category: 'prazeres', value: 45.90 },
+      { id: 'rec-1', title: 'Aluguel', category: 'essenciais', value: 1500, isRecurring: true },
+      { id: 'rec-2', title: 'Netflix', category: 'prazeres', value: 45.90, isRecurring: true },
     ];
 
     const defaultProps = {
@@ -180,11 +180,11 @@ describe('Component Integration Tests', () => {
     });
 
     // Note: ExpenseList component shows all expenses, filtering is handled at a higher level
-    // This test verifies that the categoryFilter prop is accepted
-    it('should accept categoryFilter prop', () => {
-      render(<ExpenseList {...defaultProps} categoryFilter="essenciais" />);
+    // This test verifies that the component renders correctly
+    it('should render and filter by category via internal state', () => {
+      render(<ExpenseList {...defaultProps} />);
 
-      // All expenses are still rendered, filtering happens in parent
+      // All expenses are still rendered initially
       expect(screen.getByText('Aluguel')).toBeInTheDocument();
       expect(screen.getByText('Netflix')).toBeInTheDocument();
       expect(screen.getByText('Supermercado')).toBeInTheDocument();
@@ -218,12 +218,11 @@ describe('Component Integration Tests', () => {
       expect(screen.getByText('Nenhuma despesa')).toBeInTheDocument();
     });
 
-    it('should combine search and category filters', () => {
+    it('should combine search and filter', () => {
       render(
         <ExpenseList 
           {...defaultProps} 
           searchTerm="sup" 
-          categoryFilter="essenciais" 
         />
       );
 
@@ -280,8 +279,8 @@ describe('Component Integration Tests', () => {
 
     it('should filter subcategories by selected category', () => {
       const subcategories: Subcategory[] = [
-        { id: 'sub-1', familyId: 'fam-1', name: 'Moradia', categoryKey: 'essenciais' },
-        { id: 'sub-2', familyId: 'fam-1', name: 'Streaming', categoryKey: 'prazeres' },
+        { id: 'sub-1', name: 'Moradia', categoryKey: 'essenciais' },
+        { id: 'sub-2', name: 'Streaming', categoryKey: 'prazeres' },
       ];
 
       render(

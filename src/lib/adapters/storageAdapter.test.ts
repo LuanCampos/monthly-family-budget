@@ -3,6 +3,12 @@ import { getMonthsWithExpenses, insertMonth, createChannel, removeChannel } from
 import * as budgetService from '../services/budgetService';
 import { offlineAdapter } from './offlineAdapter';
 import * as monthAdapter from './monthAdapter';
+import {
+  createMockMonthRow,
+  createMockExpenseRow,
+  createMockCategoryLimitRow,
+  createMockIncomeSourceRow,
+} from '@/test/mocks/domain/makeMockDomain';
 
 import type { MonthRow, ExpenseRow, CategoryLimitRow, IncomeSourceRow } from '@/types/database';
 
@@ -40,25 +46,16 @@ describe('storageAdapter', () => {
 
       it('should fetch months from budgetService when online', async () => {
         const mockMonths: MonthRow[] = [
-          { id: 'month-1', family_id: mockFamilyId, year: 2024, month: 1, income: 5000, created_at: '2024-01-01' }
+          createMockMonthRow({ id: 'month-1', family_id: mockFamilyId, year: 2024, month: 1, income: 5000 })
         ];
         const mockExpenses: ExpenseRow[] = [
-          { 
-            id: 'expense-1', 
-            month_id: 'month-1', 
-            title: 'Test Expense', 
-            category_key: 'housing', 
-            value: 1000, 
-            is_recurring: false, 
-            is_pending: false,
-            created_at: '2024-01-01'
-          }
+          createMockExpenseRow({ id: 'expense-1', month_id: 'month-1', title: 'Test Expense', category_key: 'essenciais', value: 1000 })
         ];
         const mockLimits: CategoryLimitRow[] = [
-          { id: 'limit-1', month_id: 'month-1', category_key: 'housing', percentage: 30 }
+          createMockCategoryLimitRow({ id: 'limit-1', month_id: 'month-1', category_key: 'essenciais', percentage: 30 })
         ];
         const mockIncomeSources: IncomeSourceRow[] = [
-          { id: 'income-1', month_id: 'month-1', name: 'Salary', value: 5000, created_at: '2024-01-01' }
+          createMockIncomeSourceRow({ id: 'income-1', month_id: 'month-1', name: 'Salary', value: 5000 })
         ];
 
         (budgetService.getMonths as Mock).mockResolvedValue({ data: mockMonths, error: null });
@@ -98,7 +95,7 @@ describe('storageAdapter', () => {
 
       it('should use default limits when no limits are set', async () => {
         const mockMonths: MonthRow[] = [
-          { id: 'month-1', family_id: mockFamilyId, year: 2024, month: 1, income: 5000, created_at: '2024-01-01' }
+          createMockMonthRow({ id: 'month-1', family_id: mockFamilyId, year: 2024, month: 1, income: 5000 })
         ];
 
         (budgetService.getMonths as Mock).mockResolvedValue({ data: mockMonths, error: null });
@@ -110,16 +107,16 @@ describe('storageAdapter', () => {
 
         expect(result[0].categoryLimits).toBeDefined();
         // Default limits should be set from CATEGORIES
-        expect(Object.keys(result[0].categoryLimits).length).toBeGreaterThan(0);
+        expect(Object.keys(result[0].categoryLimits!).length).toBeGreaterThan(0);
       });
 
       it('should calculate income from income sources', async () => {
         const mockMonths: MonthRow[] = [
-          { id: 'month-1', family_id: mockFamilyId, year: 2024, month: 1, income: 0, created_at: '2024-01-01' }
+          createMockMonthRow({ id: 'month-1', family_id: mockFamilyId, year: 2024, month: 1, income: 0 })
         ];
         const mockIncomeSources: IncomeSourceRow[] = [
-          { id: 'income-1', month_id: 'month-1', name: 'Salary', value: 3000, created_at: '2024-01-01' },
-          { id: 'income-2', month_id: 'month-1', name: 'Freelance', value: 2000, created_at: '2024-01-01' }
+          createMockIncomeSourceRow({ id: 'income-1', month_id: 'month-1', name: 'Salary', value: 3000 }),
+          createMockIncomeSourceRow({ id: 'income-2', month_id: 'month-1', name: 'Freelance', value: 2000 })
         ];
 
         (budgetService.getMonths as Mock).mockResolvedValue({ data: mockMonths, error: null });
@@ -141,12 +138,12 @@ describe('storageAdapter', () => {
 
       it('should fetch months from offlineAdapter when offline', async () => {
         const mockMonths: MonthRow[] = [
-          { id: 'month-1', family_id: mockFamilyId, year: 2024, month: 2, income: 4000, created_at: '2024-02-01' }
+          createMockMonthRow({ id: 'month-1', family_id: mockFamilyId, year: 2024, month: 2, income: 4000 })
         ];
         const mockExpenses: ExpenseRow[] = [];
         const mockLimits: CategoryLimitRow[] = [];
         const mockIncomeSources: IncomeSourceRow[] = [
-          { id: 'income-1', month_id: 'month-1', name: 'Salary', value: 4000, created_at: '2024-02-01' }
+          createMockIncomeSourceRow({ id: 'income-1', month_id: 'month-1', name: 'Salary', value: 4000 })
         ];
 
         (offlineAdapter.getAllByIndex as Mock)
@@ -179,14 +176,14 @@ describe('storageAdapter', () => {
 
       it('should map expenses correctly in offline mode', async () => {
         const mockMonths: MonthRow[] = [
-          { id: 'month-1', family_id: mockFamilyId, year: 2024, month: 3, income: 3000, created_at: '2024-03-01' }
+          createMockMonthRow({ id: 'month-1', family_id: mockFamilyId, year: 2024, month: 3, income: 3000 })
         ];
         const mockExpenses: ExpenseRow[] = [
-          { 
+          createMockExpenseRow({ 
             id: 'expense-1', 
             month_id: 'month-1', 
             title: 'Rent', 
-            category_key: 'housing', 
+            category_key: 'essenciais', 
             value: 1500, 
             is_recurring: true, 
             is_pending: false,
@@ -194,8 +191,7 @@ describe('storageAdapter', () => {
             recurring_expense_id: 'recurring-1',
             installment_current: 2,
             installment_total: 12,
-            created_at: '2024-03-01'
-          }
+          })
         ];
 
         (offlineAdapter.getAllByIndex as Mock)
@@ -209,7 +205,7 @@ describe('storageAdapter', () => {
         expect(result[0].expenses[0]).toMatchObject({
           id: 'expense-1',
           title: 'Rent',
-          category: 'housing',
+          category: 'essenciais',
           value: 1500,
           isRecurring: true,
           isPending: false,
@@ -221,8 +217,8 @@ describe('storageAdapter', () => {
 
       it('should sort months by id', async () => {
         const mockMonths: MonthRow[] = [
-          { id: 'month-2', family_id: mockFamilyId, year: 2024, month: 2, income: 0, created_at: '2024-02-01' },
-          { id: 'month-1', family_id: mockFamilyId, year: 2024, month: 1, income: 0, created_at: '2024-01-01' }
+          createMockMonthRow({ id: 'month-2', family_id: mockFamilyId, year: 2024, month: 2, income: 0 }),
+          createMockMonthRow({ id: 'month-1', family_id: mockFamilyId, year: 2024, month: 1, income: 0 })
         ];
 
         (offlineAdapter.getAllByIndex as Mock)

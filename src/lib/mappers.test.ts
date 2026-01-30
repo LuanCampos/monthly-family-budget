@@ -51,6 +51,7 @@ describe('mappers', () => {
     const baseExpense: ExpenseRow = {
       id: 'exp-123',
       month_id: 'month-456',
+      family_id: 'family-123',
       title: 'Grocery shopping',
       category_key: 'essenciais',
       subcategory_id: null,
@@ -426,6 +427,7 @@ describe('mappers', () => {
           {
             id: 'exp-1',
             month_id: 'month-1',
+            family_id: 'family-123',
             title: 'Expense 1',
             category_key: 'essenciais',
             subcategory_id: null,
@@ -442,6 +444,7 @@ describe('mappers', () => {
           {
             id: 'exp-2',
             month_id: 'month-1',
+            family_id: 'family-123',
             title: 'Expense 2',
             category_key: 'prazeres',
             subcategory_id: null,

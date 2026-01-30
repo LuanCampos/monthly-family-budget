@@ -267,7 +267,7 @@ describe('OnlineContext', () => {
           action: 'insert',
           type: 'expense',
           familyId: 'real-cloud-family-123',
-          data: makeMockExpense({ title: 'Test Expense', value: 100 }),
+          data: { title: 'Test Expense', value: 100 },
           createdAt: '2025-01-01',
         }),
       ]);
@@ -287,7 +287,7 @@ describe('OnlineContext', () => {
           action: 'update',
           type: 'expense',
           familyId: 'real-cloud-family-123',
-          data: makeMockExpense({ id: 'exp-123', title: 'Updated Expense', value: 200 }),
+          data: { id: 'exp-123', title: 'Updated Expense', value: 200 },
           createdAt: '2025-01-01',
         }),
       ]);

@@ -9,6 +9,7 @@ import {
 import * as budgetService from '../services/budgetService';
 import { offlineAdapter } from './offlineAdapter';
 import * as expenseAdapter from './expenseAdapter';
+import { createMockRecurringExpenseRow } from '@/test/mocks/domain/makeMockDomain';
 import type { RecurringExpenseRow, MonthRow } from '@/types/database';
 import type { RecurringExpense } from '@/types';
 
@@ -31,17 +32,14 @@ describe('recurringAdapter', () => {
 
     it('should fetch from budgetService when online', async () => {
       const mockData: RecurringExpenseRow[] = [
-        {
+        createMockRecurringExpenseRow({
           id: 'rec-1',
           family_id: 'family-123',
           title: 'Rent',
-          category_key: 'housing',
+          category_key: 'essenciais',
           value: 1500,
           due_day: 5,
-          is_active: true,
-          start_date: '2024-01-01',
-          created_at: '2024-01-01'
-        }
+        })
       ];
       (offlineAdapter.isOfflineId as Mock).mockReturnValue(false);
       (budgetService.getRecurringExpenses as Mock).mockResolvedValue({ data: mockData, error: null });
@@ -66,17 +64,14 @@ describe('recurringAdapter', () => {
       Object.defineProperty(navigator, 'onLine', { value: false, writable: true });
       (offlineAdapter.isOfflineId as Mock).mockReturnValue(false);
       const mockData: RecurringExpenseRow[] = [
-        {
+        createMockRecurringExpenseRow({
           id: 'rec-1',
           family_id: 'family-123',
           title: 'Netflix',
-          category_key: 'leisure',
+          category_key: 'prazeres',
           value: 50,
           due_day: 10,
-          is_active: true,
-          start_date: '2024-01-01',
-          created_at: '2024-01-01'
-        }
+        })
       ];
       (offlineAdapter.getAllByIndex as Mock).mockResolvedValue(mockData);
 
@@ -100,11 +95,9 @@ describe('recurringAdapter', () => {
   describe('insertRecurring', () => {
     const mockPayload: Partial<RecurringExpenseRow> = {
       title: 'Internet',
-      category_key: 'housing',
+      category_key: 'essenciais',
       value: 100,
       due_day: 15,
-      is_active: true,
-      start_date: '2024-01-01'
     };
 
     it('should return null when familyId is null', async () => {
@@ -250,13 +243,11 @@ describe('recurringAdapter', () => {
   describe('applyRecurringToMonth', () => {
     const mockRecurring: RecurringExpense = {
       id: 'rec-1',
-      familyId: 'family-123',
       title: 'Monthly Rent',
-      category: 'housing',
+      category: 'essenciais',
       value: 1500,
       dueDay: 5,
-      isActive: true,
-      startDate: '2024-01-01',
+      isRecurring: true,
       hasInstallments: false
     };
 
@@ -323,7 +314,8 @@ describe('recurringAdapter', () => {
         ...mockRecurring,
         hasInstallments: true,
         totalInstallments: 12,
-        startDate: '2024-01-01'
+        startYear: 2024,
+        startMonth: 1,
       };
 
       (offlineAdapter.isOfflineId as Mock).mockReturnValue(false);

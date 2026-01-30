@@ -48,10 +48,10 @@ describe('monthUtils', () => {
     it('should include recurring expense without installments in any month', () => {
       const recurring: RecurringExpense = {
         id: '1',
-        familyId: 'fam1',
         title: 'Netflix',
-        categoryKey: 'entertainment',
+        category: 'prazeres',
         value: 45,
+        isRecurring: true,
         hasInstallments: false,
       };
 
@@ -62,10 +62,10 @@ describe('monthUtils', () => {
     it('should include expense within installment range', () => {
       const recurring: RecurringExpense = {
         id: '2',
-        familyId: 'fam1',
         title: 'TV 12x',
-        categoryKey: 'shopping',
+        category: 'conforto',
         value: 200,
+        isRecurring: true,
         hasInstallments: true,
         totalInstallments: 12,
         startYear: 2025,
@@ -94,10 +94,10 @@ describe('monthUtils', () => {
     it('should exclude expense outside installment range', () => {
       const recurring: RecurringExpense = {
         id: '3',
-        familyId: 'fam1',
         title: 'Celular 10x',
-        categoryKey: 'shopping',
+        category: 'conforto',
         value: 300,
+        isRecurring: true,
         hasInstallments: true,
         totalInstallments: 10,
         startYear: 2025,
@@ -116,10 +116,10 @@ describe('monthUtils', () => {
     it('should handle year-spanning installments correctly', () => {
       const recurring: RecurringExpense = {
         id: '4',
-        familyId: 'fam1',
         title: 'Curso 24x',
-        categoryKey: 'education',
+        category: 'conhecimento',
         value: 500,
+        isRecurring: true,
         hasInstallments: true,
         totalInstallments: 24,
         startYear: 2024,

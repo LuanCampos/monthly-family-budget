@@ -9,6 +9,7 @@ import {
 } from './subcategoryAdapter';
 import * as budgetService from '../services/budgetService';
 import { offlineAdapter } from './offlineAdapter';
+import { createMockSubcategoryRow } from '@/test/mocks/domain/makeMockDomain';
 
 import type { SubcategoryRow } from '@/types/database';
 
@@ -33,13 +34,12 @@ describe('subcategoryAdapter', () => {
   const mockOfflineFamilyId = 'offline-family-123';
   const mockSubcategoryId = 'sub-123';
 
-  const mockSubcategoryRow: SubcategoryRow = {
+  const mockSubcategoryRow: SubcategoryRow = createMockSubcategoryRow({
     id: mockSubcategoryId,
     family_id: mockFamilyId,
     name: 'Groceries',
     category_key: 'essenciais',
-    created_at: '2024-01-01T00:00:00Z',
-  };
+  });
 
   describe('getSubcategories', () => {
     it('should return empty array when familyId is null', async () => {
@@ -83,9 +83,9 @@ describe('subcategoryAdapter', () => {
 
       it('should sort subcategories by name', async () => {
         const subcategories: SubcategoryRow[] = [
-          { ...mockSubcategoryRow, id: 's1', name: 'Zelda' },
-          { ...mockSubcategoryRow, id: 's2', name: 'Apple' },
-          { ...mockSubcategoryRow, id: 's3', name: 'Banana' },
+          createMockSubcategoryRow({ id: 's1', name: 'Zelda' }),
+          createMockSubcategoryRow({ id: 's2', name: 'Apple' }),
+          createMockSubcategoryRow({ id: 's3', name: 'Banana' }),
         ];
         (budgetService.getSubcategories as Mock).mockResolvedValue({ 
           data: subcategories, 

@@ -370,7 +370,7 @@ describe('Goals Page', () => {
           { id: 'sub-1', name: 'Supermercado', categoryKey: 'essenciais' },
           { id: 'sub-2', name: 'Restaurantes', categoryKey: 'prazeres' },
         ],
-        currentMonth: { id: 'month-1', month: 1, year: 2026, income: 5000, expenses: [] },
+        currentMonth: { id: 'month-1', label: '01/2026', month: 1, year: 2026, income: 5000, expenses: [], incomeSources: [] },
       });
 
       vi.mocked(useFamily).mockReturnValue({
