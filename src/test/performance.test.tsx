@@ -384,13 +384,14 @@ describe('Performance - Memoization Tests', () => {
 
   describe('List rendering optimization', () => {
     it('should use stable keys for list items', () => {
-      const items = [
+      type ItemType = { id: string; name: string };
+      const items: ItemType[] = [
         { id: '1', name: 'Item 1' },
         { id: '2', name: 'Item 2' },
         { id: '3', name: 'Item 3' },
       ];
 
-      const ListComponent = ({ items }: { items: typeof items }) => (
+      const ListComponent = ({ items }: { items: ItemType[] }) => (
         <ul>
           {items.map(item => (
             <li key={item.id}>{item.name}</li>
@@ -412,19 +413,21 @@ describe('Performance - Memoization Tests', () => {
 
     it('should avoid index as key for dynamic lists', () => {
       const renderCounts: Record<string, number> = {};
+      
+      type ItemType = { id: string; name: string };
 
-      const ListItem = memo(({ item }: { item: { id: string; name: string } }) => {
+      const ListItem = memo(({ item }: { item: ItemType }) => {
         renderCounts[item.id] = (renderCounts[item.id] || 0) + 1;
         return <li>{item.name}</li>;
       });
 
-      const items = [
+      const items: ItemType[] = [
         { id: 'a', name: 'A' },
         { id: 'b', name: 'B' },
         { id: 'c', name: 'C' },
       ];
 
-      const ListWithProperKeys = ({ items }: { items: typeof items }) => (
+      const ListWithProperKeys = ({ items }: { items: ItemType[] }) => (
         <ul>
           {items.map(item => (
             <ListItem key={item.id} item={item} />

@@ -116,7 +116,7 @@ describe('goal/utils', () => {
       const goals = [createMockGoal('goal-1', 'Goal 1')];
       goals[0].currentValue = 50; // Pre-existing value
       
-      vi.mocked(goalService.getEntriesByGoalIds).mockResolvedValue({ data: null, error: new Error('Database error'), count: null, status: 400, statusText: 'Error' });
+      vi.mocked(goalService.getEntriesByGoalIds).mockResolvedValue({ data: null, error: new Error('Database error') } as ReturnType<typeof goalService.getEntriesByGoalIds> extends Promise<infer R> ? R : never);
 
       const result = await addCurrentValueToGoals('family-123', goals);
       

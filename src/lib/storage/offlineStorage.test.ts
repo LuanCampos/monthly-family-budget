@@ -2,7 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { generateOfflineId, isOfflineId, offlineDB, syncQueue, clearOfflineCache, type SyncQueueItem } from './offlineStorage';
 
 // Mock IndexedDB for testing
-const createMockIDBRequest = <T>(result: T, error: DOMException | null = null): IDBRequest<T> => {
+interface MockIDBRequest<T> extends IDBRequest<T> {
+  onblocked: ((event: Event) => void) | null;
+}
+
+const createMockIDBRequest = <T>(result: T, error: DOMException | null = null): MockIDBRequest<T> => {
   const request = {
     result,
     error,
@@ -16,7 +20,7 @@ const createMockIDBRequest = <T>(result: T, error: DOMException | null = null): 
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(() => true),
-  } as unknown as IDBRequest<T>;
+  } as unknown as MockIDBRequest<T>;
   return request;
 };
 

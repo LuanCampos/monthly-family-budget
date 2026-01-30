@@ -48,7 +48,7 @@ describe('userService', () => {
       const mockEq2 = vi.fn(() => ({ maybeSingle: mockMaybeSingle }));
       const mockEq1 = vi.fn(() => ({ eq: mockEq2 }));
       const mockSelect = vi.fn(() => ({ eq: mockEq1 }));
-      vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as unknown as ReturnType<typeof supabase.from>);
 
       await getUserPreferences('user-123');
 
@@ -65,7 +65,7 @@ describe('userService', () => {
       const mockEq2 = vi.fn(() => ({ maybeSingle: mockMaybeSingle }));
       const mockEq1 = vi.fn(() => ({ eq: mockEq2 }));
       const mockSelect = vi.fn(() => ({ eq: mockEq1 }));
-      vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as unknown as ReturnType<typeof supabase.from>);
 
       await getCurrentFamilyPreference('user-123');
 

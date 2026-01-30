@@ -33,6 +33,7 @@ export const createMockMonthRow = (overrides: Partial<MonthRow> = {}): MonthRow 
 export const createMockExpenseRow = (overrides: Partial<ExpenseRow> = {}): ExpenseRow => ({
   id: 'expense-123',
   month_id: 'month-123',
+  family_id: 'family-123',
   title: 'Test Expense',
   category_key: 'essenciais',
   subcategory_id: null,
@@ -130,9 +131,11 @@ export const createMockGoalEntryRow = (overrides: Partial<GoalEntryRow> = {}): G
 
 export const createMockMonth = (overrides: Partial<Month> = {}): Month => ({
   id: 'month-123',
+  label: '01/2026',
   year: 2026,
   month: 1,
   income: 5000,
+  incomeSources: [],
   expenses: [],
   categoryLimits: {
     essenciais: 55,

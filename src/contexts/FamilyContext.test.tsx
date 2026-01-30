@@ -157,14 +157,14 @@ describe('FamilyContext', () => {
   describe('createFamily', () => {
     beforeEach(() => {
       vi.mocked(useAuth).mockReturnValue({
-        user: { id: 'user-123', email: 'test@example.com' },
+        user: { id: 'user-123', email: 'test@example.com', app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: '' },
         loading: false,
       } as ReturnType<typeof useAuth>);
       // Mock getSession with the expected Supabase return type
       vi.spyOn(userService, 'getSession').mockResolvedValue({
         data: { session: { user: { id: 'user-123', email: 'test@example.com' } } },
         error: null
-      });
+      } as Awaited<ReturnType<typeof userService.getSession>>);
     });
 
     it('should create cloud family when online and authenticated', async () => {

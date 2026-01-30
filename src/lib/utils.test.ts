@@ -150,14 +150,17 @@ describe('cn (class name utility)', () => {
 
   describe('real-world usage patterns', () => {
     it('should handle component variant pattern', () => {
-      const variant = 'primary' as const;
-      const size = 'lg' as const;
+      type VariantType = 'primary' | 'secondary';
+      type SizeType = 'sm' | 'lg';
+      
+      const variant: VariantType = 'primary';
+      const size: SizeType = 'lg';
       
       const result = cn(
         'btn',
         variant === 'primary' && 'bg-blue-500 text-white',
-        variant === 'secondary' && 'bg-gray-500 text-black',
-        size === 'sm' && 'text-sm px-2 py-1',
+        variant === ('secondary' as VariantType) && 'bg-gray-500 text-black',
+        size === ('sm' as SizeType) && 'text-sm px-2 py-1',
         size === 'lg' && 'text-lg px-4 py-2'
       );
       

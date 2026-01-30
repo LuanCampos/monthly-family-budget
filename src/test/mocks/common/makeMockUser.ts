@@ -1,4 +1,4 @@
-import { User } from '@/types';
+import type { User } from '@supabase/supabase-js';
 
 export function makeMockUser(overrides: Partial<User> = {}): User {
   return {
