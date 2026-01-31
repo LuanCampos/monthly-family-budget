@@ -80,6 +80,7 @@ export const RecurringExpenseFormDialog = ({
   const [totalInstallments, setTotalInstallments] = useState('');
   const [startYear, setStartYear] = useState(getDefaultYear);
   const [startMonth, setStartMonth] = useState(getDefaultMonth);
+  const [isTotalValue, setIsTotalValue] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
 
@@ -97,6 +98,7 @@ export const RecurringExpenseFormDialog = ({
         setTotalInstallments(expense.totalInstallments?.toString() || '');
         setStartYear(expense.startYear?.toString() || '');
         setStartMonth(expense.startMonth?.toString() || '');
+        setIsTotalValue(false);
       } else {
         setTitle('');
         setCategory(DEFAULT_CATEGORY);
@@ -107,6 +109,7 @@ export const RecurringExpenseFormDialog = ({
         setTotalInstallments('');
         setStartYear(String(defaultYear ?? new Date().getFullYear()));
         setStartMonth(String(defaultMonth ?? new Date().getMonth() + 1));
+        setIsTotalValue(false);
       }
     }
   }, [open, expense, defaultMonth, defaultYear]);
@@ -114,7 +117,7 @@ export const RecurringExpenseFormDialog = ({
   const handleSubmit = async () => {
     if (isSaving) return;
     
-    const numericValue = parseCurrencyInput(value);
+    let numericValue = parseCurrencyInput(value);
     if (!title.trim() || numericValue <= 0) return;
 
     const finalSubcategoryId = subcategoryId || undefined;
@@ -122,6 +125,11 @@ export const RecurringExpenseFormDialog = ({
     const finalTotalInstallments = hasInstallments && totalInstallments ? parseInt(totalInstallments) : undefined;
     const finalStartYear = hasInstallments && startYear ? parseInt(startYear) : undefined;
     const finalStartMonth = hasInstallments && startMonth ? parseInt(startMonth) : undefined;
+
+    // Se o usuário informou o valor total, dividir pelo número de parcelas
+    if (isTotalValue && finalTotalInstallments && finalTotalInstallments > 0) {
+      numericValue = Math.round((numericValue / finalTotalInstallments) * 100) / 100;
+    }
 
     if (isEditing) {
       setShowUpdateDialog(true);
@@ -149,12 +157,17 @@ export const RecurringExpenseFormDialog = ({
   const confirmUpdate = async (updatePast: boolean) => {
     if (!expense || isSaving) return;
 
-    const numericValue = parseCurrencyInput(value);
+    let numericValue = parseCurrencyInput(value);
     const finalSubcategoryId = subcategoryId || undefined;
     const finalDueDay = dueDay ? parseInt(dueDay) : undefined;
     const finalTotalInstallments = hasInstallments && totalInstallments ? parseInt(totalInstallments) : undefined;
     const finalStartYear = hasInstallments && startYear ? parseInt(startYear) : undefined;
     const finalStartMonth = hasInstallments && startMonth ? parseInt(startMonth) : undefined;
+
+    // Se o usuário informou o valor total, dividir pelo número de parcelas
+    if (isTotalValue && finalTotalInstallments && finalTotalInstallments > 0) {
+      numericValue = Math.round((numericValue / finalTotalInstallments) * 100) / 100;
+    }
 
     setIsSaving(true);
     try {
@@ -200,16 +213,39 @@ export const RecurringExpenseFormDialog = ({
               totalInstallments={totalInstallments}
               startYear={startYear}
               startMonth={startMonth}
+              isTotalValue={isTotalValue}
               subcategories={subcategories}
               onTitleChange={setTitle}
               onCategoryChange={setCategory}
               onSubcategoryChange={setSubcategoryId}
               onValueChange={(v) => setValue(sanitizeCurrencyInput(v))}
               onDueDayChange={setDueDay}
-              onHasInstallmentsChange={setHasInstallments}
+              onHasInstallmentsChange={(checked) => {
+                setHasInstallments(checked);
+                if (!checked) {
+                  setIsTotalValue(false);
+                }
+              }}
               onTotalInstallmentsChange={setTotalInstallments}
               onStartYearChange={setStartYear}
               onStartMonthChange={setStartMonth}
+              onIsTotalValueChange={(checked) => {
+                const currentValue = parseCurrencyInput(value);
+                const installments = parseInt(totalInstallments) || 0;
+                
+                if (currentValue > 0 && installments > 0) {
+                  let newValue: number;
+                  if (checked) {
+                    // Mudando de mensal para total: multiplica
+                    newValue = Math.round(currentValue * installments * 100) / 100;
+                  } else {
+                    // Mudando de total para mensal: divide
+                    newValue = Math.round((currentValue / installments) * 100) / 100;
+                  }
+                  setValue(formatCurrencyInput(newValue));
+                }
+                setIsTotalValue(checked);
+              }}
             />
           </div>
 

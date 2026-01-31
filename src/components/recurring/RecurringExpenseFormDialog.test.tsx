@@ -25,11 +25,23 @@ vi.mock('./RecurringExpenseFormFields', () => ({
     onTitleChange,
     value,
     onValueChange,
+    hasInstallments,
+    onHasInstallmentsChange,
+    totalInstallments,
+    onTotalInstallmentsChange,
+    isTotalValue,
+    onIsTotalValueChange,
   }: {
     title: string;
     onTitleChange: (v: string) => void;
     value: string;
     onValueChange: (v: string) => void;
+    hasInstallments: boolean;
+    onHasInstallmentsChange: (v: boolean) => void;
+    totalInstallments: string;
+    onTotalInstallmentsChange: (v: string) => void;
+    isTotalValue: boolean;
+    onIsTotalValueChange: (v: boolean) => void;
   }) => (
     <div data-testid="form-fields">
       <input 
@@ -44,6 +56,31 @@ vi.mock('./RecurringExpenseFormFields', () => ({
         onChange={(e) => onValueChange(e.target.value)} 
         placeholder="Value"
       />
+      <label>
+        <input
+          data-testid="has-installments-checkbox"
+          type="checkbox"
+          checked={hasInstallments}
+          onChange={(e) => onHasInstallmentsChange(e.target.checked)}
+        />
+        Has Installments
+      </label>
+      <input
+        data-testid="total-installments-input"
+        type="number"
+        value={totalInstallments}
+        onChange={(e) => onTotalInstallmentsChange(e.target.value)}
+        placeholder="Total Installments"
+      />
+      <label>
+        <input
+          data-testid="is-total-value-checkbox"
+          type="checkbox"
+          checked={isTotalValue}
+          onChange={(e) => onIsTotalValueChange(e.target.checked)}
+        />
+        Is Total Value
+      </label>
     </div>
   ),
 }));
@@ -201,6 +238,127 @@ describe('RecurringExpenseFormDialog', () => {
       await waitFor(() => {
         expect(screen.getByText('updateRecurringTitle')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('total value calculation', () => {
+    it('should divide value by installments when isTotalValue is true on submit', async () => {
+      const user = userEvent.setup();
+      const props = createDefaultProps();
+      
+      render(<RecurringExpenseFormDialog {...props} />);
+      
+      // Fill in title
+      await user.type(screen.getByTestId('title-input'), 'New Expense');
+      
+      // Enable installments first
+      await user.click(screen.getByTestId('has-installments-checkbox'));
+      
+      // Set total installments to 12
+      const installmentsInput = screen.getByTestId('total-installments-input');
+      await user.clear(installmentsInput);
+      await user.type(installmentsInput, '12');
+      
+      // Enable "is total value" checkbox BEFORE entering value
+      await user.click(screen.getByTestId('is-total-value-checkbox'));
+      
+      // Now enter the total value of 1200
+      await user.type(screen.getByTestId('value-input'), '1200');
+      
+      // Submit the form
+      await user.click(screen.getByRole('button', { name: /add/i }));
+      
+      await waitFor(() => {
+        expect(props.onAdd).toHaveBeenCalled();
+        // Value should be 1200 / 12 = 100
+        const calledWith = props.onAdd.mock.calls[0];
+        expect(calledWith[3]).toBe(100); // 4th argument is the value
+      });
+    });
+
+    it('should not divide value when isTotalValue is false', async () => {
+      const user = userEvent.setup();
+      const props = createDefaultProps();
+      
+      render(<RecurringExpenseFormDialog {...props} />);
+      
+      // Fill in title and value
+      await user.type(screen.getByTestId('title-input'), 'New Expense');
+      await user.type(screen.getByTestId('value-input'), '100');
+      
+      // Enable installments but NOT isTotalValue
+      await user.click(screen.getByTestId('has-installments-checkbox'));
+      
+      const installmentsInput = screen.getByTestId('total-installments-input');
+      await user.clear(installmentsInput);
+      await user.type(installmentsInput, '12');
+      
+      // Submit the form (isTotalValue is false by default)
+      await user.click(screen.getByRole('button', { name: /add/i }));
+      
+      await waitFor(() => {
+        expect(props.onAdd).toHaveBeenCalled();
+        // Value should remain 100 (not divided)
+        const calledWith = props.onAdd.mock.calls[0];
+        expect(calledWith[3]).toBe(100);
+      });
+    });
+
+    it('should recalculate value when toggling isTotalValue from false to true', async () => {
+      const user = userEvent.setup();
+      const props = createDefaultProps();
+      
+      render(<RecurringExpenseFormDialog {...props} />);
+      
+      // Fill in title
+      await user.type(screen.getByTestId('title-input'), 'New Expense');
+      
+      // Enable installments first
+      await user.click(screen.getByTestId('has-installments-checkbox'));
+      
+      // Set installments to 12
+      const installmentsInput = screen.getByTestId('total-installments-input');
+      await user.clear(installmentsInput);
+      await user.type(installmentsInput, '12');
+      
+      // Enter monthly value of 100
+      await user.type(screen.getByTestId('value-input'), '100');
+      
+      // Toggle to total value - should multiply by 12
+      await user.click(screen.getByTestId('is-total-value-checkbox'));
+      
+      // Value should now be 1200 (100 * 12)
+      expect(screen.getByTestId('value-input')).toHaveValue('1200,00');
+    });
+
+    it('should recalculate value when toggling isTotalValue from true to false', async () => {
+      const user = userEvent.setup();
+      const props = createDefaultProps();
+      
+      render(<RecurringExpenseFormDialog {...props} />);
+      
+      // Fill in title
+      await user.type(screen.getByTestId('title-input'), 'New Expense');
+      
+      // Enable installments first
+      await user.click(screen.getByTestId('has-installments-checkbox'));
+      
+      // Set installments to 12
+      const installmentsInput = screen.getByTestId('total-installments-input');
+      await user.clear(installmentsInput);
+      await user.type(installmentsInput, '12');
+      
+      // Toggle to total value first
+      await user.click(screen.getByTestId('is-total-value-checkbox'));
+      
+      // Enter total value of 1200
+      await user.type(screen.getByTestId('value-input'), '1200');
+      
+      // Toggle back to monthly value - should divide by 12
+      await user.click(screen.getByTestId('is-total-value-checkbox'));
+      
+      // Value should now be 100 (1200 / 12)
+      expect(screen.getByTestId('value-input')).toHaveValue('100,00');
     });
   });
 });

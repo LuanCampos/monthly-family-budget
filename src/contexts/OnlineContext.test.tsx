@@ -1,6 +1,5 @@
 import { makeMockPendingSyncItem } from '@/test/mocks/domain/makeMockPendingSyncItem';
 import { makeMockFamily } from '@/test/mocks/domain/makeMockFamily';
-import { makeMockExpense } from '@/test/mocks/domain/makeMockExpense';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { OnlineProvider, useOnline } from './OnlineContext';

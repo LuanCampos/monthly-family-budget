@@ -107,7 +107,7 @@ describe('storageAdapter', () => {
 
         expect(result[0].categoryLimits).toBeDefined();
         // Default limits should be set from CATEGORIES
-        expect(Object.keys(result[0].categoryLimits!).length).toBeGreaterThan(0);
+        expect(Object.keys(result[0].categoryLimits ?? {}).length).toBeGreaterThan(0);
       });
 
       it('should calculate income from income sources', async () => {

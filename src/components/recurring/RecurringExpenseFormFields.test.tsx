@@ -28,6 +28,9 @@ vi.mock('@/contexts/LanguageContext', () => ({
         startMonth: 'Start month',
         startYear: 'Start year',
         dueDay: 'Due day',
+        isTotalValue: 'Enter total value',
+        totalValue: 'Total value',
+        monthlyValueCalculation: 'Monthly value',
       };
       return translations[key] || key;
     },
@@ -37,6 +40,7 @@ vi.mock('@/contexts/LanguageContext', () => ({
 vi.mock('@/contexts/CurrencyContext', () => ({
   useCurrency: () => ({
     currencySymbol: 'R$',
+    formatCurrency: (val: number) => `R$ ${val.toFixed(2).replace('.', ',')}`,
   }),
 }));
 
@@ -68,6 +72,8 @@ describe('RecurringExpenseFormFields', () => {
     onStartYearChange: vi.fn(),
     dueDay: '1',
     onDueDayChange: vi.fn(),
+    isTotalValue: false,
+    onIsTotalValueChange: vi.fn(),
   };
 
   beforeEach(() => {
@@ -119,6 +125,87 @@ describe('RecurringExpenseFormFields', () => {
       render(<RecurringExpenseFormFields {...defaultProps} hasInstallments={false} />);
       
       expect(screen.queryByText('totalInstallments')).not.toBeInTheDocument();
+    });
+
+    it('should not show total value toggle when hasInstallments is false', () => {
+      render(<RecurringExpenseFormFields {...defaultProps} hasInstallments={false} />);
+      
+      expect(screen.queryByText('Enter total value')).not.toBeInTheDocument();
+    });
+
+    it('should show total value toggle when hasInstallments is true', () => {
+      render(<RecurringExpenseFormFields {...defaultProps} hasInstallments={true} />);
+      
+      expect(screen.getByText('Enter total value')).toBeInTheDocument();
+    });
+
+    it('should call onIsTotalValueChange when toggle is clicked', async () => {
+      const user = userEvent.setup();
+      const onIsTotalValueChange = vi.fn();
+      render(
+        <RecurringExpenseFormFields 
+          {...defaultProps} 
+          hasInstallments={true} 
+          onIsTotalValueChange={onIsTotalValueChange} 
+        />
+      );
+      
+      const toggle = screen.getByRole('switch');
+      await user.click(toggle);
+      
+      expect(onIsTotalValueChange).toHaveBeenCalledWith(true);
+    });
+
+    it('should show monthly value calculation when isTotalValue is true and totalInstallments > 0', () => {
+      render(
+        <RecurringExpenseFormFields 
+          {...defaultProps} 
+          hasInstallments={true}
+          isTotalValue={true}
+          value="1200,00"
+          totalInstallments="12"
+        />
+      );
+      
+      expect(screen.getByTestId('monthly-calculation')).toBeInTheDocument();
+      expect(screen.getByText(/Monthly value/)).toBeInTheDocument();
+    });
+
+    it('should change value label to Total value when isTotalValue is true', () => {
+      render(
+        <RecurringExpenseFormFields 
+          {...defaultProps} 
+          hasInstallments={true}
+          isTotalValue={true}
+        />
+      );
+      
+      expect(screen.getByText('Total value')).toBeInTheDocument();
+      expect(screen.queryByText('Value')).not.toBeInTheDocument();
+    });
+
+    it('should show Monthly value label when hasInstallments is true and isTotalValue is false', () => {
+      render(
+        <RecurringExpenseFormFields 
+          {...defaultProps} 
+          hasInstallments={true}
+          isTotalValue={false}
+        />
+      );
+      
+      expect(screen.getByText('Monthly value')).toBeInTheDocument();
+    });
+
+    it('should show Value label when hasInstallments is false', () => {
+      render(
+        <RecurringExpenseFormFields 
+          {...defaultProps} 
+          hasInstallments={false}
+          isTotalValue={false}
+        />
+      );
+      
+      expect(screen.getByText('Value')).toBeInTheDocument();
     });
   });
 });

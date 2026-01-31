@@ -446,3 +446,62 @@ npm run build         # Build sem erros
 - [ ] `npm run test:run` — todos os testes passam
 - [ ] `npm run lint` — zero warnings
 - [ ] `npm run build` — build completa sem erros
+
+---
+
+## Papéis de Execução da IA
+
+Prompts iniciando com `[Planejador]`, `[Executor]` ou `[Revisor]` ativam o papel correspondente.
+
+> ⚠️ **Nenhum papel pode violar:** fluxo de dados, Regras Absolutas, Checklist quando houver alterações (test/lint/build).
+
+---
+
+### [Planejador]
+
+**Objetivo:** Plano de implementação verificável. Sem código.
+
+**Entrada:** Requisição do usuário (ou output de Revisor com `REPROVADO`).
+
+**Saída:** Criar arquivo `docs/plan-<nome-curto>.md` contendo:
+1. Objetivo da mudança
+2. Arquivos a criar/alterar/remover
+3. Mudanças por arquivo (o quê + por quê)
+4. Tipos e contratos afetados
+5. Chaves i18n (pt.ts e en.ts)
+6. Testes a criar/alterar
+
+**Proibido:** Escrever código, alterar arquivos (exceto o plano), ignorar i18n/testes.
+
+---
+
+### [Executor]
+
+**Objetivo:** Transformar o plano em código funcional.
+
+**Entrada:** Markdown do Planejador.
+
+**Deve:** Seguir passos na ordem do plano, implementar tipos → hooks → adapters → componentes → traduções → testes. Obedecer Regras Absolutas, tokens, a11y, error handling. **Rodar test/lint/build ao final** e corrigir se necessário.
+
+**Saída:** Código dos arquivos + testes co-localizados + confirmação de test ✓ lint ✓ build ✓.
+
+**Proibido:** Mudar arquitetura do plano, refatorar fora do escopo, usar `any`/`console.log`/cores hardcoded.
+
+---
+
+### [Revisor]
+
+**Objetivo:** Validar implementação contra o plano e regras do projeto.
+
+**Entrada:** Plano (Markdown). Deve ler os arquivos do projeto para verificar a implementação.
+
+**Verificar:** Arquitetura (fluxo respeitado), Regras Absolutas, i18n completo, testes de comportamento.
+
+**Saída obrigatória:**
+1. ✅ O que está correto
+2. ❌ Problemas (lista acionável)
+3. 📌 Veredito: `APROVADO` ou `REPROVADO` + ajustes
+
+> **Fluxo circular:** Se `REPROVADO`, o output do Revisor é input válido para o Planejador reiniciar o ciclo.
+
+**Proibido:** Reimplementar, sugerir melhorias fora do escopo, mudar design.

@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -14,6 +15,7 @@ import { CATEGORIES } from '@/constants/categories';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { TranslationKey } from '@/i18n/translations/pt';
+import { parseCurrencyInput } from '@/lib/utils/formatters';
 
 const MONTH_KEYS = [
   'month-0', 'month-1', 'month-2', 'month-3', 'month-4', 'month-5',
@@ -30,6 +32,7 @@ interface RecurringExpenseFormFieldsProps {
   totalInstallments: string;
   startYear: string;
   startMonth: string;
+  isTotalValue: boolean;
   subcategories: Subcategory[];
   onTitleChange: (value: string) => void;
   onCategoryChange: (value: CategoryKey) => void;
@@ -40,6 +43,7 @@ interface RecurringExpenseFormFieldsProps {
   onTotalInstallmentsChange: (value: string) => void;
   onStartYearChange: (value: string) => void;
   onStartMonthChange: (value: string) => void;
+  onIsTotalValueChange: (value: boolean) => void;
 }
 
 export const RecurringExpenseFormFields = ({
@@ -52,6 +56,7 @@ export const RecurringExpenseFormFields = ({
   totalInstallments,
   startYear,
   startMonth,
+  isTotalValue,
   subcategories,
   onTitleChange,
   onCategoryChange,
@@ -62,9 +67,10 @@ export const RecurringExpenseFormFields = ({
   onTotalInstallmentsChange,
   onStartYearChange,
   onStartMonthChange,
+  onIsTotalValueChange,
 }: RecurringExpenseFormFieldsProps) => {
   const { t } = useLanguage();
-  const { currencySymbol } = useCurrency();
+  const { currencySymbol, formatCurrency } = useCurrency();
   
   const filteredSubcategories = subcategories.filter(
     (sub) => sub.categoryKey === category
@@ -143,7 +149,9 @@ export const RecurringExpenseFormFields = ({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <Label htmlFor="value" className="text-sm font-medium">
-            {t('expenseValue')}
+            {hasInstallments 
+              ? (isTotalValue ? t('totalValue') : t('monthlyValueCalculation'))
+              : t('expenseValue')}
           </Label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
@@ -160,6 +168,11 @@ export const RecurringExpenseFormFields = ({
               className="h-10 pl-10 bg-secondary/50 border-border"
             />
           </div>
+          {hasInstallments && isTotalValue && parseInt(totalInstallments) > 0 && (
+            <p className="text-sm text-muted-foreground" data-testid="monthly-calculation">
+              {t('monthlyValueCalculation')}: {formatCurrency(Math.round((parseCurrencyInput(value) / parseInt(totalInstallments)) * 100) / 100)}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -210,6 +223,20 @@ export const RecurringExpenseFormFields = ({
                 placeholder="Ex: 12"
                 className="h-10 bg-secondary/50 border-border"
               />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Switch
+                id="isTotalValue"
+                checked={isTotalValue}
+                onCheckedChange={onIsTotalValueChange}
+              />
+              <Label 
+                htmlFor="isTotalValue" 
+                className="text-sm font-medium cursor-pointer"
+              >
+                {t('isTotalValue')}
+              </Label>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
